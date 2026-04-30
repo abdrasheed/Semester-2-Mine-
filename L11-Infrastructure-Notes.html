@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L11: IR Infrastructure</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  :root { --bg:#0f0f1a;--bg2:#1a1a2e;--bg3:#16213e;--accent:#7c3aed;--accent2:#06b6d4;--accent3:#10b981;--text:#e2e8f0;--text2:#94a3b8;--yellow:#f59e0b;--red:#ef4444;--card:#1e293b; }
+  [data-theme="light"]{--bg:#f8fafc;--bg2:#f1f5f9;--bg3:#e2e8f0;--text:#0f172a;--text2:#475569;--card:#ffffff;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;overflow-x:hidden;}
+  #pb{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;z-index:1000;transition:width .1s;}
+  header{background:linear-gradient(135deg,#0f0f1a 0%,#1a0533 50%,#0a1628 100%);padding:80px 40px 60px;text-align:center;position:relative;overflow:hidden;}
+  header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at center,rgba(124,58,237,.15) 0%,transparent 60%);animation:rotate 20s linear infinite;}
+  @keyframes rotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes slideInLeft{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+  .badge{display:inline-block;background:var(--accent);color:#fff;padding:6px 18px;border-radius:20px;font-size:.85rem;margin-bottom:16px;animation:fadeInUp .6s ease;}
+  h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;margin-bottom:16px;background:linear-gradient(135deg,#fff 0%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:fadeInUp .8s ease;}
+  .subtitle{color:var(--text2);font-size:1.1rem;animation:fadeInUp 1s ease;}
+  .container{max-width:1200px;margin:0 auto;padding:0 24px;}
+  nav{position:fixed;right:20px;top:50%;transform:translateY(-50%);background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:16px;z-index:100;max-width:220px;max-height:85vh;overflow-y:auto;}
+  nav h3{font-size:.75rem;color:var(--accent2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+  nav a{display:block;color:var(--text2);text-decoration:none;font-size:.8rem;padding:4px 8px;border-left:2px solid transparent;transition:all .2s;}
+  nav a:hover,nav a.active{color:var(--accent);border-left-color:var(--accent);}
+  .theme-btn{position:fixed;left:20px;top:20px;background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:8px;padding:8px 16px;color:var(--text);cursor:pointer;z-index:100;font-size:.85rem;}
+  .back-top{position:fixed;bottom:30px;right:30px;background:var(--accent);color:#fff;border:none;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:none;z-index:100;box-shadow:0 4px 15px rgba(124,58,237,.4);}
+  main{padding:60px 0;}
+  section{margin-bottom:60px;animation:fadeIn .6s ease;}
+  .section-title{font-size:1.8rem;font-weight:700;margin-bottom:24px;padding-left:16px;border-left:4px solid var(--accent);color:var(--text);}
+  h2{font-size:1.5rem;font-weight:700;margin-bottom:20px;padding-left:16px;border-left:4px solid var(--accent);color:var(--text);}
+  .card{background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:28px;margin-bottom:20px;transition:transform .2s,box-shadow .2s;}
+  .card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3);}
+  .card h3,.card h4{color:var(--accent2);margin-bottom:12px;font-size:1.05rem;margin-top:16px;}
+  .card h3:first-child,.card h4:first-child{margin-top:0;}
+  .card p,.card li{color:var(--text2);line-height:1.7;}
+  .card ul,.card ol{padding-left:20px;}.card ul li,.card ol li{margin-bottom:8px;}
+  .hi{color:var(--accent);font-weight:600;}.hi2{color:var(--accent2);font-weight:600;}.hi3{color:var(--accent3);font-weight:600;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+  @media(max-width:768px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}nav{display:none;}}
+  @media(min-width:769px){body{padding-right:260px;}}
+  .def-box{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:20px;margin:16px 0;}
+  .def-box .term{color:var(--accent);font-weight:700;font-size:1.05rem;}
+  .ex-box{background:rgba(16,185,129,.08);border-left:4px solid var(--accent3);border-radius:0 12px 12px 0;padding:20px;margin:16px 0;}
+  .ex-box h4{color:var(--accent3);margin-bottom:10px;margin-top:0;}
+  .warn-box{background:rgba(245,158,11,.08);border-left:4px solid var(--yellow);border-radius:0 12px 12px 0;padding:20px;margin:16px 0;}
+  .warn-box h4{color:var(--yellow);margin-bottom:10px;margin-top:0;}
+  .svg-cont{background:var(--bg2);border-radius:16px;padding:30px;margin:20px 0;text-align:center;}
+  .svg-cont h4{color:var(--accent2);margin-bottom:20px;}
+  .eq-block{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.4);border-radius:12px;padding:24px;margin:20px 0;text-align:center;}
+  .eq-block .eq-title{color:var(--accent);font-weight:700;margin-bottom:12px;font-size:1rem;}
+  .practice-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.4);border-radius:12px;padding:20px;margin:12px 0;}
+  .practice-box h5{color:var(--yellow);margin-bottom:10px;}
+  .solved-box{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.4);border-radius:12px;padding:20px;margin:12px 0;}
+  .solved-box h5{color:var(--accent3);margin-bottom:10px;}
+  .q-section{background:var(--bg2);border-radius:20px;padding:40px;margin-top:40px;}
+  .q-type{font-size:1.4rem;font-weight:700;color:var(--accent);margin:30px 0 16px;padding-bottom:8px;border-bottom:2px solid rgba(124,58,237,.3);}
+  .mcq{background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .mcq .qtext{font-weight:600;color:var(--text);margin-bottom:12px;}
+  .opt{padding:8px 14px;border-radius:8px;cursor:pointer;color:var(--text2);border:1px solid rgba(255,255,255,.07);margin:4px 0;transition:all .2s;}
+  .opt:hover{background:rgba(124,58,237,.15);border-color:var(--accent);}
+  .opt.c{background:rgba(16,185,129,.2);border-color:var(--accent3);color:var(--accent3);}
+  .opt.w{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red);}
+  .tf-row{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .tf-q{flex:1;color:var(--text2);}
+  .tb{padding:6px 16px;border-radius:6px;border:none;cursor:pointer;font-size:.85rem;transition:all .2s;}
+  .tb.tt{background:rgba(16,185,129,.2);color:var(--accent3);}
+  .tb.tf{background:rgba(239,68,68,.15);color:var(--red);}
+  .tf-ans{display:none;font-size:.85rem;padding:6px 10px;border-radius:6px;margin-top:8px;width:100%;}
+  .tf-ans.ca{background:rgba(16,185,129,.15);color:var(--accent3);}
+  .tf-ans.wa{background:rgba(239,68,68,.1);color:var(--red);}
+  .sa{background:var(--card);border-radius:12px;padding:20px;margin-bottom:12px;}
+  .sa .qt{color:var(--text2);margin-bottom:12px;font-weight:600;}
+  .rbtn{background:var(--accent);color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .2s;}
+  .rbtn:hover{background:#6d28d9;}
+  .ans{display:none;margin-top:12px;background:rgba(16,185,129,.08);border-left:3px solid var(--accent3);padding:14px;border-radius:0 8px 8px 0;color:var(--text2);line-height:1.6;}
+  .fc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;margin-top:20px;}
+  .fc{perspective:1000px;height:160px;cursor:pointer;}
+  .fci{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d;}
+  .fc:hover .fci,.fc.flipped .fci{transform:rotateY(180deg);}
+  .fcf,.fcb{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;}
+  .fcf{background:linear-gradient(135deg,var(--accent),#5b21b6);color:#fff;font-weight:600;}
+  .fcb{background:var(--card);border:1px solid rgba(6,182,212,.3);color:var(--text2);font-size:.85rem;transform:rotateY(180deg);}
+  .exam-q{background:var(--bg3);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .tag{display:inline-block;background:var(--yellow);color:#000;font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:4px;margin-right:8px;}
+  .marks{display:inline-block;background:rgba(245,158,11,.2);color:var(--yellow);font-size:.75rem;padding:2px 8px;border-radius:4px;}
+  .obj-list{list-style:none;}.obj-list li{padding:10px 16px;margin-bottom:8px;background:var(--card);border-radius:8px;color:var(--text2);display:flex;align-items:flex-start;gap:10px;}
+  .obj-list li::before{content:"✓";color:var(--accent3);font-weight:700;margin-top:1px;}
+  .sum-card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border-radius:16px;padding:24px;border-left:4px solid var(--accent);margin-bottom:16px;}
+  .sum-card h4{color:var(--accent2);margin-bottom:10px;}
+  .stat-box{background:linear-gradient(135deg,rgba(6,182,212,.1),rgba(16,185,129,.05));border:1px solid rgba(6,182,212,.3);border-radius:12px;padding:20px;text-align:center;}
+  .stat-num{font-size:1.8rem;font-weight:800;color:var(--accent2);}
+  .stat-lbl{color:var(--text2);font-size:.85rem;margin-top:6px;}
+  table{width:100%;border-collapse:collapse;margin:16px 0;}
+  th{background:rgba(124,58,237,.2);color:var(--accent);padding:10px 14px;text-align:left;font-size:.88rem;}
+  td{padding:10px 14px;color:var(--text2);border-bottom:1px solid rgba(255,255,255,.05);font-size:.88rem;}
+  tr:hover td{background:rgba(255,255,255,.03);}
+  .mono{font-family:monospace;background:rgba(124,58,237,.15);color:var(--accent2);padding:2px 6px;border-radius:4px;font-size:.9em;}
+  code{background:rgba(124,58,237,.15);color:var(--accent2);padding:2px 6px;border-radius:4px;font-family:monospace;}
+  pre{background:#0d1117;border-radius:12px;padding:24px;overflow-x:auto;margin:16px 0;border:1px solid rgba(255,255,255,.05);}
+  pre code{background:none;padding:0;color:#c9d1d9;}
+  .kw{color:#ff7b72;}.fn{color:#d2a8ff;}.str{color:#a5d6ff;}.cm{color:#8b949e;}.num{color:#79c0ff;}
+</style>
+</head>
+<body>
+<div id="pb"></div>
+<button class="theme-btn" onclick="toggleTheme()">🌓 Theme</button>
+<button class="back-top" id="bt" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<nav><h3>Contents</h3>
+<a href="#overview">Overview &amp; Business Impact</a>
+<a href="#caching">Caching</a>
+<a href="#taat-daat">TAAT vs DAAT</a>
+<a href="#pruning">Index Pruning</a>
+<a href="#compression">Compression</a>
+<a href="#distributed">Distributed</a>
+<a href="#tiered">Tiered Indexes</a>
+<a href="#qep">Query Efficiency Pred.</a>
+<a href="#green-ir">Green IR</a>
+<a href="#summary">Summary</a>
+<a href="#questions">Questions</a>
+</nav>
+
+<header>
+  <div class="badge">L11 · Craig Macdonald</div>
+  <h1>IR Infrastructure</h1>
+  <p class="subtitle">Caching · TAAT/DAAT · Pruning · Compression · Distributed · QEP</p>
+</header>
+
+<main><div class="container">
+
+<!-- ═══════════════════════════════ OVERVIEW & BUSINESS IMPACT -->
+<section id="overview">
+<h2>1. Infrastructure Overview &amp; Business Impact</h2>
+
+<div class="card">
+<h4>Why Latency Matters: Business Impact of Delay</h4>
+<div class="grid-3" style="margin-bottom:20px;">
+  <div class="stat-box">
+    <div class="stat-num">0.5s</div>
+    <div class="stat-lbl">Delay that caused Yahoo to lose 20% traffic (user study)</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-num">0.5s</div>
+    <div class="stat-lbl">Delay that caused Microsoft Bing to lose 12% revenue per user</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-num">0.5s</div>
+    <div class="stat-lbl">Delay that reduced Google search volume by 20% in user experiments</div>
+  </div>
+</div>
+<div class="warn-box">
+  <h4>⚠️ 1% Latency Increase = 1,000 Servers at Bing</h4>
+  <p style="color:var(--text2);">This means adding just 1% extra response time requires adding ~1,000 servers to compensate for the lost user patience and query re-submissions. Infrastructure efficiency directly translates to hardware costs at scale.</p>
+</div>
+<p style="color:var(--text2);">A production search engine must handle billions of documents and thousands of queries per second. Infrastructure optimises three pillars: <strong>time</strong> (latency), <strong>space</strong> (storage), and <strong>quality</strong> (ranking accuracy).</p>
+<svg viewBox="0 0 720 160" style="width:100%;max-width:720px;display:block;margin:20px auto 0">
+  <polygon points="360,20 160,140 560,140" fill="none" stroke="#7c3aed" stroke-width="2"/>
+  <text x="360" y="16" text-anchor="middle" fill="#7c3aed" font-size="13" font-weight="bold">Quality</text>
+  <text x="140" y="158" text-anchor="middle" fill="#06b6d4" font-size="13" font-weight="bold">Speed</text>
+  <text x="580" y="158" text-anchor="middle" fill="#10b981" font-size="13" font-weight="bold">Space</text>
+  <circle cx="360" cy="95" r="6" fill="#f59e0b"/>
+  <text x="375" y="99" fill="#f59e0b" font-size="11">Sweet spot</text>
+  <text x="360" y="80" text-anchor="middle" fill="#888" font-size="10">Caching ↓ latency</text>
+  <text x="220" y="130" text-anchor="middle" fill="#888" font-size="10">Pruning</text>
+  <text x="500" y="130" text-anchor="middle" fill="#888" font-size="10">Compression</text>
+</svg>
+</div>
+
+<div class="card">
+<h4>Key Techniques Summary</h4>
+<table>
+<tr><th>Technique</th><th>Category</th><th>Benefit</th></tr>
+<tr><td>Caching (result + posting list)</td><td>Time</td><td>Avoid recomputing repeated queries</td></tr>
+<tr><td>TAAT / DAAT</td><td>Time</td><td>Efficient multi-term query processing</td></tr>
+<tr><td>Static Pruning</td><td>Space + Time</td><td>Smaller index, faster traversal</td></tr>
+<tr><td>Dynamic Pruning (WAND/MaxScore/BMW)</td><td>Time</td><td>Skip irrelevant postings at query time</td></tr>
+<tr><td>Compression (Elias/VByte/PForDelta/FOR)</td><td>Space + Time</td><td>Compact index, faster disk I/O</td></tr>
+<tr><td>Distributed Retrieval (sharding)</td><td>Time + Scale</td><td>Parallelise across machines</td></tr>
+<tr><td>Tiered Indexes</td><td>Time</td><td>Answer head queries from small fast tier</td></tr>
+<tr><td>Query Efficiency Prediction (QEP)</td><td>Time</td><td>Allocate resources adaptively per query</td></tr>
+</table>
+</div>
+</section>
+
+<!-- ═══════════════════════════════ CACHING -->
+<section id="caching">
+<h2>2. Caching</h2>
+
+<div class="card">
+<h4>Caching Statistics (Baeza-Yates, SIGIR 2007)</h4>
+<div class="grid-2" style="margin-bottom:16px;">
+  <div class="stat-box">
+    <div class="stat-num">~50%</div>
+    <div class="stat-lbl">of query result requests can be served from a query result cache ("head queries")</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-num">~88%</div>
+    <div class="stat-lbl">of posting list accesses can be served from a term-level (posting list) cache</div>
+  </div>
+</div>
+<p style="color:var(--text2);">Source: Baeza-Yates et al. SIGIR 2007. These statistics show that caching is extremely effective because query distributions are highly skewed (Zipf's law) — a small number of "head" queries account for the majority of traffic.</p>
+
+<h4>Query Result Cache</h4>
+<p style="color:var(--text2);">Store top-k search results for frequent queries. Hit = return cached results instantly, avoiding all index traversal.</p>
+
+<div class="eq-block">
+<div class="eq-title">Cache Hit Rate</div>
+<div>\[ \text{Hit Rate} = \frac{\text{# requests served from cache}}{\text{total requests}} \]</div>
+<div class="practice-box"><h5>🔶 Practice</h5>
+<p style="color:var(--text2);">A cache with 10k entries handles 1M queries/day. 300k queries are served from cache. What is the hit rate?</p>
+</div>
+<div class="solved-box"><h5>✅ Solved</h5>
+<p style="color:var(--text2);">Hit Rate = 300,000 / 1,000,000 = <strong>30%</strong>. Interpretation: 30% of queries avoid full index traversal, reducing average latency and CPU load significantly.</p>
+</div>
+</div>
+
+<h4>Cache Policies</h4>
+<table>
+<tr><th>Policy</th><th>Evict</th><th>Best for</th></tr>
+<tr><td>LRU (Least Recently Used)</td><td>Oldest access time</td><td>Temporal locality — recent queries likely to repeat</td></tr>
+<tr><td>LFU (Least Frequently Used)</td><td>Lowest frequency count</td><td>Stable workloads — always-popular queries</td></tr>
+<tr><td>Static (offline)</td><td>Pre-load top-N most frequent</td><td>Known/predictable query workloads</td></tr>
+</table>
+
+<h4>Posting List Cache</h4>
+<p style="color:var(--text2);">Cache frequently accessed posting lists (e.g., "london", "price", "the") in RAM to avoid disk I/O. Term-level caching complements query-level caching. ~88% of posting list reads can be served from cache (Baeza-Yates 2007).</p>
+</div>
+
+<div class="card">
+<h4>Paired Posting Lists — Phrase Caching</h4>
+<p style="color:var(--text2);">For common multi-word phrases, cache the <em>merged</em> posting list. Example: "white house rose garden"</p>
+<div class="ex-box">
+<h4>Worked Example: Phrase Query Cache Entry</h4>
+<p style="color:var(--text2);">Cached posting list for "white house rose garden" (positional format):<br><br>
+<code>id=0, pf=2</code> &nbsp;→ Document 0 contains the phrase at position 2<br>
+<code>id=3, pf=0</code> &nbsp;→ Document 3 contains the phrase at position 0<br>
+<code>id=5, pf=0</code> &nbsp;→ Document 5 contains the phrase at position 0<br>
+<code>id=6, pf=1</code> &nbsp;→ Document 6 contains the phrase at position 1<br><br>
+Benefit: instead of intersecting 4 separate posting lists and checking positions (expensive), the merged cache entry gives direct document matches for repeated phrase queries.</p>
+</div>
+</div>
+</section>
+
+<!-- ═══════════════════════════════ TAAT vs DAAT -->
+<section id="taat-daat">
+<h2>3. Query Processing: TAAT vs DAAT</h2>
+
+<div class="def-box">
+<span class="term">Multi-Term Query Processing Strategies</span>
+<p style="color:var(--text2);margin-top:8px;">A multi-term query like "fast food restaurant" has a posting list per term. How do you combine them to score documents?</p>
+</div>
+
+<div class="grid-2">
+<div class="card">
+  <h3>TAAT — Term At A Time</h3>
+  <p style="color:var(--text2);">Process one term completely before moving to the next. Maintain a global <em>accumulator array</em> (partial scores for all documents seen so far).</p>
+  <div class="ex-box" style="margin-top:12px;">
+    <h4>Algorithm</h4>
+    <ol style="color:var(--text2);">
+      <li>Initialise accumulator A[d] = 0 for all d</li>
+      <li>For each query term t:<br>
+        &nbsp;&nbsp;For each (docid, score) in posting(t):<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;A[docid] += score(t, docid)</li>
+      <li>Return top-K documents by A[d]</li>
+    </ol>
+  </div>
+  <div class="warn-box" style="margin-top:12px;">
+    <h4>⚠️ TAAT Disadvantage</h4>
+    <p style="color:var(--text2);">Must maintain partial scores for <strong>ALL</strong> documents encountered across any term. Memory proportional to number of unique documents in all posting lists. For common terms, this can be enormous.</p>
+  </div>
+</div>
+<div class="card">
+  <h3>DAAT — Document At A Time</h3>
+  <p style="color:var(--text2);">Process all posting lists simultaneously, advancing a pointer to the same document across all lists. Score documents one at a time.</p>
+  <div class="ex-box" style="margin-top:12px;">
+    <h4>Algorithm</h4>
+    <ol style="color:var(--text2);">
+      <li>Open a cursor on each term's posting list</li>
+      <li>Find the minimum current docid across all cursors</li>
+      <li>Score that document using contributions from all matching terms</li>
+      <li>Advance all cursors pointing to that docid</li>
+      <li>Maintain a top-K heap; update if score qualifies</li>
+      <li>Repeat until all cursors exhausted</li>
+    </ol>
+  </div>
+  <div class="ex-box" style="margin-top:12px;">
+    <h4>DAAT Advantage</h4>
+    <p style="color:var(--text2);">Only maintain top-K scores — constant memory regardless of corpus size. Naturally supports dynamic pruning (WAND/MaxScore) by skipping documents that can't enter top-K.</p>
+  </div>
+</div>
+</div>
+
+<div class="card">
+<h4>TAAT Full Worked Example</h4>
+<p style="color:var(--text2);">Query: "cat dog". Posting lists (docid: score):<br>
+"cat": [(1:3), (2:5), (4:2), (7:1)]<br>
+"dog": [(2:4), (3:2), (4:3), (7:2)]</p>
+<div class="solved-box">
+<h5>✅ TAAT Processing</h5>
+<p style="color:var(--text2);">
+<strong>After processing "cat":</strong><br>
+A[1]=3, A[2]=5, A[4]=2, A[7]=1<br><br>
+<strong>After processing "dog":</strong><br>
+A[2] += 4 → A[2]=9<br>
+A[3] += 2 → A[3]=2<br>
+A[4] += 3 → A[4]=5<br>
+A[7] += 2 → A[7]=3<br><br>
+<strong>Final accumulators:</strong> A[1]=3, A[2]=9, A[3]=2, A[4]=5, A[7]=3<br>
+<strong>Top-2:</strong> doc2 (9), doc4 (5)<br><br>
+Note: accumulator A[1] and A[3] must be stored even though only one term matched them — this is the memory cost.</p>
+</div>
+
+<h4>DAAT Full Worked Example</h4>
+<p style="color:var(--text2);">Same query. Cursors start at beginning of each list.</p>
+<div class="solved-box">
+<h5>✅ DAAT Processing</h5>
+<p style="color:var(--text2);">
+Current: cat→(1:3), dog→(2:4). Min docid = 1 (only cat). Score(1) = 3. Advance cat.<br>
+Current: cat→(2:5), dog→(2:4). Min docid = 2 (both). Score(2) = 5+4 = 9. Advance both.<br>
+Current: cat→(4:2), dog→(3:2). Min docid = 3 (only dog). Score(3) = 2. Advance dog.<br>
+Current: cat→(4:2), dog→(4:3). Min docid = 4 (both). Score(4) = 2+3 = 5. Advance both.<br>
+Current: cat→(7:1), dog→(7:2). Min docid = 7 (both). Score(7) = 1+2 = 3. Advance both.<br>
+All cursors exhausted. Top-2: doc2 (9), doc4 (5). ✓ Same result as TAAT.<br><br>
+Key difference: only ever needed current top-2 heap in memory — no full accumulator array.</p>
+</div>
+</div>
+
+<div class="card">
+<h4>TAAT vs DAAT Comparison</h4>
+<table>
+<tr><th>Property</th><th>TAAT</th><th>DAAT</th></tr>
+<tr><td>Processing order</td><td>One full term at a time</td><td>All terms simultaneously</td></tr>
+<tr><td>Memory</td><td>O(N) — accumulator for all docs</td><td>O(K) — only top-K heap</td></tr>
+<tr><td>Dynamic pruning</td><td>Difficult to integrate</td><td>Natural — supports WAND/MaxScore</td></tr>
+<tr><td>Disk access pattern</td><td>Sequential per term</td><td>Interleaved seeks</td></tr>
+<tr><td>Preferred in practice</td><td>Rarely</td><td>Yes — industry standard</td></tr>
+</table>
+</div>
+</section>
+
+<!-- ═══════════════════════════════ INDEX PRUNING -->
+<section id="pruning">
+<h2>4. Index Pruning: WAND, MaxScore, BMW</h2>
+
+<div class="card">
+<h4>4.1 Static Pruning</h4>
+<p style="color:var(--text2);">Remove postings at index build time. Reduces index size and speeds up traversal.</p>
+<ul style="color:var(--text2);">
+<li><strong>Term-level:</strong> Keep only top-N docs per term (by TF or BM25 score)</li>
+<li><strong>Document-level:</strong> Remove postings from very long documents</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>4.2 Dynamic Pruning — MaxScore</h4>
+<p style="color:var(--text2);">MaxScore pre-computes an upper bound UB for each term's contribution to any document score. It splits query terms into <strong>essential</strong> and <strong>non-essential</strong> sets:</p>
+
+<div class="def-box">
+<span class="term">Essential Terms</span>
+<p style="color:var(--text2);margin-top:8px;">A term t is essential if: without it (i.e., removing its UB from the total), the remaining terms' UBs still exceed the current threshold θ. Essential terms must be processed. Non-essential terms can be skipped unless they appear with essential terms.</p>
+</div>
+
+<div class="eq-block">
+<div class="eq-title">MaxScore Pruning Condition</div>
+<div>\[ \text{If} \sum_{t \in \text{remaining terms}} UB_t &lt; \theta \Rightarrow \text{PRUNE (skip document)} \]</div>
+<p style="color:var(--text2);margin-top:10px;">θ = current K-th best score. UB_t = maximum possible contribution of term t to any document.</p>
+</div>
+
+<div class="practice-box">
+<h5>🔶 MaxScore Full Worked Example</h5>
+<p style="color:var(--text2);">Query: "cat dog fish". Upper bounds: UB(cat)=4, UB(dog)=1. Current threshold θ=4.5.<br>
+Processing in DAAT order, current candidates: docid=21, docid=25.</p>
+</div>
+<div class="solved-box">
+<h5>✅ Solution</h5>
+<p style="color:var(--text2);">
+<strong>For docid=21:</strong> Only "cat" matches. Max possible score = UB(cat) + UB(dog) = 4 + 1 = 5. But wait — docid 21 is NOT in dog's posting list, so actual max = UB(cat) = 4 &lt; θ=4.5. → <strong>PRUNE docid 21</strong><br><br>
+<strong>For docid=25:</strong> Only "dog" matches. Max possible = UB(cat) + UB(dog) = 4 + 1 = 5. Docid 25 not in cat's list, so actual max = UB(dog) = 1 &lt; θ=4.5. → <strong>PRUNE docid 25</strong><br><br>
+Both documents pruned without computing exact scores — they cannot possibly beat the current top-K. This is the MaxScore "essential term" optimisation.</p>
+</div>
+</div>
+
+<div class="card">
+<h4>4.3 WAND (Weak AND) — Essential Term Skip Logic</h4>
+<p style="color:var(--text2);">WAND uses a pivot-based approach to skip documents. The key "essential term" concept:</p>
+<div class="ex-box">
+<h4>WAND Skip Logic</h4>
+<ol style="color:var(--text2);">
+<li>Sort posting list cursors by current docid</li>
+<li>Try to find the leftmost "pivot" term p such that sum of UBs from p to last term ≥ θ</li>
+<li>If all cursors for terms left of pivot point to a docid &lt; pivot's current docid → skip ahead</li>
+<li>Otherwise evaluate the document</li>
+</ol>
+</div>
+
+<div class="eq-block">
+<div class="eq-title">WAND Upper Bound Condition</div>
+<div>\[ \text{Score}_{UB}(d) = \sum_{t \in q,\, t \in d} UB_t \geq \theta \Rightarrow \text{Evaluate document d} \]</div>
+<div class="practice-box"><h5>🔶 Practice</h5>
+<p style="color:var(--text2);">Query: terms A, B, C with UB_A=5, UB_B=3, UB_C=2. θ=8. Document has terms A and C. Skip or evaluate?</p>
+</div>
+<div class="solved-box"><h5>✅ Solved</h5>
+<p style="color:var(--text2);">UB score = UB_A + UB_C = 5 + 2 = 7 &lt; θ=8 → <strong>SKIP</strong>. Cannot possibly enter top-K.</p>
+</div>
+</div>
+
+<div class="card" style="margin-top:0;">
+<h4>Tonellotto et al. SIGIR 2011 — Pruning Performance</h4>
+<p style="color:var(--text2);">Empirical comparison on a large web index:</p>
+<table>
+<tr><th>Algorithm</th><th>Avg. Query Time</th><th>% Postings Evaluated</th></tr>
+<tr><td>Exhaustive (full DAAT)</td><td>1.36s</td><td>100%</td></tr>
+<tr><td>MaxScore</td><td>1.24s</td><td>43%</td></tr>
+<tr><td>WAND</td><td><span class="hi3">0.96s</span></td><td><span class="hi3">10.8%</span></td></tr>
+</table>
+<p style="color:var(--text2);font-size:.9rem;margin-top:8px;">Key finding: WAND evaluates only 10.8% of all postings but returns exactly the same top-K results. This ~10× reduction in work explains the significant speedup over exhaustive evaluation.</p>
+</div>
+</div>
+
+<div class="card">
+<h4>4.4 BMW (Block-Max WAND)</h4>
+<p style="color:var(--text2);">Extends WAND: each posting list is divided into <em>blocks</em> with per-block maximum scores stored. Allows skipping entire blocks (not just documents) → typically 3–5× faster than standard WAND.</p>
+<svg viewBox="0 0 720 100" style="width:100%;max-width:720px;display:block;margin:16px auto">
+  <text x="50" y="20" text-anchor="middle" fill="#888" font-size="11">Posting List for term t</text>
+  <rect x="10" y="30" width="110" height="50" rx="4" fill="#7c3aed" opacity=".8"/>
+  <text x="65" y="52" text-anchor="middle" fill="#fff" font-size="11">Block 1</text>
+  <text x="65" y="68" text-anchor="middle" fill="#fff" font-size="10">max=4.2 ✗</text>
+  <rect x="130" y="30" width="110" height="50" rx="4" fill="#7c3aed" opacity=".8"/>
+  <text x="185" y="52" text-anchor="middle" fill="#fff" font-size="11">Block 2</text>
+  <text x="185" y="68" text-anchor="middle" fill="#fff" font-size="10">max=7.1 ✗</text>
+  <rect x="250" y="30" width="110" height="50" rx="4" fill="#10b981" opacity=".9"/>
+  <text x="305" y="52" text-anchor="middle" fill="#fff" font-size="11">Block 3 ✓</text>
+  <text x="305" y="68" text-anchor="middle" fill="#fff" font-size="10">max=9.3 ≥ θ</text>
+  <rect x="370" y="30" width="110" height="50" rx="4" fill="#7c3aed" opacity=".8"/>
+  <text x="425" y="52" text-anchor="middle" fill="#fff" font-size="11">Block 4</text>
+  <text x="425" y="68" text-anchor="middle" fill="#fff" font-size="10">max=3.0 ✗</text>
+  <text x="580" y="55" fill="#888" font-size="11">θ=8.0 → only Block 3 passes</text>
+</svg>
+</div>
+</section>
+
+<!-- ═══════════════════════════════ COMPRESSION -->
+<section id="compression">
+<h2>5. Index Compression</h2>
+
+<div class="card">
+<p style="color:var(--text2);">An inverted index stores (docID, tf) pairs for each term. Efficient compression reduces storage and I/O bandwidth — critical for in-memory and disk-based indexes.</p>
+
+<h4>5.1 D-Gap (Delta) Encoding</h4>
+<p style="color:var(--text2);">Store differences between consecutive sorted docIDs instead of absolute values. Small gaps → better compression with variable-length codes.</p>
+<div class="eq-block">
+<div class="eq-title">D-Gap Encoding</div>
+<div>\[ \delta_i = d_i - d_{i-1} \quad (d_0 = 0) \]</div>
+<div class="practice-box"><h5>🔶 Practice</h5>
+<p style="color:var(--text2);">DocID sequence: [5, 12, 15, 30, 31]. Compute d-gaps.</p>
+</div>
+<div class="solved-box"><h5>✅ Solved</h5>
+<p style="color:var(--text2);">δ = [5, 7, 3, 15, 1]. Original max = 31 (5 bits each); d-gap max = 15 (4 bits). Small values compress better with variable-length codes.</p>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h4>5.2 Elias Unary Code</h4>
+<p style="color:var(--text2);">The simplest variable-length code. Encodes integer x as: <strong>x−1 zeros followed by a 1</strong>.</p>
+<table>
+<tr><th>Value x</th><th>Unary Code</th><th>Bits</th></tr>
+<tr><td>1</td><td><code>1</code></td><td>1</td></tr>
+<tr><td>2</td><td><code>01</code></td><td>2</td></tr>
+<tr><td>3</td><td><code>001</code></td><td>3</td></tr>
+<tr><td>4</td><td><code>0001</code></td><td>4</td></tr>
+<tr><td>5</td><td><code>00001</code></td><td>5</td></tr>
+</table>
+<p style="color:var(--text2);font-size:.9rem;margin-top:8px;">Unary coding uses x bits for value x. Optimal only for very small integers (x ≤ 2–3). Used as a component in Elias Gamma coding.</p>
+</div>
+
+<div class="card">
+<h4>5.3 Elias Gamma (γ) Code</h4>
+<p style="color:var(--text2);">Encodes an integer x using two parts:<br>
+1. <strong>Unary component:</strong> N = ⌊log₂ x⌋ zeros followed by a 1 (N+1 bits total)<br>
+2. <strong>Binary remainder:</strong> x − 2<sup>N</sup> in binary using N bits</p>
+
+<div class="eq-block">
+<div class="eq-title">Elias γ Encoding</div>
+<div>\[ N = \lfloor \log_2 x \rfloor \quad \text{Bits} = 2N + 1 \]</div>
+<p style="color:var(--text2);margin-top:10px;">Unary part: (N zeros + 1) = N+1 bits. Binary remainder: (x − 2^N) in N bits.</p>
+</div>
+
+<table>
+<tr><th>Value x</th><th>N = ⌊log₂x⌋</th><th>Unary (N+1 bits)</th><th>Remainder (x−2^N, N bits)</th><th>Full code</th><th>Total bits</th></tr>
+<tr><td>1</td><td>0</td><td><code>1</code></td><td>(empty)</td><td><code>1</code></td><td>1</td></tr>
+<tr><td>2</td><td>1</td><td><code>01</code></td><td><code>0</code></td><td><code>010</code></td><td>3</td></tr>
+<tr><td>3</td><td>1</td><td><code>01</code></td><td><code>1</code></td><td><code>011</code></td><td>3</td></tr>
+<tr><td>4</td><td>2</td><td><code>001</code></td><td><code>00</code></td><td><code>00100</code></td><td>5</td></tr>
+<tr><td>5</td><td>2</td><td><code>001</code></td><td><code>01</code></td><td><code>00101</code></td><td>5</td></tr>
+<tr><td>9</td><td>3</td><td><code>0001</code></td><td><code>001</code></td><td><code>0001001</code></td><td>7</td></tr>
+</table>
+
+<div class="practice-box" style="margin-top:16px;">
+<h5>🔶 Full Encoding Worked Example</h5>
+<p style="color:var(--text2);">Given d-gaps [1, 5, 3, 9, 2, 4], encode each with Elias γ and count total bits. Compare with original 24 bytes (8 gaps × 3 bytes).</p>
+</div>
+<div class="solved-box">
+<h5>✅ Solution</h5>
+<p style="color:var(--text2);">
+1 → 1 bit (code: 1)<br>
+5 → 5 bits (N=2: code: 00101)<br>
+3 → 3 bits (N=1: code: 011)<br>
+9 → 7 bits (N=3: code: 0001001)<br>
+2 → 3 bits (N=1: code: 010)<br>
+4 → 5 bits (N=2: code: 00100)<br><br>
+Total = 1+5+3+7+3+5 = <strong>24 bits</strong> vs original 24 bytes = 192 bits → <strong>8× compression</strong></p>
+</div>
+
+<div class="practice-box" style="margin-top:12px;">
+<h5>🔶 Practice: Encode term4</h5>
+<p style="color:var(--text2);">Posting list for term4 has d-gaps: [6, 3, 1, 15, 2]. Encode each with Elias γ. How many total bits?</p>
+</div>
+<div class="solved-box">
+<h5>✅ Solution</h5>
+<p style="color:var(--text2);">
+6: N=⌊log₂6⌋=2, code=00110, 5 bits<br>
+3: N=1, code=011, 3 bits<br>
+1: N=0, code=1, 1 bit<br>
+15: N=⌊log₂15⌋=3, code=0001111, 7 bits<br>
+2: N=1, code=010, 3 bits<br>
+Total = 5+3+1+7+3 = <strong>19 bits</strong></p>
+</div>
+</div>
+
+<div class="card">
+<h4>5.4 Variable Byte (VByte) Encoding</h4>
+<p style="color:var(--text2);">Use 7 bits per byte for data, 1 bit as continuation flag. Values ≤127 need 1 byte; ≤16383 need 2 bytes.</p>
+<div class="eq-block">
+<div class="eq-title">VByte: bytes needed</div>
+<div>\[ \text{bytes}(n) = \lceil \log_{128}(n+1) \rceil \]</div>
+</div>
+<div class="practice-box"><h5>🔶 Practice</h5>
+<p style="color:var(--text2);">Encode d-gaps [5, 7, 3, 15, 1] in VByte. Total bytes?</p>
+</div>
+<div class="solved-box"><h5>✅ Solved</h5>
+<p style="color:var(--text2);">All ≤ 127 → each takes 1 byte. Total: <strong>5 bytes</strong>. Original 32-bit ints: 20 bytes → 4× compression.</p>
+</div>
+</div>
+
+<div class="card">
+<h4>5.5 Frame of Reference (FOR) Compression</h4>
+<p style="color:var(--text2);">FOR compresses blocks of integers by storing only the <em>reference frame</em> (minimum value m) and each value as its offset from m. All offsets use a fixed b bits where b = ⌈log₂(M − m + 1)⌉.</p>
+
+<div class="eq-block">
+<div class="eq-title">FOR Bit Width</div>
+<div>\[ b = \lceil \log_2(M - m + 1) \rceil \]</div>
+<p style="color:var(--text2);margin-top:10px;">M = maximum value in block, m = minimum value. Store: m (full int) + all offsets as b-bit values.</p>
+</div>
+
+<div class="practice-box">
+<h5>🔶 FOR Example</h5>
+<p style="color:var(--text2);">Block of docIDs: {2000, 2003, 2010, 2015, 2020, 2025, 2050, 2063}. Compute b and total bits for 8 values.</p>
+</div>
+<div class="solved-box">
+<h5>✅ Solution</h5>
+<p style="color:var(--text2);">m = 2000, M = 2063. Range = 2063 − 2000 + 1 = 64. b = ⌈log₂ 64⌉ = <strong>6 bits</strong>.<br>
+Offsets: {0, 3, 10, 15, 20, 25, 50, 63} — each stored in 6 bits.<br>
+Total bits: 32 (store m=2000) + 8×6 = 32 + 48 = <strong>80 bits</strong> for 8 values (vs 256 bits raw).<br>
+Compression ratio: 256/80 = 3.2×</p>
+</div>
+
+<div class="warn-box" style="margin-top:12px;">
+<h4>⚠️ FOR vs PForDelta</h4>
+<p style="color:var(--text2);">FOR requires ALL values to fit in b bits — one outlier inflates b for the whole block. PForDelta (Patched FOR) handles exceptions separately, using a small exception list for ~10% of values that don't fit b bits. This gives better compression for blocks with occasional large gaps.</p>
+</div>
+</div>
+
+<div class="card">
+<h4>5.6 Compression Methods — Full Comparison (Catena et al. ECIR 2014 Best Paper)</h4>
+<p style="color:var(--text2);">Catena et al. benchmarked compression methods on large web indexes:</p>
+<table>
+<tr><th>Method</th><th>Compression Ratio</th><th>Decode Speed</th><th>Type</th><th>Notes</th></tr>
+<tr><td>Unary</td><td>Best for values ≤ 4</td><td>Slow</td><td>Variable-length</td><td>Building block for γ-code</td></tr>
+<tr><td>Elias γ-code</td><td>Good (small integers)</td><td>Medium</td><td>Variable-length</td><td>Optimal for Zipf distributions</td></tr>
+<tr><td>VByte</td><td>Good</td><td>Fast</td><td>Variable-length</td><td>Simple, widely used, byte-aligned</td></tr>
+<tr><td>Frame of Reference (FOR)</td><td>Very good (uniform blocks)</td><td>Very fast</td><td>Fixed-width block</td><td>Good when block range is small</td></tr>
+<tr><td>PForDelta</td><td>Very good</td><td>Very fast (SIMD)</td><td>Fixed-width + exceptions</td><td>Industry standard (Lucene/ES)</td></tr>
+<tr><td>Simple9/16</td><td>Good</td><td>Very fast</td><td>Word-aligned</td><td>Packs multiple values per 32/64-bit word</td></tr>
+</table>
+<div class="ex-box" style="margin-top:12px;">
+<h4>Key Catena Finding</h4>
+<p>Compression is not just about ratio — <em>decompression speed</em> is equally critical. At query time, millions of postings must be decoded per second. SIMD-capable methods (PForDelta, FOR) dominate because they decode 4–32 values per CPU instruction.</p>
+</div>
+</div>
+</section>
+
+<!-- ═══════════════════════════════ DISTRIBUTED RETRIEVAL -->
+<section id="distributed">
+<h2>6. Distributed Retrieval</h2>
+
+<div class="card">
+<h4>Vertical vs Horizontal Scaling</h4>
+<div class="grid-2">
+  <div class="def-box">
+    <span class="term">Vertical Scaling (Scale Up)</span>
+    <p style="color:var(--text2);margin-top:8px;">Add more resources to a single machine: more RAM, faster CPU, more cores, larger SSD. Simple — no distributed coordination overhead. Limited by physical hardware ceiling. Used first because it's easier.</p>
+  </div>
+  <div class="def-box">
+    <span class="term">Horizontal Scaling (Scale Out)</span>
+    <p style="color:var(--text2);margin-top:8px;">Add more machines to the cluster. Distribute the index across N machines (sharding). Supports arbitrary scale but requires coordination: distributed IDF, result aggregation, network overhead. Required for web-scale (billions of docs).</p>
+  </div>
+</div>
+</div>
+
+<div class="card">
+<h4>Term Partitioning vs Document Partitioning</h4>
+<div class="grid-2">
+  <div class="warn-box">
+    <h4>⚠️ Term Partitioning</h4>
+    <p style="color:var(--text2);">Each machine handles a subset of <em>terms</em>. Machine 1: terms A–M. Machine 2: terms N–Z.<br><br>
+    Problem: A multi-term query must contact ALL machines (a query for "cat dog" needs both machines). Results must be collected like TAAT — every machine processes every document for its terms. Rarely used in practice for this reason.</p>
+  </div>
+  <div class="ex-box">
+    <h4>Document Partitioning (Preferred)</h4>
+    <p style="color:var(--text2);">Each machine holds a complete inverted index for a <em>subset of documents</em>. Machine 1: docs 1–N/k. Machine 2: docs N/k+1 to 2N/k.<br><br>
+    Each machine processes the full query independently and returns its top-K. A broker aggregates results into the global top-K. This is the dominant approach in production systems.</p>
+  </div>
+</div>
+
+<h4>Document Partitioning Strategies</h4>
+<table>
+<tr><th>Strategy</th><th>How</th><th>Pros</th><th>Cons</th></tr>
+<tr><td><span class="hi3">Random</span></td><td>Assign docs by docID mod N</td><td>Uniform load, simple IDF estimation</td><td>No semantic locality</td></tr>
+<tr><td>Semantic</td><td>Group similar topic documents</td><td>Enables selective search — route query to relevant shards</td><td>Load imbalance, complex assignment</td></tr>
+<tr><td>Language</td><td>Group by document language</td><td>Natural for multilingual search</td><td>Cross-language queries harder</td></tr>
+<tr><td>Query-log-based</td><td>Place docs near queries that retrieve them</td><td>Can reduce cross-shard communication</td><td>Requires historical query data</td></tr>
+</table>
+<div class="warn-box" style="margin-top:12px;">
+<h4>⚠️ Term Partitioning: Rarely Used in Practice</h4>
+<p style="color:var(--text2);">Every query must collect partial scores from ALL machines (one per term in the query). This is equivalent to TAAT distributed — requires aggregating partial accumulators across the network. Network overhead and synchronisation costs make this impractical at scale.</p>
+</div>
+</div>
+
+<div class="card">
+<h4>6.1 Document Sharding &amp; Distributed IDF</h4>
+<svg viewBox="0 0 720 140" style="width:100%;max-width:720px;display:block;margin:16px auto">
+  <rect x="280" y="10" width="160" height="35" rx="8" fill="#7c3aed"/>
+  <text x="360" y="32" text-anchor="middle" fill="#fff" font-size="13">Broker/Aggregator</text>
+  <line x1="360" y1="45" x2="180" y2="75" stroke="#999" stroke-width="1.5"/>
+  <line x1="360" y1="45" x2="360" y2="75" stroke="#999" stroke-width="1.5"/>
+  <line x1="360" y1="45" x2="540" y2="75" stroke="#999" stroke-width="1.5"/>
+  <rect x="100" y="75" width="160" height="40" rx="6" fill="#06b6d4"/>
+  <text x="180" y="100" text-anchor="middle" fill="#fff" font-size="12">Shard 1</text>
+  <rect x="280" y="75" width="160" height="40" rx="6" fill="#06b6d4"/>
+  <text x="360" y="100" text-anchor="middle" fill="#fff" font-size="12">Shard 2</text>
+  <rect x="460" y="75" width="160" height="40" rx="6" fill="#06b6d4"/>
+  <text x="540" y="100" text-anchor="middle" fill="#fff" font-size="12">Shard 3</text>
+</svg>
+
+<div class="eq-block">
+<div class="eq-title">Distributed IDF Estimation</div>
+<div>\[ \text{IDF}(t) = \log \frac{N_{\text{global}}}{\sum_{i=1}^{k} \text{df}_i(t)} \]</div>
+<div class="practice-box"><h5>🔶 Practice</h5>
+<p style="color:var(--text2);">3 shards, each 1M docs. "retrieval": df=500 (shard 1), 300 (shard 2), 200 (shard 3). Global IDF?</p>
+</div>
+<div class="solved-box"><h5>✅ Solved</h5>
+<p style="color:var(--text2);">N=3M, df=1000. IDF = log(3,000,000/1000) = log(3000) ≈ <strong>8.006</strong> (natural log)</p>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h4>6.2 Resource Selection: CORI and ReDDE</h4>
+<p style="color:var(--text2);">Resource selection decides <em>which shards to query</em> for a given query, rather than broadcasting to all. Reduces cost and latency for selective search.</p>
+<div class="grid-2">
+  <div class="def-box">
+    <span class="term">CORI</span>
+    <p style="color:var(--text2);margin-top:8px;">Collection Retrieval and Inference. Models each shard as a document and scores shards using TF-IDF of query terms. High CORI score = shard likely contains relevant results. Select top-k shards by CORI score.</p>
+  </div>
+  <div class="def-box">
+    <span class="term">ReDDE</span>
+    <p style="color:var(--text2);margin-top:8px;">Relevant Document Distribution Estimation. Estimates the number of relevant documents each shard would contribute to the global top-K. Uses a sampled "central sample index" to estimate shard relevance without querying each shard.</p>
+  </div>
+</div>
+</div>
+
+<div class="card">
+<h4>6.3 Selective Search</h4>
+<p style="color:var(--text2);">Route each query to only the most relevant shards (selected by CORI or ReDDE) rather than all shards. Typically query 2–3 shards out of 10–20.</p>
+<div class="ex-box">
+<h4>Trade-off</h4>
+<ul style="color:var(--text2);">
+<li><strong>Benefit:</strong> Proportional reduction in latency and cost — 3 shards out of 10 = ~70% cost reduction</li>
+<li><strong>Risk:</strong> May miss relevant documents in unqueried shards → potential recall loss</li>
+<li><strong>Best for:</strong> Head queries where relevant documents are concentrated in a few shards</li>
+<li><strong>Worst for:</strong> Rare queries where relevant documents are scattered</li>
+</ul>
+</div>
+</div>
+</section>
+
+<!-- ═══════════════════════════════ TIERED INDEXES -->
+<section id="tiered">
+<h2>7. Tiered Indexes &amp; Further Optimisations</h2>
+
+<div class="card">
+<h4>Tiered Index Architecture</h4>
+<p style="color:var(--text2);">Split index into tiers based on document quality/importance:</p>
+<ol style="color:var(--text2);">
+<li><strong>Tier 1:</strong> High-quality documents (high PageRank, frequently clicked). Very small — try here first.</li>
+<li><strong>Tier 2:</strong> Medium quality. Query if Tier 1 has insufficient results.</li>
+<li><strong>Tier 3:</strong> Long tail. Rarely queried — only for specific/rare queries.</li>
+</ol>
+<svg viewBox="0 0 400 160" style="width:100%;max-width:400px;display:block;margin:20px auto">
+  <polygon points="200,10 80,60 320,60" fill="#7c3aed" opacity=".9"/>
+  <text x="200" y="42" text-anchor="middle" fill="#fff" font-size="12">Tier 1 (top docs)</text>
+  <polygon points="80,65 10,120 390,120" fill="#06b6d4" opacity=".8"/>
+  <text x="200" y="100" text-anchor="middle" fill="#fff" font-size="12">Tier 2 (medium)</text>
+  <rect x="10" y="125" width="380" height="30" rx="4" fill="#10b981" opacity=".7"/>
+  <text x="200" y="145" text-anchor="middle" fill="#fff" font-size="12">Tier 3 (long tail)</text>
+</svg>
+</div>
+
+<div class="card">
+<h4>Impact-Ordered Index</h4>
+<p style="color:var(--text2);">Sort postings within each posting list by decreasing impact (TF-IDF or BM25 contribution), not by docID. Early termination achieves high precision by scoring only top-impact entries — process first P% of postings and stop.</p>
+</div>
+
+<div class="card">
+<h4>Index Freshness</h4>
+<ul style="color:var(--text2);">
+<li><strong>Batch re-indexing:</strong> Periodic full rebuild — simple but stale index</li>
+<li><strong>Incremental indexing:</strong> Merge small "delta" indexes into main index continuously</li>
+<li><strong>Real-time indexing:</strong> Documents immediately searchable — complex but fresh (used by Elasticsearch)</li>
+</ul>
+</div>
+
+<div class="card">
+<h4>Hardware Memory Hierarchy</h4>
+<table>
+<tr><th>Level</th><th>Latency</th><th>Capacity</th><th>Use in Search</th></tr>
+<tr><td>CPU Cache (L1/L2/L3)</td><td>~1–10 ns</td><td>KB–MB</td><td>Active computation, loop variables</td></tr>
+<tr><td>RAM</td><td>~100 ns</td><td>GB–TB</td><td>Hot posting lists, caches, index</td></tr>
+<tr><td>NVMe SSD</td><td>~100 µs</td><td>TB</td><td>Main inverted index on-disk</td></tr>
+<tr><td>HDD</td><td>~10 ms</td><td>PB</td><td>Archive, cold storage, backups</td></tr>
+</table>
+</div>
+</section>
+
+<!-- ═══════════════════════════════ QUERY EFFICIENCY PREDICTION -->
+<section id="qep">
+<h2>8. Query Efficiency Prediction (QEP)</h2>
+
+<div class="def-box">
+<span class="term">Query Efficiency Prediction (QEP)</span>
+<p style="color:var(--text2);margin-top:8px;">Predict — at query time, before executing the query — how much computational cost (CPU time, memory, evaluated postings) this query will require. Used to adaptively allocate resources per query rather than using fixed settings.</p>
+</div>
+
+<div class="card">
+<h4>What QEP Depends On</h4>
+<p style="color:var(--text2);margin-bottom:12px;">Macdonald, Tonellotto &amp; Ounis (SIGIR 2012) showed QEP models depend on four key factors:</p>
+<div class="grid-2">
+  <div class="ex-box">
+    <h4>Query-level factors</h4>
+    <ul style="color:var(--text2);">
+      <li><strong>Query length:</strong> More terms = more posting lists = more work</li>
+      <li><strong>Posting list length:</strong> Total number of postings across all query terms — longer lists = more candidates to process</li>
+    </ul>
+  </div>
+  <div class="ex-box">
+    <h4>Execution-level factors</h4>
+    <ul style="color:var(--text2);">
+      <li><strong>Pruning rate:</strong> What fraction of postings will be skipped by WAND/MaxScore — hard to know without executing (hence "prediction")</li>
+      <li><strong>K:</strong> Number of results requested — larger K = stricter threshold needed, more postings evaluated</li>
+    </ul>
+  </div>
+</div>
+</div>
+
+<div class="card">
+<h4>QEP Applications</h4>
+<div class="grid-3">
+  <div class="def-box">
+    <span class="term">Query Scheduling</span>
+    <p style="color:var(--text2);margin-top:8px;">Predicted-expensive queries are queued during peak load; cheap queries execute immediately. Prevents a single hard query from blocking the queue. Similar to CPU job scheduling.</p>
+  </div>
+  <div class="def-box">
+    <span class="term">Adjusting K</span>
+    <p style="color:var(--text2);margin-top:8px;">Reduce K for predicted-expensive queries. E.g., retrieve top-10 instead of top-100 to reduce threshold computation. Quality impact is minimal for most queries.</p>
+  </div>
+  <div class="def-box">
+    <span class="term">Selective Parallelisation</span>
+    <p style="color:var(--text2);margin-top:8px;">Allocate more parallel threads/shards to expensive queries; process cheap queries on a single thread. Avoids over-provisioning for simple queries.</p>
+  </div>
+</div>
+</div>
+
+<div class="card">
+<h4>QEP Impact at Bing Scale</h4>
+<div class="stat-box" style="max-width:500px;margin:0 auto 16px;">
+  <div class="stat-num" style="font-size:2.5rem;">1/3</div>
+  <div class="stat-lbl" style="font-size:1rem;">of production servers saved by QEP at Bing<br>("saves one-third of production servers" across "a few hundred thousand query servers")</div>
+</div>
+<p style="color:var(--text2);text-align:center;font-size:.9rem;">Source: Macdonald, Tonellotto &amp; Ounis, SIGIR 2012. This is one of the most dramatic examples of an academic IR technique having direct production impact.</p>
+<div class="ex-box" style="margin-top:16px;">
+<h4>Interpretation</h4>
+<p>At Bing's scale of hundreds of thousands of servers, saving 1/3 of servers through smarter query resource allocation means enormous cost savings. QEP enables the system to handle the same query load with 33% fewer machines by intelligently routing query costs.</p>
+</div>
+</div>
+
+<div class="card">
+<h4>QEP Model Design</h4>
+<p style="color:var(--text2);margin-bottom:12px;">A QEP model is a regression model predicting query cost:</p>
+<div class="eq-block">
+<div class="eq-title">QEP Regression</div>
+<div>\[ \hat{C}(q) = f(\text{query length}, \sum_t |\text{posting}(t)|, \hat{P}_{\text{prune}}, K) \]</div>
+<p style="color:var(--text2);margin-top:10px;">Features extracted at query time without executing. Model trained on historical (query, observed cost) pairs.</p>
+</div>
+<div class="warn-box">
+<h4>⚠️ Chicken-and-Egg Problem</h4>
+<p style="color:var(--text2);">The best feature for predicting cost is the pruning rate — but you only know the pruning rate after executing the query. QEP uses proxy features (posting list lengths, upper bound distributions) to estimate it before execution.</p>
+</div>
+</div>
+</section>
+
+<!-- ═══════════════════════════════ GREEN IR -->
+<section id="green-ir">
+<h2>9. Green IR</h2>
+
+<div class="def-box">
+<span class="term">Green IR</span>
+<p style="color:var(--text2);margin-top:8px;">The study and practice of reducing the energy consumption and environmental impact of information retrieval systems while maintaining acceptable quality. Motivated by the enormous energy footprint of large-scale search engines.</p>
+</div>
+
+<div class="card">
+<h4>Energy Context</h4>
+<div class="grid-3">
+  <div class="stat-box">
+    <div class="stat-num">1 KJ</div>
+    <div class="stat-lbl">Energy per web search query (≈0.3 Wh)</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-num">1.1–1.5%</div>
+    <div class="stat-lbl">Global electricity consumption by web search</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-num">~8.5B</div>
+    <div class="stat-lbl">Google searches per day (2023 estimate)</div>
+  </div>
+</div>
+<div class="warn-box" style="margin-top:16px;">
+<h4>⚠️ Neural IR's Energy Problem</h4>
+<p style="color:var(--text2);">Neural ranking models (BERT-based cross-encoders, large LMs) are dramatically more expensive than BM25. A single BERT inference may use 100–1000× more energy than a BM25 score. At web scale, deploying these models naively is environmentally unsustainable. This motivates cascade architectures (cheap BM25 first, expensive neural re-ranking on small set) and efficient models (ColBERT, SPLADE).</p>
+</div>
+</div>
+
+<div class="card">
+<h4>Green IR Principles</h4>
+<ul style="color:var(--text2);">
+<li><strong>Cascade retrieval:</strong> Use cheap model (BM25) to generate candidates, apply expensive model (BERT) only to top-N</li>
+<li><strong>Early termination:</strong> WAND/MaxScore/BMW reduce postings evaluated → less CPU → less energy</li>
+<li><strong>QEP-based allocation:</strong> Don't over-provision — use resources proportional to query difficulty</li>
+<li><strong>Model compression:</strong> Smaller, quantised neural models (TinyBERT, DistilBERT) sacrifice small quality for large energy savings</li>
+<li><strong>Caching:</strong> Cached results require zero computation energy</li>
+</ul>
+</div>
+</section>
+
+<!-- ═══════════════════════════════ SUMMARY -->
+<section id="summary">
+<h2>10. Summary</h2>
+<div class="sum-card"><h4>Business Impact &amp; Motivation</h4><p style="color:var(--text2);">0.5s delay → Yahoo −20% traffic, Bing −12% revenue/user, Google −20% searches. 1% latency = ~1,000 extra Bing servers. Every millisecond matters at scale.</p></div>
+<div class="sum-card"><h4>Caching</h4><p style="color:var(--text2);">50% of query results cacheable (head queries); 88% of posting list accesses cacheable (Baeza-Yates SIGIR 2007). Zipf distribution of query frequency makes caching highly effective. Policies: LRU/LFU/Static.</p></div>
+<div class="sum-card"><h4>TAAT vs DAAT</h4><p style="color:var(--text2);">TAAT: one full term at a time, needs O(N) accumulator memory. DAAT: all terms simultaneously, O(K) heap memory, supports dynamic pruning. DAAT is industry standard.</p></div>
+<div class="sum-card"><h4>Dynamic Pruning</h4><p style="color:var(--text2);">MaxScore: essential/non-essential term split, prune if remaining UBs &lt; θ. WAND: pivot-based, evaluates only 10.8% of postings (Tonellotto SIGIR 2011, vs 100% exhaustive). BMW: per-block maxima for block-level skipping.</p></div>
+<div class="sum-card"><h4>Compression</h4><p style="color:var(--text2);">D-gaps + coding: Elias Unary (x bits for value x), Elias γ (2⌊log₂x⌋+1 bits), VByte (7 data + 1 flag bits per byte), FOR (b=⌈log₂(M−m+1)⌉ bits per block), PForDelta (SIMD, industry standard). Catena ECIR 2014: decompression speed equally important as compression ratio.</p></div>
+<div class="sum-card"><h4>Distributed Retrieval</h4><p style="color:var(--text2);">Document partitioning preferred (term partitioning requires TAAT-like full collection traversal). Strategies: random/semantic/language/query-log. Resource selection (CORI, ReDDE) enables selective search. Vertical then horizontal scaling.</p></div>
+<div class="sum-card"><h4>Query Efficiency Prediction</h4><p style="color:var(--text2);">QEP predicts query cost from: query length, posting list lengths, estimated pruning rate, K. Applications: scheduling, adjusting K, selective parallelisation. Impact: saves 1/3 of Bing production servers (Macdonald/Tonellotto/Ounis SIGIR 2012) across hundreds of thousands of servers.</p></div>
+<div class="sum-card"><h4>Green IR</h4><p style="color:var(--text2);">1 KJ per search, 1.1–1.5% global electricity. Neural models are 100–1000× more expensive than BM25. Mitigations: cascade architectures, dynamic pruning, QEP, model compression, caching.</p></div>
+</section>
+
+<!-- ═══════════════════════════════ QUESTIONS -->
+<section id="questions" class="q-section">
+<h2 style="border:none;padding-left:0;">📝 Questions &amp; Practice</h2>
+
+<div class="q-type">Multiple Choice Questions</div>
+
+<div class="mcq"><div class="qtext">Q1. According to Baeza-Yates (SIGIR 2007), approximately what fraction of posting list accesses can be served from cache?</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">A) 50%</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">B) 60%</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">C) 75%</div>
+  <div class="opt" onclick="answerMCQ(this,'correct')">D) 88%</div>
+</div>
+
+<div class="mcq"><div class="qtext">Q2. TAAT (Term At A Time) requires more memory than DAAT because:</div>
+  <div class="opt" onclick="answerMCQ(this,'correct')">A) It maintains an accumulator for ALL documents encountered across all terms</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">B) It stores the full posting lists in memory</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">C) It processes each document multiple times</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">D) It decompresses all posting lists upfront</div>
+</div>
+
+<div class="mcq"><div class="qtext">Q3. According to Tonellotto et al. (SIGIR 2011), WAND evaluates approximately what percentage of postings compared to exhaustive evaluation?</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">A) 43%</div>
+  <div class="opt" onclick="answerMCQ(this,'correct')">B) 10.8%</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">C) 50%</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">D) 25%</div>
+</div>
+
+<div class="mcq"><div class="qtext">Q4. In Elias γ coding, how many bits are needed to encode the integer x=9?</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">A) 5 bits</div>
+  <div class="opt" onclick="answerMCQ(this,'correct')">B) 7 bits (N=3: 0001 + 001)</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">C) 9 bits</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">D) 4 bits</div>
+</div>
+
+<div class="mcq"><div class="qtext">Q5. Why is term partitioning rarely used in practice for distributed IR?</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">A) It produces uneven load across shards</div>
+  <div class="opt" onclick="answerMCQ(this,'correct')">B) Every multi-term query must contact ALL shards and collect partial scores like TAAT</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">C) IDF cannot be computed accurately</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">D) It requires too much disk storage per machine</div>
+</div>
+
+<div class="mcq"><div class="qtext">Q6. According to Macdonald et al. (SIGIR 2012), which of the following is NOT a key factor for Query Efficiency Prediction?</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">A) Query length</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">B) Posting list length</div>
+  <div class="opt" onclick="answerMCQ(this,'correct')">C) Document language</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">D) Pruning rate</div>
+</div>
+
+<div class="mcq"><div class="qtext">Q7. For a block of docIDs {500, 503, 508, 515, 516, 527, 528, 531} using Frame of Reference, what bit width b is needed?</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">A) 4 bits</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">B) 5 bits</div>
+  <div class="opt" onclick="answerMCQ(this,'correct')">C) 6 bits (range=531−500+1=32; ⌈log₂32⌉=5, but range needs 32 values so b=5)</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">D) 8 bits</div>
+</div>
+
+<div class="mcq"><div class="qtext">Q8. What does QEP enable at Bing that has significant cost impact?</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">A) 10% reduction in index size</div>
+  <div class="opt" onclick="answerMCQ(this,'correct')">B) Saving approximately one-third of production servers</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">C) 50% improvement in NDCG</div>
+  <div class="opt" onclick="answerMCQ(this,'wrong')">D) Eliminating the need for caching</div>
+</div>
+
+<div class="q-type">True / False</div>
+
+<div class="tf-row"><div class="tf-q">T1. WAND guarantees exactly the same top-K results as full exhaustive evaluation.</div>
+  <button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+  <div class="tf-ans ca">TRUE — WAND is a safe pruning strategy. It skips documents that provably cannot enter the top-K, so the result is identical to exhaustive evaluation.</div>
+</div>
+
+<div class="tf-row"><div class="tf-q">T2. A 0.5 second delay caused Yahoo to lose approximately 50% of its traffic in user studies.</div>
+  <button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+  <div class="tf-ans wa">FALSE — A 0.5s delay caused Yahoo to lose approximately 20% of traffic (not 50%).</div>
+</div>
+
+<div class="tf-row"><div class="tf-q">T3. Frame of Reference (FOR) compression stores each value as its offset from the minimum value in the block.</div>
+  <button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+  <div class="tf-ans ca">TRUE — FOR stores the block minimum m and then each value as (value − m), using b = ⌈log₂(M−m+1)⌉ bits per value.</div>
+</div>
+
+<div class="tf-row"><div class="tf-q">T4. DAAT (Document At A Time) processes each posting list completely before moving to the next.</div>
+  <button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+  <div class="tf-ans wa">FALSE — That describes TAAT. DAAT advances all posting list cursors simultaneously, processing all terms for the same document at once.</div>
+</div>
+
+<div class="tf-row"><div class="tf-q">T5. According to Baeza-Yates (SIGIR 2007), approximately 50% of query result requests can be served from a query result cache.</div>
+  <button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+  <div class="tf-ans ca">TRUE — The "head" queries (very common, repeated queries) make up ~50% of traffic and can be fully served from cache.</div>
+</div>
+
+<div class="q-type">Calculation Problems</div>
+
+<div class="sa"><div class="qt">Elias γ Encoding: Encode the following d-gap sequence with Elias γ code: [4, 7, 1, 3, 6]. Show each encoding and total bit count.</div>
+  <button class="rbtn" onclick="rev(this)">Solution</button>
+  <div class="ans">
+  4: N=⌊log₂4⌋=2, unary(2)=001, remainder=4−4=0→"00", code=<strong>00100</strong> (5 bits)<br>
+  7: N=⌊log₂7⌋=2, unary(2)=001, remainder=7−4=3→"11", code=<strong>00111</strong> (5 bits)<br>
+  1: N=⌊log₂1⌋=0, unary(0)=1, remainder=(empty), code=<strong>1</strong> (1 bit)<br>
+  3: N=⌊log₂3⌋=1, unary(1)=01, remainder=3−2=1→"1", code=<strong>011</strong> (3 bits)<br>
+  6: N=⌊log₂6⌋=2, unary(2)=001, remainder=6−4=2→"10", code=<strong>00110</strong> (5 bits)<br>
+  Total: 5+5+1+3+5 = <strong>19 bits</strong></div>
+</div>
+
+<div class="sa"><div class="qt">TAAT Worked Example: Query "sun moon". Posting lists: "sun"=[(2:3),(5:2),(8:4)], "moon"=[(3:1),(5:5),(8:2)]. Show TAAT accumulator after processing both terms. What is the top-1 result?</div>
+  <button class="rbtn" onclick="rev(this)">Solution</button>
+  <div class="ans">
+  After "sun": A[2]=3, A[5]=2, A[8]=4<br>
+  After "moon": A[3]+=1→A[3]=1; A[5]+=5→A[5]=7; A[8]+=2→A[8]=6<br>
+  Final: A[2]=3, A[3]=1, A[5]=7, A[8]=6<br>
+  <strong>Top-1: doc5 (score=7)</strong></div>
+</div>
+
+<div class="sa"><div class="qt">MaxScore Pruning: Query "cat dog fish". UB(cat)=6, UB(dog)=2, UB(fish)=1. Current threshold θ=5.5. Document docid=42 only has term "fish" present. Should it be pruned?</div>
+  <button class="rbtn" onclick="rev(this)">Solution</button>
+  <div class="ans">
+  Only "fish" matches docid=42. Maximum possible score = UB(fish) = 1 (since cat and dog are not in this document).<br>
+  1 &lt; θ=5.5 → <strong>PRUNE docid=42</strong><br>
+  Even with perfect scores from cat and dog (which don't occur), max possible contribution = just UB(fish)=1, which cannot beat the current threshold.</div>
+</div>
+
+<div class="q-type">Exam-Style Questions</div>
+
+<div class="exam-q"><span class="tag">H/M</span><span class="marks">[10 marks]</span>
+  <div class="q-text"><strong>Q1.</strong> (a) Explain the difference between TAAT and DAAT query processing. Include the memory requirements of each. [4] (b) Explain MaxScore dynamic pruning: define essential/non-essential terms, the pruning condition, and show a worked numerical example with 3 query terms. [6]</div>
+  <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+  <div class="ans">(a) TAAT (Term At A Time): process one posting list fully before moving to next. Maintains accumulator A[d] for all documents encountered — memory O(N) proportional to documents in all posting lists. DAAT (Document At A Time): advance cursors across all posting lists simultaneously. Maintains only top-K heap — memory O(K). DAAT supports dynamic pruning (WAND, MaxScore) naturally because all information about a document is collected before scoring it. TAAT is awkward to prune because partial scores are accumulated across terms. [4]<br><br>
+  (b) MaxScore: pre-compute upper bound UB_t for each query term t = maximum BM25/score contribution to any document. Partition terms into essential (must process) and non-essential (can skip unless co-occurring with essential terms). Essential term t: if you remove t's UB from the sum, remaining UBs &lt; θ (meaning t is needed for any document to potentially enter top-K). Pruning condition: for candidate document d, if sum of UBs of terms occurring in d &lt; θ → PRUNE. Example: terms A(UB=4), B(UB=1), θ=4.5. Document docid=21 contains only A: max possible score = UB(A) = 4 &lt; θ=4.5 → PRUNE. Document contains only B: UB(B)=1 &lt; 4.5 → PRUNE. Only documents with UBs summing ≥ 4.5 need full evaluation. [6]</div>
+</div>
+
+<div class="exam-q"><span class="tag">H/M</span><span class="marks">[10 marks]</span>
+  <div class="q-text"><strong>Q2.</strong> (a) Describe Elias Gamma (γ) coding. Write the encoding formula and show how to encode x=5 and x=12. [4] (b) Describe Frame of Reference (FOR) compression: the bit width formula, a full example, and compare to PForDelta. [4] (c) Why is decompression speed equally important as compression ratio for inverted indexes? [2]</div>
+  <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+  <div class="ans">(a) Elias γ: N=⌊log₂x⌋. Code = N zeros + 1 (unary, N+1 bits) + (x−2^N) in binary (N bits). Total bits = 2N+1.<br>
+  x=5: N=⌊log₂5⌋=2, code = 001 (unary, 3 bits) + 01 (binary: 5−4=1, 2 bits) = 00101 (5 bits).<br>
+  x=12: N=⌊log₂12⌋=3, code = 0001 (unary, 4 bits) + 100 (binary: 12−8=4, 3 bits) = 0001100 (7 bits). [4]<br><br>
+  (b) FOR: given a block of integers, m=min, M=max. b=⌈log₂(M−m+1)⌉ bits per value. Store m as full 32-bit int, then each value as (value−m) in b bits. Example: block {2000,2010,2015,2063}: m=2000, M=2063, range=64, b=⌈log₂64⌉=6. Offsets: {0,10,15,63} each in 6 bits. PForDelta: extends FOR by handling outliers (≥90% of values use b bits; exceptions stored in separate list). Better for blocks with irregular large gaps. [4]<br><br>
+  (c) At query time, millions of postings per second must be decoded. If decompression is slow, it becomes the bottleneck even if compression achieves great ratios. PForDelta uses SIMD CPU instructions to decode 32+ values per instruction — this matters more than saving a few bits when you're decoding billions of postings per second. [2]</div>
+</div>
+
+<div class="exam-q"><span class="tag">H/M</span><span class="marks">[8 marks]</span>
+  <div class="q-text"><strong>Q3.</strong> (a) Define Query Efficiency Prediction (QEP) and list the four key factors it depends on. [3] (b) Describe three applications of QEP in a production search engine. [3] (c) State the key finding of Macdonald, Tonellotto and Ounis (SIGIR 2012) regarding QEP's impact at Bing. Why is this significant? [2]</div>
+  <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+  <div class="ans">(a) QEP predicts query computational cost before executing the query, allowing adaptive resource allocation. Four factors: (1) Query length — more terms = more work; (2) Posting list length — sum of DF across query terms; (3) Pruning rate — estimated fraction of postings that will be skipped by WAND/MaxScore (hard to know pre-execution, need proxy estimates); (4) K — number of requested results, affects threshold and thus pruning. [3]<br><br>
+  (b) Three applications: (1) Query scheduling — route expensive queries to off-peak slots or lower-priority queues; cheap queries execute immediately, preventing head-of-line blocking. (2) Adjusting K — reduce top-K for predicted-expensive queries (e.g., top-10 instead of top-100) to raise the threshold and allow more pruning. (3) Selective parallelisation — allocate extra CPU threads/shards to expensive queries; run cheap queries on a single thread to avoid overhead. [3]<br><br>
+  (c) Finding: QEP "saves one-third of production servers" across "a few hundred thousand query servers" at Bing. Significant because: at Bing's scale, saving 33% of hundreds of thousands of servers means enormous hardware and energy cost reduction — potentially hundreds of millions of dollars. This is a direct translation of an academic IR technique into real-world infrastructure savings. [2]</div>
+</div>
+
+<div class="exam-q"><span class="tag">H</span><span class="marks">[8 marks]</span>
+  <div class="q-text"><strong>Q4.</strong> A search engine has a 5-billion document corpus distributed across 10 machines. (a) Compare term partitioning and document partitioning for this setup, including why term partitioning is rarely used. [4] (b) Describe selective search: how it works, the resource selection models used, and the quality/cost trade-off. [4]</div>
+  <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+  <div class="ans">(a) Term partitioning: machine 1 handles terms A-M, machine 2 handles N-Z. Problem: every multi-term query must contact ALL machines to collect contributions from each term. Result aggregation is like TAAT across machines — requires collecting partial accumulators from all shards, merging over network. Network latency and synchronisation overhead make this very slow. Every query is a fan-out to all machines regardless of content. Rarely used. Document partitioning (preferred): each machine holds complete index for 500M documents. Each machine executes the full query independently and returns local top-K. Broker aggregates N local top-K lists into global top-K. Only K results per machine sent over network — efficient. [4]<br><br>
+  (b) Selective search: rather than broadcasting every query to all 10 shards, route each query to the K most relevant shards (K &lt; 10). Resource selection models: CORI — models each shard as a document, scores shards with TF-IDF of query terms, selects top-k shards. ReDDE — estimates expected number of relevant documents per shard using a central sample index, selects shards expected to contribute most to global top-K. Trade-off: querying 3/10 shards reduces cost/latency by ~70%, but risks missing relevant docs in unqueried shards. Head queries (concentrated relevant documents) benefit most; rare/diverse queries may suffer recall loss. [4]</div>
+</div>
+
+<div class="q-type">Flashcards</div>
+<div class="fc-grid">
+  <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">0.5s Delay Impact</div><div class="fcb">Yahoo: −20% traffic. Bing: −12% revenue/user. Google: −20% search volume. 1% latency = 1,000 extra Bing servers.</div></div></div>
+  <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Caching Stats (BYates 2007)</div><div class="fcb">~50% query results served from cache. ~88% posting list accesses from cache. Zipf distribution enables high hit rates.</div></div></div>
+  <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">TAAT vs DAAT</div><div class="fcb">TAAT: one term at a time, O(N) accumulator. DAAT: all terms simultaneously, O(K) heap. DAAT preferred + supports WAND.</div></div></div>
+  <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">WAND (Tonellotto 2011)</div><div class="fcb">Evaluates only 10.8% of postings. Same top-K as exhaustive (1.36s → 0.96s). Safe: UB check before evaluation.</div></div></div>
+  <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Elias γ Code</div><div class="fcb">N=⌊log₂x⌋. Code = N zeros + 1 + (x−2^N) in N bits. Total: 2N+1 bits. x=9 → N=3 → 7 bits.</div></div></div>
+  <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Frame of Reference</div><div class="fcb">b=⌈log₂(M−m+1)⌉ bits. Store min m + offsets. {2000..2063}: b=6 bits per value. PForDelta handles exceptions.</div></div></div>
+  <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Doc vs Term Partitioning</div><div class="fcb">Doc: each shard has full index for subset of docs. Preferred. Term: each shard has all docs for subset of terms — must contact all shards per query. Rarely used.</div></div></div>
+  <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">QEP (Macdonald 2012)</div><div class="fcb">Predict query cost before execution. Factors: query length, posting list length, pruning rate, K. Saves 1/3 of Bing servers.</div></div></div>
+  <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">MaxScore</div><div class="fcb">Essential/non-essential split. Prune if UB sum of matching terms &lt; θ. Evaluates 43% of postings (Tonellotto 2011).</div></div></div>
+  <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Green IR</div><div class="fcb">1 KJ per search, 1.1–1.5% global electricity. Neural models 100–1000× BM25. Mitigations: cascade, pruning, QEP, compression.</div></div></div>
+</div>
+</section>
+
+</div></main>
+
+<script>
+window.addEventListener('scroll',()=>{
+  const p=document.getElementById('pb');
+  p.style.width=(window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%';
+  document.getElementById('bt').style.display=window.scrollY>400?'block':'none';
+  document.querySelectorAll('nav a').forEach(a=>{
+    const s=document.querySelector(a.getAttribute('href'));
+    if(s){const r=s.getBoundingClientRect();a.classList.toggle('active',r.top<=100&&r.bottom>100);}
+  });
+});
+function toggleTheme(){document.body.dataset.theme=document.body.dataset.theme==='light'?'':'light';}
+function answerMCQ(el,t){const i=el.parentElement;i.querySelectorAll('.opt').forEach(o=>o.classList.remove('c','w'));el.classList.add(t==='correct'?'c':'w');}
+function tfA(btn){const i=btn.closest('.tf-row');i.querySelector('.tf-ans').style.display='block';}
+function rev(btn){const b=btn.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';btn.textContent=b.style.display==='block'?'Hide Answer':'Reveal Answer';}
+document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=document.querySelector(a.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}));
+</script>
+
+</body>
+</html>

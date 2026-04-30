@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L01: Introduction to Information Retrieval</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  :root {
+    --bg: #0f0f1a; --bg2: #1a1a2e; --bg3: #16213e;
+    --accent: #7c3aed; --accent2: #06b6d4; --accent3: #10b981;
+    --text: #e2e8f0; --text2: #94a3b8; --yellow: #f59e0b;
+    --red: #ef4444; --card: #1e293b;
+  }
+  [data-theme="light"] {
+    --bg: #f8fafc; --bg2: #f1f5f9; --bg3: #e2e8f0;
+    --text: #0f172a; --text2: #475569; --card: #ffffff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; overflow-x: hidden; }
+  
+  #progress-bar { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent2)); width: 0%; z-index: 1000; transition: width 0.1s; }
+  
+  header {
+    background: linear-gradient(135deg, #0f0f1a 0%, #1a0533 50%, #0a1628 100%);
+    padding: 80px 40px 60px; text-align: center; position: relative; overflow: hidden;
+  }
+  header::before {
+    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(ellipse at center, rgba(124,58,237,0.15) 0%, transparent 60%);
+    animation: rotate 20s linear infinite;
+  }
+  @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  
+  .lecture-badge {
+    display: inline-block; background: var(--accent); color: white;
+    padding: 6px 18px; border-radius: 20px; font-size: 0.85rem; margin-bottom: 16px;
+    animation: fadeInDown 0.6s ease;
+  }
+  h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; margin-bottom: 16px;
+    background: linear-gradient(135deg, #fff 0%, var(--accent2) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    animation: fadeInUp 0.8s ease; }
+  .subtitle { color: var(--text2); font-size: 1.1rem; animation: fadeInUp 1s ease; }
+  
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeInDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes slideInLeft { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.7; } }
+  
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+  
+  nav {
+    position: fixed; right: 20px; top: 50%; transform: translateY(-50%);
+    background: var(--card); border: 1px solid rgba(124,58,237,0.3);
+    border-radius: 12px; padding: 16px; z-index: 100; max-width: 220px;
+    max-height: 70vh; overflow-y: auto;
+  }
+  nav h3 { font-size: 0.75rem; color: var(--accent2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  nav a { display: block; color: var(--text2); text-decoration: none; font-size: 0.8rem; padding: 4px 0;
+    border-left: 2px solid transparent; padding-left: 8px; transition: all 0.2s; }
+  nav a:hover, nav a.active { color: var(--accent); border-left-color: var(--accent); }
+  
+  .theme-btn {
+    position: fixed; left: 20px; top: 20px; background: var(--card);
+    border: 1px solid rgba(124,58,237,0.3); border-radius: 8px;
+    padding: 8px 16px; color: var(--text); cursor: pointer; z-index: 100; font-size: 0.85rem;
+  }
+  .back-top {
+    position: fixed; bottom: 30px; right: 30px; background: var(--accent);
+    color: white; border: none; width: 44px; height: 44px; border-radius: 50%;
+    cursor: pointer; font-size: 1.2rem; display: none; z-index: 100;
+    box-shadow: 0 4px 15px rgba(124,58,237,0.4);
+  }
+  
+  main { padding: 60px 0; }
+  section { margin-bottom: 60px; animation: fadeIn 0.6s ease; }
+  
+  .section-title {
+    font-size: 1.8rem; font-weight: 700; margin-bottom: 24px;
+    padding-left: 16px; border-left: 4px solid var(--accent);
+    color: var(--text);
+  }
+  
+  .card {
+    background: var(--card); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px; padding: 28px; margin-bottom: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+  .card h3 { color: var(--accent2); margin-bottom: 12px; font-size: 1.1rem; }
+  .card p, .card li { color: var(--text2); line-height: 1.7; }
+  .card ul { padding-left: 20px; }
+  .card ul li { margin-bottom: 8px; }
+  
+  .highlight { color: var(--accent); font-weight: 600; }
+  .highlight2 { color: var(--accent2); font-weight: 600; }
+  .highlight3 { color: var(--accent3); font-weight: 600; }
+  
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  @media(max-width:768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } nav { display: none; } }
+  @media(min-width:769px) { body { padding-right: 260px; } }
+  
+  .definition-box {
+    background: linear-gradient(135deg, rgba(124,58,237,0.1), rgba(6,182,212,0.05));
+    border: 1px solid rgba(124,58,237,0.3); border-radius: 12px; padding: 20px; margin: 20px 0;
+  }
+  .definition-box .term { color: var(--accent); font-weight: 700; font-size: 1.05rem; }
+  
+  .example-box {
+    background: rgba(16,185,129,0.08); border-left: 4px solid var(--accent3);
+    border-radius: 0 12px 12px 0; padding: 20px; margin: 20px 0;
+  }
+  .example-box h4 { color: var(--accent3); margin-bottom: 10px; }
+  
+  .warning-box {
+    background: rgba(245,158,11,0.08); border-left: 4px solid var(--yellow);
+    border-radius: 0 12px 12px 0; padding: 20px; margin: 20px 0;
+  }
+  .warning-box h4 { color: var(--yellow); margin-bottom: 10px; }
+  
+  .svg-container { background: var(--bg2); border-radius: 16px; padding: 30px; margin: 30px 0; text-align: center; }
+  .svg-container h4 { color: var(--accent2); margin-bottom: 20px; }
+  
+  .collapsible-header {
+    background: var(--bg2); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px; padding: 14px 20px; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 4px; transition: background 0.2s;
+  }
+  .collapsible-header:hover { background: rgba(124,58,237,0.15); }
+  .collapsible-header span { color: var(--text2); font-size: 1.2rem; }
+  .collapsible-content { display: none; background: var(--card); border-radius: 0 0 10px 10px; padding: 20px; margin-bottom: 16px; }
+  .collapsible-content.open { display: block; animation: fadeIn 0.3s ease; }
+  
+  /* Question styles */
+  .questions-section { background: var(--bg2); border-radius: 20px; padding: 40px; margin-top: 40px; }
+  .q-type-title { font-size: 1.4rem; font-weight: 700; color: var(--accent); margin: 30px 0 16px; padding-bottom: 8px; border-bottom: 2px solid rgba(124,58,237,0.3); }
+  
+  .mcq-item { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .mcq-item .question { font-weight: 600; color: var(--text); margin-bottom: 12px; }
+  .mcq-option { padding: 8px 14px; border-radius: 8px; cursor: pointer; color: var(--text2);
+    border: 1px solid rgba(255,255,255,0.07); margin: 4px 0; transition: all 0.2s; }
+  .mcq-option:hover { background: rgba(124,58,237,0.15); border-color: var(--accent); }
+  .mcq-option.correct { background: rgba(16,185,129,0.2); border-color: var(--accent3); color: var(--accent3); }
+  .mcq-option.wrong { background: rgba(239,68,68,0.15); border-color: var(--red); color: var(--red); }
+  .answer-reveal { display: none; margin-top: 10px; padding: 10px; background: rgba(16,185,129,0.1); border-radius: 8px; color: var(--accent3); }
+  
+  .tf-item { background: var(--card); border-radius: 12px; padding: 16px 20px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .tf-item .q { flex: 1; color: var(--text2); }
+  .tf-btn { padding: 6px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+  .tf-btn.true-btn { background: rgba(16,185,129,0.2); color: var(--accent3); }
+  .tf-btn.false-btn { background: rgba(239,68,68,0.15); color: var(--red); }
+  .tf-answer { display: none; font-size: 0.85rem; padding: 6px 10px; border-radius: 6px; }
+  .tf-answer.correct-ans { background: rgba(16,185,129,0.15); color: var(--accent3); }
+  .tf-answer.wrong-ans { background: rgba(239,68,68,0.1); color: var(--red); }
+  
+  .sa-item { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 12px; }
+  .sa-item .question { color: var(--text2); margin-bottom: 12px; font-weight: 600; }
+  .reveal-btn { background: var(--accent); color: white; border: none; padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+  .reveal-btn:hover { background: #6d28d9; }
+  .answer-box { display: none; margin-top: 12px; background: rgba(16,185,129,0.08); border-left: 3px solid var(--accent3); padding: 14px; border-radius: 0 8px 8px 0; color: var(--text2); line-height: 1.6; }
+  
+  .fitb-item { background: var(--card); border-radius: 10px; padding: 16px 20px; margin-bottom: 10px; color: var(--text2); }
+  .fitb-blank { display: inline-block; width: 120px; border-bottom: 2px solid var(--accent); margin: 0 6px; text-align: center; color: transparent; cursor: pointer; transition: all 0.3s; }
+  .fitb-blank.revealed { color: var(--accent); }
+  
+  /* Flashcard */
+  .flashcard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 20px; }
+  .flashcard { perspective: 1000px; height: 160px; cursor: pointer; }
+  .flashcard-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+  .flashcard:hover .flashcard-inner, .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+  .flashcard-front, .flashcard-back {
+    position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
+    border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    padding: 16px; text-align: center;
+  }
+  .flashcard-front { background: linear-gradient(135deg, var(--accent), #5b21b6); color: white; font-weight: 600; }
+  .flashcard-back { background: var(--card); border: 1px solid rgba(6,182,212,0.3); color: var(--text2); font-size: 0.9rem; transform: rotateY(180deg); }
+  
+  /* Exam questions */
+  .exam-q { background: var(--bg3); border: 1px solid rgba(245,158,11,0.3); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .exam-q .tag { display: inline-block; background: var(--yellow); color: #000; font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-right: 8px; }
+  .exam-q .marks { display: inline-block; background: rgba(245,158,11,0.2); color: var(--yellow); font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; }
+  .exam-q .q-text { color: var(--text2); margin: 10px 0; line-height: 1.6; }
+  
+  /* Learning objectives */
+  .objectives-list { list-style: none; }
+  .objectives-list li { padding: 10px 16px; margin-bottom: 8px; background: var(--card); border-radius: 8px; color: var(--text2); display: flex; align-items: flex-start; gap: 10px; animation: slideInLeft 0.5s ease; }
+  .objectives-list li::before { content: "✓"; color: var(--accent3); font-weight: 700; margin-top: 1px; }
+
+  /* Summary cards */
+  .summary-card { background: linear-gradient(135deg, var(--bg2), var(--bg3)); border-radius: 16px; padding: 24px; border-left: 4px solid var(--accent); margin-bottom: 16px; }
+  .summary-card h4 { color: var(--accent2); margin-bottom: 10px; }
+  
+  code { background: rgba(124,58,237,0.15); color: var(--accent2); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+  pre { background: #0d1117; border-radius: 12px; padding: 24px; overflow-x: auto; margin: 20px 0; border: 1px solid rgba(255,255,255,0.05); }
+  pre code { background: none; padding: 0; color: #c9d1d9; }
+  .kw { color: #ff7b72; } .fn { color: #d2a8ff; } .str { color: #a5d6ff; } .cm { color: #8b949e; } .num { color: #79c0ff; }
+</style>
+</head>
+<body>
+<div id="progress-bar"></div>
+<button class="theme-btn" onclick="toggleTheme()">🌓 Theme</button>
+<button class="back-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<nav>
+  <h3>Contents</h3>
+  <a href="#objectives">Objectives</a>
+  <a href="#what-is-ir">What is IR?</a>
+  <a href="#data-info-knowledge">Data→Info→Knowledge</a>
+  <a href="#history">Historical Timeline</a>
+  <a href="#vs-databases">IR vs Databases</a>
+  <a href="#information-needs">Information Needs</a>
+  <a href="#retrieval-process">Retrieval Process</a>
+  <a href="#relevance">Relevance</a>
+  <a href="#prp">Prob. Ranking Principle</a>
+  <a href="#cranfield">Cranfield Paradigm</a>
+  <a href="#heuristics">Heuristics</a>
+  <a href="#applications">Applications</a>
+  <a href="#summary">Summary</a>
+  <a href="#questions">Questions</a>
+  <a href="#flashcards">Flashcards</a>
+</nav>
+
+<header>
+  <div class="lecture-badge">Lecture 01 · Introduction</div>
+  <h1>Introduction to Information Retrieval</h1>
+  <p class="subtitle">IR H/M Course · Craig Macdonald · 2026</p>
+</header>
+
+<main>
+<div class="container">
+
+<!-- LEARNING OBJECTIVES -->
+<section id="objectives">
+  <h2 class="section-title">Learning Objectives</h2>
+  <ul class="objectives-list">
+    <li>Define Information Retrieval and distinguish it from database retrieval</li>
+    <li>Explain the concept of relevance and why it is difficult to define precisely</li>
+    <li>Describe the components and flow of an IR system</li>
+    <li>Understand why IR techniques are fundamentally heuristic</li>
+    <li>List the types of information needs and search tasks</li>
+    <li>Appreciate the role of IR in modern AI systems (RAG, LLMs)</li>
+  </ul>
+</section>
+
+<!-- WHAT IS IR -->
+<section id="what-is-ir">
+  <h2 class="section-title">What is Information Retrieval?</h2>
+  
+  <div class="card">
+    <h3>Classic Definitions</h3>
+    <div class="definition-box">
+      <span class="term">Salton (1968):</span>
+      <p style="color:var(--text2);margin-top:8px;">"Information retrieval is a field concerned with the <em>structure, analysis, organisation, storage, searching and retrieval</em> of information."</p>
+    </div>
+    <div class="definition-box">
+      <span class="term">Needham (1977):</span>
+      <p style="color:var(--text2);margin-top:8px;">"The complexity arises from the impossibility of describing the content of a document, or the intent of a request, precisely or unambiguously."</p>
+    </div>
+    <div class="definition-box">
+      <span class="term">General Definition:</span>
+      <p style="color:var(--text2);margin-top:8px;">Retrieval of <span class="highlight">relevant information</span> from data sources which were not originally intended for structured access (e.g., unstructured text, images, video, audio).</p>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>🔍 What IR Covers</h3>
+      <ul>
+        <li>Text documents (most common)</li>
+        <li>Web pages</li>
+        <li>Images and video</li>
+        <li>Audio content</li>
+        <li>Emails, tweets, social media</li>
+        <li>Medical records</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>🎯 Two Core Goals</h3>
+      <ul>
+        <li><span class="highlight3">Effectively</span>: Get the right information to users</li>
+        <li><span class="highlight2">Efficiently</span>: Get it to users quickly</li>
+        <li>Balance is crucial — often a trade-off</li>
+        <li>IR is the science behind search engines</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="svg-container">
+    <h4>The IR System — High Level</h4>
+    <svg width="700" height="180" viewBox="0 0 700 180" style="max-width:100%;">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/>
+        </marker>
+      </defs>
+      <!-- User -->
+      <rect x="10" y="60" width="110" height="60" rx="10" fill="rgba(124,58,237,0.2)" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="65" y="88" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">User</text>
+      <text x="65" y="108" text-anchor="middle" fill="#94a3b8" font-size="11">Information Need</text>
+      <!-- Arrow -->
+      <line x1="120" y1="90" x2="175" y2="90" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="148" y="82" text-anchor="middle" fill="#94a3b8" font-size="10">Query</text>
+      <!-- IR System -->
+      <rect x="180" y="40" width="160" height="100" rx="10" fill="rgba(6,182,212,0.15)" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="260" y="72" text-anchor="middle" fill="#06b6d4" font-size="14" font-weight="700">IR System</text>
+      <text x="260" y="95" text-anchor="middle" fill="#94a3b8" font-size="11">Indexing</text>
+      <text x="260" y="112" text-anchor="middle" fill="#94a3b8" font-size="11">Retrieval Model</text>
+      <text x="260" y="129" text-anchor="middle" fill="#94a3b8" font-size="11">Ranking</text>
+      <!-- Arrow -->
+      <line x1="340" y1="90" x2="395" y2="90" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow)"/>
+      <text x="368" y="82" text-anchor="middle" fill="#94a3b8" font-size="10">Results</text>
+      <!-- Documents -->
+      <rect x="400" y="60" width="120" height="60" rx="10" fill="rgba(16,185,129,0.15)" stroke="#10b981" stroke-width="1.5"/>
+      <text x="460" y="88" text-anchor="middle" fill="#10b981" font-size="13" font-weight="600">Ranked</text>
+      <text x="460" y="108" text-anchor="middle" fill="#10b981" font-size="11">Documents</text>
+      <!-- Collection -->
+      <rect x="545" y="40" width="140" height="100" rx="10" fill="rgba(245,158,11,0.1)" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="615" y="72" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="600">Collection</text>
+      <text x="615" y="92" text-anchor="middle" fill="#94a3b8" font-size="10">Web pages</text>
+      <text x="615" y="108" text-anchor="middle" fill="#94a3b8" font-size="10">Emails</text>
+      <text x="615" y="124" text-anchor="middle" fill="#94a3b8" font-size="10">News articles</text>
+      <line x1="544" y1="90" x2="523" y2="90" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow)"/>
+    </svg>
+  </div>
+</section>
+
+<!-- DATA → INFORMATION → KNOWLEDGE -->
+<section id="data-info-knowledge">
+  <h2 class="section-title">Data, Information &amp; Knowledge</h2>
+  <div class="card">
+    <h3>The Hierarchy</h3>
+    <p style="color:var(--text2);margin-bottom:16px;">A crucial distinction that motivates why IR is needed:</p>
+    <div class="grid-3">
+      <div class="definition-box">
+        <span class="term">Data</span>
+        <p style="color:var(--text2);margin-top:8px;">Raw facts and figures. No context. E.g., the number <code>37.5</code> or the string <code>"fever"</code>. Databases store data.</p>
+      </div>
+      <div class="definition-box">
+        <span class="term">Information</span>
+        <p style="color:var(--text2);margin-top:8px;">Data in context — <em>meaningful</em> data. E.g., "Patient has a fever of 37.5°C". Both databases and IR systems produce information. IR systems also <em>contain</em> information (unlike DBs that contain data).</p>
+      </div>
+      <div class="definition-box">
+        <span class="term">Knowledge</span>
+        <p style="color:var(--text2);margin-top:8px;">A basis for making decisions. Going beyond information to actionable understanding. E.g., "A fever of 37.5°C in an adult requires monitoring." This is what a user wants after IR.</p>
+      </div>
+    </div>
+  </div>
+  <div class="warning-box">
+    <h4>Why This Matters for IR</h4>
+    <p style="color:var(--text2);">Databases contain <strong>data</strong> and produce <strong>information</strong>. IR systems both contain <strong>information</strong> and provide it. The ultimate goal of IR is to help users obtain <strong>knowledge</strong> — to satisfy their information need so they can make decisions or take action. This is why ranking and relevance matter so much: retrieving information that doesn't serve the user's knowledge gap is useless.</p>
+  </div>
+</section>
+
+<!-- HISTORICAL TIMELINE -->
+<section id="history">
+  <h2 class="section-title">Historical Timeline of IR</h2>
+  <div class="card">
+    <h3>Key Milestones</h3>
+    <p style="color:var(--text2);margin-bottom:16px;">IR is an old field — much older than Google. Understanding the history explains why current techniques exist.</p>
+
+    <div class="summary-card">
+      <h4>1940s–1950s: The Origins</h4>
+      <p style="color:var(--text2);">Vannevar Bush's <em>memex</em> (1945) — a conceptual machine for storing and cross-referencing documents. Considered the ancestor of hypertext. Mortimer Taube's "uniterm" concept (1951) laid early groundwork for keyword indexing.</p>
+    </div>
+
+    <div class="summary-card">
+      <h4>1957–1966: Cranfield Experiments</h4>
+      <p style="color:var(--text2);">Cyril Cleverdon led the <span class="highlight">Cranfield experiments</span> at Cranfield Institute of Technology (UK). A landmark: the first systematic, controlled evaluation of IR systems. Used a small test collection of ~1,400 aeronautical engineering abstracts. Key finding: the inverted index is the most effective indexing method. Introduced <span class="highlight2">Precision</span> and <span class="highlight2">Recall</span> as evaluation measures. Also studied stemming effectiveness for the first time.</p>
+    </div>
+
+    <div class="summary-card">
+      <h4>1960s–1970s: Theoretical Foundations</h4>
+      <p style="color:var(--text2);">Gerard Salton developed the <span class="highlight">Vector Space Model</span> (SMART system, Cornell, 1960s) — representing documents and queries as vectors in term space. Karen Sparck Jones introduced <span class="highlight2">IDF (Inverse Document Frequency)</span> weighting (1972), showing rare terms are more informative. Robertson &amp; Jones formulated the <span class="highlight">Probability Ranking Principle</span> (1977).</p>
+    </div>
+
+    <div class="summary-card">
+      <h4>1978: Swets ROC Analysis</h4>
+      <p style="color:var(--text2);">Swets (1963/1969) applied ROC curve analysis to IR, providing a theoretical framework for comparing retrieval systems. His work established that a system ranking documents by estimated probability of relevance is optimal — foundational to the PRP.</p>
+    </div>
+
+    <div class="summary-card">
+      <h4>1992–present: TREC</h4>
+      <p style="color:var(--text2);">The <span class="highlight">Text REtrieval Conference (TREC)</span>, run by NIST (USA), began in 1992. Scaled up Cranfield's approach to millions of documents. Standardised test collections, relevance assessments by human judges, and metrics (MAP, NDCG). Enabled reproducible comparison of systems worldwide. TREC tracks have covered Web IR, genomics, legal, medical, and more.</p>
+    </div>
+
+    <div class="summary-card">
+      <h4>1994–1998: Web IR &amp; PageRank</h4>
+      <p style="color:var(--text2);">World Wide Web created a new IR challenge at web scale. AltaVista, Lycos, Excite — early web search engines. Larry Page &amp; Sergey Brin published <span class="highlight">PageRank</span> (1998): using hyperlink graph to estimate page authority. Google launched — today one of the largest companies in the world, built entirely on IR.</p>
+    </div>
+
+    <div class="summary-card">
+      <h4>2013–present: Neural IR</h4>
+      <p style="color:var(--text2);">Word2Vec (2013), BERT (2018), and transformer-based models revolutionised IR. Dense retrieval, cross-encoders, and neural ranking models. GPT-based RAG systems (2020s) create a new paradigm where IR feeds LLM generation.</p>
+    </div>
+  </div>
+
+  <div class="example-box">
+    <h4>Cranfield by the Numbers</h4>
+    <ul style="color:var(--text2);padding-left:20px;">
+      <li>~1,400 aeronautical engineering abstracts</li>
+      <li>~225 queries with relevance judgements</li>
+      <li>Conducted in two phases: Cranfield I (1957) and Cranfield II (1963–66)</li>
+      <li>Cranfield II tested 33 different index languages (stemming variants, thesaurus, etc.)</li>
+      <li>Key finding: <em>simple keyword indexing with stemming outperforms complex thesauri</em></li>
+      <li>First use of Precision and Recall as IR evaluation metrics</li>
+    </ul>
+  </div>
+</section>
+
+<!-- IR vs DATABASES -->
+<section id="vs-databases">
+  <h2 class="section-title">IR vs. Database Retrieval</h2>
+  <div class="grid-2">
+    <div class="card" style="border-left: 4px solid var(--red);">
+      <h3>🗄️ Database / SQL</h3>
+      <ul>
+        <li>Structured query language (SQL)</li>
+        <li>Well-defined fields/attributes</li>
+        <li>Exact match semantics</li>
+        <li>Deterministic — always a "right" answer</li>
+        <li>E.g. SELECT * WHERE account = 123</li>
+      </ul>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--accent3);">
+      <h3>🔍 Information Retrieval</h3>
+      <ul>
+        <li>Unstructured natural language queries</li>
+        <li>Free-form documents</li>
+        <li>Approximate / ranked results</li>
+        <li>Heuristic — no single "right" answer</li>
+        <li>E.g. "find documents about hippos in the zoo"</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="warning-box">
+    <h4>⚠️ Key Insight: IR is Heuristic</h4>
+    <p style="color:var(--text2);">Most algorithms in Computer Science have a definitive "right" answer. IR is fundamentally different — we use <strong>heuristics</strong> because we cannot know with certainty which documents are relevant to a given user's need. Consider: sorting integers has one answer; finding "relevant" documents does not.</p>
+  </div>
+</section>
+
+<!-- INFORMATION NEEDS -->
+<section id="information-needs">
+  <h2 class="section-title">Information Needs &amp; Query Types</h2>
+  
+  <div class="card">
+    <h3>What is an Information Need?</h3>
+    <p style="color:var(--text2);">An information need is the underlying cause of the query submitted to a search engine. It can be vague, ambiguous, or hard to express. The same query string may represent very different information needs by different users.</p>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <h3>🧭 Navigational</h3>
+      <p>Reach a specific website or URL already in mind. E.g.: "University of Glasgow homepage"</p>
+    </div>
+    <div class="card">
+      <h3>📖 Informational</h3>
+      <p>Acquire general information about a topic. E.g.: "How do vaccines work?"</p>
+    </div>
+    <div class="card">
+      <h3>🛒 Transactional</h3>
+      <p>Reach a site for further interaction (shopping, download). E.g.: "buy iPhone 16"</p>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>🔍 Ad Hoc Search</h3>
+      <p>Find documents "about topic X". The classic IR task — new queries on a static collection.</p>
+    </div>
+    <div class="card">
+      <h3>🎯 Known-Item Search</h3>
+      <p>Find one specific document. E.g. "University of Glasgow home page". Measured with MRR.</p>
+    </div>
+  </div>
+
+  <div class="example-box">
+    <h4>Example: The Same Query, Different Needs</h4>
+    <p style="color:var(--text2);">Consider the query <code>ash</code>:</p>
+    <ul style="color:var(--text2); padding-left:20px; margin-top:8px;">
+      <li>A geologist may want: ash cloud from a volcano</li>
+      <li>A Game of Thrones fan may want: the character Ash</li>
+      <li>A music fan may want: the band Ash</li>
+    </ul>
+    <p style="color:var(--text2); margin-top:8px;">Over 16% of web queries are ambiguous!</p>
+  </div>
+</section>
+
+<!-- RETRIEVAL PROCESS -->
+<section id="retrieval-process">
+  <h2 class="section-title">The Retrieval Process</h2>
+
+  <div class="svg-container">
+    <h4>Three-Part Retrieval Pipeline</h4>
+    <svg width="700" height="300" viewBox="0 0 700 300" style="max-width:100%;">
+      <defs>
+        <marker id="arr2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#06b6d4"/>
+        </marker>
+      </defs>
+      <!-- Part 1: Text Processing -->
+      <rect x="10" y="30" width="160" height="120" rx="12" fill="rgba(124,58,237,0.12)" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="90" y="55" text-anchor="middle" fill="#7c3aed" font-size="12" font-weight="700">PART 1</text>
+      <text x="90" y="72" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">Text Processing</text>
+      <text x="90" y="95" text-anchor="middle" fill="#94a3b8" font-size="11">Tokenisation</text>
+      <text x="90" y="112" text-anchor="middle" fill="#94a3b8" font-size="11">Stopword Removal</text>
+      <text x="90" y="129" text-anchor="middle" fill="#94a3b8" font-size="11">Stemming</text>
+      <!-- Arrow -->
+      <line x1="170" y1="90" x2="215" y2="90" stroke="#06b6d4" stroke-width="2" marker-end="url(#arr2)"/>
+      <!-- Part 2: Indexing -->
+      <rect x="220" y="30" width="160" height="120" rx="12" fill="rgba(6,182,212,0.1)" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="300" y="55" text-anchor="middle" fill="#06b6d4" font-size="12" font-weight="700">PART 2</text>
+      <text x="300" y="72" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">Indexing</text>
+      <text x="300" y="95" text-anchor="middle" fill="#94a3b8" font-size="11">Build Inverted Index</text>
+      <text x="300" y="112" text-anchor="middle" fill="#94a3b8" font-size="11">Term Dictionary</text>
+      <text x="300" y="129" text-anchor="middle" fill="#94a3b8" font-size="11">Document Index</text>
+      <!-- Arrow -->
+      <line x1="380" y1="90" x2="425" y2="90" stroke="#06b6d4" stroke-width="2" marker-end="url(#arr2)"/>
+      <!-- Part 3: Retrieval -->
+      <rect x="430" y="30" width="160" height="120" rx="12" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1.5"/>
+      <text x="510" y="55" text-anchor="middle" fill="#10b981" font-size="12" font-weight="700">PART 3</text>
+      <text x="510" y="72" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">Retrieval</text>
+      <text x="510" y="95" text-anchor="middle" fill="#94a3b8" font-size="11">Relevance Estimation</text>
+      <text x="510" y="112" text-anchor="middle" fill="#94a3b8" font-size="11">Ranking</text>
+      <text x="510" y="129" text-anchor="middle" fill="#94a3b8" font-size="11">Top-K Results</text>
+      <!-- Input docs label -->
+      <rect x="10" y="200" width="120" height="40" rx="8" fill="rgba(245,158,11,0.1)" stroke="#f59e0b" stroke-width="1"/>
+      <text x="70" y="225" text-anchor="middle" fill="#f59e0b" font-size="12">Input Docs</text>
+      <line x1="70" y1="200" x2="70" y2="155" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4"/>
+      <!-- User query label -->
+      <rect x="200" y="200" width="130" height="40" rx="8" fill="rgba(239,68,68,0.1)" stroke="#ef4444" stroke-width="1"/>
+      <text x="265" y="225" text-anchor="middle" fill="#ef4444" font-size="12">User Query</text>
+      <line x1="265" y1="200" x2="265" y2="155" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4"/>
+      <!-- Ranked results label -->
+      <rect x="450" y="200" width="130" height="40" rx="8" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1"/>
+      <text x="515" y="225" text-anchor="middle" fill="#10b981" font-size="12">Ranked Results</text>
+      <line x1="515" y1="200" x2="515" y2="155" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4"/>
+    </svg>
+  </div>
+
+  <div class="card">
+    <h3>IR System Capabilities</h3>
+    <p style="color:var(--text2); margin-bottom:12px;">Given few query words, an IR system must:</p>
+    <ul>
+      <li>Infer what the user wants (handle vague queries)</li>
+      <li>Fetch relevant documents as fast as possible</li>
+      <li>Present results in a way users understand</li>
+      <li>Support query reformulation and feedback</li>
+    </ul>
+  </div>
+</section>
+
+<!-- RELEVANCE -->
+<section id="relevance">
+  <h2 class="section-title">Relevance, Effectiveness &amp; Efficiency</h2>
+
+  <div class="grid-3">
+    <div class="card" style="border-top: 3px solid var(--accent);">
+      <h3>📌 Relevance</h3>
+      <p>A document is <span class="highlight">topically relevant</span> if it and the query are about the same topic. User relevance is broader (novelty, freshness, authority, etc.)</p>
+    </div>
+    <div class="card" style="border-top: 3px solid var(--accent2);">
+      <h3>📊 Effectiveness</h3>
+      <p>The quality of the retrieved set — do results largely contain <span class="highlight2">relevant documents</span>? Measured by Precision, Recall, NDCG, MAP.</p>
+    </div>
+    <div class="card" style="border-top: 3px solid var(--accent3);">
+      <h3>⚡ Efficiency</h3>
+      <p>Return results as <span class="highlight3">fast as possible</span>. Role of indexing, caching, compression. Even a 0.2s delay can hurt user satisfaction.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>What Makes a Document Relevant?</h3>
+    <div class="grid-2">
+      <div>
+        <p style="color:var(--text2); margin-bottom:8px;"><strong>Content signals:</strong></p>
+        <ul>
+          <li>Contains the query terms</li>
+          <li>Contains ALL query terms</li>
+          <li>Query terms appear often (high TF)</li>
+          <li>Query terms appear in a short document</li>
+          <li>Query terms appear close together</li>
+          <li>Contains synonyms of query terms</li>
+        </ul>
+      </div>
+      <div>
+        <p style="color:var(--text2); margin-bottom:8px;"><strong>Authority/other signals:</strong></p>
+        <ul>
+          <li>Document is authoritative (many links)</li>
+          <li>Not too many ads/spam</li>
+          <li>Clicked by many users for this query</li>
+          <li>Fresh / recent content</li>
+          <li>Not too many unrelated words</li>
+        </ul>
+      </div>
+    </div>
+    <div class="warning-box" style="margin-top:16px;">
+      <h4>🔑 All of these are heuristics!</h4>
+      <p>None are guaranteed to correctly identify relevant documents for all users and all queries.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PROBABILITY RANKING PRINCIPLE -->
+<section id="prp">
+  <h2 class="section-title">The Probability Ranking Principle (PRP)</h2>
+  <div class="card">
+    <h3>Robertson (1977) — The Theoretical Foundation of Ranked Retrieval</h3>
+    <div class="definition-box">
+      <span class="term">The Probability Ranking Principle (Robertson, 1977):</span>
+      <p style="color:var(--text2);margin-top:8px;">"If a reference retrieval system's response to each request is a ranking of the documents in the collection in order of decreasing probability of relevance to the request, where the probabilities are estimated as accurately as possible on the basis of whatever data have been made available to the system for this purpose, the overall effectiveness of the system to its users will be the best that is obtainable on the basis of those data."</p>
+    </div>
+    <p style="color:var(--text2);margin-top:12px;">In plain English: <span class="highlight">rank documents by their probability of being relevant, highest first</span>. This is the theoretical justification for ranked retrieval and forms the basis of probabilistic IR models (e.g., BM25, language models).</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Why PRP is Important</h3>
+      <ul>
+        <li>Provides a <span class="highlight">theoretical optimality</span> argument for ranking</li>
+        <li>Justifies why ranked retrieval is better than Boolean retrieval</li>
+        <li>Bridges IR and probability theory</li>
+        <li>Basis for BM25 (Robertson &amp; Walker, 1994)</li>
+        <li>Still the gold standard principle for ranking today</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>PRP Assumptions</h3>
+      <ul>
+        <li>Documents are assessed <span class="highlight2">independently</span> of each other</li>
+        <li>Probabilities are estimated from available data</li>
+        <li>User examines documents in ranked order (top-down)</li>
+        <li>Independence assumption is <em>unrealistic</em> but practical</li>
+        <li>Violated by: duplicate documents, complementary documents</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="example-box">
+    <h4>Formal Statement</h4>
+    <p style="color:var(--text2);">Given a query <strong>q</strong> and a document <strong>d</strong>, the PRP says rank documents by:</p>
+    \[ P(R=1 \mid d, q) \]
+    <p style="color:var(--text2);margin-top:8px;">where \(R=1\) means the document is relevant. Any ranking score that is a monotonically increasing function of this probability achieves the same optimal ranking. The Odds Ratio form is often used:</p>
+    \[ \text{Odds}(R=1 \mid d,q) = \frac{P(R=1 \mid d,q)}{P(R=0 \mid d,q)} \]
+    <p style="color:var(--text2);margin-top:8px;">Ranking by odds gives the same ordering as ranking by probability — and is often mathematically more convenient (leads to log-odds, i.e., BM25-style scoring).</p>
+  </div>
+
+  <div class="warning-box">
+    <h4>PRP vs. Heuristic Models</h4>
+    <p style="color:var(--text2);">Not all IR models explicitly estimate \(P(R=1 \mid d,q)\). TF-IDF and cosine similarity are heuristic scores that correlate with relevance but lack a formal probabilistic derivation. BM25 is derived more rigorously from the Robertson–Spark Jones probability model, making it more theoretically grounded.</p>
+  </div>
+</section>
+
+<!-- CRANFIELD EVALUATION PARADIGM -->
+<section id="cranfield">
+  <h2 class="section-title">The Cranfield Evaluation Paradigm</h2>
+  <div class="card">
+    <h3>How IR Systems are Evaluated</h3>
+    <p style="color:var(--text2);margin-bottom:16px;">The Cranfield paradigm (derived from the Cranfield experiments) defines how we measure IR system effectiveness. It is the standard methodology used by TREC and all modern IR evaluation.</p>
+    <div class="grid-3">
+      <div class="definition-box">
+        <span class="term">1. Test Collection</span>
+        <p style="color:var(--text2);margin-top:8px;">A static set of documents. E.g., Cranfield: 1,400 abstracts; TREC: millions of news/web documents.</p>
+      </div>
+      <div class="definition-box">
+        <span class="term">2. Topic Set</span>
+        <p style="color:var(--text2);margin-top:8px;">A set of queries (topics) with formal descriptions of the user's information need. TREC topics include Title, Description, and Narrative fields.</p>
+      </div>
+      <div class="definition-box">
+        <span class="term">3. Relevance Judgements (Qrels)</span>
+        <p style="color:var(--text2);margin-top:8px;">Human assessors judge each (query, document) pair as relevant or not. This "ground truth" is used to compute metrics. Often binary (relevant/not) or graded (0/1/2/3).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>The Evaluation Loop</h3>
+    <ol style="color:var(--text2);padding-left:20px;line-height:2;">
+      <li>System retrieves a <strong>ranked list</strong> of documents for each query</li>
+      <li>Compare ranked list against <strong>relevance judgements (qrels)</strong></li>
+      <li>Compute metrics: <span class="highlight">Precision</span>, <span class="highlight2">Recall</span>, <span class="highlight3">MAP</span>, NDCG, etc.</li>
+      <li>Average metrics across all queries → overall system score</li>
+      <li>Compare systems — highest score wins</li>
+    </ol>
+    <div class="ex-box" style="margin-top:16px;">
+      <h4>Key Metrics (Preview — details in L05)</h4>
+      <ul style="color:var(--text2);">
+        <li><strong>Precision@k</strong>: fraction of top-k retrieved docs that are relevant</li>
+        <li><strong>Recall</strong>: fraction of all relevant docs that were retrieved</li>
+        <li><strong>MAP</strong>: Mean Average Precision — average precision at each relevant doc position, averaged over queries</li>
+        <li><strong>NDCG</strong>: Normalised Discounted Cumulative Gain — accounts for graded relevance and rank position</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Pooling (TREC Method)</h3>
+      <p style="color:var(--text2);">Since judging every document is impossible for large collections, TREC uses <span class="highlight">pooling</span>: take the top-K results from each participating system, pool them together, and only judge documents in the pool. Unjudged documents are assumed non-relevant. This makes evaluation feasible at scale.</p>
+    </div>
+    <div class="card">
+      <h3>Critique of Cranfield</h3>
+      <ul>
+        <li>Relevance is treated as <span class="highlight2">binary</span> — oversimplified</li>
+        <li>Judgements by one assessor — inter-annotator agreement ~60-75%</li>
+        <li>Static collections don't reflect web dynamics</li>
+        <li>Does not capture <em>user</em> satisfaction directly</li>
+        <li>Despite limitations, still the gold standard methodology</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="example-box">
+    <h4>Worked Example: Precision and Recall</h4>
+    <p style="color:var(--text2);">Collection of 10 documents. Query has 4 truly relevant documents (R = {d1, d3, d5, d8}). System returns ranked list: [d1, d2, d3, d6, d5].</p>
+    <ul style="color:var(--text2);margin-top:8px;">
+      <li><strong>Precision@5</strong> = (relevant in top 5) / 5 = 3/5 = <span class="highlight">0.6</span></li>
+      <li><strong>Recall@5</strong> = (relevant in top 5) / (total relevant) = 3/4 = <span class="highlight2">0.75</span></li>
+      <li><strong>Average Precision</strong> = (P@1 + P@3 + P@5) / 4 = (1 + 2/3 + 3/5) / 4 = (1 + 0.667 + 0.6) / 4 = <span class="highlight3">0.567</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- HEURISTICS -->
+<section id="heuristics">
+  <h2 class="section-title">Imprecision &amp; Heuristics in IR</h2>
+  
+  <div class="card">
+    <h3>The "Right Answer" Problem</h3>
+    <div class="grid-2">
+      <div>
+        <p style="color:var(--accent3);font-weight:600;">Algorithms WITH a right answer:</p>
+        <ul style="color:var(--text2);">
+          <li>Sort these 10 integers → one correct order</li>
+          <li>Find the maximum value → one answer</li>
+          <li>SELECT name FROM users WHERE id=5 → exact result</li>
+        </ul>
+      </div>
+      <div>
+        <p style="color:var(--red);font-weight:600;">IR — NO single right answer:</p>
+        <ul style="color:var(--text2);">
+          <li>"Find documents most relevant to hippos in the zoo"</li>
+          <li>Different users have different needs</li>
+          <li>Relevance is subjective</li>
+          <li>We use heuristics that approximate the right answer</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="example-box">
+    <h4>Example: Imprecision in Practice</h4>
+    <p style="color:var(--text2);">A query for <code>"bank"</code> could mean a riverbank, a financial institution, or a data bank. The IR system must guess which meaning the user intends — often using context clues, click data, location, and prior queries.</p>
+  </div>
+</section>
+
+<!-- APPLICATIONS -->
+<section id="applications">
+  <h2 class="section-title">IR Applications &amp; AI Era</h2>
+  <div class="grid-3">
+    <div class="card"><h3>🌐 Web Search</h3><p>Google, Bing — the most visible IR application. Commercially crucial.</p></div>
+    <div class="card"><h3>📧 Email Search</h3><p>Find emails by content, sender, date across millions of messages.</p></div>
+    <div class="card"><h3>🏥 Medical Records</h3><p>Retrieve patient records, medical literature, clinical notes.</p></div>
+    <div class="card"><h3>📱 Social Media</h3><p>Twitter/X search, Instagram, LinkedIn — structured + unstructured.</p></div>
+    <div class="card"><h3>📚 Digital Libraries</h3><p>ACM DL, arXiv, PubMed — academic literature retrieval.</p></div>
+    <div class="card"><h3>🤖 AI Assistants (RAG)</h3><p>Retrieval-Augmented Generation: LLMs + IR = grounded AI answers.</p></div>
+  </div>
+
+  <div class="card" style="border: 1px solid rgba(124,58,237,0.4);">
+    <h3>🚀 IR in the AI Era: RAG</h3>
+    <p style="color:var(--text2);">Retrieval-Augmented Generation (RAG) combines Large Language Models (GPT, Claude, Gemini) with IR systems. The LLM generates answers grounded in retrieved documents, reducing hallucinations and enabling citation of sources. IR is experiencing a renaissance due to this paradigm.</p>
+    <p style="color:var(--accent); margin-top:10px; font-weight:600;">RAG = LLM + IR system</p>
+  </div>
+</section>
+
+<!-- SUMMARY -->
+<section id="summary">
+  <h2 class="section-title">Summary</h2>
+  <div class="summary-card"><h4>IR Definition</h4><p style="color:var(--text2);">IR is the science of finding relevant information in unstructured data sources. It powers search engines, AI assistants, and enterprise search tools.</p></div>
+  <div class="summary-card"><h4>Heuristic Nature</h4><p style="color:var(--text2);">IR techniques are heuristics — there is no single "correct" answer. Relevance is subjective and context-dependent.</p></div>
+  <div class="summary-card"><h4>Three Core Concerns</h4><p style="color:var(--text2);">Relevance (what is relevant?), Effectiveness (quality of results), Efficiency (speed of retrieval). All three interact and trade off.</p></div>
+  <div class="summary-card"><h4>The Pipeline</h4><p style="color:var(--text2);">IR systems have three main parts: (1) Text Processing, (2) Indexing, (3) Retrieval. Each has distinct algorithms and data structures.</p></div>
+</section>
+
+<!-- QUESTIONS -->
+<section id="questions" class="questions-section">
+  <h2 class="section-title" style="border:none;padding-left:0;">📝 Questions &amp; Practice</h2>
+
+  <!-- MCQ -->
+  <div class="q-type-title">Multiple Choice Questions</div>
+
+  <div class="mcq-item">
+    <div class="question">Q1. Which of the following best describes Information Retrieval?</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">A) Querying structured databases using SQL</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">B) Finding relevant information in unstructured data sources</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">C) Sorting and organising data in relational tables</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) Performing arithmetic operations on numerical datasets</div>
+  </div>
+
+  <div class="mcq-item">
+    <div class="question">Q2. Why are IR techniques described as heuristics?</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">A) Because they are always incorrect</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">B) Because they use randomness to select documents</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">C) Because there is no single "right" answer for what is relevant</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) Because they only work on small collections</div>
+  </div>
+
+  <div class="mcq-item">
+    <div class="question">Q3. What does "topical relevance" mean?</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">A) The document was recently published</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">B) The query and document are about the same topic</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">C) The document appears at the top of the results list</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) The document is popular on social media</div>
+  </div>
+
+  <div class="mcq-item">
+    <div class="question">Q4. Which query type describes a user looking for a specific website they already have in mind?</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">A) Informational</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">B) Navigational</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">C) Transactional</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) Exploratory</div>
+  </div>
+
+  <div class="mcq-item">
+    <div class="question">Q5. What is RAG in the context of modern AI?</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">A) Random Access Generation</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">B) Recurrent Attention Graph</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">C) Retrieval-Augmented Generation — LLMs grounded by retrieved documents</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) Ranked Answer Generation</div>
+  </div>
+
+  <div class="mcq-item">
+    <div class="question">Q6. What percentage of user queries are reportedly ambiguous?</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">A) ~5%</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">B) ~16%</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">C) ~30%</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) ~50%</div>
+  </div>
+
+  <div class="mcq-item">
+    <div class="question">Q7. Which is NOT a component of a typical IR system?</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">A) Text processing module</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">B) Inverted index</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">C) SQL query executor</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) Ranking model</div>
+  </div>
+
+  <div class="mcq-item">
+    <div class="question">Q8. According to Salton's definition, IR deals with which of the following?</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">A) Structure, analysis, organisation, storage, searching and retrieval of information</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">B) Structured query processing and database normalisation</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">C) Machine translation and natural language generation</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) Image and video processing pipelines</div>
+  </div>
+
+  <div class="mcq-item">
+    <div class="question">Q9. In the IR context, "efficiency" refers to:</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">A) Retrieving only relevant documents</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">B) Minimising the number of documents in the index</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">C) Returning results as quickly as possible</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) Using the least amount of storage space</div>
+  </div>
+
+  <div class="mcq-item">
+    <div class="question">Q10. Which task asks "Find the University of Glasgow homepage"?</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">A) Ad hoc search</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">B) Known-item search</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">C) Expert search</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) Transactional search</div>
+  </div>
+
+  <!-- TRUE/FALSE -->
+  <div class="q-type-title">True / False Questions</div>
+  
+  <div class="tf-item">
+    <span class="q">1. IR systems are designed primarily for structured, relational data.</span>
+    <div>
+      <button class="tf-btn true-btn" onclick="tfAnswer(this,'False')">True</button>
+      <button class="tf-btn false-btn" onclick="tfAnswer(this,'False')">False</button>
+      <div class="tf-answer wrong-ans">FALSE — IR is for unstructured data like text documents.</div>
+    </div>
+  </div>
+
+  <div class="tf-item">
+    <span class="q">2. "Effectiveness" and "efficiency" always improve together in IR.</span>
+    <div>
+      <button class="tf-btn true-btn" onclick="tfAnswer(this,'False')">True</button>
+      <button class="tf-btn false-btn" onclick="tfAnswer(this,'False')">False</button>
+      <div class="tf-answer wrong-ans">FALSE — They often trade off. More complex models improve effectiveness but hurt efficiency.</div>
+    </div>
+  </div>
+
+  <div class="tf-item">
+    <span class="q">3. Topical relevance accounts for all factors a user might consider when judging relevance.</span>
+    <div>
+      <button class="tf-btn true-btn" onclick="tfAnswer(this,'False')">True</button>
+      <button class="tf-btn false-btn" onclick="tfAnswer(this,'False')">False</button>
+      <div class="tf-answer wrong-ans">FALSE — Topical relevance only concerns whether the document is on the same topic; user relevance also includes novelty, freshness, authority, etc.</div>
+    </div>
+  </div>
+
+  <div class="tf-item">
+    <span class="q">4. Relevance feedback allows users to interactively improve search results.</span>
+    <div>
+      <button class="tf-btn true-btn" onclick="tfAnswer(this,'True')">True</button>
+      <button class="tf-btn false-btn" onclick="tfAnswer(this,'True')">False</button>
+      <div class="tf-answer correct-ans">TRUE — Users can mark relevant/non-relevant documents to refine results.</div>
+    </div>
+  </div>
+
+  <div class="tf-item">
+    <span class="q">5. An SQL query for WHERE id=5 is an example of an IR task.</span>
+    <div>
+      <button class="tf-btn true-btn" onclick="tfAnswer(this,'False')">True</button>
+      <button class="tf-btn false-btn" onclick="tfAnswer(this,'False')">False</button>
+      <div class="tf-answer wrong-ans">FALSE — This is a database (exact match) query, not an IR task.</div>
+    </div>
+  </div>
+
+  <div class="tf-item">
+    <span class="q">6. In modern AI, IR plays a role in Retrieval-Augmented Generation (RAG).</span>
+    <div>
+      <button class="tf-btn true-btn" onclick="tfAnswer(this,'True')">True</button>
+      <button class="tf-btn false-btn" onclick="tfAnswer(this,'True')">False</button>
+      <div class="tf-answer correct-ans">TRUE — IR retrieves relevant documents which are then used by LLMs to generate grounded answers.</div>
+    </div>
+  </div>
+
+  <div class="tf-item">
+    <span class="q">7. Users can always easily articulate their exact information need.</span>
+    <div>
+      <button class="tf-btn true-btn" onclick="tfAnswer(this,'False')">True</button>
+      <button class="tf-btn false-btn" onclick="tfAnswer(this,'False')">False</button>
+      <div class="tf-answer wrong-ans">FALSE — Belkin's ASK hypothesis states that information needs are often gaps in knowledge that are hard to articulate.</div>
+    </div>
+  </div>
+
+  <div class="tf-item">
+    <span class="q">8. Google is one of the largest corporations in the world largely due to its IR-based advertising model.</span>
+    <div>
+      <button class="tf-btn true-btn" onclick="tfAnswer(this,'True')">True</button>
+      <button class="tf-btn false-btn" onclick="tfAnswer(this,'True')">False</button>
+      <div class="tf-answer correct-ans">TRUE — As stated in the lecture, Google's commercial success is built on IR technology and search-based advertising.</div>
+    </div>
+  </div>
+
+  <!-- SHORT ANSWER -->
+  <div class="q-type-title">Short Answer Questions</div>
+
+  <div class="sa-item">
+    <div class="question">Q1. What is the difference between "Information" and "Data"?</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)">Reveal Answer</button>
+    <div class="answer-box">Information is data in context. Databases contain data and produce information. IR systems both contain and provide information. Knowledge goes further — it is a basis for making decisions.</div>
+  </div>
+
+  <div class="sa-item">
+    <div class="question">Q2. Give three examples of signals that might indicate a document is relevant to a query.</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)">Reveal Answer</button>
+    <div class="answer-box">Any three from: (1) contains all query terms, (2) query terms appear frequently (high TF), (3) query terms appear close together, (4) document is authoritative (many inlinks), (5) document has been clicked by many users for that query, (6) contains terms similar to query terms, (7) document is fresh/recent.</div>
+  </div>
+
+  <div class="sa-item">
+    <div class="question">Q3. What are the three types of queries according to Broder's taxonomy?</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)">Reveal Answer</button>
+    <div class="answer-box">(1) Navigational — to reach a specific website already in mind; (2) Informational — to acquire information on a topic; (3) Transactional — to reach a site for further interaction such as shopping or downloading.</div>
+  </div>
+
+  <div class="sa-item">
+    <div class="question">Q4. Why is the "bag of words" model useful despite ignoring word order?</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)">Reveal Answer</button>
+    <div class="answer-box">Despite ignoring word order, bag-of-words is simple to compute, works well in practice for topical retrieval, and allows efficient indexing. Statistical properties of term frequencies provide good approximations of document content. The model is foundational to TF-IDF and BM25, which remain highly effective.</div>
+  </div>
+
+  <div class="sa-item">
+    <div class="question">Q5. What is Belkin's ASK hypothesis and why is it significant for IR?</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)">Reveal Answer</button>
+    <div class="answer-box">The Anomalous State of Knowledge (ASK) hypothesis (Belkin et al., 1982) states that information needs are difficult to define because they represent a gap in knowledge. Since users don't yet know what they're looking for, they can't specify it precisely. This motivates interactive IR, query expansion, and relevance feedback as ways to iteratively refine what the user needs.</div>
+  </div>
+
+  <div class="sa-item">
+    <div class="question">Q6. Distinguish between "effectiveness" and "efficiency" in an IR system.</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)">Reveal Answer</button>
+    <div class="answer-box">Effectiveness concerns the quality of retrieved results — how many relevant documents are found and how highly they rank (measured by Precision, Recall, MAP, NDCG). Efficiency concerns the speed of retrieval — how quickly results are returned (measured by query latency, throughput). They often trade off: more complex models improve effectiveness but require more computation.</div>
+  </div>
+
+  <div class="sa-item">
+    <div class="question">Q7. What is an inverted index and why is it needed?</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)">Reveal Answer</button>
+    <div class="answer-box">An inverted index maps terms to the list of documents that contain them (a term → document mapping). It is needed because without it, a system would need to scan all documents for every query — infeasible for billions of documents. With an inverted index, retrieval only processes the posting lists of query terms, giving sub-second response times.</div>
+  </div>
+
+  <div class="sa-item">
+    <div class="question">Q8. Name four application domains of information retrieval beyond web search.</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)">Reveal Answer</button>
+    <div class="answer-box">Any four from: (1) Email search, (2) Medical record retrieval, (3) Enterprise/intranet search, (4) Social media search (Twitter, LinkedIn), (5) Digital library search (ACM, PubMed), (6) News search, (7) Legal document retrieval, (8) Patent search, (9) Image/video retrieval, (10) AI assistants using RAG.</div>
+  </div>
+
+  <!-- LONG ANSWER -->
+  <div class="q-type-title">Long Answer / Essay Questions</div>
+
+  <div class="sa-item">
+    <div class="question">Q1. Compare and contrast Information Retrieval with traditional database retrieval. In your answer, discuss the nature of queries, data representations, matching mechanisms, and the concept of relevance. [10 marks]</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)">Reveal Model Answer</button>
+    <div class="answer-box">
+      <strong>Database Retrieval:</strong> Uses structured query languages (SQL). Data is organised into tables with well-defined fields (attributes). Queries use exact match semantics (WHERE clause). The system always returns a deterministic, correct answer. Relevance is binary and objective — either the record matches the criteria or not. Example: SELECT * FROM accounts WHERE id=12345.<br><br>
+      <strong>Information Retrieval:</strong> Queries are natural language (or keyword). Data is unstructured (free-form text, images, etc.). Matching is approximate — the system ranks documents by estimated relevance. There is no single "correct" answer; relevance is subjective and depends on context, user, and task. Techniques are heuristic.<br><br>
+      <strong>Key differences:</strong> (1) Data type: structured vs. unstructured; (2) Query type: formal vs. natural language; (3) Matching: exact vs. approximate; (4) Output: exact result set vs. ranked list; (5) Correctness: deterministic vs. probabilistic/heuristic. The imprecision in IR arises from the difficulty of describing document content and query intent unambiguously (Needham, 1977).
+    </div>
+  </div>
+
+  <div class="sa-item">
+    <div class="question">Q2. Explain the three-part pipeline of a typical IR system (text processing, indexing, retrieval) and describe the purpose of each stage. [8 marks]</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)">Reveal Model Answer</button>
+    <div class="answer-box">
+      <strong>Part 1 — Text Processing:</strong> Input documents are processed to create concise representations. Steps include: Tokenisation (splitting text into words), Stopword Removal (removing high-frequency, low-discriminative words like "the", "and"), and Stemming (reducing words to their root forms, e.g., "connecting" → "connect"). Output: {docID, term, frequency} triplets.<br><br>
+      <strong>Part 2 — Indexing:</strong> The processed representations are stored in a fast-lookup data structure — the inverted index. This is a term → documents mapping. The inverted index enables fast retrieval by only processing relevant posting lists during query time, rather than scanning all documents.<br><br>
+      <strong>Part 3 — Retrieval:</strong> Given a user query (also processed through tokenisation/stemming), the system searches the inverted index, retrieves posting lists for query terms, computes a relevance score for each document using a retrieval model (e.g., TF-IDF, BM25), and returns a ranked list of documents to the user. Users may provide feedback to refine results.
+    </div>
+  </div>
+
+  <div class="sa-item">
+    <div class="question">Q3. Discuss the role of Information Retrieval in modern AI systems, with particular reference to Retrieval-Augmented Generation (RAG). [6 marks]</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)">Reveal Model Answer</button>
+    <div class="answer-box">Large Language Models (LLMs) such as GPT and Claude can generate fluent text but are prone to "hallucinations" — generating plausible but incorrect information. RAG addresses this by integrating IR with LLMs: when a user poses a question, an IR system first retrieves relevant documents from a corpus; these documents are then provided as context to the LLM, which generates an answer grounded in the retrieved evidence. Benefits: (1) reduces hallucinations by grounding generation in retrieved facts; (2) allows attribution of answers to source documents; (3) enables LLMs to access up-to-date information without retraining. This has sparked a renaissance in IR research, as the quality of retrieval directly impacts LLM output quality. Enterprise IR, scientific literature search, and legal document retrieval are key RAG application areas.</div>
+  </div>
+
+  <!-- FILL IN THE BLANKS -->
+  <div class="q-type-title">Fill in the Blanks <small style="color:var(--text2); font-weight:400;">(Click blank to reveal)</small></div>
+
+  <div class="fitb-item">1. Information Retrieval is the science of <span class="fitb-blank" onclick="revealBlank(this)">search engines</span>.</div>
+  <div class="fitb-item">2. IR techniques are fundamentally <span class="fitb-blank" onclick="revealBlank(this)">heuristics</span> because relevance is subjective.</div>
+  <div class="fitb-item">3. The three types of queries according to Broder are: navigational, informational, and <span class="fitb-blank" onclick="revealBlank(this)">transactional</span>.</div>
+  <div class="fitb-item">4. A document is topically relevant if the query and document are about the same <span class="fitb-blank" onclick="revealBlank(this)">topic</span>.</div>
+  <div class="fitb-item">5. RAG stands for Retrieval-Augmented <span class="fitb-blank" onclick="revealBlank(this)">Generation</span>.</div>
+  <div class="fitb-item">6. Belkin's hypothesis is called the Anomalous State of <span class="fitb-blank" onclick="revealBlank(this)">Knowledge</span> (ASK).</div>
+  <div class="fitb-item">7. The primary data structure in an IR index is the <span class="fitb-blank" onclick="revealBlank(this)">inverted index</span>.</div>
+  <div class="fitb-item">8. "Efficiency" in IR refers to returning results as <span class="fitb-blank" onclick="revealBlank(this)">quickly</span> as possible.</div>
+
+  <!-- EXAM-STYLE QUESTIONS -->
+  <div class="q-type-title">Exam-Style Questions</div>
+
+  <div class="exam-q">
+    <span class="tag">H/M</span><span class="marks">[4 marks]</span>
+    <div class="q-text"><strong>Q1.</strong> Describe two key differences between Information Retrieval and traditional database retrieval. For each difference, provide a concrete example.</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="answer-box">(1) Structured vs. unstructured data: Databases store data in tables with fixed fields; IR deals with free-form text. E.g. a bank account query uses SQL (WHERE balance > 1000) whereas finding "articles about climate change" requires IR. (2) Exact vs. approximate matching: SQL returns exact matches; IR ranks documents by estimated relevance. E.g. SQL: SELECT * WHERE id=5 returns exactly record 5; IR: query "cats" may return documents ranked by how much they discuss cats. [2 marks per point]</div>
+  </div>
+
+  <div class="exam-q">
+    <span class="tag">H/M</span><span class="marks">[6 marks]</span>
+    <div class="q-text"><strong>Q2.</strong> Explain why IR techniques are described as "heuristics" and discuss three factors that make a document relevant to a query.</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="answer-box">Heuristic because: unlike sorting or SQL which have definitive answers, relevance is subjective — different users may judge the same document differently for the same query. There is no ground truth. [2 marks] Three relevance factors (any 3, 1 mark each up to 4): (1) Term frequency — document contains query terms often; (2) Document authority — many links pointing to it; (3) Query term proximity — query terms appear close together; (4) Freshness — document is recent; (5) User engagement — many users clicked on it for that query; (6) Absence of spam/ads. [4 marks]</div>
+  </div>
+
+  <div class="exam-q">
+    <span class="tag">H</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q3.</strong> Discuss the concept of Retrieval-Augmented Generation (RAG) and explain how IR contributes to modern AI assistants. What are the benefits of combining IR with large language models?</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="answer-box">RAG = LLM + IR: When a question is asked, an IR system retrieves relevant documents from a corpus, which are provided as context to the LLM for answer generation. [2 marks] Benefits: (1) Reduces hallucinations by grounding generation in retrieved facts [1 mark]; (2) Enables source attribution [1 mark]; (3) Allows access to up-to-date information without retraining [1 mark]; (4) Enables factual verification [1 mark]; (5) Improves accuracy in knowledge-intensive tasks [1 mark]. The quality of IR directly affects LLM output quality. Poor retrieval (missing relevant docs or returning irrelevant ones) leads to poor generation. [1 mark]</div>
+  </div>
+
+  <div class="exam-q">
+    <span class="tag">H/M</span><span class="marks">[10 marks]</span>
+    <div class="q-text"><strong>Q4.</strong> Describe the three-part pipeline of an IR system. For each part, explain its purpose and list its main operations. Give an example of how the query "running shoes" would be processed at each stage.</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="answer-box">Part 1 — Text Processing [3 marks]: Purpose: create concise, normalized term representations. Operations: (a) Tokenisation: "running shoes" → [running, shoes]; (b) Stopword removal: no change here; (c) Stemming: [run, shoe]. Applied to both documents and queries.<br>Part 2 — Indexing [3 marks]: Purpose: store term-document mappings for fast lookup. Creates inverted index: run → [doc3, doc7, doc12, ...], shoe → [doc1, doc3, doc9, ...]. Also builds lexicon and document index. Offline process done once.<br>Part 3 — Retrieval [4 marks]: Query "running shoes" processed identically → [run, shoe]. System fetches posting lists for both terms, computes a relevance score for each document using a model (e.g., TF-IDF sum), ranks documents by score, and returns top-K results. Documents containing both stemmed terms in appropriate frequencies rank highest.</div>
+  </div>
+
+  <div class="exam-q">
+    <span class="tag">M</span><span class="marks">[6 marks]</span>
+    <div class="q-text"><strong>Q5.</strong> Define and distinguish between "relevance", "effectiveness", and "efficiency" in the context of Information Retrieval systems.</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="answer-box">Relevance [2 marks]: A document is relevant if it satisfies the user's information need. Topical relevance means query and document are on the same topic; user relevance additionally considers novelty, freshness, authority. Relevance is subjective and context-dependent. Effectiveness [2 marks]: The quality of the retrieved result set — how many relevant documents are retrieved and how highly they rank. Measured by Precision, Recall, MAP, NDCG. A highly effective system finds and ranks relevant documents accurately. Efficiency [2 marks]: The speed and resource usage of retrieval. Measured by query latency and throughput. Critical for user satisfaction — delays over 0.2s reduce perceived quality. The three are related: improving effectiveness (e.g., with re-ranking) often reduces efficiency, requiring infrastructure trade-offs.</div>
+  </div>
+
+  <!-- ADDITIONAL EXAM QUESTIONS -->
+  <div class="exam-q">
+    <span class="tag">H</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q6.</strong> State the Probability Ranking Principle (Robertson, 1977). Explain what it claims, what assumptions it makes, and why it is important for the theory of ranked retrieval. Discuss one limitation of the PRP in practice.</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="answer-box">
+      <strong>Statement [2 marks]:</strong> The PRP states that ranking documents in decreasing order of their estimated probability of relevance \(P(R=1|d,q)\) gives the optimal retrieval effectiveness achievable from the available data.<br><br>
+      <strong>What it claims [1 mark]:</strong> That ranked retrieval (highest probability first) is theoretically optimal — no other ordering can do better in expectation.<br><br>
+      <strong>Assumptions [2 marks]:</strong> (1) Documents are assessed independently of each other — the relevance of one document does not depend on which other documents are retrieved. (2) Users examine results in ranked order from top to bottom. (3) Probabilities are estimated from available data (queries, document features).<br><br>
+      <strong>Importance [2 marks]:</strong> Provides the theoretical justification for all probabilistic IR models, including BM25. Bridges probability theory and IR practice. Explains why ranking is better than Boolean retrieval.<br><br>
+      <strong>Limitation [1 mark]:</strong> The independence assumption is violated in practice — if document A and document B are near-duplicates, retrieving both wastes results. Similarly, complementary documents (one gives half the answer) would be better retrieved together, not independently ranked.
+    </div>
+  </div>
+
+  <div class="exam-q">
+    <span class="tag">H/M</span><span class="marks">[10 marks]</span>
+    <div class="q-text"><strong>Q7.</strong> Describe the Cranfield evaluation paradigm. What are its three components? Explain how TREC extended this paradigm to web-scale collections. Discuss two limitations of the Cranfield approach and how they affect the validity of IR evaluation results.</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="answer-box">
+      <strong>Three Components [3 marks]:</strong> (1) Test Collection: a static, fixed set of documents (Cranfield: ~1,400 abstracts; TREC: millions of documents). (2) Topic Set: a set of queries with formal information need descriptions (TREC topics have Title, Description, Narrative). (3) Relevance Judgements (Qrels): human assessors judge each (query, document) pair as relevant or not — this provides the ground truth for computing metrics.<br><br>
+      <strong>TREC Extension [3 marks]:</strong> TREC (from 1992, NIST) scaled Cranfield to millions of documents using pooling — top-K results from all participating systems are pooled, and only pooled documents are judged. This makes large-scale evaluation feasible. TREC standardises topics and metrics (MAP, NDCG), enabling reproducible cross-system comparison. Hundreds of groups worldwide submit runs annually.<br><br>
+      <strong>Limitation 1 [2 marks]:</strong> Binary relevance — treating documents as simply relevant or not is an oversimplification. In reality, relevance is graded (highly relevant, partially relevant, not relevant). Graded metrics like NDCG partially address this, but binary qrels still dominate. This can mean two systems performing identically on binary metrics but differently for user satisfaction.<br><br>
+      <strong>Limitation 2 [2 marks]:</strong> Inter-assessor disagreement — different humans judge the same document differently. Studies show assessors agree only ~60-75% of the time. This means the "ground truth" qrels are themselves noisy, making evaluation results unreliable at the margins. Additionally, unjudged documents are assumed non-relevant (pooling assumption), which may unfairly penalise systems that retrieve many relevant unjudged documents.
+    </div>
+  </div>
+
+  <div class="exam-q">
+    <span class="tag">H/M</span><span class="marks">[6 marks]</span>
+    <div class="q-text"><strong>Q8.</strong> Distinguish between "data", "information", and "knowledge" in the context of IR. Why is this distinction important for understanding the goals of an IR system?</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="answer-box">
+      <strong>Data [1 mark]:</strong> Raw facts without context. E.g., the number 37.5 or the string "fever". Databases store data. On its own, data is not useful to a user without interpretation.<br><br>
+      <strong>Information [2 marks]:</strong> Data in context — data that has been given meaning. E.g., "Patient temperature is 37.5°C — a fever." Databases produce information from data. IR systems both <em>contain</em> information (their documents are meaningful) and <em>provide</em> information to users. This is a key difference from databases.<br><br>
+      <strong>Knowledge [1 mark]:</strong> A basis for making decisions. Knowing that a 37.5°C fever in an adult needs monitoring. Knowledge requires interpretation and context beyond raw information.<br><br>
+      <strong>Importance for IR [2 marks]:</strong> The ultimate goal of IR is to help users obtain knowledge to satisfy their information need. Simply returning a document (data) is insufficient — the system must return the right document (information) that enables the user to gain knowledge. This is why relevance matters — a retrieved document that doesn't address the user's knowledge gap fails its purpose, even if it technically "matches" the query. This distinction also explains why relevance is not binary but context-dependent.
+    </div>
+  </div>
+
+  <div class="exam-q">
+    <span class="tag">H</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q9.</strong> Describe the history of Information Retrieval from the Cranfield experiments through to the modern neural IR era. Identify at least four key milestones and explain the significance of each.</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="answer-box">
+      Any four milestones well described, 2 marks each (up to 8):<br><br>
+      <strong>Cranfield Experiments (1957–1966) [2 marks]:</strong> First systematic, controlled evaluation of IR systems. Introduced Precision and Recall. Tested 33 indexing strategies. Key finding: simple keyword indexing with stemming outperforms complex thesauri. Established the test-collection-based evaluation paradigm.<br><br>
+      <strong>Vector Space Model / IDF (1960s–1972) [2 marks]:</strong> Salton's SMART system introduced the Vector Space Model — representing documents and queries as vectors. Sparck Jones (1972) introduced Inverse Document Frequency (IDF) — rare terms are more informative. This gave us TF-IDF, still widely used.<br><br>
+      <strong>Probability Ranking Principle (Robertson, 1977) [2 marks]:</strong> Theoretical foundation for ranked retrieval. Ranking by estimated probability of relevance is optimal. Led to BM25 (1994), the most widely used ranking function.<br><br>
+      <strong>TREC (1992–present) [2 marks]:</strong> Scaled Cranfield evaluation to millions of documents. Standardised test collections, metrics, and evaluation methodology. Enabled reproducible worldwide comparison of IR systems.<br><br>
+      <strong>PageRank / Google (1998) [2 marks]:</strong> Used hyperlink graph to estimate page authority. Combined with TF-IDF-style content matching to create web-scale IR. Commercialised IR and enabled the modern web economy.<br><br>
+      <strong>Neural IR / BERT / RAG (2013–present) [2 marks]:</strong> Dense neural representations replaced sparse bag-of-words. Transformer models (BERT, GPT) enable semantic matching. RAG combines IR with LLM generation for grounded AI answers.
+    </div>
+  </div>
+
+  <!-- ADDITIONAL MCQs -->
+  <div class="q-type-title">Additional MCQs</div>
+
+  <div class="mcq-item">
+    <div class="question">Q11. The Probability Ranking Principle was formulated by:</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">A) Gerard Salton (1968)</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">B) Cyril Cleverdon (1966)</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">C) Stephen Robertson (1977)</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) Karen Sparck Jones (1972)</div>
+  </div>
+
+  <div class="mcq-item">
+    <div class="question">Q12. The Cranfield experiments were conducted at:</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">A) University of Glasgow</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">B) Cornell University</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">C) Cranfield Institute of Technology, UK</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) NIST, USA</div>
+  </div>
+
+  <div class="mcq-item">
+    <div class="question">Q13. Which of the following correctly describes the three components of the Cranfield evaluation paradigm?</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">A) Index, Query Processor, Ranking Model</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">B) Test Collection, Topic Set, Relevance Judgements</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">C) Tokeniser, Stemmer, Stopword List</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) Precision, Recall, F1</div>
+  </div>
+
+  <div class="mcq-item">
+    <div class="question">Q14. IDF (Inverse Document Frequency) was introduced by:</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">A) Robertson (1977)</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">B) Cleverdon (1966)</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">C) Sparck Jones (1972)</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) Salton (1968)</div>
+  </div>
+
+  <div class="mcq-item">
+    <div class="question">Q15. TREC (Text REtrieval Conference) has been running since:</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">A) 1966</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">B) 1982</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">C) 1992</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) 1998</div>
+  </div>
+
+  <div class="mcq-item">
+    <div class="question">Q16. The PRP assumes that documents are assessed:</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">A) Independently of each other</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">B) In alphabetical order</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">C) By document length</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) Based on their PageRank</div>
+  </div>
+
+  <div class="mcq-item">
+    <div class="question">Q17. In the data-information-knowledge hierarchy, an IR system is unique because it:</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">A) Only stores raw data like a database</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">B) Only produces knowledge directly</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">C) Both contains and provides information (unlike databases which only contain data)</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) Stores knowledge in structured tables</div>
+  </div>
+
+  <div class="mcq-item">
+    <div class="question">Q18. TREC uses "pooling" to make evaluation feasible. Pooling means:</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">A) Merging all documents into a single index</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'correct')">B) Collecting top-K results from all systems and only judging those documents</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">C) Averaging scores across multiple queries</div>
+    <div class="mcq-option" onclick="answerMCQ(this,'wrong')">D) Combining multiple retrieval models</div>
+  </div>
+
+  <!-- ADDITIONAL TRUE/FALSE -->
+  <div class="q-type-title">Additional True / False Questions</div>
+
+  <div class="tf-item">
+    <span class="q">9. The Probability Ranking Principle states that documents should be ranked by their length.</span>
+    <div>
+      <button class="tf-btn true-btn" onclick="tfAnswer(this,'False')">True</button>
+      <button class="tf-btn false-btn" onclick="tfAnswer(this,'False')">False</button>
+      <div class="tf-answer wrong-ans">FALSE — The PRP states documents should be ranked by their estimated probability of relevance P(R=1|d,q).</div>
+    </div>
+  </div>
+
+  <div class="tf-item">
+    <span class="q">10. The Cranfield experiments were the first systematic evaluation of IR systems using test collections.</span>
+    <div>
+      <button class="tf-btn true-btn" onclick="tfAnswer(this,'True')">True</button>
+      <button class="tf-btn false-btn" onclick="tfAnswer(this,'True')">False</button>
+      <div class="tf-answer correct-ans">TRUE — Cranfield (1957-1966) introduced the test-collection evaluation paradigm, Precision, and Recall.</div>
+    </div>
+  </div>
+
+  <div class="tf-item">
+    <span class="q">11. Karen Sparck Jones introduced Inverse Document Frequency (IDF) weighting in 1972.</span>
+    <div>
+      <button class="tf-btn true-btn" onclick="tfAnswer(this,'True')">True</button>
+      <button class="tf-btn false-btn" onclick="tfAnswer(this,'True')">False</button>
+      <div class="tf-answer correct-ans">TRUE — Sparck Jones (1972) showed that rarer terms carry more information, which is the basis of IDF weighting.</div>
+    </div>
+  </div>
+
+  <div class="tf-item">
+    <span class="q">12. The PRP's independence assumption holds in all practical IR scenarios.</span>
+    <div>
+      <button class="tf-btn true-btn" onclick="tfAnswer(this,'False')">True</button>
+      <button class="tf-btn false-btn" onclick="tfAnswer(this,'False')">False</button>
+      <div class="tf-answer wrong-ans">FALSE — The independence assumption is often violated, e.g. by near-duplicate documents or complementary documents.</div>
+    </div>
+  </div>
+
+  <!-- CRITICAL THINKING -->
+  <div class="q-type-title">Critical Thinking Questions</div>
+  <div class="sa-item">
+    <div class="question">Q1. Should a search engine prioritise a user's immediate stated query or try to infer their deeper information need? What are the risks of each approach?</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)">Discuss</button>
+    <div class="answer-box">Immediate query: safer, more transparent, but may miss what user really needs (Belkin's ASK). Inferred need: more helpful if correct, but risky — may be wrong or feel intrusive/paternalistic. Risk of filter bubble. Balance: serve the stated query well, offer query suggestions to help users refine their need. Modern engines use click data and context to infer intent without explicitly overriding the query.</div>
+  </div>
+  <div class="sa-item">
+    <div class="question">Q2. Is it possible to build a completely objective IR system? Why or why not?</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)">Discuss</button>
+    <div class="answer-box">No — relevance judgments by humans are subjective and context-dependent (even trained TREC assessors disagree ~25% of the time). The weighting and ranking functions embed design choices (e.g., how much to weight title vs body). Training data reflects historical user behaviour which has biases. Objectivity is an ideal rather than an achievable state in IR.</div>
+  </div>
+  <div class="sa-item">
+    <div class="question">Q3. How might IR systems need to evolve as AI assistants become the primary way users access information?</div>
+    <button class="reveal-btn" onclick="revealAnswer(this)">Discuss</button>
+    <div class="answer-box">IR must support: (1) multi-hop reasoning (AI asks multiple sub-queries); (2) returning evidence chunks rather than full documents; (3) grading quality/trustworthiness of sources; (4) real-time indexing for currency; (5) multi-modal retrieval (images, audio for AI). The "user" may be an LLM, not a human, changing what "relevant" and "useful" mean.</div>
+  </div>
+</section>
+
+<!-- FLASHCARDS -->
+<section id="flashcards">
+  <h2 class="section-title">Flashcards</h2>
+  <p style="color:var(--text2); margin-bottom:20px;">Click a card to flip it and reveal the definition.</p>
+  <div class="flashcard-grid">
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">Information Retrieval</div><div class="flashcard-back">Field concerned with structure, analysis, organisation, storage, searching, and retrieval of information from unstructured sources.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">Heuristic</div><div class="flashcard-back">A technique that tries to approximate the right answer rather than compute it exactly. All IR ranking functions are heuristics because relevance is subjective.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">Topical Relevance</div><div class="flashcard-back">A document is topically relevant to a query if both concern the same topic.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">Inverted Index</div><div class="flashcard-back">A data structure mapping each term to a list of documents containing that term. Enables fast query processing.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">ASK Hypothesis</div><div class="flashcard-back">Anomalous State of Knowledge (Belkin 1982): users find it hard to articulate their information need because it represents a gap in their knowledge.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">RAG</div><div class="flashcard-back">Retrieval-Augmented Generation: combining LLMs with IR to ground generated text in retrieved documents, reducing hallucinations.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">Navigational Query</div><div class="flashcard-back">A query issued to reach a specific website or URL that the user already has in mind. E.g., "University of Glasgow".</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">Informational Query</div><div class="flashcard-back">A query issued to acquire information on a topic. Reading/bookmarking the result is the primary action.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">Transactional Query</div><div class="flashcard-back">A query where the user intends to interact further with the found website (shopping, downloading, gaming).</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">Effectiveness</div><div class="flashcard-back">Quality of retrieval results — how many relevant documents are found and how highly ranked they are. Measured by P, R, MAP, NDCG.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">Efficiency</div><div class="flashcard-back">Speed of retrieval — how quickly results are returned. Even 0.2s delays affect user satisfaction. Role of inverted index, caching, compression.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">Bag of Words</div><div class="flashcard-back">Document representation that counts term occurrences, ignoring word order. Basis for TF-IDF and BM25. Simple yet effective.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">Probability Ranking Principle</div><div class="flashcard-back">Robertson (1977): rank documents by P(R=1|d,q) — probability of relevance — highest first. Theoretically optimal retrieval strategy. Basis of BM25.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">Cranfield Experiments</div><div class="flashcard-back">First systematic IR evaluation (Cleverdon, 1957–1966). ~1,400 aeronautical abstracts. Introduced Precision, Recall, and the test-collection evaluation paradigm.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">TREC</div><div class="flashcard-back">Text REtrieval Conference (NIST, since 1992). Scales Cranfield to millions of docs. Uses pooling for relevance judgements. Standardises MAP, NDCG metrics.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">IDF (Sparck Jones, 1972)</div><div class="flashcard-back">Inverse Document Frequency: rarer terms are more informative. IDF = log(N/df). Basis of TF-IDF weighting — rare query terms should count more.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">Pooling (TREC)</div><div class="flashcard-back">To make large-scale evaluation feasible: take top-K results from each participating system, pool them, and only judge pooled documents. Unjudged docs assumed non-relevant.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">Data vs Information</div><div class="flashcard-back">Data: raw facts (e.g., 37.5). Information: data in context (e.g., "patient has 37.5°C fever"). IR systems both contain and provide information; DBs contain data and produce information.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">Ad Hoc Search</div><div class="flashcard-back">Classic IR task: find documents about topic X from a static collection. New queries arrive over time. Evaluated by TREC. Different from known-item search.</div></div></div>
+    <div class="flashcard" onclick="this.classList.toggle('flipped')"><div class="flashcard-inner"><div class="flashcard-front">Relevance Judgements (Qrels)</div><div class="flashcard-back">Human assessors judge (query, document) pairs as relevant or not. Used as ground truth in Cranfield-style evaluation. Often binary, sometimes graded (0–3).</div></div></div>
+  </div>
+</section>
+
+</div>
+</main>
+
+<script>
+// Progress bar
+window.addEventListener('scroll', () => {
+  const el = document.getElementById('progress-bar');
+  const pct = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+  el.style.width = pct + '%';
+  document.getElementById('backTop').style.display = window.scrollY > 400 ? 'block' : 'none';
+  // Update nav
+  document.querySelectorAll('nav a').forEach(a => {
+    const sec = document.querySelector(a.getAttribute('href'));
+    if(sec) { const r = sec.getBoundingClientRect(); a.classList.toggle('active', r.top <= 100 && r.bottom > 100); }
+  });
+});
+
+// Theme
+function toggleTheme() {
+  document.body.dataset.theme = document.body.dataset.theme === 'light' ? '' : 'light';
+}
+
+// MCQ
+function answerMCQ(el, type) {
+  const item = el.parentElement;
+  item.querySelectorAll('.mcq-option').forEach(o => o.classList.remove('correct','wrong'));
+  el.classList.add(type === 'correct' ? 'correct' : 'wrong');
+}
+
+// True/False
+function tfAnswer(btn, correct) {
+  const item = btn.closest('.tf-item');
+  const ans = item.querySelector('.tf-answer');
+  ans.style.display = 'block';
+}
+
+// Reveal
+function revealAnswer(btn) {
+  const box = btn.nextElementSibling;
+  box.style.display = box.style.display === 'block' ? 'none' : 'block';
+  btn.textContent = box.style.display === 'block' ? 'Hide Answer' : 'Reveal Answer';
+}
+
+// Fill in blanks
+function revealBlank(el) { el.classList.add('revealed'); }
+
+// Smooth scroll
+document.querySelectorAll('nav a').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const t = document.querySelector(a.getAttribute('href'));
+    if(t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+</body>
+</html>

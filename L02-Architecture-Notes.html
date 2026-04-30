@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 02 · Architecture: Architecture of Retrieval Systems</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+  :root { --bg:#0f0f1a;--bg2:#1a1a2e;--bg3:#16213e;--accent:#7c3aed;--accent2:#06b6d4;--accent3:#10b981;--text:#e2e8f0;--text2:#94a3b8;--yellow:#f59e0b;--red:#ef4444;--card:#1e293b; }
+  [data-theme="light"]{--bg:#f8fafc;--bg2:#f1f5f9;--bg3:#e2e8f0;--text:#0f172a;--text2:#475569;--card:#ffffff;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;overflow-x:hidden;}
+  #pb{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;z-index:1000;transition:width .1s;}
+  header{background:linear-gradient(135deg,#0f0f1a 0%,#1a0533 50%,#0a1628 100%);padding:80px 40px 60px;text-align:center;position:relative;overflow:hidden;}
+  header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at center,rgba(124,58,237,.15) 0%,transparent 60%);animation:rotate 20s linear infinite;}
+  @keyframes rotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes slideInLeft{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+  .badge{display:inline-block;background:var(--accent);color:#fff;padding:6px 18px;border-radius:20px;font-size:.85rem;margin-bottom:16px;animation:fadeInUp .6s ease;}
+  h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;margin-bottom:16px;background:linear-gradient(135deg,#fff 0%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:fadeInUp .8s ease;}
+  .subtitle{color:var(--text2);font-size:1.1rem;animation:fadeInUp 1s ease;}
+  .container{max-width:1200px;margin:0 auto;padding:0 24px;}
+  nav{position:fixed;right:20px;top:50%;transform:translateY(-50%);background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:16px;z-index:100;max-width:220px;max-height:70vh;overflow-y:auto;}
+  nav h3{font-size:.75rem;color:var(--accent2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+  nav a{display:block;color:var(--text2);text-decoration:none;font-size:.8rem;padding:4px 8px;border-left:2px solid transparent;transition:all .2s;}
+  nav a:hover,nav a.active{color:var(--accent);border-left-color:var(--accent);}
+  .theme-btn{position:fixed;left:20px;top:20px;background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:8px;padding:8px 16px;color:var(--text);cursor:pointer;z-index:100;font-size:.85rem;}
+  .back-top{position:fixed;bottom:30px;right:30px;background:var(--accent);color:#fff;border:none;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:none;z-index:100;box-shadow:0 4px 15px rgba(124,58,237,.4);}
+  main{padding:60px 0;}
+  section{margin-bottom:60px;animation:fadeIn .6s ease;}
+  .section-title{font-size:1.8rem;font-weight:700;margin-bottom:24px;padding-left:16px;border-left:4px solid var(--accent);color:var(--text);}
+  .card{background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:28px;margin-bottom:20px;transition:transform .2s,box-shadow .2s;}
+  .card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3);}
+  .card h3{color:var(--accent2);margin-bottom:12px;font-size:1.1rem;}
+  .card p,.card li{color:var(--text2);line-height:1.7;}
+  .card ul{padding-left:20px;}.card ul li{margin-bottom:8px;}
+  .hi{color:var(--accent);font-weight:600;}.hi2{color:var(--accent2);font-weight:600;}.hi3{color:var(--accent3);font-weight:600;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  @media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr;}nav{display:none;}}
+  @media(min-width:769px){body{padding-right:260px;}}
+  .def-box{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:20px;margin:20px 0;}
+  .def-box .term{color:var(--accent);font-weight:700;font-size:1.05rem;}
+  .ex-box{background:rgba(16,185,129,.08);border-left:4px solid var(--accent3);border-radius:0 12px 12px 0;padding:20px;margin:20px 0;}
+  .ex-box h4{color:var(--accent3);margin-bottom:10px;}
+  .warn-box{background:rgba(245,158,11,.08);border-left:4px solid var(--yellow);border-radius:0 12px 12px 0;padding:20px;margin:20px 0;}
+  .warn-box h4{color:var(--yellow);margin-bottom:10px;}
+  .svg-cont{background:var(--bg2);border-radius:16px;padding:30px;margin:30px 0;text-align:center;}
+  .svg-cont h4{color:var(--accent2);margin-bottom:20px;}
+  /* Equations */
+  .eq-block{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.4);border-radius:12px;padding:24px;margin:24px 0;text-align:center;}
+  .eq-block .eq-title{color:var(--accent);font-weight:700;margin-bottom:12px;font-size:1rem;}
+  .practice-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.4);border-radius:12px;padding:20px;margin:12px 0;}
+  .practice-box h5{color:var(--yellow);margin-bottom:10px;}
+  .solved-box{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.4);border-radius:12px;padding:20px;margin:12px 0;}
+  .solved-box h5{color:var(--accent3);margin-bottom:10px;}
+  /* Questions */
+  .q-section{background:var(--bg2);border-radius:20px;padding:40px;margin-top:40px;}
+  .q-type{font-size:1.4rem;font-weight:700;color:var(--accent);margin:30px 0 16px;padding-bottom:8px;border-bottom:2px solid rgba(124,58,237,.3);}
+  .mcq{background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .mcq .qtext{font-weight:600;color:var(--text);margin-bottom:12px;}
+  .opt{padding:8px 14px;border-radius:8px;cursor:pointer;color:var(--text2);border:1px solid rgba(255,255,255,.07);margin:4px 0;transition:all .2s;}
+  .opt:hover{background:rgba(124,58,237,.15);border-color:var(--accent);}
+  .opt.c{background:rgba(16,185,129,.2);border-color:var(--accent3);color:var(--accent3);}
+  .opt.w{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red);}
+  .tf-row{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .tf-q{flex:1;color:var(--text2);}
+  .tb{padding:6px 16px;border-radius:6px;border:none;cursor:pointer;font-size:.85rem;transition:all .2s;}
+  .tb.tt{background:rgba(16,185,129,.2);color:var(--accent3);}
+  .tb.tf{background:rgba(239,68,68,.15);color:var(--red);}
+  .tf-ans{display:none;font-size:.85rem;padding:6px 10px;border-radius:6px;margin-top:8px;}
+  .tf-ans.ca{background:rgba(16,185,129,.15);color:var(--accent3);}
+  .tf-ans.wa{background:rgba(239,68,68,.1);color:var(--red);}
+  .sa{background:var(--card);border-radius:12px;padding:20px;margin-bottom:12px;}
+  .sa .qt{color:var(--text2);margin-bottom:12px;font-weight:600;}
+  .rbtn{background:var(--accent);color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .2s;}
+  .rbtn:hover{background:#6d28d9;}
+  .ans{display:none;margin-top:12px;background:rgba(16,185,129,.08);border-left:3px solid var(--accent3);padding:14px;border-radius:0 8px 8px 0;color:var(--text2);line-height:1.6;}
+  .fitb{background:var(--card);border-radius:10px;padding:16px 20px;margin-bottom:10px;color:var(--text2);}
+  .blank{display:inline-block;min-width:100px;border-bottom:2px solid var(--accent);margin:0 6px;text-align:center;color:transparent;cursor:pointer;transition:all .3s;padding:0 4px;}
+  .blank.rv{color:var(--accent);}
+  .fc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;margin-top:20px;}
+  .fc{perspective:1000px;height:150px;cursor:pointer;}
+  .fci{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d;}
+  .fc:hover .fci,.fc.flipped .fci{transform:rotateY(180deg);}
+  .fcf,.fcb{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;}
+  .fcf{background:linear-gradient(135deg,var(--accent),#5b21b6);color:#fff;font-weight:600;}
+  .fcb{background:var(--card);border:1px solid rgba(6,182,212,.3);color:var(--text2);font-size:.9rem;transform:rotateY(180deg);}
+  .exam-q{background:var(--bg3);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .tag{display:inline-block;background:var(--yellow);color:#000;font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:4px;margin-right:8px;}
+  .marks{display:inline-block;background:rgba(245,158,11,.2);color:var(--yellow);font-size:.75rem;padding:2px 8px;border-radius:4px;}
+  .obj-list{list-style:none;}.obj-list li{padding:10px 16px;margin-bottom:8px;background:var(--card);border-radius:8px;color:var(--text2);display:flex;align-items:flex-start;gap:10px;animation:slideInLeft .5s ease;}
+  .obj-list li::before{content:"✓";color:var(--accent3);font-weight:700;margin-top:1px;}
+  .sum-card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border-radius:16px;padding:24px;border-left:4px solid var(--accent);margin-bottom:16px;}
+  .sum-card h4{color:var(--accent2);margin-bottom:10px;}
+  code{background:rgba(124,58,237,.15);color:var(--accent2);padding:2px 6px;border-radius:4px;font-family:monospace;}
+  pre{background:#0d1117;border-radius:12px;padding:24px;overflow-x:auto;margin:20px 0;border:1px solid rgba(255,255,255,.05);}
+  pre code{background:none;padding:0;color:#c9d1d9;}
+  .kw{color:#ff7b72;}.fn{color:#d2a8ff;}.str{color:#a5d6ff;}.cm{color:#8b949e;}.num{color:#79c0ff;}
+</style>
+</head>
+<body>
+<div id="pb"></div>
+<button class="theme-btn" onclick="toggleTheme()">🌓 Theme</button>
+<button class="back-top" id="bt" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<nav><h3>Contents</h3><a href="#objectives">Objectives</a>
+<a href="#text-processing">Text Processing</a>
+<a href="#indexing">Indexing</a>
+<a href="#index-construction">Index Construction</a>
+<a href="#compression">Index Compression</a>
+<a href="#skip-pointers">Skip Pointers</a>
+<a href="#boolean-model">Boolean Model</a>
+<a href="#zone-index">Zone Indexes</a>
+<a href="#retrieval">Retrieval</a>
+<a href="#dynamic-indexing">Dynamic Indexing</a>
+<a href="#summary">Summary</a>
+<a href="#questions">Questions</a></nav>
+<header>
+  <div class="badge">Lecture 02 · Architecture</div>
+  <h1>Architecture of Retrieval Systems</h1>
+  <p class="subtitle">IR H/M Course · Craig Macdonald · 2026</p>
+</header>
+<main><div class="container">
+
+<section id="objectives">
+  <h2 class="section-title">Learning Objectives</h2>
+  <ul class="obj-list">
+    <li>Describe the three-part IR pipeline: Text Processing, Indexing, Retrieval</li>
+    <li>Explain tokenisation, stopword removal, and stemming with examples</li>
+    <li>Construct and query an inverted index step by step</li>
+    <li>Understand the best-match (co-ordinated) retrieval algorithm</li>
+    <li>Explain relevance estimation using similarity measures</li>
+    <li>Describe BSBI and SPIMI algorithms for large-scale index construction</li>
+    <li>Explain index compression: gap encoding and variable-byte encoding</li>
+    <li>Explain skip pointers and their role in speeding up AND queries</li>
+    <li>Describe the Boolean retrieval model and its AND intersection algorithm</li>
+    <li>Explain zone indexes and weighted zone scoring</li>
+    <li>Understand dynamic indexing with auxiliary indexes and invalidation lists</li>
+  </ul>
+</section>
+
+<section id="text-processing">
+  <h2 class="section-title">Part 1: Text Processing</h2>
+  <div class="card">
+    <h3>Why Process Text?</h3>
+    <p>IR models use statistical properties of text ("bag of words"). We need to convert raw text into a normalised set of index terms. Three main steps: Tokenisation → Stopword Removal → Stemming.</p>
+  </div>
+
+  <div class="card" id="tokenisation">
+    <h3>Step 1: Tokenisation (Lexical Analysis)</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">Converts a stream of characters into a stream of words (tokens). Not as simple as splitting on spaces!</p>
+    <div class="grid-2">
+      <div>
+        <p class="hi2">Issues to handle:</p>
+        <ul>
+          <li>Numbers: <code>1999</code> vs <code>510B.C.</code></li>
+          <li>Hyphens: <code>state-of-the-art</code> vs <code>B-49</code></li>
+          <li>Punctuation: <code>510B.C.</code> vs <code>list.id</code></li>
+          <li>Case: <code>Bank</code> vs <code>bank</code></li>
+          <li>Multi-language: Arabic, Chinese, Cyrillic</li>
+        </ul>
+      </div>
+      <div>
+        <p class="hi3">Small decisions matter:</p>
+        <p style="color:var(--text2);">Tokenisation choices have major impact on retrieval effectiveness for some queries. E.g. treating "C.A.T." as one token vs three affects retrieval for abbreviation queries.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="stopwords">
+    <h3>Step 2: Stopword Removal</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">Words too frequent in a collection are poor discriminators — called <span class="hi">stopwords</span>.</p>
+    <ul>
+      <li>Examples: <code>the</code>, <code>am</code>, <code>and</code>, <code>of</code>, <code>in</code>, <code>to</code></li>
+      <li>Reduces index size considerably</li>
+      <li>Strategies: list lookup, frequency analysis (remove terms in >80% of docs)</li>
+    </ul>
+    <div class="warn-box">
+      <h4>⚠️ Care needed!</h4>
+      <p>Some phrases lose meaning: "to be or not to be" — all words are stopwords! Modern IR often retains stopwords in the index but ignores them at query processing time.</p>
+    </div>
+  </div>
+
+  <div class="card" id="stemming">
+    <h3>Step 3: Stemming (Conflation)</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">Reduces word variants to a single root form. E.g. <code>connect</code> is the stem for <em>connected</em>, <em>connecting</em>, <em>connections</em>.</p>
+    <div class="grid-2">
+      <div>
+        <p class="hi3">Benefits:</p>
+        <ul>
+          <li>5–10% improvement for English</li>
+          <li>Up to 50% improvement in Arabic</li>
+          <li>Reduces index size 10–50%</li>
+          <li>User doesn't need to submit variants</li>
+        </ul>
+      </div>
+      <div>
+        <p style="color:var(--red);font-weight:600;">Problems:</p>
+        <ul>
+          <li>GRAVITY (place) ≠ GRAVITATION → GRAVITY</li>
+          <li>Overstemming: "universe" → "univers"</li>
+          <li>Can collapse distinct meanings</li>
+        </ul>
+      </div>
+    </div>
+    <div class="ex-box">
+      <h4>Example: Porter Stemmer Rules</h4>
+      <ul style="color:var(--text2);">
+        <li>Rule: (.*)SSES → \1SS — e.g., <em>possesses → possess</em></li>
+        <li>Rule: (.*[AEIOU].*)ED → \1 — e.g., <em>shared → shar</em></li>
+        <li>Rule: (.*[AEIOU].*)ING → \1 — e.g., <em>running → run</em></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="svg-cont">
+    <h4>Text Processing Pipeline Example</h4>
+    <svg width="700" height="200" viewBox="0 0 700 200" style="max-width:100%;">
+      <defs><marker id="a2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#06b6d4"/></marker></defs>
+      <rect x="5" y="20" width="130" height="50" rx="8" fill="rgba(124,58,237,.15)" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="70" y="42" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">Original Text</text>
+      <text x="70" y="60" text-anchor="middle" fill="#94a3b8" font-size="10">"Twinkle, twinkle..."</text>
+      <line x1="135" y1="45" x2="160" y2="45" stroke="#06b6d4" stroke-width="2" marker-end="url(#a2)"/>
+      <rect x="165" y="20" width="110" height="50" rx="8" fill="rgba(6,182,212,.12)" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="220" y="42" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="600">Tokenisation</text>
+      <text x="220" y="60" text-anchor="middle" fill="#94a3b8" font-size="9">twinkle twinkle bat...</text>
+      <line x1="275" y1="45" x2="300" y2="45" stroke="#06b6d4" stroke-width="2" marker-end="url(#a2)"/>
+      <rect x="305" y="20" width="120" height="50" rx="8" fill="rgba(16,185,129,.12)" stroke="#10b981" stroke-width="1.5"/>
+      <text x="365" y="42" text-anchor="middle" fill="#10b981" font-size="11" font-weight="600">Stop Removal</text>
+      <text x="365" y="60" text-anchor="middle" fill="#94a3b8" font-size="9">twinkle bat wonder world</text>
+      <line x1="425" y1="45" x2="450" y2="45" stroke="#06b6d4" stroke-width="2" marker-end="url(#a2)"/>
+      <rect x="455" y="20" width="110" height="50" rx="8" fill="rgba(245,158,11,.12)" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="510" y="42" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="600">Stemming</text>
+      <text x="510" y="60" text-anchor="middle" fill="#94a3b8" font-size="9">twinkl bat wonder world</text>
+      <!-- Example full -->
+      <text x="10" y="110" fill="#7c3aed" font-size="11" font-weight="600">Input: "Twinkle, twinkle, little bat. How I wonder what you're at! Up above the world you fly."</text>
+      <text x="10" y="130" fill="#94a3b8" font-size="10">Tokenise → twinkle twinkle little bat how i wonder what you re at up above the world you fly</text>
+      <text x="10" y="148" fill="#94a3b8" font-size="10">Stop remove → twinkle twinkle little bat wonder world like tea tray sky</text>
+      <text x="10" y="166" fill="#94a3b8" font-size="10">Stem → twinkl twinkl littl bat wonder world like tea trai sky</text>
+    </svg>
+  </div>
+
+  <div class="card">
+    <h3>Python: Text Processing Pipeline</h3>
+    <pre><code><span class="kw">import</span> re
+<span class="kw">from</span> nltk.corpus <span class="kw">import</span> stopwords
+<span class="kw">from</span> nltk.stem <span class="kw">import</span> PorterStemmer
+
+<span class="fn">def</span> <span class="fn">process_text</span>(text):
+    <span class="cm"># Step 1: Tokenise (lowercase, split on non-alphanumeric)</span>
+    tokens = re.findall(<span class="str">r'[a-zA-Z0-9]+'</span>, text.lower())
+    
+    <span class="cm"># Step 2: Remove stopwords</span>
+    stop = <span class="fn">set</span>(stopwords.words(<span class="str">'english'</span>))
+    tokens = [t <span class="kw">for</span> t <span class="kw">in</span> tokens <span class="kw">if</span> t <span class="kw">not in</span> stop]
+    
+    <span class="cm"># Step 3: Stem</span>
+    stemmer = PorterStemmer()
+    tokens = [stemmer.stem(t) <span class="kw">for</span> t <span class="kw">in</span> tokens]
+    
+    <span class="kw">return</span> tokens
+
+text = <span class="str">"Twinkle, twinkle, little bat. How I wonder what you're at!"</span>
+<span class="fn">print</span>(process_text(text))
+<span class="cm"># Output: ['twinkl', 'twinkl', 'littl', 'bat', 'wonder']</span></code></pre>
+  </div>
+</section>
+
+<section id="indexing">
+  <h2 class="section-title">Part 2: Indexing — The Inverted Index</h2>
+
+  <div class="card">
+    <h3>Why an Inverted Index?</h3>
+    <p style="color:var(--text2);">Without an index: to answer a query, we scan every document — infeasible for billions of pages. With an inverted index: we jump directly to the posting list for each query term, then intersect/score. Response time: milliseconds.</p>
+  </div>
+
+  <div class="svg-cont">
+    <h4>Inverted Index Structure</h4>
+    <svg width="680" height="280" viewBox="0 0 680 280" style="max-width:100%;">
+      <defs><marker id="a3" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#7c3aed"/></marker></defs>
+      <!-- Lexicon -->
+      <rect x="10" y="10" width="140" height="260" rx="8" fill="rgba(124,58,237,.1)" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="80" y="32" text-anchor="middle" fill="#7c3aed" font-size="13" font-weight="700">LEXICON</text>
+      <text x="80" y="55" text-anchor="middle" fill="#94a3b8" font-size="11">aid</text>
+      <text x="80" y="78" text-anchor="middle" fill="#94a3b8" font-size="11">come</text>
+      <text x="80" y="101" text-anchor="middle" fill="#94a3b8" font-size="11">country</text>
+      <text x="80" y="124" text-anchor="middle" fill="#94a3b8" font-size="11">dark</text>
+      <text x="80" y="147" text-anchor="middle" fill="#94a3b8" font-size="11">men</text>
+      <text x="80" y="170" text-anchor="middle" fill="#94a3b8" font-size="11">now</text>
+      <text x="80" y="193" text-anchor="middle" fill="#94a3b8" font-size="11">stormy</text>
+      <text x="80" y="216" text-anchor="middle" fill="#94a3b8" font-size="11">time</text>
+      <!-- Posting lists -->
+      <text x="240" y="22" text-anchor="middle" fill="#06b6d4" font-size="12" font-weight="700">POSTING LISTS (docID → tf)</text>
+      <!-- aid -->
+      <line x1="150" y1="55" x2="185" y2="55" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#a3)"/>
+      <rect x="190" y="44" width="80" height="22" rx="4" fill="rgba(16,185,129,.15)" stroke="#10b981" stroke-width="1"/>
+      <text x="230" y="59" text-anchor="middle" fill="#10b981" font-size="10">Doc1, tf=1</text>
+      <!-- come -->
+      <line x1="150" y1="78" x2="185" y2="78" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#a3)"/>
+      <rect x="190" y="67" width="80" height="22" rx="4" fill="rgba(16,185,129,.15)" stroke="#10b981" stroke-width="1"/>
+      <text x="230" y="82" text-anchor="middle" fill="#10b981" font-size="10">Doc1, tf=1</text>
+      <!-- country -->
+      <line x1="150" y1="101" x2="185" y2="101" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#a3)"/>
+      <rect x="190" y="90" width="80" height="22" rx="4" fill="rgba(16,185,129,.15)" stroke="#10b981" stroke-width="1"/>
+      <text x="230" y="105" text-anchor="middle" fill="#10b981" font-size="10">Doc1, tf=1</text>
+      <rect x="280" y="90" width="80" height="22" rx="4" fill="rgba(16,185,129,.15)" stroke="#10b981" stroke-width="1"/>
+      <text x="320" y="105" text-anchor="middle" fill="#10b981" font-size="10">Doc2, tf=1</text>
+      <!-- dark -->
+      <line x1="150" y1="124" x2="185" y2="124" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#a3)"/>
+      <rect x="190" y="113" width="80" height="22" rx="4" fill="rgba(245,158,11,.15)" stroke="#f59e0b" stroke-width="1"/>
+      <text x="230" y="128" text-anchor="middle" fill="#f59e0b" font-size="10">Doc2, tf=1</text>
+      <!-- men -->
+      <line x1="150" y1="147" x2="185" y2="147" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#a3)"/>
+      <rect x="190" y="136" width="80" height="22" rx="4" fill="rgba(16,185,129,.15)" stroke="#10b981" stroke-width="1"/>
+      <text x="230" y="151" text-anchor="middle" fill="#10b981" font-size="10">Doc1, tf=1</text>
+      <!-- time -->
+      <line x1="150" y1="216" x2="185" y2="216" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#a3)"/>
+      <rect x="190" y="205" width="80" height="22" rx="4" fill="rgba(16,185,129,.15)" stroke="#10b981" stroke-width="1"/>
+      <text x="230" y="220" text-anchor="middle" fill="#10b981" font-size="10">Doc1, tf=2</text>
+      <rect x="280" y="205" width="80" height="22" rx="4" fill="rgba(16,185,129,.15)" stroke="#10b981" stroke-width="1"/>
+      <text x="320" y="220" text-anchor="middle" fill="#10b981" font-size="10">Doc2, tf=2</text>
+      <!-- legend -->
+      <text x="190" y="260" fill="#94a3b8" font-size="10">Query "time AND dark": fetch lists → intersection → Doc2 matches both!</text>
+    </svg>
+  </div>
+
+  <div class="card">
+    <h3>Inverted Index Summary</h3>
+    <p style="color:var(--text2); margin-bottom:12px;">An index contains three sub-structures:</p>
+    <div class="grid-3">
+      <div class="def-box"><span class="term">Lexicon</span><p style="color:var(--text2);margin-top:8px;">All unique terms and their statistics (df, cf). Stored in sorted order for fast lookup.</p></div>
+      <div class="def-box"><span class="term">Inverted Index</span><p style="color:var(--text2);margin-top:8px;">Term → posting list. Each posting has (docID, tf, positions). The core retrieval structure.</p></div>
+      <div class="def-box"><span class="term">Document Index</span><p style="color:var(--text2);margin-top:8px;">All documents and their statistics (length, URL, PageRank, etc.).</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Python: Building an Inverted Index</h3>
+    <pre><code><span class="kw">from</span> collections <span class="kw">import</span> defaultdict
+
+<span class="fn">def</span> <span class="fn">build_index</span>(docs):
+    <span class="cm"># docs: {docid: text}</span>
+    index = defaultdict(<span class="kw">lambda</span>: defaultdict(<span class="num">int</span>))
+    
+    <span class="kw">for</span> docid, text <span class="kw">in</span> docs.items():
+        tokens = process_text(text)  <span class="cm"># from earlier</span>
+        <span class="kw">for</span> token <span class="kw">in</span> tokens:
+            index[token][docid] += <span class="num">1</span>  <span class="cm"># tf</span>
+    
+    <span class="kw">return</span> dict(index)
+
+docs = {<span class="num">1</span>: <span class="str">"now is the time for all good men"</span>,
+        <span class="num">2</span>: <span class="str">"it was a dark and stormy night in the country"</span>}
+
+idx = build_index(docs)
+<span class="fn">print</span>(<span class="str">"time:"</span>, idx[<span class="str">'time'</span>])    <span class="cm"># {1: 1}</span>
+<span class="fn">print</span>(<span class="str">"dark:"</span>, idx[<span class="str">'dark'</span>])    <span class="cm"># {2: 1}</span>
+<span class="fn">print</span>(<span class="str">"country:"</span>, idx[<span class="str">'countri'</span>]) <span class="cm"># {2: 1} (stemmed)</span></code></pre>
+  </div>
+</section>
+
+<!-- INDEX CONSTRUCTION -->
+<section id="index-construction">
+  <h2 class="section-title">Index Construction Algorithms</h2>
+
+  <div class="card">
+    <h3>The Challenge</h3>
+    <p style="color:var(--text2);">For web-scale collections (billions of documents), the inverted index is too large to build in RAM. Two classic algorithms solve this: <span class="hi">BSBI</span> (Block Sort-Based Indexing) and <span class="hi2">SPIMI</span> (Single-Pass In-Memory Indexing).</p>
+  </div>
+
+  <div class="card">
+    <h3>BSBI — Block Sort-Based Indexing</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">Processes documents in fixed-size blocks that fit in RAM, sorts each block, then merges. Requires a global term dictionary.</p>
+    <div class="eq-block">
+      <div class="eq-title">BSBI Algorithm</div>
+      <pre style="background:transparent;border:none;text-align:left;padding:10px;color:var(--text2);">BSBI-Index-Construction():
+  while (collection not exhausted):
+    block ← ParseNextBlock()          // Read a block of docs
+    BSBI-Invert(block)                 // Create (termID, docID) pairs
+    SortAndWrite(block, disk)          // Sort pairs, write to disk
+  MergeBlocks(all blocks on disk)      // Merge sorted runs → final index</pre>
+    </div>
+    <div class="grid-2">
+      <div class="ex-box">
+        <h4>Steps in Detail</h4>
+        <ol style="color:var(--text2);padding-left:20px;">
+          <li>Accumulate (termID, docID) pairs in memory</li>
+          <li>When block full: sort by termID, then docID</li>
+          <li>Write sorted block to disk as a "run"</li>
+          <li>Repeat for all blocks</li>
+          <li>Merge all sorted runs into final inverted index</li>
+        </ol>
+      </div>
+      <div class="warn-box">
+        <h4>Limitation of BSBI</h4>
+        <p style="color:var(--text2);">Requires a <strong>global term dictionary</strong> mapping terms to integer termIDs. This dictionary must fit in RAM — problematic for very large collections. SPIMI avoids this.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>SPIMI — Single-Pass In-Memory Indexing</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">Avoids the need for a global term dictionary. Instead, builds partial inverted indexes directly in memory and writes them to disk when memory is full. <span class="hi2">Faster and more memory-efficient than BSBI.</span></p>
+    <div class="eq-block">
+      <div class="eq-title">SPIMI Algorithm</div>
+      <pre style="background:transparent;border:none;text-align:left;padding:10px;color:var(--text2);">SPIMI-Invert(token_stream):
+  output_file = newFile()
+  dictionary = newHashMap()
+  while (memory not full):
+    token = next(token_stream)         // (term, docID) pair
+    if term not in dictionary:
+      dictionary[term] = newPostingList()
+    posting_list = dictionary[term]
+    if posting_list is full:
+      posting_list = doublePostingList(posting_list)
+    posting_list.append(docID)
+  sorted_terms = SortTerms(dictionary)
+  WriteBlockToDisk(sorted_terms, dictionary, output_file)
+  return output_file</pre>
+    </div>
+    <div class="grid-2">
+      <div class="ex-box">
+        <h4>Key SPIMI Advantages</h4>
+        <ul style="color:var(--text2);">
+          <li>No global term dictionary needed — terms added as encountered</li>
+          <li>Posting lists grow dynamically (doubled when full)</li>
+          <li>Single pass through document collection</li>
+          <li>Handles any vocabulary size</li>
+          <li>Faster: no sorting of (termID, docID) pairs — sort only terms</li>
+        </ul>
+      </div>
+      <div>
+        <div class="practice-box">
+          <h5>BSBI vs SPIMI Comparison</h5>
+          <table style="width:100%;color:var(--text2);font-size:0.85rem;border-collapse:collapse;">
+            <tr style="color:var(--accent2);"><th style="padding:4px;">Feature</th><th>BSBI</th><th>SPIMI</th></tr>
+            <tr><td style="padding:4px;">Term dict</td><td>Global (in RAM)</td><td>Local per block</td></tr>
+            <tr><td style="padding:4px;">Sorting</td><td>Sort all (termID,docID) pairs</td><td>Only sort terms</td></tr>
+            <tr><td style="padding:4px;">Speed</td><td>Slower</td><td>Faster</td></tr>
+            <tr><td style="padding:4px;">Memory</td><td>Needs dict in RAM</td><td>More flexible</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Distributed Indexing (MapReduce)</h3>
+    <p style="color:var(--text2);">At web scale (billions of docs), even SPIMI is too slow for a single machine. Google uses <span class="hi">MapReduce</span>-style distributed indexing:</p>
+    <ul>
+      <li><strong>Map phase</strong>: Each machine processes a shard of documents → emits (term, docID) pairs</li>
+      <li><strong>Reduce phase</strong>: Group by term → merge posting lists → write to distributed index</li>
+      <li>Enables indexing of the full web in hours using thousands of machines</li>
+    </ul>
+  </div>
+</section>
+
+<!-- INDEX COMPRESSION -->
+<section id="compression">
+  <h2 class="section-title">Index Compression</h2>
+
+  <div class="card">
+    <h3>Why Compress?</h3>
+    <p style="color:var(--text2);">The inverted index for the web can be hundreds of GB. Compression reduces: (1) disk footprint, (2) I/O time (read compressed data faster than uncompressed), (3) can fit more in RAM. <span class="hi">Decompression is fast enough to be done on-the-fly during retrieval.</span></p>
+  </div>
+
+  <div class="card">
+    <h3>Step 1: Gap Encoding (d-gaps)</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">Instead of storing raw docIDs, store the <span class="hi">difference (gap)</span> between consecutive docIDs in a posting list. Since docIDs are sorted, gaps are always positive. Small gaps = fewer bits needed.</p>
+    <div class="ex-box">
+      <h4>Example: Gap Encoding</h4>
+      <p style="color:var(--text2);">Raw posting list for term "the": <code>[1, 5, 12, 25, 200, 201]</code></p>
+      <p style="color:var(--text2);">After gap encoding: <code>[1, 4, 7, 13, 175, 1]</code></p>
+      <p style="color:var(--text2);margin-top:8px;">For frequent terms like "the", gaps are small → very compressible. For rare terms, gaps are large but there are few entries anyway → still efficient overall.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Step 2: Variable-Byte (VB) Encoding</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">Encode each gap as a variable number of bytes. Small gaps use 1 byte; larger gaps use 2, 3, or 4 bytes. The most significant bit of each byte signals whether more bytes follow.</p>
+    <div class="eq-block">
+      <div class="eq-title">Variable-Byte Encoding Format</div>
+      <pre style="background:transparent;border:none;text-align:left;padding:10px;color:var(--text2);">Each byte: [continuation_bit | 7 bits of data]
+  - continuation_bit = 1: more bytes to follow
+  - continuation_bit = 0: this is the last byte
+
+Example: gap = 5 (binary: 101)
+  → One byte: [0|000 0101] = 0x05
+
+Example: gap = 214 (binary: 1101 0110)
+  → Two bytes: [1|000 0001] [0|101 0110] = 0x81 0x56
+
+Numbers 0-127: 1 byte; 128-16383: 2 bytes; etc.</pre>
+    </div>
+    <div class="grid-2">
+      <div class="ex-box">
+        <h4>VB Encoding Example</h4>
+        <p style="color:var(--text2);">Gaps: [5, 128, 2]</p>
+        <ul style="color:var(--text2);">
+          <li>Gap 5: <code>00000101</code> (1 byte)</li>
+          <li>Gap 128: <code>10000001 00000000</code> (2 bytes)</li>
+          <li>Gap 2: <code>00000010</code> (1 byte)</li>
+        </ul>
+        <p style="color:var(--text2);margin-top:8px;">Total: 4 bytes vs 3×4=12 bytes uncompressed</p>
+      </div>
+      <div class="warn-box">
+        <h4>Other Compression Schemes</h4>
+        <ul style="color:var(--text2);">
+          <li><strong>Unary coding</strong>: encode n as n ones followed by a zero. Simple but only good for very small gaps.</li>
+          <li><strong>Gamma coding</strong>: Elias gamma — more complex, better compression for skewed distributions.</li>
+          <li><strong>PForDelta</strong>: used in modern search engines (Elasticsearch, Lucene) — pack groups of 128 gaps.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="practice-box">
+    <h5>Worked Compression Example</h5>
+    <p style="color:var(--text2);">Posting list for "cat": docIDs = [3, 7, 11, 15, 20]</p>
+    <p style="color:var(--text2);">Step 1 — Gaps: [3, 4, 4, 4, 5]</p>
+    <p style="color:var(--text2);">Step 2 — VB encode each (all &lt;128, so 1 byte each): <code>[03, 04, 04, 04, 05]</code></p>
+    <p style="color:var(--text2);">Compressed size: 5 bytes vs 5×4=20 bytes uncompressed = <span class="hi3">75% reduction</span></p>
+  </div>
+</section>
+
+<!-- SKIP POINTERS -->
+<section id="skip-pointers">
+  <h2 class="section-title">Skip Pointers</h2>
+
+  <div class="card">
+    <h3>Why Skip Pointers?</h3>
+    <p style="color:var(--text2);">When computing AND (intersection) of two posting lists, we must merge them. For lists of length \(m\) and \(n\), naive merge takes \(O(m+n)\). <span class="hi">Skip pointers</span> allow us to jump ahead in a list, skipping large portions that can't possibly intersect. This speeds up AND queries significantly when lists are long and the intersection is small.</p>
+  </div>
+
+  <div class="card">
+    <h3>Skip Pointer Structure</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">At regular intervals in the posting list, add a "skip" pointer that jumps ahead by \(\sqrt{L}\) entries (where L is the list length). Each entry that has a skip also stores the docID at the skip destination.</p>
+    <div class="ex-box">
+      <h4>Example: AND intersection with skips</h4>
+      <p style="color:var(--text2);">List A: [2, 4, 8, <span style="color:var(--accent)">41</span>→, 48, 64, 128] (skip from 8 to 41)</p>
+      <p style="color:var(--text2);">List B: [1, 2, 3, 8, 11, 17, 21, 50, 64]</p>
+      <p style="color:var(--text2);margin-top:8px;">Merging at docID 8: both lists have 8 → add to result. Now advance A. A's skip points to 41; B's current is 11. Since 11 &lt; 41, we can't use the skip yet. Advance B normally... when B reaches 50, A's current is 41 — use A's normal advance to 48, then 64. B also has 64 → add to result.</p>
+      <p style="color:var(--text2);margin-top:8px;">Result: [2, 8, 64] — with skips, we avoided inspecting A's entries 4, 48 (jumped from 8 to 41).</p>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="def-box">
+      <span class="term">Optimal Skip Interval</span>
+      <p style="color:var(--text2);margin-top:8px;">For a posting list of length \(L\), place a skip every \(\sqrt{L}\) entries. This gives \(\sqrt{L}\) skip pointers, each spanning \(\sqrt{L}\) entries. Empirically the best trade-off between skip overhead and skip savings.</p>
+    </div>
+    <div class="warn-box">
+      <h4>Skip Pointers and Compression</h4>
+      <p style="color:var(--text2);">Skip pointers are harder to use with compressed posting lists since we can't easily random-access mid-list. Modern systems (e.g., using PForDelta in blocks) add skips at block boundaries, giving block-level skipping.</p>
+    </div>
+  </div>
+</section>
+
+<!-- BOOLEAN MODEL -->
+<section id="boolean-model">
+  <h2 class="section-title">The Boolean Retrieval Model</h2>
+
+  <div class="card">
+    <h3>Boolean Queries</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">The simplest retrieval model. Documents are retrieved if they satisfy a Boolean expression over query terms. No ranking — output is a set.</p>
+    <div class="grid-3">
+      <div class="def-box">
+        <span class="term">AND</span>
+        <p style="color:var(--text2);margin-top:8px;">Document must contain ALL terms. "cat AND dog" → only docs with both. Tends to give too few results.</p>
+      </div>
+      <div class="def-box">
+        <span class="term">OR</span>
+        <p style="color:var(--text2);margin-top:8px;">Document must contain ANY term. "cat OR dog" → docs with either. Tends to give too many results (information overload).</p>
+      </div>
+      <div class="def-box">
+        <span class="term">NOT</span>
+        <p style="color:var(--text2);margin-top:8px;">Document must NOT contain the term. "cat NOT dog" → docs with cat but without dog. Rarely used alone.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>AND Intersection Algorithm</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">To compute "term1 AND term2": retrieve both posting lists (sorted by docID), then merge them like merge sort — only output docIDs that appear in both.</p>
+    <div class="eq-block">
+      <div class="eq-title">Posting List Intersection (AND)</div>
+      <pre style="background:transparent;border:none;text-align:left;padding:10px;color:var(--text2);">Intersect(P1, P2):
+  result = []
+  p1, p2 = pointers to start of P1, P2
+  while p1 ≠ END and p2 ≠ END:
+    if P1[p1].docID == P2[p2].docID:
+      result.append(P1[p1].docID)
+      advance p1; advance p2
+    elif P1[p1].docID &lt; P2[p2].docID:
+      advance p1
+    else:
+      advance p2
+  return result
+  // Time complexity: O(|P1| + |P2|)</pre>
+    </div>
+    <div class="solved-box">
+      <h5>Worked AND Intersection Example</h5>
+      <p style="color:var(--text2);">P("time") = [1, 4, 7, 11, 21, 31, 41]<br>
+      P("dark") = [2, 4, 11, 16, 21, 35, 41, 50]<br>
+      <strong>Query: "time AND dark"</strong></p>
+      <p style="color:var(--text2);margin-top:8px;">Merge: 1&lt;2→adv p1 | 4=4→output 4, adv both | 7&lt;11→adv p1 | 11=11→output 11, adv both | 21=21→output 21, adv both | 31&lt;35→adv p1 | 41=41→output 41, adv both</p>
+      <p style="color:var(--text2);margin-top:8px;"><strong>Result: [4, 11, 21, 41]</strong> — inspected 15 entries total (7+8), returned 4.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Query Optimisation: Shortest List First</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">For multi-term AND queries, process terms in order of increasing posting list length (shortest first). This minimises the number of docIDs compared at each step.</p>
+    <div class="ex-box">
+      <h4>Example: 3-term AND Query</h4>
+      <p style="color:var(--text2);">Query: "cat AND dog AND zoo"</p>
+      <ul style="color:var(--text2);">
+        <li>P("zoo"): length 50 (rare term)</li>
+        <li>P("cat"): length 1,200</li>
+        <li>P("dog"): length 3,500</li>
+      </ul>
+      <p style="color:var(--text2);margin-top:8px;">Optimal order: intersect(zoo, cat) → get ~50 result → intersect that with dog. Much faster than starting with "dog".</p>
+    </div>
+    <div class="warn-box">
+      <h4>Problems with Pure Boolean Retrieval</h4>
+      <ul style="color:var(--text2);">
+        <li><strong>Null output</strong>: too many ANDs → zero results</li>
+        <li><strong>Information overload</strong>: too many ORs → thousands of unranked results</li>
+        <li><strong>No ranking</strong>: all matching documents treated equally</li>
+        <li><strong>Exact term matching</strong>: misses synonyms and near-matches</li>
+        <li>Solution: <span class="hi">Best-match (ranked) retrieval</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ZONE INDEXES -->
+<section id="zone-index">
+  <h2 class="section-title">Zone Indexes &amp; Weighted Zone Scoring</h2>
+
+  <div class="card">
+    <h3>What are Zones?</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">Documents have structure: <span class="hi">title</span>, <span class="hi2">abstract</span>, body, author, URL. A <span class="hi">zone</span> is a named field of a document. Zone indexes extend the inverted index to record <em>which zone</em> each term occurrence is in.</p>
+    <div class="def-box">
+      <span class="term">Zone Index (Fielded Index)</span>
+      <p style="color:var(--text2);margin-top:8px;">Each posting entry records not just (docID, tf) but also the <em>zone</em> in which the term appears: e.g., (docID=5, zone=TITLE, tf=1). Posting list format: term → [(docID, zone, tf), ...]</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Weighted Zone Scoring</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">Assign different weights to different zones — a match in the title is more indicative of relevance than a match in the body. The overall relevance score is a weighted sum over zones.</p>
+    <div class="eq-block">
+      <div class="eq-title">Weighted Zone Score</div>
+      \[ \text{Score}(d, q) = \sum_{z \in \text{zones}} w_z \cdot \text{match}(q, d, z) \]
+      <p style="color:var(--text2);margin-top:8px;">where \(w_z\) is the weight of zone \(z\) (learnt from training data or set manually), and \(\text{match}(q, d, z)\) is 1 if the query term appears in zone \(z\) of document \(d\), else 0. Weights must sum to 1: \(\sum_z w_z = 1\).</p>
+    </div>
+    <div class="solved-box">
+      <h5>Worked Example: Weighted Zone Scoring</h5>
+      <p style="color:var(--text2);">Query: "information retrieval". Document d has: title="Information Retrieval Systems", body="...learning information...</p>
+      <p style="color:var(--text2);">Zone weights: title=0.6, body=0.4.</p>
+      <p style="color:var(--text2);">match("information", d, title)=1, match("retrieval", d, title)=1, match("information", d, body)=1, match("retrieval", d, body)=0.</p>
+      <p style="color:var(--text2);">Per-term scores: "information": 0.6×1 + 0.4×1 = 1.0; "retrieval": 0.6×1 + 0.4×0 = 0.6.</p>
+      <p style="color:var(--text2);">Final score = (1.0 + 0.6) / 2 = <span class="hi3">0.8</span></p>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Typical Zone Weights</h3>
+      <ul>
+        <li><span class="hi">Title</span>: 0.4–0.6 (high — title summarises content)</li>
+        <li><span class="hi2">Abstract / Description</span>: 0.2–0.3</li>
+        <li>Body: 0.1–0.2 (low — less discriminative)</li>
+        <li>Anchor text: 0.3–0.5 (very informative on the web)</li>
+        <li>URL: 0.1–0.2</li>
+      </ul>
+      <p style="color:var(--text2);margin-top:12px;">Weights are often <strong>learnt</strong> from click-through data using machine learning.</p>
+    </div>
+    <div class="card">
+      <h3>Learning Zone Weights (Preview)</h3>
+      <p style="color:var(--text2);">Given training examples (query, doc, relevant/not), learn weights \(w_z\) that minimise classification error. This is the simplest form of <span class="hi2">Learning to Rank</span> — treating retrieval as a binary classification problem. Covered in detail in L08.</p>
+    </div>
+  </div>
+</section>
+
+<!-- DYNAMIC INDEXING -->
+<section id="dynamic-indexing">
+  <h2 class="section-title">Dynamic Indexing</h2>
+
+  <div class="card">
+    <h3>The Problem: The Web Changes</h3>
+    <p style="color:var(--text2);">Documents are added, deleted, and modified constantly. Rebuilding the full index from scratch every time is too slow. Dynamic indexing strategies maintain the index incrementally.</p>
+    <div class="grid-2">
+      <div class="def-box">
+        <span class="term">Main Index + Auxiliary Index</span>
+        <p style="color:var(--text2);margin-top:8px;">Keep a large <strong>main index</strong> on disk. New documents go into a small <strong>auxiliary index</strong> in RAM. At query time, search both and merge results. Periodically <strong>merge</strong> auxiliary into main index.</p>
+      </div>
+      <div class="def-box">
+        <span class="term">Invalidation Lists (Deletions)</span>
+        <p style="color:var(--text2);margin-top:8px;">When a document is deleted or updated, add it to an <strong>invalidation list</strong>. At retrieval time, filter out invalidated docIDs from results. Actual removal happens during next index merge.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Logarithmic Merge Strategy</h3>
+    <p style="color:var(--text2);">Maintain a series of indexes of exponentially growing sizes: \(I_0, I_1, I_2, \ldots\) where \(|I_k| = 2^k \cdot Z_0\). When \(I_0\) is full, merge with \(I_1\); if \(I_1\) overflows, merge with \(I_2\), etc. Amortised merge cost is \(O(\log^2 T)\) per document where \(T\) is total docs. Used in Lucene's segment-based architecture.</p>
+    <div class="ex-box">
+      <h4>Logarithmic Merge Example</h4>
+      <p style="color:var(--text2);">Z₀ = 2 documents per level. After 8 documents added:</p>
+      <ul style="color:var(--text2);">
+        <li>I₀: [d7, d8] (newest 2)</li>
+        <li>I₁: [d5, d6] (merged from I₀ overflow)</li>
+        <li>I₂: [d1, d2, d3, d4] (merged I₀+I₁ overflow)</li>
+      </ul>
+      <p style="color:var(--text2);">Query searches all three levels and merges results. This avoids rebuilding one large index.</p>
+    </div>
+  </div>
+</section>
+
+<section id="retrieval">
+  <h2 class="section-title">Part 3: Retrieval &amp; Best-Match Algorithm</h2>
+
+  <div class="card">
+    <h3>Boolean Retrieval vs Best-Match</h3>
+    <div class="grid-2">
+      <div>
+        <p class="hi">Boolean (AND):</p>
+        <ul>
+          <li>All query terms must match</li>
+          <li>All terms treated equally (binary)</li>
+          <li>Returns a set (unordered)</li>
+          <li>E.g. "time AND dark" → Doc 2 only</li>
+        </ul>
+      </div>
+      <div>
+        <p class="hi3">Best-Match (Ranked):</p>
+        <ul>
+          <li>More matching terms = higher score</li>
+          <li>Terms weighted by importance (TF-IDF)</li>
+          <li>Returns ranked list</li>
+          <li>More flexible, better user experience</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Best-Match Retrieval Algorithm (Co-ordinated Search)</div>
+    <pre style="background:transparent;border:none;text-align:left;padding:10px;color:var(--text2);">For each document I, Score(I) = 0
+For each query term t_k:
+    Search the lexicon for t_k
+    Pull out the posting list P(t_k)
+    For each document J in P(t_k):
+        Score(J) = Score(J) + weight(t_k, J)
+Return documents sorted by Score descending</pre>
+    <div class="practice-box">
+      <h5>🔶 Practice Example</h5>
+      <p style="color:var(--text2);">Given index: <em>run</em> → [Doc1(tf=3), Doc2(tf=1)], <em>shoe</em> → [Doc1(tf=2), Doc3(tf=5)]. Query: "run shoe" (binary weights). Compute Score for Doc1, Doc2, Doc3.</p>
+    </div>
+    <div class="solved-box">
+      <h5>✅ Solved Example</h5>
+      <p style="color:var(--text2);">Start: Score[1]=Score[2]=Score[3]=0<br>
+      Process "run": Doc1 → Score[1]+=1=1; Doc2 → Score[2]+=1=1<br>
+      Process "shoe": Doc1 → Score[1]+=1=2; Doc3 → Score[3]+=1=1<br>
+      Final ranking: Doc1=2, Doc2=1, Doc3=1 → Doc1 is most relevant!</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Relevance Estimation</h3>
+    <p style="color:var(--text2); margin-bottom:12px;">The process of computing a numeric relevance score for each document. Requires:</p>
+    <ul>
+      <li><span class="hi2">Term Weighting</span> — assigns numerical values to index terms (e.g., TF-IDF)</li>
+      <li><span class="hi">Similarity Coefficient</span> — combines weights to compute overall similarity (e.g., Cosine, Dice)</li>
+    </ul>
+    <p style="color:var(--text2); margin-top:12px;">More detail on weighting models in L03 and L07!</p>
+  </div>
+</section>
+
+<section id="summary">
+  <h2 class="section-title">Summary</h2>
+  <div class="sum-card"><h4>Text Processing</h4><p style="color:var(--text2);">Tokenisation + Stopword Removal + Stemming → normalised {docID, term, frequency} triples.</p></div>
+  <div class="sum-card"><h4>Inverted Index</h4><p style="color:var(--text2);">Term → [docID, tf] mapping enabling O(1) term lookup. Consists of Lexicon, Inverted Index, Document Index.</p></div>
+  <div class="sum-card"><h4>Index Construction</h4><p style="color:var(--text2);">BSBI: sort (termID,docID) pairs per block, merge. SPIMI: build partial indexes per block without global dictionary — faster and more scalable. Distributed indexing (MapReduce) for web scale.</p></div>
+  <div class="sum-card"><h4>Index Compression</h4><p style="color:var(--text2);">Gap encoding (d-gaps) + Variable-Byte encoding reduces index size dramatically. Skip pointers (every √L entries) speed up AND intersection. Both save I/O and RAM.</p></div>
+  <div class="sum-card"><h4>Boolean Model</h4><p style="color:var(--text2);">AND/OR/NOT over posting lists. AND intersection: O(|P1|+|P2|) two-pointer merge. Optimise: process shortest list first. Problems: null output (AND) and information overload (OR).</p></div>
+  <div class="sum-card"><h4>Zone Indexes &amp; Dynamic Indexing</h4><p style="color:var(--text2);">Zone indexes record per-field occurrences; weighted zone scoring weights title matches more than body matches. Dynamic indexing uses auxiliary index + invalidation list for real-time updates.</p></div>
+  <div class="sum-card"><h4>Retrieval</h4><p style="color:var(--text2);">Best-match: score each document by summing term weights for matching query terms. Return ranked list.</p></div>
+  <div class="sum-card"><h4>Key Trade-off</h4><p style="color:var(--text2);">The inverted index dramatically speeds up retrieval at the cost of storage and preprocessing time. Offline indexing; online retrieval.</p></div>
+</section>
+
+<section id="questions" class="q-section">
+  <h2 class="section-title" style="border:none;padding-left:0;">📝 Questions &amp; Practice</h2>
+
+  <div class="q-type">Multiple Choice Questions</div>
+
+  <div class="mcq"><div class="qtext">Q1. What is the purpose of tokenisation?</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) Remove stopwords from text</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) Convert a stream of characters into a stream of words/tokens</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Build the inverted index</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Compute TF-IDF weights</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q2. Stemming converts "connections" to:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) connect</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) connection</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) connected</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) conn</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q3. What does the inverted index map?</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) Documents to their URLs</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) Terms to documents containing them</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Documents to their TF-IDF scores</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Queries to their results</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q4. Stopword removal is primarily applied to:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) Infrequent terms</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) Very frequent terms that have low discriminative value</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Proper nouns and named entities</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Query terms only</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q5. In the co-ordinated search algorithm, Score(J) is computed by:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) Counting the number of unique terms in document J</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) Summing weights of query terms that appear in J</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Dividing document length by number of matching terms</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Multiplying precision by recall</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q6. Which sub-structure of the index stores all unique terms and their statistics?</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Lexicon</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) Document Index</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Posting List</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Term Matrix</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q7. Indexing is typically:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) Performed in real-time for every query</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) An offline process performed once (or periodically)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Done only when the user adds new stopwords</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Never needed if BM25 is used</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q8. "to be or not to be" is a problematic query if the system uses:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Stopword removal (all words removed)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) TF-IDF weighting</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) BM25</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Stemming</div>
+  </div>
+
+  <div class="q-type">True / False Questions</div>
+  <div class="tf-row"><span class="tf-q">1. Stemming always improves retrieval effectiveness.</span><div><button class="tb tf" onclick="tfA(this)">True</button><button class="tb tt" onclick="tfA(this)">False</button><div class="tf-ans wa">FALSE — Overstemming can hurt effectiveness by merging unrelated terms.</div></div></div>
+  <div class="tf-row"><span class="tf-q">2. An inverted index maps terms to the documents containing them.</span><div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button><div class="tf-ans ca">TRUE — This is the fundamental structure of the inverted index.</div></div></div>
+  <div class="tf-row"><span class="tf-q">3. Tokenisation only involves splitting text on whitespace.</span><div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button><div class="tf-ans wa">FALSE — Tokenisation must handle hyphens, punctuation, numbers, different languages, case, etc.</div></div></div>
+  <div class="tf-row"><span class="tf-q">4. Boolean AND retrieval returns a ranked list.</span><div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button><div class="tf-ans wa">FALSE — Boolean AND returns an unordered set of matching documents.</div></div></div>
+  <div class="tf-row"><span class="tf-q">5. The Document Index stores each document's statistics (e.g., length).</span><div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button><div class="tf-ans ca">TRUE — The document index stores per-document metadata needed for normalisation and ranking.</div></div></div>
+  <div class="tf-row"><span class="tf-q">6. Stemming is only applied at index time, not at query time.</span><div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button><div class="tf-ans wa">FALSE — Stemming should be applied consistently at both index time and query time so terms match.</div></div></div>
+
+  <div class="q-type">Short Answer Questions</div>
+  <div class="sa"><div class="qt">Q1. Describe the three steps of text processing and explain the purpose of each.</div><button class="rbtn" onclick="rev(this)">Reveal Answer</button><div class="ans">(1) Tokenisation: converts raw text to a stream of words, handling punctuation, hyphens, numbers, case. Creates candidate index terms. (2) Stopword Removal: removes high-frequency, low-discriminative words (the, and, of) to reduce index size and improve retrieval speed. (3) Stemming: reduces morphological variants to a common root (running → run) so query terms match document terms even if inflected differently.</div></div>
+  <div class="sa"><div class="qt">Q2. What is a posting list and what information does it contain?</div><button class="rbtn" onclick="rev(this)">Reveal Answer</button><div class="ans">A posting list is an entry in the inverted index for a specific term. It contains: (1) the document IDs of all documents containing the term; (2) the term frequency (tf) in each document; (3) optionally, positions of occurrences for phrase/proximity queries. The list is typically sorted by docID for efficient intersection operations.</div></div>
+  <div class="sa"><div class="qt">Q3. Explain why Boolean AND retrieval can suffer from "null output" or "information overload".</div><button class="rbtn" onclick="rev(this)">Reveal Answer</button><div class="ans">Null output: with many query terms connected by AND, only documents containing ALL terms are returned. Rare combinations return nothing. Information overload: with OR, any document matching any term is returned, potentially thousands of unranked results. Best-match retrieval avoids both by returning ranked results with partial matches.</div></div>
+  <div class="sa"><div class="qt">Q4. How are inverted files created? Describe the main steps.</div><button class="rbtn" onclick="rev(this)">Reveal Answer</button><div class="ans">(1) Parse all documents, extract tokens, assign docIDs. (2) Create (term, docID, tf) triples. (3) Sort triples alphabetically by term (then by docID). (4) Merge triples for the same term into posting lists. (5) Compress posting lists for storage efficiency. (6) Store sorted lexicon for fast binary search. This is done offline before any queries are processed.</div></div>
+
+  <div class="sa"><div class="qt">Q5. What is the difference between BSBI and SPIMI index construction algorithms?</div><button class="rbtn" onclick="rev(this)">Reveal Answer</button><div class="ans">Both process large collections in memory-sized blocks and merge on disk. BSBI creates (termID, docID) pairs, sorts them, and writes sorted runs to disk — requires a global term dictionary in RAM. SPIMI builds partial inverted indexes directly without a global dictionary: for each token it appends the docID to the term's posting list, growing the list dynamically. When memory is full, it sorts terms and writes the block. SPIMI is faster (only sort terms, not all pairs) and handles larger vocabularies.</div></div>
+
+  <div class="sa"><div class="qt">Q6. Explain skip pointers. When do they provide the greatest benefit?</div><button class="rbtn" onclick="rev(this)">Reveal Answer</button><div class="ans">Skip pointers are extra forward pointers placed every √L positions in a posting list of length L. During AND intersection, if the skip destination is still less than the current position in the other list, we can jump ahead without inspecting each intermediate entry. Greatest benefit: when posting lists are long and the intersection is small (many entries can be skipped). Least benefit: when the intersection is large relative to list size — few skips are possible because lists advance together. Also, skips are harder to use with heavily compressed lists.</div></div>
+
+  <div class="sa"><div class="qt">Q7. What is dynamic indexing and why is it needed?</div><button class="rbtn" onclick="rev(this)">Reveal Answer</button><div class="ans">Dynamic indexing allows an IR system to handle documents that are added, updated, or deleted without rebuilding the entire index from scratch. The approach: maintain a large main index on disk and a small auxiliary index in RAM for new documents. At query time, search both and merge results. Deletions are tracked via an invalidation list and filtered at query time. Periodically the auxiliary index is merged into the main index. This is essential for web search where millions of pages change daily. Lucene uses a logarithmic merge strategy (segment-based) for efficient incremental updates.</div></div>
+
+  <div class="q-type">Exam-Style Questions</div>
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[6 marks]</span>
+    <div class="q-text"><strong>Q1.</strong> Describe the three main steps of text processing in an IR system. For each step, explain its purpose, give an example, and discuss one potential problem. Use the phrase "University of Glasgow Computing Science" as your example text.</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">Step 1 – Tokenisation [2]: Splits text into tokens. "University of Glasgow Computing Science" → [University, of, Glasgow, Computing, Science]. Problem: how to handle "University of Glasgow" — is it one entity or three tokens? Named entity recognition needed. Step 2 – Stopword Removal [2]: Remove low-discriminative words. [University, Glasgow, Computing, Science] (of removed). Problem: "to be or not to be" — all words are stopwords; meaning lost. Step 3 – Stemming [2]: Reduce to root forms. [Univers, Glasgow, Comput, Scienc]. Problem: "Glasgow" is a proper noun and shouldn't be stemmed; stemming may damage named entities.</div>
+  </div>
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q2.</strong> Trace through the process of building an inverted index for the following two documents:<br>Doc1: "now is the time for all good men"<br>Doc2: "it was a dark and stormy night"<br>Show the lexicon and posting lists after tokenisation, stopword removal, and stemming. Then show how the query "time night" would be processed.</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">After tokenisation: Doc1=[now,is,the,time,for,all,good,men], Doc2=[it,was,a,dark,and,stormy,night]. After stop removal: Doc1=[now,time,good,men], Doc2=[dark,stormy,night]. After stemming: Doc1=[now,time,good,men], Doc2=[dark,stormi,night]. Lexicon + posting lists: dark→{Doc2:1}, good→{Doc1:1}, men→{Doc1:1}, night→{Doc2:1}, now→{Doc1:1}, stormi→{Doc2:1}, time→{Doc1:1}. Query "time night": fetch time→{Doc1}, night→{Doc2}. Co-ordinate search: Score(Doc1)+=1 (for time), Score(Doc2)+=1 (for night). Both score 1. No document contains both terms. In Boolean AND: no results returned (null output problem).</div>
+  </div>
+
+  <!-- ADDITIONAL EXAM QUESTIONS -->
+  <div class="q-type">Additional Exam-Style Questions</div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q3.</strong> Describe the BSBI and SPIMI algorithms for large-scale index construction. What problem does each solve, and what is the key advantage of SPIMI over BSBI?</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">
+      <strong>Problem [1 mark]:</strong> Web-scale collections are too large to build an inverted index entirely in RAM. Both algorithms process the collection in blocks, writing partial indexes to disk and merging.<br><br>
+      <strong>BSBI [3 marks]:</strong> Block Sort-Based Indexing. (1) Parse document block → create (termID, docID) pairs. (2) Sort pairs by termID, then docID. (3) Write sorted block to disk as a "run". (4) Repeat. (5) Merge all sorted runs into final index. Requires a global term→termID dictionary in RAM — problematic for very large vocabularies.<br><br>
+      <strong>SPIMI [3 marks]:</strong> Single-Pass In-Memory Indexing. Processes the token stream one pass. For each (term, docID): if term not in local dictionary, create new posting list; else append docID. When memory full, sort terms and write block to disk. No global dictionary needed — terms mapped locally per block.<br><br>
+      <strong>SPIMI advantage [1 mark]:</strong> No global term dictionary required. Posting lists grow dynamically. Faster because only terms (not (termID,docID) pairs) need sorting. More memory efficient — can handle arbitrarily large vocabularies.
+    </div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H</span><span class="marks">[6 marks]</span>
+    <div class="q-text"><strong>Q4.</strong> Explain gap encoding and variable-byte encoding as methods of index compression. Given the posting list for term "run" = [3, 7, 11, 200, 201, 350], show the gap-encoded sequence and describe how variable-byte encoding would store gap 197.</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">
+      <strong>Gap encoding [2 marks]:</strong> Instead of storing raw docIDs, store the difference between consecutive docIDs (d-gaps). Since posting lists are sorted by docID, gaps are always positive. Small gaps (common for frequent terms) require fewer bits. The posting list [3, 7, 11, 200, 201, 350] becomes gaps: [3, 4, 4, 189, 1, 149].<br><br>
+      <strong>Variable-byte encoding [2 marks]:</strong> Each integer is encoded using a variable number of bytes. The most significant bit of each byte is a continuation flag (1=more bytes follow, 0=last byte). The remaining 7 bits of each byte carry data. Numbers 0–127 need 1 byte; 128–16383 need 2 bytes, etc.<br><br>
+      <strong>Encoding gap 197 [2 marks]:</strong> 197 in binary = 11000101. Since 197 > 127, needs 2 bytes. Low 7 bits = 1000101 = 69. High bits = 1 = 0000001. Encode as: byte1 = [1|0000001] = 0x81 (continuation), byte2 = [0|1000101] = 0x45 (final). So gap 197 = bytes [0x81, 0x45].
+    </div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q5.</strong> Describe the Boolean AND intersection algorithm for two posting lists. Given P("computer") = [1, 3, 5, 8, 11, 17] and P("science") = [2, 3, 7, 8, 11, 14, 21], trace through the intersection algorithm step by step and give the result. Then explain the query optimisation strategy for multi-term AND queries.</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">
+      <strong>Algorithm [2 marks]:</strong> Two pointers p1, p2 start at beginning. While both lists unexhausted: if P1[p1]==P2[p2], output docID and advance both; if P1[p1]&lt;P2[p2], advance p1; else advance p2. Time: O(|P1|+|P2|).<br><br>
+      <strong>Trace [4 marks]:</strong><br>
+      p1=1, p2=2: 1&lt;2 → advance p1<br>
+      p1=3, p2=2: 3&gt;2 → advance p2<br>
+      p1=3, p2=3: 3=3 → output 3, advance both<br>
+      p1=5, p2=7: 5&lt;7 → advance p1<br>
+      p1=8, p2=7: 8&gt;7 → advance p2<br>
+      p1=8, p2=8: 8=8 → output 8, advance both<br>
+      p1=11, p2=11: 11=11 → output 11, advance both<br>
+      p1=17, p2=14: 17&gt;14 → advance p2<br>
+      p1=17, p2=21: 17&lt;21 → advance p1 → p1=END<br>
+      <strong>Result: [3, 8, 11]</strong><br><br>
+      <strong>Query optimisation [2 marks]:</strong> For multi-term AND queries with k terms, process posting lists in order of increasing length (shortest first). After intersecting the two shortest lists, the intermediate result is at most as large as the shorter list. This intermediate result is then intersected with the next shortest list. Processing shortest-first minimises the total number of comparisons at each step.
+    </div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H</span><span class="marks">[6 marks]</span>
+    <div class="q-text"><strong>Q6.</strong> Explain zone indexes and weighted zone scoring. Given zone weights w(title)=0.6, w(body)=0.4, and two documents: Doc1 has query term in title and body; Doc2 has query term in body only. Compute the weighted zone score for each document and rank them.</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">
+      <strong>Zone indexes [2 marks]:</strong> Extend the inverted index to record which zone (field) of a document each term occurrence is in. A zone is a named region of a document (title, abstract, body, anchor text, URL). Posting list entries include zone information: (docID, zone, tf). This allows the retrieval system to weight matches differently by zone.<br><br>
+      <strong>Weighted zone scoring [2 marks]:</strong> Score(d,q) = Σ_z w_z × match(q,d,z), where w_z is the weight of zone z (Σw_z=1) and match=1 if the query term appears in zone z of document d.<br><br>
+      <strong>Computation [2 marks]:</strong><br>
+      Doc1: match(title)=1, match(body)=1 → Score = 0.6×1 + 0.4×1 = <strong>1.0</strong><br>
+      Doc2: match(title)=0, match(body)=1 → Score = 0.6×0 + 0.4×1 = <strong>0.4</strong><br>
+      Ranking: Doc1 (1.0) &gt; Doc2 (0.4). Title match is much more valuable, correctly reflecting that title terms are stronger indicators of document content.
+    </div>
+  </div>
+
+  <!-- ADDITIONAL MCQs -->
+  <div class="q-type">Additional MCQs</div>
+
+  <div class="mcq"><div class="qtext">Q9. What is the key advantage of SPIMI over BSBI?</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) SPIMI sorts (termID, docID) pairs more efficiently</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) SPIMI does not require a global term dictionary in RAM</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) SPIMI uses less disk space</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) SPIMI works only for small collections</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q10. Gap encoding in posting lists stores:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) The absolute docID for each posting</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) The difference between consecutive docIDs</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) The term frequency in each document</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The document length for normalisation</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q11. Skip pointers in posting lists are primarily used to:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) Compress docIDs using variable-byte encoding</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) Store term positions for phrase queries</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">C) Speed up AND intersection by jumping ahead in a list</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Support OR queries with multiple terms</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q12. The optimal skip interval for a posting list of length L is:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) L/2</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) √L</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) log₂(L)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) L²</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q13. In Boolean retrieval, the "null output" problem occurs when:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) Too many documents match with OR</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) Too many AND terms result in no document matching all of them</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) The index is too compressed to read</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The lexicon is not sorted</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q14. A zone index extends the inverted index by recording:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) The URL of each document</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) Which field (title, body, etc.) each term occurrence is in</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) The PageRank of each document</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The tf-idf score for each term</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q15. In variable-byte encoding, the continuation bit (MSB) of each byte indicates:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) Whether the encoded number is positive or negative</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) Whether more bytes follow (1=yes, 0=last byte)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Whether the term is a stopword</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Whether the document is relevant</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q16. For a 3-term AND query with posting list lengths 50, 2000, 80000, the optimal processing order is:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) 50, 2000, 80000 (shortest first)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) 80000, 2000, 50 (longest first)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Alphabetical order of terms</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Random order — it doesn't matter</div>
+  </div>
+
+  <!-- ADDITIONAL TRUE/FALSE -->
+  <div class="q-type">Additional True / False Questions</div>
+  <div class="tf-row"><span class="tf-q">7. BSBI requires a global term dictionary that maps terms to integer IDs.</span><div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button><div class="tf-ans ca">TRUE — BSBI works with termIDs, so a global term→termID dictionary must be maintained in RAM.</div></div></div>
+  <div class="tf-row"><span class="tf-q">8. Gap encoding is effective because posting lists are sorted in ascending docID order.</span><div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button><div class="tf-ans ca">TRUE — Sorted order ensures all gaps are positive and typically small for frequent terms.</div></div></div>
+  <div class="tf-row"><span class="tf-q">9. Boolean OR retrieval returns a ranked list of documents.</span><div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button><div class="tf-ans wa">FALSE — Boolean retrieval (AND/OR/NOT) returns an unordered set. No ranking is produced.</div></div></div>
+  <div class="tf-row"><span class="tf-q">10. Zone weights must sum to 1 in weighted zone scoring.</span><div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button><div class="tf-ans ca">TRUE — Zone weights are typically normalised to sum to 1, making the score a convex combination of zone matches.</div></div></div>
+  <div class="tf-row"><span class="tf-q">11. In dynamic indexing, deleted documents are immediately removed from the main index.</span><div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button><div class="tf-ans wa">FALSE — Deletions are recorded in an invalidation list and filtered at query time; actual removal happens during index merge.</div></div></div>
+  <div class="tf-row"><span class="tf-q">12. Skip pointers work best when the intersection of two posting lists is large relative to list sizes.</span><div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button><div class="tf-ans wa">FALSE — Skip pointers are most beneficial when the intersection is small (many entries can be skipped). If intersection is large, few skips are possible.</div></div></div>
+
+  <div class="q-type">Flashcards</div>
+  <div class="fc-grid">
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Tokenisation</div><div class="fcb">Converting a character stream to a stream of word tokens. Must handle punctuation, hyphens, numbers, case, multi-language.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Stopword</div><div class="fcb">A very frequent word with low discriminative value for retrieval. E.g. "the", "and", "of". Typically removed at indexing or query time.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Stemming</div><div class="fcb">Reducing word variants to a common root form. E.g. connect(ed/ing/ions) → connect. Porter Stemmer is the classic algorithm.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Inverted Index</div><div class="fcb">Core IR data structure: maps each term to a posting list of documents containing it. Enables fast lookup by term.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Posting List</div><div class="fcb">For a given term: list of (docID, tf, [positions]) pairs. Sorted by docID for efficient intersection.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Lexicon</div><div class="fcb">Dictionary of all unique index terms with statistics (df, cf). Sorted alphabetically for O(log n) lookup.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Best-Match Retrieval</div><div class="fcb">Ranks documents by sum of term weights for matching query terms. More matches = higher rank. Returns ranked list, not binary set.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Term Frequency (tf)</div><div class="fcb">Number of times a term appears in a specific document. High tf suggests the document is "about" that term.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">BSBI</div><div class="fcb">Block Sort-Based Indexing: processes docs in fixed blocks, creates (termID,docID) pairs, sorts each block, writes to disk, then merges all blocks. Needs global term dictionary in RAM.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">SPIMI</div><div class="fcb">Single-Pass In-Memory Indexing: builds partial inverted indexes directly per block. No global term dictionary needed. Faster than BSBI. Handles arbitrarily large vocabularies.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Gap Encoding (d-gaps)</div><div class="fcb">Store differences between consecutive docIDs instead of raw docIDs. Since lists are sorted, gaps are positive and small for frequent terms → highly compressible.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Variable-Byte Encoding</div><div class="fcb">Encode integers using variable number of bytes. MSB is a continuation flag (1=more follows). Numbers &lt;128: 1 byte; 128–16383: 2 bytes. Widely used in Lucene/Elasticsearch.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Skip Pointers</div><div class="fcb">Extra pointers in posting lists placed every √L entries. Allow AND intersection to jump ahead in a list, skipping entries that can't possibly be in the intersection.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Boolean AND</div><div class="fcb">Intersection of posting lists: output only docIDs in BOTH lists. O(|P1|+|P2|) via two-pointer merge. Returns unranked set. Optimise: process shortest list first.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Zone Index</div><div class="fcb">Extended inverted index that records which document field (zone) each term appears in. Enables weighted zone scoring where title matches outweigh body matches.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Weighted Zone Scoring</div><div class="fcb">Score(d,q) = Σ_z w_z × match(q,d,z). Zone weights (Σ=1) reflect importance of each field. Title weight typically highest. Weights can be learnt from training data.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Dynamic Indexing</div><div class="fcb">Main index on disk + small auxiliary index in RAM. New docs added to auxiliary. Deletions tracked via invalidation list. Auxiliary periodically merged into main index.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Null Output Problem</div><div class="fcb">In Boolean AND: too many query terms → no document contains all of them → empty result set. Best-match retrieval solves this by returning partial matches ranked by score.</div></div></div>
+  </div>
+</section>
+
+</div></main>
+
+<script>
+window.addEventListener('scroll',()=>{
+  const p=document.getElementById('pb');
+  p.style.width=(window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%';
+  document.getElementById('bt').style.display=window.scrollY>400?'block':'none';
+  document.querySelectorAll('nav a').forEach(a=>{
+    const s=document.querySelector(a.getAttribute('href'));
+    if(s){const r=s.getBoundingClientRect();a.classList.toggle('active',r.top<=100&&r.bottom>100);}
+  });
+});
+function toggleTheme(){document.body.dataset.theme=document.body.dataset.theme==='light'?'':'light';}
+function answerMCQ(el,t){const i=el.parentElement;i.querySelectorAll('.opt').forEach(o=>o.classList.remove('c','w'));el.classList.add(t==='correct'?'c':'w');}
+function tfA(btn){const i=btn.closest('.tf-row');i.querySelector('.tf-ans').style.display='block';}
+function rev(btn){const b=btn.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';btn.textContent=b.style.display==='block'?'Hide Answer':'Reveal Answer';}
+function rvb(el){el.classList.add('rv');}
+document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=document.querySelector(a.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}));
+</script>
+
+</body>
+</html>

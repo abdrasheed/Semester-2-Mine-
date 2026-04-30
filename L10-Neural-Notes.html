@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>L10: Neural Retrieval & Re-ranking</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+  :root { --bg:#0f0f1a;--bg2:#1a1a2e;--bg3:#16213e;--accent:#7c3aed;--accent2:#06b6d4;--accent3:#10b981;--text:#e2e8f0;--text2:#94a3b8;--yellow:#f59e0b;--red:#ef4444;--card:#1e293b; }
+  [data-theme="light"]{--bg:#f8fafc;--bg2:#f1f5f9;--bg3:#e2e8f0;--text:#0f172a;--text2:#475569;--card:#ffffff;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;overflow-x:hidden;}
+  #pb{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;z-index:1000;transition:width .1s;}
+  header{background:linear-gradient(135deg,#0f0f1a 0%,#1a0533 50%,#0a1628 100%);padding:80px 40px 60px;text-align:center;position:relative;overflow:hidden;}
+  header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at center,rgba(124,58,237,.15) 0%,transparent 60%);animation:rotate 20s linear infinite;}
+  @keyframes rotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes slideInLeft{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+  .badge{display:inline-block;background:var(--accent);color:#fff;padding:6px 18px;border-radius:20px;font-size:.85rem;margin-bottom:16px;animation:fadeInUp .6s ease;}
+  h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;margin-bottom:16px;background:linear-gradient(135deg,#fff 0%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:fadeInUp .8s ease;}
+  .subtitle{color:var(--text2);font-size:1.1rem;animation:fadeInUp 1s ease;}
+  .container{max-width:1200px;margin:0 auto;padding:0 24px;}
+  nav{position:fixed;right:20px;top:50%;transform:translateY(-50%);background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:16px;z-index:100;max-width:220px;max-height:70vh;overflow-y:auto;}
+  nav h3{font-size:.75rem;color:var(--accent2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+  nav a{display:block;color:var(--text2);text-decoration:none;font-size:.8rem;padding:4px 8px;border-left:2px solid transparent;transition:all .2s;}
+  nav a:hover,nav a.active{color:var(--accent);border-left-color:var(--accent);}
+  .theme-btn{position:fixed;left:20px;top:20px;background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:8px;padding:8px 16px;color:var(--text);cursor:pointer;z-index:100;font-size:.85rem;}
+  .back-top{position:fixed;bottom:30px;right:30px;background:var(--accent);color:#fff;border:none;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:none;z-index:100;box-shadow:0 4px 15px rgba(124,58,237,.4);}
+  main{padding:60px 0;}
+  section{margin-bottom:60px;animation:fadeIn .6s ease;}
+  .section-title{font-size:1.8rem;font-weight:700;margin-bottom:24px;padding-left:16px;border-left:4px solid var(--accent);color:var(--text);}
+  .card{background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:28px;margin-bottom:20px;transition:transform .2s,box-shadow .2s;}
+  .card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3);}
+  .card h3{color:var(--accent2);margin-bottom:12px;font-size:1.1rem;}
+  .card p,.card li{color:var(--text2);line-height:1.7;}
+  .card ul{padding-left:20px;}.card ul li{margin-bottom:8px;}
+  .hi{color:var(--accent);font-weight:600;}.hi2{color:var(--accent2);font-weight:600;}.hi3{color:var(--accent3);font-weight:600;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  @media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr;}nav{display:none;}}
+  @media(min-width:769px){body{padding-right:260px;}}
+  .def-box{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:20px;margin:20px 0;}
+  .def-box .term{color:var(--accent);font-weight:700;font-size:1.05rem;}
+  .ex-box{background:rgba(16,185,129,.08);border-left:4px solid var(--accent3);border-radius:0 12px 12px 0;padding:20px;margin:20px 0;}
+  .ex-box h4{color:var(--accent3);margin-bottom:10px;}
+  .warn-box{background:rgba(245,158,11,.08);border-left:4px solid var(--yellow);border-radius:0 12px 12px 0;padding:20px;margin:20px 0;}
+  .warn-box h4{color:var(--yellow);margin-bottom:10px;}
+  .svg-cont{background:var(--bg2);border-radius:16px;padding:30px;margin:30px 0;text-align:center;}
+  .svg-cont h4{color:var(--accent2);margin-bottom:20px;}
+  /* Equations */
+  .eq-block{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.4);border-radius:12px;padding:24px;margin:24px 0;text-align:center;}
+  .eq-block .eq-title{color:var(--accent);font-weight:700;margin-bottom:12px;font-size:1rem;}
+  .practice-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.4);border-radius:12px;padding:20px;margin:12px 0;}
+  .practice-box h5{color:var(--yellow);margin-bottom:10px;}
+  .solved-box{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.4);border-radius:12px;padding:20px;margin:12px 0;}
+  .solved-box h5{color:var(--accent3);margin-bottom:10px;}
+  /* Questions */
+  .q-section{background:var(--bg2);border-radius:20px;padding:40px;margin-top:40px;}
+  .q-type{font-size:1.4rem;font-weight:700;color:var(--accent);margin:30px 0 16px;padding-bottom:8px;border-bottom:2px solid rgba(124,58,237,.3);}
+  .mcq{background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .mcq .qtext{font-weight:600;color:var(--text);margin-bottom:12px;}
+  .opt{padding:8px 14px;border-radius:8px;cursor:pointer;color:var(--text2);border:1px solid rgba(255,255,255,.07);margin:4px 0;transition:all .2s;}
+  .opt:hover{background:rgba(124,58,237,.15);border-color:var(--accent);}
+  .opt.c{background:rgba(16,185,129,.2);border-color:var(--accent3);color:var(--accent3);}
+  .opt.w{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red);}
+  .tf-row{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .tf-q{flex:1;color:var(--text2);}
+  .tb{padding:6px 16px;border-radius:6px;border:none;cursor:pointer;font-size:.85rem;transition:all .2s;}
+  .tb.tt{background:rgba(16,185,129,.2);color:var(--accent3);}
+  .tb.tf{background:rgba(239,68,68,.15);color:var(--red);}
+  .tf-ans{display:none;font-size:.85rem;padding:6px 10px;border-radius:6px;margin-top:8px;}
+  .tf-ans.ca{background:rgba(16,185,129,.15);color:var(--accent3);}
+  .tf-ans.wa{background:rgba(239,68,68,.1);color:var(--red);}
+  .sa{background:var(--card);border-radius:12px;padding:20px;margin-bottom:12px;}
+  .sa .qt{color:var(--text2);margin-bottom:12px;font-weight:600;}
+  .rbtn{background:var(--accent);color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .2s;}
+  .rbtn:hover{background:#6d28d9;}
+  .ans{display:none;margin-top:12px;background:rgba(16,185,129,.08);border-left:3px solid var(--accent3);padding:14px;border-radius:0 8px 8px 0;color:var(--text2);line-height:1.6;}
+  .fitb{background:var(--card);border-radius:10px;padding:16px 20px;margin-bottom:10px;color:var(--text2);}
+  .blank{display:inline-block;min-width:100px;border-bottom:2px solid var(--accent);margin:0 6px;text-align:center;color:transparent;cursor:pointer;transition:all .3s;padding:0 4px;}
+  .blank.rv{color:var(--accent);}
+  .fc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;margin-top:20px;}
+  .fc{perspective:1000px;height:150px;cursor:pointer;}
+  .fci{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d;}
+  .fc:hover .fci,.fc.flipped .fci{transform:rotateY(180deg);}
+  .fcf,.fcb{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;}
+  .fcf{background:linear-gradient(135deg,var(--accent),#5b21b6);color:#fff;font-weight:600;}
+  .fcb{background:var(--card);border:1px solid rgba(6,182,212,.3);color:var(--text2);font-size:.9rem;transform:rotateY(180deg);}
+  .exam-q{background:var(--bg3);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .tag{display:inline-block;background:var(--yellow);color:#000;font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:4px;margin-right:8px;}
+  .marks{display:inline-block;background:rgba(245,158,11,.2);color:var(--yellow);font-size:.75rem;padding:2px 8px;border-radius:4px;}
+  .obj-list{list-style:none;}.obj-list li{padding:10px 16px;margin-bottom:8px;background:var(--card);border-radius:8px;color:var(--text2);display:flex;align-items:flex-start;gap:10px;animation:slideInLeft .5s ease;}
+  .obj-list li::before{content:"✓";color:var(--accent3);font-weight:700;margin-top:1px;}
+  .sum-card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border-radius:16px;padding:24px;border-left:4px solid var(--accent);margin-bottom:16px;}
+  .sum-card h4{color:var(--accent2);margin-bottom:10px;}
+  code{background:rgba(124,58,237,.15);color:var(--accent2);padding:2px 6px;border-radius:4px;font-family:monospace;}
+  pre{background:#0d1117;border-radius:12px;padding:24px;overflow-x:auto;margin:20px 0;border:1px solid rgba(255,255,255,.05);}
+  pre code{background:none;padding:0;color:#c9d1d9;}
+  .kw{color:#ff7b72;}.fn{color:#d2a8ff;}.str{color:#a5d6ff;}.cm{color:#8b949e;}.num{color:#79c0ff;}
+</style>
+</head>
+<body>
+<div id="pb"></div>
+<button class="theme-btn" onclick="toggleTheme()">🌓 Theme</button>
+<button class="back-top" id="bt" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<nav><h3>Contents</h3><a href="#overview">Overview</a>
+<a href="#transformer-lm">Transformer Crash Course</a>
+<a href="#model-framework">Model Framework</a>
+<a href="#relevance-models">Relevance Models Taxonomy</a>
+<a href="#sparse-retrieval">Sparse Retrieval</a>
+<a href="#lsr-models">LSR: DeepCT/EPIC/TILDE</a>
+<a href="#dense-retrieval">Dense / Bi-Encoder</a>
+<a href="#cross-encoders">Cross-Encoders</a>
+<a href="#interaction-models">Interaction Models</a>
+<a href="#colbert">ColBERT</a>
+<a href="#listwise-duo">Listwise &amp; Duo</a>
+<a href="#quality-est">Quality Estimators</a>
+<a href="#training">Training Strategies</a>
+<a href="#engines">Retrieval Engines</a>
+<a href="#rag">RAG</a>
+<a href="#questions">Questions</a>
+<a href="#exam">Exam Questions</a></nav>
+<header>
+  <div class="badge">L10</div>
+  <h1>Neural Retrieval & Re-ranking</h1>
+  <p class="subtitle">Bi-Encoders · Cross-Encoders · ColBERT · Training · RAG</p>
+</header>
+<main><div class="container">
+
+<section id="overview">
+<h2>1. Overview – Neural Retrieval &amp; Re-ranking</h2>
+<div class="card">
+<p>Neural IR replaces or augments classical retrieval (BM25, TF-IDF) with deep learning models that learn
+semantic representations from text. The central question: <em>how to estimate relevance between a query and a document?</em></p>
+<svg viewBox="0 0 720 160" style="width:100%;max-width:720px;display:block;margin:auto">
+  <defs>
+    <marker id="arr10" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#6366f1"/>
+    </marker>
+  </defs>
+  <rect x="10" y="60" width="120" height="40" rx="8" fill="#6366f1" opacity=".9"/>
+  <text x="70" y="85" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">Query</text>
+  <rect x="300" y="30" width="130" height="40" rx="8" fill="#0ea5e9" opacity=".9"/>
+  <text x="365" y="55" text-anchor="middle" fill="#fff" font-size="13">Neural Model</text>
+  <rect x="300" y="90" width="130" height="40" rx="8" fill="#0ea5e9" opacity=".9"/>
+  <text x="365" y="115" text-anchor="middle" fill="#fff" font-size="13">Architecture</text>
+  <rect x="580" y="60" width="130" height="40" rx="8" fill="#10b981" opacity=".9"/>
+  <text x="645" y="80" text-anchor="middle" fill="#fff" font-size="13">Relevance</text>
+  <text x="645" y="96" text-anchor="middle" fill="#fff" font-size="13">Score</text>
+  <rect x="10" y="110" width="120" height="40" rx="8" fill="#8b5cf6" opacity=".9"/>
+  <text x="70" y="135" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">Document</text>
+  <line x1="130" y1="80" x2="295" y2="50" stroke="#6366f1" stroke-width="2" marker-end="url(#arr10)"/>
+  <line x1="130" y1="130" x2="295" y2="110" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arr10)"/>
+  <line x1="430" y1="60" x2="575" y2="75" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arr10)"/>
+</svg>
+<h4>Two Sub-problems</h4>
+<ul>
+<li><strong>Relevance Estimation</strong>: What architecture and training signal to use?</li>
+<li><strong>Retrieval Engine</strong>: How to efficiently find top results at scale?</li>
+</ul>
+</div>
+</section>
+
+<section id="transformer-lm">
+<h2>2. Transformer Language Model Crash Course</h2>
+<div class="card">
+<p style="color:var(--text2);">All modern neural IR models are built on Transformer language models (BERT, T5, RoBERTa). Understanding the building blocks is essential for understanding why different architectures have different cost profiles.</p>
+
+<h4>Token Embeddings</h4>
+<p style="color:var(--text2);">Input text is tokenised into subword tokens (BERT uses WordPiece: ~30k vocabulary). Each token maps to a learnable embedding vector (typically 768 dims). Special tokens: <code>[CLS]</code> (classification token, first position), <code>[SEP]</code> (separator between sequences).</p>
+
+<div class="eq-block">
+<div class="eq-title">Self-Attention (Transformer Core)</div>
+<div>\[ \text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^T}{\sqrt{d_k}}\right)V \]</div>
+<p style="color:var(--text2);margin-top:10px;">Q, K, V are projections of the input sequence. The key insight: attention computes pairwise interactions between <em>all</em> pairs of tokens. For a sequence of length |d|, this requires O(|d|²) computation and memory — this is the dominant cost for long documents.</p>
+</div>
+
+<div class="grid-2">
+  <div class="def-box">
+    <span class="term">[CLS] Pooling</span>
+    <p style="color:var(--text2);margin-top:8px;">Use the output embedding of the [CLS] token as a summary representation of the entire sequence. BERT was pre-trained with [CLS] for classification (NSP task). Used by: DPR (bi-encoder), MonoBERT (cross-encoder). Simple but discards token-level detail.</p>
+  </div>
+  <div class="def-box">
+    <span class="term">Mean Pooling</span>
+    <p style="color:var(--text2);margin-top:8px;">Average all token embeddings as the sequence representation. Shown to outperform [CLS] pooling for semantic similarity in several studies (e.g., TCT-ColBERT uses mean pooling). Captures information from all tokens, not just [CLS].</p>
+  </div>
+</div>
+
+<div class="card" style="margin-top:12px;">
+<h4>Cost Notation Used in the 2D Taxonomy</h4>
+<table>
+<tr><th>Cost Class</th><th>Meaning</th><th>Example</th></tr>
+<tr><td><span class="hi3">O(1)</span></td><td>Constant — no sequence processing</td><td>Dot product of pre-computed vectors</td></tr>
+<tr><td><span class="hi2">O(|d|)</span></td><td>Linear in document length</td><td>Static embedding lookup, sum pooling</td></tr>
+<tr><td><span class="hi">O(|d|²)</span></td><td>Quadratic — full self-attention</td><td>BERT on full document</td></tr>
+<tr><td>Ω(|d|²)</td><td>Super-quadratic</td><td>Certain multi-document interactions</td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<section id="model-framework">
+<h2>3. Generic Relevance Model Framework</h2>
+<div class="card">
+<p style="color:var(--text2);">All neural ranking models can be described by three components:</p>
+<div class="eq-block">
+<div class="eq-title">Generic Relevance Estimation Framework</div>
+<div>\[ \text{score}(q, d) = F\!\left(\Phi_Q(q),\; \Phi_D(d)\right) \]</div>
+<p style="color:var(--text2);margin-top:12px;">
+<strong>Φ_Q(q)</strong> = Query encoder: how expensive to encode the query?<br>
+<strong>Φ_D(d)</strong> = Document encoder: how expensive to encode the document?<br>
+<strong>F(·,·)</strong> = Combiner: how expensive to combine query and document representations?</p>
+</div>
+
+<h4>2D Taxonomy: Encoder Cost × Combiner Cost</h4>
+<p style="color:var(--text2);margin-bottom:16px;">Each model family occupies a cell in this table based on the encoder complexity (for the document, the expensive part) and combiner complexity:</p>
+<div style="overflow-x:auto;">
+<table>
+<tr><th>Encoder Cost →<br>Combiner Cost ↓</th><th>O(|d|) Static</th><th>O(|d|²) Contextual</th></tr>
+<tr><td><strong>0 (precomputed)</strong></td><td>BM25, TF-IDF<br><em>Classical sparse</em></td><td>Bi-Encoder (DPR, TCT)<br><em>Single vector</em></td></tr>
+<tr><td><strong>O(1) Dot product</strong></td><td>DeepCT, EPIC<br><em>LSR models</em></td><td>Bi-Encoder (CLS pooling)<br><em>Dense retrieval</em></td></tr>
+<tr><td><strong>O(|d|) Linear/Sum</strong></td><td>DRMM, KNRM<br><em>Interaction models</em></td><td>ColBERT, CEDR<br><em>Late interaction</em></td></tr>
+<tr><td><strong>O(|d|²) Full attention</strong></td><td>—</td><td>Cross-Encoder (MonoBERT)<br><em>Mono models</em></td></tr>
+<tr><td><strong>Ω(|d|²) Listwise</strong></td><td>—</td><td>DuoBERT, RankGPT<br><em>Duo/Listwise</em></td></tr>
+</table>
+</div>
+<div class="ex-box" style="margin-top:16px;">
+<h4>Key Insight</h4>
+<p>Moving down the table = more expensive but higher quality. Moving right = richer document representation. The art of neural IR is choosing the right cost-quality point for each stage of a cascade pipeline.</p>
+</div>
+</div>
+</section>
+
+<section id="relevance-models">
+<h2>4. Relevance Models Taxonomy</h2>
+<div class="card">
+<svg viewBox="0 0 720 260" style="width:100%;max-width:720px;display:block;margin:auto">
+  <rect x="280" y="10" width="160" height="40" rx="8" fill="#6366f1"/>
+  <text x="360" y="35" text-anchor="middle" fill="#fff" font-size="13" font-weight="bold">Relevance Models</text>
+  <line x1="360" y1="50" x2="180" y2="90" stroke="#666" stroke-width="1.5"/>
+  <line x1="360" y1="50" x2="360" y2="90" stroke="#666" stroke-width="1.5"/>
+  <line x1="360" y1="50" x2="540" y2="90" stroke="#666" stroke-width="1.5"/>
+  <rect x="80" y="90" width="200" height="40" rx="8" fill="#0ea5e9"/>
+  <text x="180" y="115" text-anchor="middle" fill="#fff" font-size="12">Sparse (Lexical)</text>
+  <rect x="260" y="90" width="200" height="40" rx="8" fill="#10b981"/>
+  <text x="360" y="115" text-anchor="middle" fill="#fff" font-size="12">Dense (Semantic)</text>
+  <rect x="440" y="90" width="200" height="40" rx="8" fill="#f59e0b"/>
+  <text x="540" y="115" text-anchor="middle" fill="#fff" font-size="12">Hybrid / Late Int.</text>
+  <rect x="20" y="170" width="170" height="50" rx="6" fill="#1e40af" opacity=".85"/>
+  <text x="105" y="190" text-anchor="middle" fill="#fff" font-size="11">BM25, TF-IDF</text>
+  <text x="105" y="207" text-anchor="middle" fill="#fff" font-size="11">Learned Sparse (SPLADE)</text>
+  <rect x="200" y="170" width="150" height="50" rx="6" fill="#065f46" opacity=".85"/>
+  <text x="275" y="190" text-anchor="middle" fill="#fff" font-size="11">Bi-Encoder (DPR)</text>
+  <text x="275" y="207" text-anchor="middle" fill="#fff" font-size="11">Dense Passage Ret.</text>
+  <rect x="360" y="170" width="150" height="50" rx="6" fill="#92400e" opacity=".85"/>
+  <text x="435" y="190" text-anchor="middle" fill="#fff" font-size="11">Cross-Encoder</text>
+  <text x="435" y="207" text-anchor="middle" fill="#fff" font-size="11">MonoBERT, monoT5</text>
+  <rect x="520" y="170" width="150" height="50" rx="6" fill="#581c87" opacity=".85"/>
+  <text x="595" y="190" text-anchor="middle" fill="#fff" font-size="11">ColBERT</text>
+  <text x="595" y="207" text-anchor="middle" fill="#fff" font-size="11">Late Interaction</text>
+  <line x1="180" y1="130" x2="105" y2="170" stroke="#999" stroke-width="1"/>
+  <line x1="180" y1="130" x2="275" y2="170" stroke="#999" stroke-width="1"/>
+  <line x1="540" y1="130" x2="435" y2="170" stroke="#999" stroke-width="1"/>
+  <line x1="540" y1="130" x2="595" y2="170" stroke="#999" stroke-width="1"/>
+</svg>
+
+<h4>Latency vs Quality Trade-off</h4>
+<table style="width:100%;border-collapse:collapse;font-size:14px">
+<tr style="background:#6366f1;color:#fff"><th>Model</th><th>Query Rep.</th><th>Doc Rep.</th><th>Interaction</th><th>Speed</th><th>Quality</th></tr>
+<tr><td>BM25</td><td>Sparse</td><td>Sparse</td><td>Lexical</td><td>⚡⚡⚡</td><td>✓</td></tr>
+<tr><td>Bi-Encoder</td><td>Dense vector</td><td>Dense vector</td><td>Dot product</td><td>⚡⚡</td><td>✓✓</td></tr>
+<tr><td>ColBERT</td><td>Token vectors</td><td>Token vectors</td><td>MaxSim</td><td>⚡</td><td>✓✓✓</td></tr>
+<tr><td>Cross-Encoder</td><td>Joint</td><td>Joint</td><td>Full attn.</td><td>🐢</td><td>✓✓✓✓</td></tr>
+</table>
+</div>
+</section>
+
+<section id="sparse-retrieval">
+<h2>3. Sparse / Lexical Retrieval</h2>
+<div class="card">
+<p>Traditional lexical retrieval represents documents as <em>sparse</em> term-weight vectors. Neural sparse models like <strong>SPLADE</strong> learn improved sparse representations.</p>
+
+<div class="eq-block">
+<div class="eq-title">BM25 (reminder)</div>
+<div>\[ \text{BM25}(q,d) = \sum_{t \in q} \text{IDF}(t) \cdot \frac{\text{tf}(t,d) \cdot (k_1+1)}{\text{tf}(t,d) + k_1(1-b+b\frac{|d|}{\text{avgdl}})} \]</div>
+<div class="practice-box"><h5>🔶 Practice Example</h5>
+<p>Given k₁=1.5, b=0.75, |d|=100, avgdl=200, tf(t,d)=3, IDF(t)=2.0 — compute the BM25 contribution of term t.</p>
+</div>
+<div class="solved-box"><h5>✅ Solved Example</h5>
+<p>TF part: tf × (k₁+1) / (tf + k₁(1 - b + b·|d|/avgdl))</p>
+<p>= 3 × 2.5 / (3 + 1.5×(1 - 0.75 + 0.75×0.5))</p>
+<p>= 7.5 / (3 + 1.5×0.625) = 7.5 / (3 + 0.9375) = 7.5/3.9375 ≈ 1.905</p>
+<p>BM25 contribution = IDF × TF-part = 2.0 × 1.905 = <strong>3.81</strong></p>
+</div>
+</div>
+
+<h4>SPLADE — Learned Sparse</h4>
+<div class="eq-block">
+<div class="eq-title">SPLADE Representation</div>
+<div>\[ w_j = \log(1 + \text{ReLU}(\sum_{i} h_i \cdot E_j^T)) \]</div>
+<div class="practice-box"><h5>🔶 Practice</h5>
+<p>Why use log(1 + ReLU(·)) instead of raw logits for sparse representations?</p>
+</div>
+<div class="solved-box"><h5>✅ Solved</h5>
+<p><strong>ReLU</strong> ensures non-negative weights (no negative term weights). <strong>log(1+x)</strong> compresses large activations (prevents a few terms dominating) and ensures zero stays zero — maintaining sparsity. The vocabulary-level projection aggregates all token representations to produce a single doc-level sparse vector.</p>
+</div>
+</div>
+</div>
+</section>
+
+<section id="lsr-models">
+<h2>6. Learned Sparse Retrieval (LSR) Models</h2>
+<div class="card">
+<p style="color:var(--text2);">LSR models replace static term-weight functions (TF-IDF) with contextualised term weights learned by a BERT-based model. They produce sparse vectors compatible with inverted index infrastructure.</p>
+
+<div class="grid-3">
+  <div class="def-box">
+    <span class="term">DeepCT</span>
+    <p style="color:var(--text2);margin-top:8px;"><strong>Deep Contextualized Term weights.</strong> Passes document through BERT; uses each token's output embedding to predict a <em>contextualised term frequency</em> for that word. Replaces raw TF with a learned weight that captures context. Compatible with BM25-style retrieval using the new TF values.</p>
+  </div>
+  <div class="def-box">
+    <span class="term">EPIC</span>
+    <p style="color:var(--text2);margin-top:8px;"><strong>Expansion via Prediction of Importance using Context.</strong> Uses a language model to <em>expand</em> each token: for each input token, predict which vocabulary terms it implies. Aggregates via max-pooling across tokens. Produces a sparse document vector over the full vocabulary — richer than TF-based representations.</p>
+  </div>
+  <div class="def-box">
+    <span class="term">TILDE</span>
+    <p style="color:var(--text2);margin-top:8px;"><strong>Term Independent Likelihood moDEl.</strong> Simplest LM-based expansion: uses a single [CLS] token representation to predict document expansion terms. Very fast — one LM inference gives the whole expanded representation. Less expressive than EPIC (single-token vs multi-token context).</p>
+  </div>
+</div>
+
+<div class="card">
+<h4>LSR vs Classical Sparse vs Dense</h4>
+<table>
+<tr><th>Model</th><th>Term Weights</th><th>Vocabulary Expansion</th><th>Index Type</th><th>Speed</th></tr>
+<tr><td>BM25</td><td>Static TF-IDF</td><td>No</td><td>Standard inverted</td><td>⚡⚡⚡</td></tr>
+<tr><td>DeepCT</td><td>Contextual TF</td><td>No</td><td>Standard inverted</td><td>⚡⚡</td></tr>
+<tr><td>EPIC/TILDE</td><td>Contextual</td><td>Yes (LM-predicted)</td><td>Expanded inverted</td><td>⚡⚡</td></tr>
+<tr><td>SPLADE</td><td>Contextual</td><td>Yes (all vocab)</td><td>Sparse inverted</td><td>⚡⚡</td></tr>
+<tr><td>Bi-Encoder</td><td>Dense vectors</td><td>Implicit</td><td>FAISS ANN</td><td>⚡</td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<section id="dense-retrieval">
+<h2>7. Dense / Bi-Encoder Retrieval</h2>
+<div class="card">
+<p>A <strong>bi-encoder</strong> independently encodes query and document into fixed-size dense vectors, then scores via dot product or cosine similarity. Enables approximate nearest-neighbour (ANN) search at scale.</p>
+
+<svg viewBox="0 0 720 180" style="width:100%;max-width:720px;display:block;margin:auto">
+  <rect x="20" y="70" width="120" height="40" rx="8" fill="#6366f1"/>
+  <text x="80" y="95" text-anchor="middle" fill="#fff" font-size="13">Query</text>
+  <rect x="20" y="120" width="120" height="40" rx="8" fill="#8b5cf6"/>
+  <text x="80" y="145" text-anchor="middle" fill="#fff" font-size="13">Document</text>
+  <rect x="180" y="55" width="140" height="40" rx="8" fill="#0ea5e9"/>
+  <text x="250" y="80" text-anchor="middle" fill="#fff" font-size="12">Encoder (BERT)</text>
+  <rect x="180" y="105" width="140" height="40" rx="8" fill="#0ea5e9"/>
+  <text x="250" y="130" text-anchor="middle" fill="#fff" font-size="12">Encoder (BERT)</text>
+  <rect x="370" y="55" width="80" height="40" rx="8" fill="#10b981"/>
+  <text x="410" y="80" text-anchor="middle" fill="#fff" font-size="12">q⃗</text>
+  <rect x="370" y="105" width="80" height="40" rx="8" fill="#10b981"/>
+  <text x="410" y="130" text-anchor="middle" fill="#fff" font-size="12">d⃗</text>
+  <rect x="510" y="80" width="120" height="40" rx="8" fill="#f59e0b"/>
+  <text x="570" y="98" text-anchor="middle" fill="#fff" font-size="12">score =</text>
+  <text x="570" y="114" text-anchor="middle" fill="#fff" font-size="12">q⃗ · d⃗</text>
+  <line x1="140" y1="90" x2="178" y2="75" stroke="#6366f1" stroke-width="1.5"/>
+  <line x1="140" y1="140" x2="178" y2="125" stroke="#8b5cf6" stroke-width="1.5"/>
+  <line x1="320" y1="75" x2="368" y2="75" stroke="#0ea5e9" stroke-width="1.5"/>
+  <line x1="320" y1="125" x2="368" y2="125" stroke="#0ea5e9" stroke-width="1.5"/>
+  <line x1="450" y1="75" x2="508" y2="95" stroke="#10b981" stroke-width="1.5"/>
+  <line x1="450" y1="125" x2="508" y2="105" stroke="#10b981" stroke-width="1.5"/>
+</svg>
+
+<div class="eq-block">
+<div class="eq-title">Bi-Encoder Scoring</div>
+<div>\[ s(q,d) = E_Q(q) \cdot E_D(d) \]</div>
+<div class="practice-box"><h5>🔶 Practice</h5>
+<p>Query vector q⃗ = [0.6, 0.8, 0.0], doc vector d⃗ = [0.5, 0.5, 0.7]. Compute the relevance score.</p>
+</div>
+<div class="solved-box"><h5>✅ Solved</h5>
+<p>s = 0.6×0.5 + 0.8×0.5 + 0.0×0.7 = 0.30 + 0.40 + 0.00 = <strong>0.70</strong></p>
+<p>For cosine similarity: normalise both vectors first — ||q⃗|| = 1 (already unit), ||d⃗|| = √(0.25+0.25+0.49) = √0.99 ≈ 0.995, cosine ≈ 0.70/0.995 ≈ 0.704</p>
+</div>
+</div>
+
+<h4>DPR (Dense Passage Retrieval)</h4>
+<p>DPR trains separate BERT encoders for query and passages using in-batch negatives. Documents are pre-encoded offline; ANN indexes (FAISS) serve queries in milliseconds.</p>
+
+<pre><code class="language-python">import torch
+from transformers import DPRQuestionEncoder, DPRContextEncoder, DPRQuestionEncoderTokenizer
+
+q_tokenizer = DPRQuestionEncoderTokenizer.from_pretrained('facebook/dpr-question_encoder-single-nq-base')
+q_encoder = DPRQuestionEncoder.from_pretrained('facebook/dpr-question_encoder-single-nq-base')
+
+query = "What is information retrieval?"
+inputs = q_tokenizer(query, return_tensors='pt')
+with torch.no_grad():
+    q_vec = q_encoder(**inputs).pooler_output  # shape: (1, 768)
+
+print("Query embedding shape:", q_vec.shape)
+# Score against pre-indexed doc vectors via FAISS ANN</code></pre>
+</div>
+</section>
+
+<section id="cross-encoders">
+<h2>9. Cross-Encoders / Mono Models (Re-ranking)</h2>
+<div class="card">
+<p>A <strong>cross-encoder</strong> concatenates query and document as a single input to a transformer (e.g. BERT). Full attention between all tokens → highest quality, but too slow for first-stage retrieval.</p>
+
+<svg viewBox="0 0 720 140" style="width:100%;max-width:720px;display:block;margin:auto">
+  <rect x="10" y="50" width="200" height="40" rx="8" fill="#6366f1"/>
+  <text x="110" y="75" text-anchor="middle" fill="#fff" font-size="13">[CLS] query [SEP] doc [SEP]</text>
+  <rect x="250" y="30" width="200" height="80" rx="8" fill="#0ea5e9"/>
+  <text x="350" y="65" text-anchor="middle" fill="#fff" font-size="12">BERT</text>
+  <text x="350" y="85" text-anchor="middle" fill="#fff" font-size="12">(All tokens attend)</text>
+  <rect x="500" y="50" width="140" height="40" rx="8" fill="#f59e0b"/>
+  <text x="570" y="70" text-anchor="middle" fill="#fff" font-size="12">Linear → score</text>
+  <text x="570" y="86" text-anchor="middle" fill="#fff" font-size="12">(from [CLS])</text>
+  <line x1="210" y1="70" x2="248" y2="70" stroke="#6366f1" stroke-width="2" marker-end="url(#arr10)"/>
+  <line x1="450" y1="70" x2="498" y2="70" stroke="#0ea5e9" stroke-width="2" marker-end="url(#arr10)"/>
+</svg>
+
+<h4>monoBERT / monoT5</h4>
+<ul>
+<li><strong>monoBERT</strong>: BERT fine-tuned on MS MARCO pairs, [CLS] → sigmoid → relevance prob</li>
+<li><strong>monoT5</strong>: T5 seq2seq, generates token "true"/"false" for relevance</li>
+</ul>
+
+<div class="eq-block">
+<div class="eq-title">Cross-Encoder Scoring</div>
+<div>\[ s(q,d) = \sigma(\mathbf{W}^T \text{BERT}([q;d])_{[CLS]}) \]</div>
+<div class="practice-box"><h5>🔶 Practice</h5>
+<p>Why can't cross-encoders be used for first-stage retrieval over a corpus of 10M documents?</p>
+</div>
+<div class="solved-box"><h5>✅ Solved</h5>
+<p>A cross-encoder must run inference for each (query, document) pair. At 10M docs, with each BERT inference taking ~20ms, that's 200,000 seconds ≈ 55 hours per query — completely infeasible. Cross-encoders are only practical for <strong>re-ranking</strong> a small shortlist (~100-1000) of candidates retrieved by a faster first stage (BM25, bi-encoder).</p>
+</div>
+</div>
+
+<h4>Pipeline: Retrieve → Re-rank</h4>
+<pre><code class="language-python">import pyterrier as pt
+from pyterrier.measures import *
+
+# Stage 1: BM25 first-stage retrieval
+bm25 = pt.BatchRetrieve(index, wmodel="BM25", num_results=1000)
+
+# Stage 2: monoT5 re-ranker
+from pyterrier_t5 import MonoT5ReRanker
+mono_t5 = MonoT5ReRanker(model='castorini/monot5-base-msmarco')
+
+# Pipeline
+pipeline = bm25 >> mono_t5
+
+results = pipeline.transform(queries_df)</code></pre>
+</div>
+</section>
+
+<section id="interaction-models">
+<h2>10. Interaction Models (DRMM, KNRM, PACRR, CEDR)</h2>
+<div class="card">
+<p style="color:var(--text2);">Interaction models build a query-document interaction matrix from token-level similarities, then use a neural network to score from this matrix. They use <em>static</em> (non-contextual) encoders like word2vec/GloVe for O(|d|) encoding, but O(|d|) or more for the interaction.</p>
+
+<div class="def-box">
+<span class="term">Key Intuition</span>
+<p style="color:var(--text2);margin-top:8px;">Rather than compressing query and document into single vectors (bi-encoder) or processing them jointly (cross-encoder), interaction models compute a similarity matrix between all query tokens and document tokens, then learn from this rich interaction signal.</p>
+</div>
+
+<div class="grid-2">
+  <div class="def-box">
+    <span class="term">DRMM (Deep Relevance Matching Model)</span>
+    <p style="color:var(--text2);margin-top:8px;">Computes histogram of cosine similarity scores between each query term and all document terms. Feeds histogram through MLP to get per-query-term scores. Sum to final score. Uses static word2vec embeddings (O(|d|) encoder, O(|d|) combiner).</p>
+  </div>
+  <div class="def-box">
+    <span class="term">KNRM (Kernel-based Neural Ranking)</span>
+    <p style="color:var(--text2);margin-top:8px;">Uses RBF kernels to soft-count matches at different similarity levels (from exact to soft match). More principled than histograms. Differentiable → trained end-to-end. Also uses static embeddings.</p>
+  </div>
+  <div class="def-box">
+    <span class="term">PACRR (Position-Aware ConvolutionalRecurrent Ranking)</span>
+    <p style="color:var(--text2);margin-top:8px;">Applies 2D convolutions to the query-document interaction matrix to capture phrase-level patterns. Position-aware — the location of matching terms matters (unlike unordered histograms).</p>
+  </div>
+  <div class="def-box">
+    <span class="term">CEDR (Contextual-Enhanced Dense Retrieval)</span>
+    <p style="color:var(--text2);margin-top:8px;">Combines BERT's contextual token embeddings with DRMM/KNRM-style interaction. BERT encodes document and query (O(|d|²)), but interaction is O(|d|) — a hybrid between interaction models and transformers. Better quality than static embedding models.</p>
+  </div>
+</div>
+
+<div class="card">
+<h4>Interaction Models: Summary Table</h4>
+<table>
+<tr><th>Model</th><th>Encoder</th><th>Interaction</th><th>Combiner</th><th>Quality</th></tr>
+<tr><td>DRMM</td><td>Static (word2vec), O(|d|)</td><td>Histogram</td><td>MLP</td><td>Medium</td></tr>
+<tr><td>KNRM</td><td>Static, O(|d|)</td><td>RBF kernels</td><td>Sum</td><td>Medium</td></tr>
+<tr><td>PACRR</td><td>Static, O(|d|)</td><td>Conv2D on sim matrix</td><td>RNN</td><td>Medium-High</td></tr>
+<tr><td>CEDR</td><td>BERT, O(|d|²)</td><td>DRMM/KNRM-style</td><td>MLP</td><td>High</td></tr>
+<tr><td>ColBERT</td><td>BERT, O(|d|²)</td><td>MaxSim</td><td>Sum</td><td>High</td></tr>
+</table>
+</div>
+</div>
+</section>
+
+<section id="colbert">
+<h2>11. ColBERT — Late Interaction</h2>
+<div class="card">
+<p>ColBERT encodes query and document <em>independently per-token</em>, then scores via a lightweight MaxSim operation. Balances expressiveness of cross-encoder with efficiency of bi-encoder.</p>
+
+<svg viewBox="0 0 720 200" style="width:100%;max-width:720px;display:block;margin:auto">
+  <text x="80" y="20" text-anchor="middle" fill="#888" font-size="11">Query tokens</text>
+  <rect x="20" y="30" width="50" height="30" rx="5" fill="#6366f1"/><text x="45" y="50" text-anchor="middle" fill="#fff" font-size="10">q₁</text>
+  <rect x="80" y="30" width="50" height="30" rx="5" fill="#6366f1"/><text x="105" y="50" text-anchor="middle" fill="#fff" font-size="10">q₂</text>
+  <rect x="140" y="30" width="50" height="30" rx="5" fill="#6366f1"/><text x="165" y="50" text-anchor="middle" fill="#fff" font-size="10">q₃</text>
+
+  <text x="370" y="20" text-anchor="middle" fill="#888" font-size="11">Document tokens</text>
+  <rect x="310" y="30" width="50" height="30" rx="5" fill="#10b981"/><text x="335" y="50" text-anchor="middle" fill="#fff" font-size="10">d₁</text>
+  <rect x="370" y="30" width="50" height="30" rx="5" fill="#10b981"/><text x="395" y="50" text-anchor="middle" fill="#fff" font-size="10">d₂</text>
+  <rect x="430" y="30" width="50" height="30" rx="5" fill="#10b981"/><text x="455" y="50" text-anchor="middle" fill="#fff" font-size="10">d₃</text>
+  <rect x="490" y="30" width="50" height="30" rx="5" fill="#10b981"/><text x="515" y="50" text-anchor="middle" fill="#fff" font-size="10">d₄</text>
+
+  <text x="360" y="130" text-anchor="middle" fill="#f59e0b" font-size="14" font-weight="bold">MaxSim(qᵢ, D) = max_j qᵢ·dⱼ</text>
+  <text x="360" y="160" text-anchor="middle" fill="#888" font-size="12">Score = Σᵢ MaxSim(qᵢ, D)</text>
+
+  <line x1="105" y1="60" x2="335" y2="100" stroke="#6366f1" stroke-width="1" stroke-dasharray="3"/>
+  <line x1="105" y1="60" x2="395" y2="100" stroke="#6366f1" stroke-width="1" stroke-dasharray="3"/>
+  <line x1="105" y1="60" x2="455" y2="100" stroke="#6366f1" stroke-width="1" stroke-dasharray="3"/>
+  <line x1="105" y1="60" x2="515" y2="100" stroke="#6366f1" stroke-width="1" stroke-dasharray="3"/>
+</svg>
+
+<div class="eq-block">
+<div class="eq-title">ColBERT Scoring (MaxSim)</div>
+<div>\[ s(q,d) = \sum_{i \in |q|} \max_{j \in |d|} E_Q(q)_i \cdot E_D(d)_j \]</div>
+<div class="practice-box"><h5>🔶 Practice</h5>
+<p>Query has 2 token vectors: q₁=[1,0], q₂=[0,1]. Document has 3 token vectors: d₁=[0.8,0.1], d₂=[0.3,0.9], d₃=[0.1,0.2]. Compute the ColBERT score.</p>
+</div>
+<div class="solved-box"><h5>✅ Solved</h5>
+<p>MaxSim(q₁, D) = max(q₁·d₁, q₁·d₂, q₁·d₃) = max(0.8, 0.3, 0.1) = <strong>0.8</strong></p>
+<p>MaxSim(q₂, D) = max(q₂·d₁, q₂·d₂, q₂·d₃) = max(0.1, 0.9, 0.2) = <strong>0.9</strong></p>
+<p>ColBERT score = 0.8 + 0.9 = <strong>1.7</strong></p>
+</div>
+</div>
+
+<h4>ColBERT v2 Improvements</h4>
+<ul>
+<li><strong>Denoised supervision</strong>: Uses cross-encoder labels for harder negative mining</li>
+<li><strong>Residual compression</strong>: Compresses document token vectors 4–16× for storage efficiency</li>
+<li>PyTerrier-ColBERT: <code>pip install pyterrier-colbert</code></li>
+</ul>
+</div>
+</section>
+
+<section id="listwise-duo">
+<h2>13. Listwise &amp; Duo Models</h2>
+<div class="card">
+<p style="color:var(--text2);">Mono models (MonoBERT, monoT5) score each document independently given the query. Duo models and listwise models explicitly compare multiple documents simultaneously — more expensive but more expressive.</p>
+
+<div class="grid-2">
+  <div class="def-box">
+    <span class="term">DuoBERT (Duo+)</span>
+    <p style="color:var(--text2);margin-top:8px;">Jointly scores a pair of documents given a query. Input: [CLS] query [SEP] doc1 [SEP] doc2 [SEP]. Estimates P(d1 more relevant than d2 | q). Produces a pairwise preference. More expensive: O(|candidates|²) pairs to evaluate.</p>
+  </div>
+  <div class="def-box">
+    <span class="term">ListoBERT / RankGPT (Late Duo+)</span>
+    <p style="color:var(--text2);margin-top:8px;">Listwise: simultaneously considers the full list of candidates. RankGPT uses a large language model (GPT-4, LLaMA) prompted to rank a set of passages. Estimates Rel(d? | q, d₁, d₂, ..., dₙ) — explicitly conditioned on all candidates. Highest quality but very expensive: must process all candidates in one pass.</p>
+  </div>
+</div>
+
+<div class="eq-block">
+<div class="eq-title">Duo+ Formulation</div>
+<div>\[ \text{score}(d_i | q) = \sum_{j \neq i} P(d_i \succ d_j \mid q) \]</div>
+<p style="color:var(--text2);margin-top:10px;">Aggregate pairwise preferences into a final score. Equivalent to counting "wins" in a round-robin tournament among candidate documents.</p>
+</div>
+
+<div class="warn-box">
+<h4>⚠️ Cost of Duo Models</h4>
+<p style="color:var(--text2);">For N candidates, DuoBERT requires N(N-1)/2 pairwise comparisons. For N=100: 4,950 BERT inferences. Only practical on very small candidate sets (top-20 or fewer) after aggressive re-ranking by a mono model.</p>
+</div>
+</div>
+</section>
+
+<section id="quality-est">
+<h2>14. Quality Estimators</h2>
+<div class="card">
+<p style="color:var(--text2);">Quality Estimators are <em>query-independent</em> models that estimate the general quality of a document — without any query context. They function as sophisticated replacements for PageRank or spam filters.</p>
+
+<div class="grid-2">
+  <div class="def-box">
+    <span class="term">Spam Classifier</span>
+    <p style="color:var(--text2);margin-top:8px;">Trained ML classifier predicting whether a document is spam (link farm, keyword stuffing, thin content). Assigned a spam score at index time. Documents above the spam threshold are filtered from retrieval entirely or heavily downranked.</p>
+  </div>
+  <div class="def-box">
+    <span class="term">QualT5 (Quality Estimator)</span>
+    <p style="color:var(--text2);margin-top:8px;">A T5-based model fine-tuned to predict document quality (e.g., "high quality writing" vs. "low quality"). Generates a quality estimate without a query. Used as a QI (query-independent) feature in web search ranking alongside PageRank and spam scores.</p>
+  </div>
+</div>
+
+<div class="ex-box" style="margin-top:16px;">
+<h4>Quality Estimators in the 2D Taxonomy</h4>
+<p>Quality estimators have <strong>Φ_D(d) = O(|d|²)</strong> (BERT/T5 over full document) but <strong>F() = 0</strong> (no combiner — there is no query). They are computed offline and stored as a single scalar per document. The cost is paid at index time, not at query time.</p>
+</div>
+</div>
+</section>
+
+<section id="training">
+<h2>15. Training Strategies</h2>
+<div class="card">
+<h4>Pointwise Training</h4>
+<p>Predict relevance of each (q,d) pair independently. Simple but ignores relative ordering between documents.</p>
+<div class="eq-block">
+<div class="eq-title">Pointwise MSE Loss (Regression)</div>
+<div>\[ \mathcal{L}_{\text{MSE}} = \left(\text{Rel}(d \mid q) - l\right)^2 \]</div>
+<p style="color:var(--text2);margin-top:8px;">Where l is the graded relevance label (e.g., 0–4 from TREC scale). The model predicts a real-valued relevance score and is trained to minimise squared error from the label.</p>
+</div>
+<div class="eq-block">
+<div class="eq-title">Binary Cross-Entropy Loss (Classification)</div>
+<div>\[ \mathcal{L}_{\text{BCE}} = -y \log \hat{y} - (1-y) \log(1-\hat{y}) \]</div>
+<div class="practice-box"><h5>🔶 Practice</h5>
+<p>A model predicts ŷ=0.9 for a relevant document (y=1). Compute the loss.</p>
+</div>
+<div class="solved-box"><h5>✅ Solved</h5>
+<p>L = -1·log(0.9) - 0·log(0.1) = -log(0.9) ≈ 0.105 (low loss, correct prediction)</p>
+</div>
+</div>
+
+<h4>7.2 Pairwise Training (RankNet / In-batch Negatives)</h4>
+<div class="eq-block">
+<div class="eq-title">Softmax In-Batch Loss</div>
+<div>\[ \mathcal{L} = -\log \frac{e^{s(q,d^+)}}{e^{s(q,d^+)} + \sum_{d^- \in \mathcal{B}} e^{s(q,d^-)}} \]</div>
+<div class="practice-box"><h5>🔶 Practice</h5>
+<p>Batch has 1 positive (score=2.0) and 2 negatives (scores 0.5, 0.3). What is the in-batch loss?</p>
+</div>
+<div class="solved-box"><h5>✅ Solved</h5>
+<p>Numerator: e²·⁰ ≈ 7.389</p>
+<p>Denominator: 7.389 + e⁰·⁵ + e⁰·³ = 7.389 + 1.649 + 1.350 = 10.388</p>
+<p>Loss = -log(7.389/10.388) = -log(0.711) ≈ <strong>0.340</strong></p>
+</div>
+</div>
+
+<h4>Hard Negatives</h4>
+<p>In-batch negatives are <em>easy</em> (random docs unlikely to be relevant). Hard negatives are near-misses — retrieved by BM25 or a weaker model but not relevant. Critical for strong performance.</p>
+<ul>
+<li><strong>BM25 negatives</strong>: top-k BM25-ranked non-relevant docs — lexically similar but semantically different</li>
+<li><strong>MS-MARCO click negatives</strong>: documents shown to users but not clicked for a query — implicit human judgement of non-relevance</li>
+<li><strong>Model-mined negatives (iterative)</strong>: top-k from a trained retrieval model, updated each training epoch</li>
+<li><strong>Denoised</strong> (ColBERT v2): cross-encoder re-labels top-k candidates to remove false negatives</li>
+</ul>
+
+<h4>Synthetic Training Data</h4>
+<p style="color:var(--text2);">When labelled (query, document) pairs are scarce, synthetic data can be generated:</p>
+<div class="grid-2">
+  <div class="def-box">
+    <span class="term">InPars</span>
+    <p style="color:var(--text2);margin-top:8px;">Uses a large LLM (GPT-3) with few-shot examples to <em>generate queries</em> for each document. Produces (doc → synthetic query) pairs. Model fine-tuned on these pairs achieves competitive performance even without human labels.</p>
+  </div>
+  <div class="def-box">
+    <span class="term">Promptagator</span>
+    <p style="color:var(--text2);margin-top:8px;">Uses FLAN (instruction-following LLM) to generate task-specific queries for a target domain. Task instructions in the prompt enable adaptation to specialised domains (biomedical, legal, etc.) without any domain-labelled data.</p>
+  </div>
+</div>
+
+<h4>Knowledge Distillation</h4>
+<div class="eq-block">
+<div class="eq-title">KL-Divergence Distillation Loss</div>
+<div>\[ \mathcal{L}_{KD} = \text{KL}(P_{teacher} \| P_{student}) = \sum_i P_T(i) \log \frac{P_T(i)}{P_S(i)} \]</div>
+<div class="practice-box"><h5>🔶 Practice</h5>
+<p>Why distill from a cross-encoder teacher to a bi-encoder student instead of training the bi-encoder directly?</p>
+</div>
+<div class="solved-box"><h5>✅ Solved</h5>
+<p>Cross-encoders achieve higher ranking quality (full query-doc attention) but are too slow for retrieval. Distillation transfers the teacher's <em>soft probability distributions</em> (richer signal than binary relevance labels) to train a faster bi-encoder student — combining the teacher's quality with the student's speed.</p>
+</div>
+</div>
+</div>
+</section>
+
+<section id="engines">
+<h2>8. Retrieval Engines for Neural Models</h2>
+<div class="card">
+<h4>Forward Index</h4>
+<p style="color:var(--text2);">The <strong>forward index</strong> maps documents → list of terms (opposite of inverted index which maps terms → documents). Used for:<br>
+• Relevance feedback (finding related terms for a known document)<br>
+• Pseudo-relevance feedback — identifying expansion terms from top-k retrieved documents<br>
+• Impact-ordered posting lists (need to retrieve document's full term list)<br>
+In neural IR, the forward index may store pre-computed dense vectors or ColBERT token embeddings.</p>
+
+<h4>ANN Search for Dense Retrieval: HNSW</h4>
+<p><strong>HNSW (Hierarchical Navigable Small World)</strong> is the dominant ANN structure for dense retrieval. Built on the cluster hypothesis: nearby vectors in embedding space are likely to be relevant.</p>
+<div class="def-box">
+<span class="term">HNSW Structure</span>
+<p style="color:var(--text2);margin-top:8px;"><strong>Hierarchical layers:</strong> Each document appears in multiple layers. Upper layers have fewer nodes (sparse graph, long-range connections for fast navigation). Lower layers have more nodes (dense graph, precise local search). Search proceeds top-down: traverse upper layers quickly, refine in lower layers.<br><br>
+<strong>Key property:</strong> Based on cluster hypothesis — if A is similar to B and B is similar to C, A is likely similar to C. This allows greedy graph traversal to find approximate nearest neighbours without exhaustive search.<br><br>
+<strong>Trade-off:</strong> Construction time O(N log N), query time O(log N) — vs. exact search O(N). Small quality loss (~1–2% recall) for 10–100× speedup.</p>
+</div>
+
+<div class="eq-block">
+<div class="eq-title">FAISS Inner Product Search</div>
+<div>\[ \hat{d}^* = \arg\max_{d \in \mathcal{C}} E_Q(q) \cdot E_D(d) \]</div>
+<div class="practice-box"><h5>🔶 Practice</h5>
+<p>A corpus has 10M documents, each with a 768-dim float32 vector. How much RAM does the flat (exact) FAISS index require?</p>
+</div>
+<div class="solved-box"><h5>✅ Solved</h5>
+<p>Storage = 10M × 768 × 4 bytes = 30,720,000,000 bytes ≈ <strong>28.6 GB</strong></p>
+<p>In practice, product quantisation (PQ) compresses vectors 8–64× at slight recall cost, making this feasible on a single machine.</p>
+</div>
+</div>
+
+<h4>8.2 Cascade / Multi-Stage Pipeline</h4>
+<svg viewBox="0 0 720 80" style="width:100%;max-width:720px;display:block;margin:auto">
+  <rect x="10" y="20" width="130" height="40" rx="8" fill="#6366f1"/>
+  <text x="75" y="45" text-anchor="middle" fill="#fff" font-size="12">BM25 / DPR</text>
+  <text x="75" y="58" text-anchor="middle" fill="#fff" font-size="10">1000 candidates</text>
+  <line x1="140" y1="40" x2="180" y2="40" stroke="#999" stroke-width="1.5" marker-end="url(#arr10)"/>
+  <rect x="180" y="20" width="130" height="40" rx="8" fill="#0ea5e9"/>
+  <text x="245" y="45" text-anchor="middle" fill="#fff" font-size="12">Bi-Encoder</text>
+  <text x="245" y="58" text-anchor="middle" fill="#fff" font-size="10">100 candidates</text>
+  <line x1="310" y1="40" x2="350" y2="40" stroke="#999" stroke-width="1.5" marker-end="url(#arr10)"/>
+  <rect x="350" y="20" width="130" height="40" rx="8" fill="#10b981"/>
+  <text x="415" y="45" text-anchor="middle" fill="#fff" font-size="12">ColBERT</text>
+  <text x="415" y="58" text-anchor="middle" fill="#fff" font-size="10">50 candidates</text>
+  <line x1="480" y1="40" x2="520" y2="40" stroke="#999" stroke-width="1.5" marker-end="url(#arr10)"/>
+  <rect x="520" y="20" width="130" height="40" rx="8" fill="#f59e0b"/>
+  <text x="585" y="45" text-anchor="middle" fill="#fff" font-size="12">Cross-Encoder</text>
+  <text x="585" y="58" text-anchor="middle" fill="#fff" font-size="10">Final top-10</text>
+</svg>
+
+<h4>Adaptive Re-Ranking: GAR and LADR</h4>
+<p style="color:var(--text2);">Standard re-ranking uses a fixed cascade. Adaptive re-ranking uses the <em>corpus graph</em> (connections between similar documents) to dynamically find more candidates to re-rank.</p>
+<div class="grid-2">
+  <div class="def-box">
+    <span class="term">GAR (Graph-based Adaptive Retrieval)</span>
+    <p style="color:var(--text2);margin-top:8px;">After initial retrieval, traverse the corpus graph: for each retrieved document, add its nearest neighbours (by embedding similarity) to the candidate set. Re-rank the expanded set. Finds semantically related documents that the initial retrieval missed.</p>
+  </div>
+  <div class="def-box">
+    <span class="term">LADR (Lexically-Accelerated Dense Retrieval)</span>
+    <p style="color:var(--text2);margin-top:8px;">Combines lexical (BM25) and dense retrieval via corpus graph traversal. Uses BM25 to retrieve initial candidates, then uses the corpus graph to find dense-retrieval-style neighbours of those candidates. Avoids full FAISS index query while approximating dense retrieval quality.</p>
+  </div>
+</div>
+<div class="ex-box" style="margin-top:12px;">
+<h4>Corpus Graph</h4>
+<p>A pre-computed graph where nodes = documents, edges = k-nearest neighbours by dense embedding similarity (e.g., k=16). Used for traversal at query time. Analogous to HNSW but interpreted as a document similarity structure for retrieval augmentation.</p>
+</div>
+
+<h4>Learned Sparse (SPLADE) + Inverted Index</h4>
+<p>SPLADE vectors are sparse over a 30k-vocabulary → compatible with classical inverted index infrastructure. Achieves dense-model quality with sparse-retrieval speed.</p>
+</div>
+</section>
+
+<section id="rag">
+<h2>9. RAG — Retrieval-Augmented Generation</h2>
+<div class="card">
+<p><strong>RAG</strong> combines a neural retriever with a generative LLM. Retrieved documents provide grounding context, reducing hallucination and keeping knowledge up-to-date.</p>
+
+<svg viewBox="0 0 720 120" style="width:100%;max-width:720px;display:block;margin:auto">
+  <rect x="10" y="40" width="100" height="40" rx="8" fill="#6366f1"/>
+  <text x="60" y="65" text-anchor="middle" fill="#fff" font-size="12">Query</text>
+  <line x1="110" y1="60" x2="150" y2="60" stroke="#999" stroke-width="1.5" marker-end="url(#arr10)"/>
+  <rect x="150" y="30" width="140" height="60" rx="8" fill="#0ea5e9"/>
+  <text x="220" y="58" text-anchor="middle" fill="#fff" font-size="12">Neural Retriever</text>
+  <text x="220" y="75" text-anchor="middle" fill="#fff" font-size="11">(DPR / ColBERT)</text>
+  <line x1="290" y1="60" x2="330" y2="60" stroke="#999" stroke-width="1.5" marker-end="url(#arr10)"/>
+  <rect x="330" y="20" width="160" height="80" rx="8" fill="#10b981"/>
+  <text x="410" y="55" text-anchor="middle" fill="#fff" font-size="12">Top-k Docs</text>
+  <text x="410" y="72" text-anchor="middle" fill="#fff" font-size="11">+ Query → Prompt</text>
+  <line x1="490" y1="60" x2="530" y2="60" stroke="#999" stroke-width="1.5" marker-end="url(#arr10)"/>
+  <rect x="530" y="30" width="140" height="60" rx="8" fill="#f59e0b"/>
+  <text x="600" y="55" text-anchor="middle" fill="#fff" font-size="12">LLM Generator</text>
+  <text x="600" y="72" text-anchor="middle" fill="#fff" font-size="11">(GPT, Llama, etc.)</text>
+</svg>
+
+<div class="eq-block">
+<div class="eq-title">RAG Marginalisation</div>
+<div>\[ P(y|x) = \sum_{z \in \text{top-k}} P(z|x) \cdot P(y|x, z) \]</div>
+<div class="practice-box"><h5>🔶 Practice</h5>
+<p>What are the two key failure modes of RAG systems?</p>
+</div>
+<div class="solved-box"><h5>✅ Solved</h5>
+<p><strong>1. Retrieval failure</strong>: Relevant documents not in top-k → generator has no correct context to ground on.</p>
+<p><strong>2. Generator ignoring context</strong>: LLM relies on parametric knowledge instead of retrieved docs (context faithfulness issue). Mitigated by prompt engineering ("Answer only using the provided documents").</p>
+</div>
+</div>
+</div>
+</section>
+
+<section id="questions">
+<h2>10. Practice Questions</h2>
+<div class="card">
+<h3>Multiple Choice</h3>
+<div class="mcq"><p><strong>1.</strong> Which model concatenates query and document as a single transformer input?</p>
+<button onclick="this.nextElementSibling.style.display='block'">Reveal</button>
+<div class="answer" style="display:none">B) Cross-Encoder</div></div>
+
+<div class="mcq"><p><strong>2.</strong> ColBERT scoring aggregates per-query-token scores using:</p>
+<button onclick="this.nextElementSibling.style.display='block'">Reveal</button>
+<div class="answer" style="display:none">C) MaxSim — maximum similarity to any document token</div></div>
+
+<div class="mcq"><p><strong>3.</strong> In-batch negatives during bi-encoder training treat:</p>
+<button onclick="this.nextElementSibling.style.display='block'">Reveal</button>
+<div class="answer" style="display:none">A) Other queries' positives in the same batch as negatives for the current query</div></div>
+
+<div class="mcq"><p><strong>4.</strong> SPLADE produces what type of representation?</p>
+<button onclick="this.nextElementSibling.style.display='block'">Reveal</button>
+<div class="answer" style="display:none">B) Learned sparse vector over vocabulary</div></div>
+
+<div class="mcq"><p><strong>5.</strong> What is the primary advantage of knowledge distillation in neural IR?</p>
+<button onclick="this.nextElementSibling.style.display='block'">Reveal</button>
+<div class="answer" style="display:none">C) Transfers soft probability distributions (richer signal) from slow cross-encoder to fast bi-encoder</div></div>
+
+<div class="mcq"><p><strong>6.</strong> Which component makes dense retrieval scalable to millions of documents?</p>
+<button onclick="this.nextElementSibling.style.display='block'">Reveal</button>
+<div class="answer" style="display:none">D) Approximate Nearest Neighbour (ANN) index (e.g. FAISS)</div></div>
+
+<div class="mcq"><p><strong>7.</strong> RAG stands for:</p>
+<button onclick="this.nextElementSibling.style.display='block'">Reveal</button>
+<div class="answer" style="display:none">B) Retrieval-Augmented Generation</div></div>
+
+<div class="mcq"><p><strong>8.</strong> Hard negatives differ from in-batch negatives because they:</p>
+<button onclick="this.nextElementSibling.style.display='block'">Reveal</button>
+<div class="answer" style="display:none">A) Are near-misses — semantically similar to the query but not relevant</div></div>
+
+<div class="mcq"><p><strong>9.</strong> Which represents the efficiency ordering from fastest to slowest?</p>
+<button onclick="this.nextElementSibling.style.display='block'">Reveal</button>
+<div class="answer" style="display:none">C) BM25 > Bi-Encoder > ColBERT > Cross-Encoder</div></div>
+
+<div class="mcq"><p><strong>10.</strong> MonoT5 determines relevance by generating which tokens?</p>
+<button onclick="this.nextElementSibling.style.display='block'">Reveal</button>
+<div class="answer" style="display:none">B) "true" / "false"</div></div>
+
+<h3>True / False</h3>
+<div class="tf-row"><span>Bi-encoders allow pre-computing document representations offline.</span>
+<button onclick="this.nextElementSibling.style.display='inline'">Reveal</button><span class="answer" style="display:none">✅ TRUE</span></div>
+<div class="tf-row"><span>Cross-encoders can be used for first-stage retrieval over 10M documents in real-time.</span>
+<button onclick="this.nextElementSibling.style.display='inline'">Reveal</button><span class="answer" style="display:none">❌ FALSE — too slow; only for re-ranking small candidate sets</span></div>
+<div class="tf-row"><span>ColBERT uses a single vector to represent each document.</span>
+<button onclick="this.nextElementSibling.style.display='inline'">Reveal</button><span class="answer" style="display:none">❌ FALSE — one vector per token</span></div>
+<div class="tf-row"><span>SPLADE representations are compatible with inverted index infrastructure.</span>
+<button onclick="this.nextElementSibling.style.display='inline'">Reveal</button><span class="answer" style="display:none">✅ TRUE</span></div>
+<div class="tf-row"><span>Knowledge distillation always uses a bi-encoder as the teacher.</span>
+<button onclick="this.nextElementSibling.style.display='inline'">Reveal</button><span class="answer" style="display:none">❌ FALSE — typically uses cross-encoder as teacher</span></div>
+<div class="tf-row"><span>RAG helps reduce LLM hallucinations by grounding answers in retrieved documents.</span>
+<button onclick="this.nextElementSibling.style.display='inline'">Reveal</button><span class="answer" style="display:none">✅ TRUE</span></div>
+<div class="tf-row"><span>Hard negatives are randomly sampled documents from the corpus.</span>
+<button onclick="this.nextElementSibling.style.display='inline'">Reveal</button><span class="answer" style="display:none">❌ FALSE — they are retrieved near-misses</span></div>
+<div class="tf-row"><span>DPR uses two separate BERT encoders for query and passage.</span>
+<button onclick="this.nextElementSibling.style.display='inline'">Reveal</button><span class="answer" style="display:none">✅ TRUE</span></div>
+
+<h3>Short Answer</h3>
+<div class="sa"><b>Q:</b> What is the "late interaction" in ColBERT and why does it improve over bi-encoders?
+<button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+<div class="answer" style="display:none">Late interaction: query and document are encoded independently, but scoring involves fine-grained token-level interactions (MaxSim). Unlike bi-encoders (single vector dot product), late interaction retains per-token query information, allowing each query token to find its best-matching document token — richer than a single compressed vector.</div></div>
+
+<div class="sa"><b>Q:</b> Describe the two-stage retrieve-and-rerank pipeline and why it is used.
+<button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+<div class="answer" style="display:none">Stage 1 (retrieval): Fast model (BM25/bi-encoder) retrieves top-1000 candidates efficiently. Stage 2 (re-ranking): Slow, high-quality model (cross-encoder) re-scores only those 1000. This combines the speed of sparse/dense retrieval with the accuracy of cross-encoders, making high-quality IR tractable at scale.</div></div>
+
+<div class="sa"><b>Q:</b> What makes hard negatives important for training dense retrievers?
+<button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+<div class="answer" style="display:none">Hard negatives are semantically similar to the query but not relevant. They force the model to learn fine-grained distinctions. Random in-batch negatives are too easy (very different from the query) — the model can distinguish them without learning deep semantic similarity, leading to poor performance on actual retrieval tasks.</div></div>
+
+<div class="sa"><b>Q:</b> How does RAG address the knowledge cutoff problem in LLMs?
+<button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+<div class="answer" style="display:none">LLMs have static parametric knowledge frozen at training time. RAG retrieves current documents from an up-to-date corpus at query time and injects them into the prompt context. The generator can then answer using retrieved information rather than relying solely on potentially stale internal knowledge.</div></div>
+</div>
+</section>
+
+<section id="exam">
+<h2>11. Exam-Style Questions</h2>
+<div class="card">
+<div class="exam-q"><span class="badge">H/M</span>
+<b>[10 marks]</b> Compare and contrast bi-encoders and cross-encoders for document ranking. Your answer should address: (a) architecture differences, (b) how each model produces a relevance score, (c) computational trade-offs, and (d) where each is best deployed in a retrieval pipeline. Illustrate with relevant equations.
+<button onclick="this.nextElementSibling.style.display='block'">Model Answer</button>
+<div class="answer" style="display:none">
+<p><strong>(a) Architecture:</strong> Bi-encoder independently encodes query and document: s = E_Q(q)·E_D(d). Cross-encoder concatenates [q;d] as single input to transformer.</p>
+<p><strong>(b) Score:</strong> Bi-encoder: dot product of fixed-size vectors. Cross-encoder: [CLS] token after full self-attention over joint input → linear layer → score.</p>
+<p><strong>(c) Trade-offs:</strong> Bi-encoder documents can be pre-encoded offline (O(1) per query after indexing). Cross-encoder requires full inference per pair (O(|corpus|) infeasible). Cross-encoder typically 5-10% better MRR/NDCG.</p>
+<p><strong>(d) Deployment:</strong> Bi-encoder for first-stage retrieval (millions of docs). Cross-encoder for re-ranking top-100/1000 shortlist.</p>
+</div></div>
+
+<div class="exam-q"><span class="badge">H</span>
+<b>[8 marks]</b> Derive the ColBERT MaxSim scoring function. Show by numerical example that ColBERT is more expressive than a single-vector bi-encoder for polysemous queries. Use at least 2 query tokens and 4 document tokens in your example.
+<button onclick="this.nextElementSibling.style.display='block'">Model Answer</button>
+<div class="answer" style="display:none">
+Formula: s(q,d) = Σᵢ max_j Eᵢ·Dⱼ
+Example: q="bank" with tokens q₁=[account sense], q₂=[river sense]. Doc1 about rivers: d₁=[0.1,0.9], d₂=[0.05,0.95]. Doc2 about finance: d₁=[0.9,0.1], d₂=[0.85,0.05].
+ColBERT correctly gives Doc1 high score for q₂ and Doc2 high score for q₁. A single-vector bi-encoder compresses both senses into one embedding, potentially confusing the two.
+</div></div>
+
+<div class="exam-q"><span class="badge">M</span>
+<b>[6 marks]</b> Explain why hard negatives are essential for training competitive dense retrieval models. Describe two strategies for mining hard negatives and their trade-offs.
+<button onclick="this.nextElementSibling.style.display='block'">Model Answer</button>
+<div class="answer" style="display:none">
+In-batch negatives are random documents — trivially different from the query. Hard negatives (high-BM25-rank but non-relevant docs) provide challenging training signal, forcing learning of fine-grained semantic discrimination.
+Strategy 1 — BM25 hard negatives: fast to mine, but may miss semantic near-misses. Strategy 2 — Model-mined (iterative): top-k from trained model, better targeted, but risks false negatives (relevant docs mislabelled as negative).
+</div></div>
+
+<div class="exam-q"><span class="badge">H/M</span>
+<b>[8 marks]</b> Describe the Retrieval-Augmented Generation (RAG) framework. Explain: (a) the role of each component, (b) the marginalisation formula P(y|x), (c) two failure modes, and (d) one technique to mitigate each failure mode.
+<button onclick="this.nextElementSibling.style.display='block'">Model Answer</button>
+<div class="answer" style="display:none">
+(a) Retriever (DPR/ColBERT) fetches top-k relevant documents. Generator (LLM) conditions on query + docs to produce answer.
+(b) P(y|x) = Σz P(z|x)·P(y|x,z) — marginalises over retrieved documents.
+(c) Failure 1: retrieval failure — relevant doc not in top-k. Failure 2: generator hallucination — ignores retrieved context.
+(d) Mitigate 1: improve retriever (use dense+sparse hybrid). Mitigate 2: prompt engineering ("answer only from provided documents") or faithfulness fine-tuning.
+</div></div>
+
+<div class="exam-q"><span class="badge">H</span>
+<b>[6 marks]</b> Explain knowledge distillation from a cross-encoder teacher to a bi-encoder student. Write the KL-divergence loss and explain why soft labels are preferable to hard binary relevance labels.
+<button onclick="this.nextElementSibling.style.display='block'">Model Answer</button>
+<div class="answer" style="display:none">
+Loss: L_KD = KL(P_T || P_S) = Σᵢ P_T(i) log(P_T(i)/P_S(i))
+Teacher (cross-encoder) produces probability distributions over candidate docs. Student (bi-encoder) trained to match these distributions.
+Soft labels encode relative relevance (e.g., 0.9 vs 0.7 vs 0.1) richer than binary (1/0). They convey partial relevance and inter-document relationships, providing stronger training signal — especially valuable for near-relevant documents.
+</div></div>
+
+<div class="exam-q"><span class="tag">H/M</span><span class="marks">[10 marks]</span>
+<p><strong>Q.</strong> (a) Describe the generic Φ_Q(q)/Φ_D(d)/F(·) framework for neural relevance models. [2] (b) Using the 2D taxonomy (Encoder cost × Combiner cost), place BM25, Bi-Encoder (DPR), ColBERT, and MonoBERT in the correct cells. [4] (c) Explain DeepCT and SPLADE as learned sparse models. How do they differ from BM25? [4]</p>
+<button onclick="this.nextElementSibling.style.display='block'">Model Answer</button>
+<div class="answer" style="display:none">
+(a) score(q,d) = F(Φ_Q(q), Φ_D(d)). Φ_Q = query encoder (cost of encoding query). Φ_D = document encoder (cost of encoding document). F = combiner (cost of combining to produce score). Classification by cost allows predicting latency and scaling behaviour. [2]<br><br>
+(b) BM25: O(|d|) encoder, O(1) combiner (precomputed stats). Bi-Encoder (DPR): O(|d|²) encoder (BERT), O(1) combiner (dot product). ColBERT: O(|d|²) encoder (BERT per token), O(|d|) combiner (MaxSim sum). MonoBERT: O(|d|²) encoder (BERT on joint input), O(|d|²) combiner (full attention between q and d). [4]<br><br>
+(c) DeepCT: passes document through BERT to produce contextualised term frequency weights — same inverted index format as BM25 but TF values learned from context instead of raw counts. SPLADE: uses BERT + log(1+ReLU) activation to produce a sparse vector over full vocabulary — includes expansion terms not in the original document. Both differ from BM25 by: using contextual embeddings (BERT) rather than bag-of-words statistics, and (for SPLADE) expanding the vocabulary beyond terms actually present in the document. [4]
+</div></div>
+
+<div class="exam-q"><span class="tag">H/M</span><span class="marks">[8 marks]</span>
+<p><strong>Q.</strong> (a) Distinguish between Mono, Duo, and Listwise neural ranking models. Give one example model for each. [4] (b) Explain HNSW for approximate nearest neighbour search: the hierarchical structure, the cluster hypothesis it relies on, and the trade-off vs. exact search. [4]</p>
+<button onclick="this.nextElementSibling.style.display='block'">Model Answer</button>
+<div class="answer" style="display:none">
+(a) Mono models: score each document independently given query. Rel(d|q). Example: MonoBERT/monoT5. Efficient: N inferences for N candidates. Duo models: score pairs of documents given query. Rel(d1 vs d2 | q). Example: DuoBERT. Cost: O(N²) pairs. Better quality through pairwise comparison. Listwise: score the whole ranked list simultaneously. Rel(d? | q, d1, d2, ...). Example: RankGPT (large LM prompted to rank passages). Highest quality but most expensive — must process all candidates at once. [4]<br><br>
+(b) HNSW: hierarchical graph where each document appears at multiple levels. Top levels: few nodes, long-range connections — fast navigation to approximate region. Bottom levels: all nodes, short connections — precise local search. Based on cluster hypothesis: similar documents cluster together in vector space, so greedy traversal from any start node converges to the query's neighbourhood. Trade-off vs. exact FAISS: ~10–100× faster search, but retrieves approximate (not exact) nearest neighbours — typically &lt;2% recall loss. Query time O(log N) vs O(N) for exact. Construction time O(N log N) — paid offline. [4]
+</div></div>
+
+<div class="exam-q"><span class="tag">H</span><span class="marks">[6 marks]</span>
+<p><strong>Q.</strong> Explain two approaches to synthetic training data generation for neural IR when relevance labels are scarce. For each: describe the method, the LLM's role, and one limitation. [6]</p>
+<button onclick="this.nextElementSibling.style.display='block'">Model Answer</button>
+<div class="answer" style="display:none">
+InPars: Given a document, prompt a large LLM (GPT-3) with few-shot examples ("Here is a document. Generate a question a user might ask that this document answers"). Produces (document → synthetic query) pairs at scale. Fine-tune retrieval model on these pairs. Role: LLM as a "question generator". Limitation: generated queries may not match real user query distributions — they tend to be longer and more formal than actual search queries. [3]<br><br>
+Promptagator: Uses an instruction-following LLM (FLAN) with task-specific instructions in the prompt ("Generate biomedical research questions that are answered by the following passage"). Enables rapid domain adaptation without domain-labelled data. Role: LLM as a task-conditioned data generator. Limitation: quality depends heavily on prompt quality and LLM's knowledge of the target domain — low-quality prompts produce low-quality training pairs. [3]
+</div></div>
+</div>
+</section>
+
+</div></main>
+
+<script>
+window.addEventListener('scroll',()=>{
+  const p=document.getElementById('pb');
+  p.style.width=(window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%';
+  document.getElementById('bt').style.display=window.scrollY>400?'block':'none';
+  document.querySelectorAll('nav a').forEach(a=>{
+    const s=document.querySelector(a.getAttribute('href'));
+    if(s){const r=s.getBoundingClientRect();a.classList.toggle('active',r.top<=100&&r.bottom>100);}
+  });
+});
+function toggleTheme(){document.body.dataset.theme=document.body.dataset.theme==='light'?'':'light';}
+function answerMCQ(el,t){const i=el.parentElement;i.querySelectorAll('.opt').forEach(o=>o.classList.remove('c','w'));el.classList.add(t==='correct'?'c':'w');}
+function tfA(btn){const i=btn.closest('.tf-row');i.querySelector('.tf-ans').style.display='block';}
+function rev(btn){const b=btn.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';btn.textContent=b.style.display==='block'?'Hide Answer':'Reveal Answer';}
+function rvb(el){el.classList.add('rv');}
+document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=document.querySelector(a.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}));
+</script>
+
+</body>
+</html>

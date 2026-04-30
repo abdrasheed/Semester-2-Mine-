@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(brew install:*)",
+      "Bash(brew list:*)",
+      "Bash(pdftotext --version)",
+      "Read(//usr/local/Cellar/**)",
+      "Read(//opt/homebrew/Cellar/**)",
+      "Read(//usr/local/bin/**)",
+      "Read(//opt/homebrew/**)",
+      "Bash(brew info:*)",
+      "Bash(python3 -c \"import pdfplumber; print\\(''pdfplumber available''\\)\")",
+      "Bash(python3 -c \"import PyPDF2; print\\(''PyPDF2 available''\\)\")",
+      "Bash(python3 -c \"import fitz; print\\(''PyMuPDF available''\\)\")",
+      "Bash(python3:*)",
+      "Bash(ls -lh \"/Users/imran/Desktop/IR notes/\"*Notes.html)",
+      "Bash(ls -lh \"/Users/imran/Desktop/IR notes/\"*.html)",
+      "Bash(wc -l L*.html)",
+      "Bash(grep -h \"<h2\\\\|<h3\\\\|<h4\" L0*-Notes.html)",
+      "Bash(sed 's/<[^>]*>//g')"
+    ]
+  }
+}

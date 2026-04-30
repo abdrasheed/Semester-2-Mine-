@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 08 · Learning to Rank: Discriminative Models &amp; LTR</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+  :root { --bg:#0f0f1a;--bg2:#1a1a2e;--bg3:#16213e;--accent:#7c3aed;--accent2:#06b6d4;--accent3:#10b981;--text:#e2e8f0;--text2:#94a3b8;--yellow:#f59e0b;--red:#ef4444;--card:#1e293b; }
+  [data-theme="light"]{--bg:#f8fafc;--bg2:#f1f5f9;--bg3:#e2e8f0;--text:#0f172a;--text2:#475569;--card:#ffffff;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;overflow-x:hidden;}
+  #pb{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;z-index:1000;transition:width .1s;}
+  header{background:linear-gradient(135deg,#0f0f1a 0%,#1a0533 50%,#0a1628 100%);padding:80px 40px 60px;text-align:center;position:relative;overflow:hidden;}
+  header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at center,rgba(124,58,237,.15) 0%,transparent 60%);animation:rotate 20s linear infinite;}
+  @keyframes rotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes slideInLeft{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+  .badge{display:inline-block;background:var(--accent);color:#fff;padding:6px 18px;border-radius:20px;font-size:.85rem;margin-bottom:16px;animation:fadeInUp .6s ease;}
+  h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;margin-bottom:16px;background:linear-gradient(135deg,#fff 0%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:fadeInUp .8s ease;}
+  .subtitle{color:var(--text2);font-size:1.1rem;animation:fadeInUp 1s ease;}
+  .container{max-width:1200px;margin:0 auto;padding:0 24px;}
+  nav{position:fixed;right:20px;top:50%;transform:translateY(-50%);background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:16px;z-index:100;max-width:220px;max-height:70vh;overflow-y:auto;}
+  nav h3{font-size:.75rem;color:var(--accent2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+  nav a{display:block;color:var(--text2);text-decoration:none;font-size:.8rem;padding:4px 8px;border-left:2px solid transparent;transition:all .2s;}
+  nav a:hover,nav a.active{color:var(--accent);border-left-color:var(--accent);}
+  .theme-btn{position:fixed;left:20px;top:20px;background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:8px;padding:8px 16px;color:var(--text);cursor:pointer;z-index:100;font-size:.85rem;}
+  .back-top{position:fixed;bottom:30px;right:30px;background:var(--accent);color:#fff;border:none;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:none;z-index:100;box-shadow:0 4px 15px rgba(124,58,237,.4);}
+  main{padding:60px 0;}
+  section{margin-bottom:60px;animation:fadeIn .6s ease;}
+  .section-title{font-size:1.8rem;font-weight:700;margin-bottom:24px;padding-left:16px;border-left:4px solid var(--accent);color:var(--text);}
+  .card{background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:28px;margin-bottom:20px;transition:transform .2s,box-shadow .2s;}
+  .card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3);}
+  .card h3{color:var(--accent2);margin-bottom:12px;font-size:1.1rem;}
+  .card p,.card li{color:var(--text2);line-height:1.7;}
+  .card ul{padding-left:20px;}.card ul li{margin-bottom:8px;}
+  .hi{color:var(--accent);font-weight:600;}.hi2{color:var(--accent2);font-weight:600;}.hi3{color:var(--accent3);font-weight:600;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  @media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr;}nav{display:none;}}
+  @media(min-width:769px){body{padding-right:260px;}}
+  .def-box{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:20px;margin:20px 0;}
+  .def-box .term{color:var(--accent);font-weight:700;font-size:1.05rem;}
+  .ex-box{background:rgba(16,185,129,.08);border-left:4px solid var(--accent3);border-radius:0 12px 12px 0;padding:20px;margin:20px 0;}
+  .ex-box h4{color:var(--accent3);margin-bottom:10px;}
+  .warn-box{background:rgba(245,158,11,.08);border-left:4px solid var(--yellow);border-radius:0 12px 12px 0;padding:20px;margin:20px 0;}
+  .warn-box h4{color:var(--yellow);margin-bottom:10px;}
+  .svg-cont{background:var(--bg2);border-radius:16px;padding:30px;margin:30px 0;text-align:center;}
+  .svg-cont h4{color:var(--accent2);margin-bottom:20px;}
+  .eq-block{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.4);border-radius:12px;padding:24px;margin:24px 0;text-align:center;}
+  .eq-block .eq-title{color:var(--accent);font-weight:700;margin-bottom:12px;font-size:1rem;}
+  .practice-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.4);border-radius:12px;padding:20px;margin:12px 0;}
+  .practice-box h5{color:var(--yellow);margin-bottom:10px;}
+  .solved-box{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.4);border-radius:12px;padding:20px;margin:12px 0;}
+  .solved-box h5{color:var(--accent3);margin-bottom:10px;}
+  .q-section{background:var(--bg2);border-radius:20px;padding:40px;margin-top:40px;}
+  .q-type{font-size:1.4rem;font-weight:700;color:var(--accent);margin:30px 0 16px;padding-bottom:8px;border-bottom:2px solid rgba(124,58,237,.3);}
+  .mcq{background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .mcq .qtext{font-weight:600;color:var(--text);margin-bottom:12px;}
+  .opt{padding:8px 14px;border-radius:8px;cursor:pointer;color:var(--text2);border:1px solid rgba(255,255,255,.07);margin:4px 0;transition:all .2s;}
+  .opt:hover{background:rgba(124,58,237,.15);border-color:var(--accent);}
+  .opt.c{background:rgba(16,185,129,.2);border-color:var(--accent3);color:var(--accent3);}
+  .opt.w{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red);}
+  .tf-row{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .tf-q{flex:1;color:var(--text2);}
+  .tb{padding:6px 16px;border-radius:6px;border:none;cursor:pointer;font-size:.85rem;transition:all .2s;}
+  .tb.tt{background:rgba(16,185,129,.2);color:var(--accent3);}
+  .tb.tf{background:rgba(239,68,68,.15);color:var(--red);}
+  .tf-ans{display:none;font-size:.85rem;padding:6px 10px;border-radius:6px;margin-top:8px;}
+  .tf-ans.ca{background:rgba(16,185,129,.15);color:var(--accent3);}
+  .tf-ans.wa{background:rgba(239,68,68,.1);color:var(--red);}
+  .sa{background:var(--card);border-radius:12px;padding:20px;margin-bottom:12px;}
+  .sa .qt{color:var(--text2);margin-bottom:12px;font-weight:600;}
+  .rbtn{background:var(--accent);color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .2s;}
+  .rbtn:hover{background:#6d28d9;}
+  .ans{display:none;margin-top:12px;background:rgba(16,185,129,.08);border-left:3px solid var(--accent3);padding:14px;border-radius:0 8px 8px 0;color:var(--text2);line-height:1.6;}
+  .fitb{background:var(--card);border-radius:10px;padding:16px 20px;margin-bottom:10px;color:var(--text2);}
+  .blank{display:inline-block;min-width:100px;border-bottom:2px solid var(--accent);margin:0 6px;text-align:center;color:transparent;cursor:pointer;transition:all .3s;padding:0 4px;}
+  .blank.rv{color:var(--accent);}
+  .fc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;margin-top:20px;}
+  .fc{perspective:1000px;height:150px;cursor:pointer;}
+  .fci{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d;}
+  .fc:hover .fci,.fc.flipped .fci{transform:rotateY(180deg);}
+  .fcf,.fcb{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;}
+  .fcf{background:linear-gradient(135deg,var(--accent),#5b21b6);color:#fff;font-weight:600;}
+  .fcb{background:var(--card);border:1px solid rgba(6,182,212,.3);color:var(--text2);font-size:.9rem;transform:rotateY(180deg);}
+  .exam-q{background:var(--bg3);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .tag{display:inline-block;background:var(--yellow);color:#000;font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:4px;margin-right:8px;}
+  .marks{display:inline-block;background:rgba(245,158,11,.2);color:var(--yellow);font-size:.75rem;padding:2px 8px;border-radius:4px;}
+  .obj-list{list-style:none;}.obj-list li{padding:10px 16px;margin-bottom:8px;background:var(--card);border-radius:8px;color:var(--text2);display:flex;align-items:flex-start;gap:10px;animation:slideInLeft .5s ease;}
+  .obj-list li::before{content:"✓";color:var(--accent3);font-weight:700;margin-top:1px;}
+  .sum-card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border-radius:16px;padding:24px;border-left:4px solid var(--accent);margin-bottom:16px;}
+  .sum-card h4{color:var(--accent2);margin-bottom:10px;}
+  code{background:rgba(124,58,237,.15);color:var(--accent2);padding:2px 6px;border-radius:4px;font-family:monospace;}
+  pre{background:#0d1117;border-radius:12px;padding:24px;overflow-x:auto;margin:20px 0;border:1px solid rgba(255,255,255,.05);}
+  pre code{background:none;padding:0;color:#c9d1d9;}
+  .kw{color:#ff7b72;}.fn{color:#d2a8ff;}.str{color:#a5d6ff;}.cm{color:#8b949e;}.num{color:#79c0ff;}
+  .new-badge{display:inline-block;background:var(--accent3);color:#fff;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:4px;margin-left:8px;vertical-align:middle;}
+</style>
+</head>
+<body>
+<div id="pb"></div>
+<button class="theme-btn" onclick="toggleTheme()">🌓 Theme</button>
+<button class="back-top" id="bt" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<nav><h3>Contents</h3>
+<a href="#objectives">Objectives</a>
+<a href="#gen-vs-disc">Gen vs Disc</a>
+<a href="#features">Features</a>
+<a href="#training-data">Training Data</a>
+<a href="#pointwise">Pointwise LTR</a>
+<a href="#pairwise">Pairwise (RankNet)</a>
+<a href="#listwise">Listwise (LambdaMART)</a>
+<a href="#lambdarank">LambdaRank Details</a>
+<a href="#mart">MART / GBM</a>
+<a href="#risk">Risk in LTR</a>
+<a href="#summary">Summary</a>
+<a href="#questions">Questions</a>
+</nav>
+<header>
+  <div class="badge">Lecture 08 · Learning to Rank</div>
+  <h1>Discriminative Models &amp; Learning to Rank</h1>
+  <p class="subtitle">IR H/M Course · Craig Macdonald · 2026</p>
+</header>
+<main><div class="container">
+
+<!-- ─── OBJECTIVES ─── -->
+<section id="objectives">
+  <h2 class="section-title">Learning Objectives</h2>
+  <ul class="obj-list">
+    <li>Distinguish generative vs discriminative retrieval models</li>
+    <li>Explain the types of features used in Learning to Rank (QD, QI, Q)</li>
+    <li>Describe pointwise LTR: regression formulation, MSE loss</li>
+    <li>Describe pairwise LTR: RankNet algorithm, cross-entropy loss, gradient derivation</li>
+    <li>Describe listwise LTR: LambdaRank, LambdaMART, NDCG-weighted gradients</li>
+    <li>Explain how MART / Gradient Boosted Trees work for LTR</li>
+    <li>Understand training data: LETOR, MS MARCO, TREC, click-through data</li>
+    <li>Identify risks in LTR and risk-sensitive approaches</li>
+    <li>Apply LTR concepts using PyTerrier pipelines</li>
+  </ul>
+</section>
+
+<!-- ─── GEN vs DISC ─── -->
+<section id="gen-vs-disc">
+  <h2 class="section-title">Generative vs Discriminative Models</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3>Generative Models (BM25, LM, DFR)</h3>
+      <ul>
+        <li>Assume documents were "generated" from an underlying statistical model</li>
+        <li>Estimate P(document|class) using Bayes' Rule</li>
+        <li>Work well with small training data</li>
+        <li>Strong theoretical foundations</li>
+        <li>Examples: BIM, BM25, Query Likelihood, DFR/PL2</li>
+        <li>Interpretable: each component has a clear meaning</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Discriminative Models (LTR)</h3>
+      <ul>
+        <li>Directly estimate P(relevance|features) from training data</li>
+        <li>Can incorporate many diverse features</li>
+        <li>Usually outperform generative models with enough data</li>
+        <li>Require large training datasets (e.g., click logs, LETOR)</li>
+        <li>Examples: RankSVM, LambdaMART, Neural Rankers</li>
+        <li>Less interpretable but more flexible</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <h4>Why LTR? Motivation</h4>
+    <p style="color:var(--text2);">Generative models like BM25 use only a handful of carefully designed features (TF, IDF, length). In practice, hundreds of signals exist: PageRank, anchor text, query-click history, proximity scores for different fields, etc. LTR can combine all these signals optimally from training data — this is fundamentally beyond what a hand-crafted formula can do.</p>
+  </div>
+</section>
+
+<!-- ─── FEATURES ─── -->
+<section id="features">
+  <h2 class="section-title">Features for Learning to Rank</h2>
+  <div class="card">
+    <h3>Feature Categories</h3>
+    <div class="grid-3">
+      <div class="def-box">
+        <span class="term">Query-Dependent (QD)</span>
+        <p style="color:var(--text2);margin-top:8px;">Depend on both query AND document: BM25 score (body, title, anchor, URL), TF-IDF, PL2, BM25F, cosine similarity, proximity scores, deep learned semantic matching (e.g., BERT score)</p>
+      </div>
+      <div class="def-box">
+        <span class="term">Query-Independent (QI)</span>
+        <p style="color:var(--text2);margin-top:8px;">Depend only on document: PageRank, number of inlinks, spamminess score, document age, URL depth, page length, readability score</p>
+      </div>
+      <div class="def-box">
+        <span class="term">Query Features (Q)</span>
+        <p style="color:var(--text2);margin-top:8px;">Depend only on query: query length (number of terms), presence of named entities, query type classification (navigational, informational, transactional)</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Typical Feature Set (Web LTR — hundreds of features)</h3>
+    <div class="grid-2">
+      <div>
+        <p class="hi2">BM25-based features (per field):</p>
+        <ul>
+          <li>BM25 on body text</li>
+          <li>BM25 on title field</li>
+          <li>BM25 on anchor text</li>
+          <li>BM25 on URL</li>
+          <li>BM25F (combined field BM25)</li>
+        </ul>
+      </div>
+      <div>
+        <p class="hi">Other retrieval features:</p>
+        <ul>
+          <li>PL2 on body/title</li>
+          <li>TF-IDF variants</li>
+          <li>Language model scores (Dirichlet, JM)</li>
+          <li>Proximity / MRF scores</li>
+          <li>Semantic similarity (embedding-based)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="grid-2" style="margin-top:16px;">
+      <div>
+        <p class="hi3">Graph/structural features:</p>
+        <ul>
+          <li>PageRank</li>
+          <li>In-degree (number of inlinks)</li>
+          <li>HITS hub/authority scores</li>
+          <li>URL depth, number of slashes</li>
+        </ul>
+      </div>
+      <div>
+        <p class="hi">Click/behavioural features:</p>
+        <ul>
+          <li>CTR (click-through rate) for (query, doc) pair</li>
+          <li>Dwell time on page after click</li>
+          <li>Skip rate (user skipped without clicking)</li>
+          <li>Query reformulation rate after viewing</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="svg-cont">
+    <h4>Ranking Cascade (Web-Scale Search)</h4>
+    <svg width="600" height="240" viewBox="0 0 600 240" style="max-width:100%;">
+      <defs><marker id="ac" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#06b6d4"/></marker></defs>
+      <rect x="10" y="80" width="140" height="80" rx="8" fill="rgba(124,58,237,.15)" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="80" y="108" text-anchor="middle" fill="#7c3aed" font-size="11" font-weight="600">Stage 1</text>
+      <text x="80" y="125" text-anchor="middle" fill="#94a3b8" font-size="10">Boolean / BM25</text>
+      <text x="80" y="140" text-anchor="middle" fill="#94a3b8" font-size="10">1B docs → 1K</text>
+      <line x1="150" y1="120" x2="185" y2="120" stroke="#06b6d4" stroke-width="2" marker-end="url(#ac)"/>
+      <rect x="190" y="60" width="160" height="120" rx="8" fill="rgba(6,182,212,.12)" stroke="#06b6d4" stroke-width="1.5"/>
+      <text x="270" y="88" text-anchor="middle" fill="#06b6d4" font-size="11" font-weight="600">Stage 2: LTR</text>
+      <text x="270" y="108" text-anchor="middle" fill="#94a3b8" font-size="10">100s of features</text>
+      <text x="270" y="125" text-anchor="middle" fill="#94a3b8" font-size="10">LambdaMART</text>
+      <text x="270" y="142" text-anchor="middle" fill="#94a3b8" font-size="10">1K docs → 20</text>
+      <line x1="350" y1="120" x2="385" y2="120" stroke="#06b6d4" stroke-width="2" marker-end="url(#ac)"/>
+      <rect x="390" y="80" width="160" height="80" rx="8" fill="rgba(16,185,129,.12)" stroke="#10b981" stroke-width="1.5"/>
+      <text x="470" y="108" text-anchor="middle" fill="#10b981" font-size="11" font-weight="600">Stage 3: Re-rank</text>
+      <text x="470" y="125" text-anchor="middle" fill="#94a3b8" font-size="10">BERT cross-encoder</text>
+      <text x="470" y="142" text-anchor="middle" fill="#94a3b8" font-size="10">20 → top 10</text>
+      <text x="80" y="185" text-anchor="middle" fill="#7c3aed" font-size="10">Fast, coarse</text>
+      <text x="270" y="205" text-anchor="middle" fill="#06b6d4" font-size="10">Many features, ML</text>
+      <text x="470" y="185" text-anchor="middle" fill="#10b981" font-size="10">Slow, accurate</text>
+    </svg>
+  </div>
+</section>
+
+<!-- ─── TRAINING DATA ─── -->
+<section id="training-data">
+  <h2 class="section-title">Training Data for LTR <span class="new-badge">NEW</span></h2>
+
+  <div class="card">
+    <h3>Types of Training Data</h3>
+    <div class="grid-2">
+      <div class="def-box">
+        <span class="term">Explicit Relevance Judgments</span>
+        <p style="color:var(--text2);margin-top:8px;">Human assessors rate (query, document) pairs on a relevance scale. Examples: TREC ad-hoc tracks, LETOR benchmark datasets. High quality but expensive — limited scale.</p>
+      </div>
+      <div class="def-box">
+        <span class="term">Implicit Signals (Click-Through)</span>
+        <p style="color:var(--text2);margin-top:8px;">User clicks, dwell time, skip rates collected from search logs. Very large scale (billions of interactions at Google/Bing) but noisy — clicks ≠ relevance. Subject to position bias (top results clicked more regardless of relevance).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Key LTR Benchmark Datasets</h3>
+    <div class="grid-3">
+      <div class="def-box">
+        <span class="term">LETOR (Learning to Rank)</span>
+        <p style="color:var(--text2);margin-top:8px;">Classic benchmark from Microsoft Research. Multiple datasets (LETOR 3.0, 4.0). ~46 features per (query,doc) pair. OHSUMED, MQ2007, MQ2008 subsets. Up to ~100K query-document pairs.</p>
+      </div>
+      <div class="def-box">
+        <span class="term">MS MARCO</span>
+        <p style="color:var(--text2);margin-top:8px;">Microsoft Machine Reading Comprehension dataset — repurposed for passage and document retrieval. ~1M queries, real Bing queries. Sparse relevance judgments (from click data). Standard benchmark since 2016.</p>
+      </div>
+      <div class="def-box">
+        <span class="term">TREC Deep Learning</span>
+        <p style="color:var(--text2);margin-top:8px;">TREC 2019–2023 Deep Learning tracks. Built on MS MARCO but with dense relevance judgments (NIST assessors). Standard for evaluating both classical and neural LTR models.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Position Bias in Click Data</h3>
+    <p style="color:var(--text2);">Users are more likely to click on highly-ranked results simply because they appear near the top — independent of true relevance. This creates a feedback loop: biased training data → biased model → documents ranked at top → more clicks → more bias. Solutions:</p>
+    <ul>
+      <li><span class="hi">Inverse Propensity Scoring (IPS):</span> down-weight clicks on top positions, up-weight clicks on lower positions</li>
+      <li><span class="hi2">Randomisation:</span> occasionally randomise result order to collect unbiased data (costly)</li>
+      <li><span class="hi3">Unbiased LTR:</span> jointly learn relevance model and propensity (position bias) model</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ─── POINTWISE ─── -->
+<section id="pointwise">
+  <h2 class="section-title">Pointwise Learning to Rank <span class="new-badge">EXPANDED</span></h2>
+
+  <div class="def-box">
+    <span class="term">Pointwise LTR</span>
+    <p style="color:var(--text2);margin-top:8px;">Treat ranking as a regression or classification problem on individual (query, document) pairs. Each pair is treated independently — predict a relevance score s = f(x) where x is the feature vector. The model is a function from features to a scalar relevance estimate.</p>
+  </div>
+
+  <div class="card">
+    <h3>Pointwise: Regression Tree Approach</h3>
+    <p style="color:var(--text2);">Most common pointwise approach: train a regression tree (or ensemble) to predict the relevance label y ∈ {0, 1, 2, 3} from features. At test time, score each (query, doc) pair and sort by predicted score.</p>
+    <div class="eq-block" style="margin:20px 0;">
+      <div class="eq-title">Mean Squared Error (MSE) Loss — Pointwise</div>
+      <div>\[ \mathcal{L}_{MSE} = \frac{1}{n} \sum_{i=1}^n (y_i - \hat{y}_i)^2 = \frac{1}{n} \sum_{i=1}^n (y_i - f(\mathbf{x}_i))^2 \]</div>
+      <p style="color:var(--text2);margin-top:10px;">yᵢ = true relevance label, ŷᵢ = predicted score. Minimised via gradient descent or regression tree fitting.</p>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Pointwise Advantages</h3>
+      <ul>
+        <li>Simple to implement — standard ML regression</li>
+        <li>Works with any ML method (trees, SVMs, linear models)</li>
+        <li>Efficient — O(n) training pairs</li>
+        <li>Easy to add new features</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Pointwise Disadvantages</h3>
+      <ul>
+        <li>Ignores rank order — treats position 1 and position 10 equally</li>
+        <li>Predicting absolute relevance is harder than predicting relative order</li>
+        <li>MSE is not directly correlated with ranking metrics (NDCG, MAP)</li>
+        <li>Does not model interaction between documents in the list</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ─── PAIRWISE / RANKNET ─── -->
+<section id="pairwise">
+  <h2 class="section-title">Pairwise LTR: RankNet <span class="new-badge">EXPANDED</span></h2>
+
+  <div class="def-box">
+    <span class="term">Pairwise LTR</span>
+    <p style="color:var(--text2);margin-top:8px;">Instead of predicting absolute relevance, learn which of two documents (dᵢ, dⱼ) is more relevant to a query. Formulates ranking as a binary classification of document pairs. Proposed by Burges et al. (Microsoft Research, 2005).</p>
+  </div>
+
+  <div class="card">
+    <h3>RankNet: The Core Idea</h3>
+    <p style="color:var(--text2);">A scoring function f(x) assigns a score sᵢ = f(xᵢ) to each document. The probability that dᵢ should be ranked above dⱼ is modelled as a sigmoid of the score difference:</p>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">RankNet: Pairwise Preference Probability</div>
+    <div>\[ P_{ij} = P(d_i \succ d_j) = \frac{1}{1 + e^{-\sigma(s_i - s_j)}} = \sigma(\sigma_{\text{param}} \cdot (s_i - s_j)) \]</div>
+    <p style="color:var(--text2);margin-top:10px;">
+      &bull; sᵢ = f(xᵢ) = score for document i (from the model)<br>
+      &bull; σ(·) = sigmoid function<br>
+      &bull; σ_param (often just written σ) controls steepness of the sigmoid<br>
+      &bull; When sᵢ &gt; sⱼ: Pᵢⱼ &gt; 0.5 (dᵢ more likely to be ranked above dⱼ)<br>
+      &bull; When sᵢ = sⱼ: Pᵢⱼ = 0.5 (equal preference)
+    </p>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">RankNet: Cross-Entropy Loss</div>
+    <div>\[ \mathcal{L}_{RankNet} = -\bar{P}_{ij} \log P_{ij} - (1 - \bar{P}_{ij}) \log(1 - P_{ij}) \]</div>
+    <p style="color:var(--text2);margin-top:10px;">
+      &bull; P̄ᵢⱼ = ground truth preference: 1 if dᵢ is truly more relevant than dⱼ, 0.5 if tied, 0 if dⱼ is more relevant<br>
+      &bull; This is the standard binary cross-entropy loss applied to pairwise preferences<br>
+      &bull; Summed over all pairs (dᵢ, dⱼ) in the training set
+    </p>
+    <div class="practice-box">
+      <h5>Practice Example</h5>
+      <p style="color:var(--text2);">Two documents: sᵢ=3.0, sⱼ=1.0. σ=1. dᵢ is truly more relevant (P̄=1). Compute P_ij and the RankNet loss.</p>
+    </div>
+    <div class="solved-box">
+      <h5>Solved Example</h5>
+      <p style="color:var(--text2);">P_ij = 1/(1+e^(−1×(3−1))) = 1/(1+e^(−2)) = 1/(1+0.135) ≈ <strong>0.880</strong><br>
+      Loss = −1×log(0.880) − 0×log(0.120) = −log(0.880) ≈ <strong>0.128</strong><br>
+      Low loss because the model correctly ranks dᵢ above dⱼ with high confidence.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>RankNet: Gradient Derivation</h3>
+    <p style="color:var(--text2);">When P̄ᵢⱼ ∈ {0, 1} (hard labels), the gradient of the loss with respect to the score sᵢ simplifies nicely:</p>
+    <div style="margin:16px 0;">\[ \frac{\partial \mathcal{L}}{\partial s_i} = \sigma \cdot (\bar{P}_{ij} - P_{ij}) \cdot (-1) = -\sigma \cdot (1 - P_{ij}) \quad \text{(when } \bar{P}_{ij}=1\text{)} \]</div>
+    <p style="color:var(--text2);">This gradient is used to update the scoring function f (neural network weights or tree parameters) via backpropagation. The gradient is large when Pᵢⱼ is small (model gets the order wrong) and small when Pᵢⱼ is large (model is correct).</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Pairwise Advantages</h3>
+      <ul>
+        <li>Closer to the IR goal than pointwise (pairwise order is what ranking needs)</li>
+        <li>Loss directly penalises wrong pairwise orderings</li>
+        <li>Well-studied, principled gradient derivation</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Pairwise Disadvantages</h3>
+      <ul>
+        <li>O(n²) pairs per query — expensive for large candidate sets</li>
+        <li>Does not optimise full list-level metrics (NDCG, MAP)</li>
+        <li>Treats all pairs equally — swapping rank 1 and rank 2 vs rank 100 and 101 gets same loss</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ─── LISTWISE / LAMBDAMART ─── -->
+<section id="listwise">
+  <h2 class="section-title">Listwise LTR: LambdaMART</h2>
+
+  <div class="def-box">
+    <span class="term">Listwise LTR</span>
+    <p style="color:var(--text2);margin-top:8px;">Optimise the entire ranked list directly using a list-level metric (e.g., NDCG, MAP). Does not decompose into independent pairs or individual documents — considers the whole permutation. State-of-the-art for web search.</p>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <h3>Pointwise</h3>
+      <p>Learn to predict relevance of individual (query, doc) pairs. Treats each pair independently. Simple regression/classification. Easy but ignores rank position.</p>
+      <p style="color:var(--text2); margin-top:8px; font-size:0.9rem;">E.g., regression tree predicting relevance label [0,1,2,3]</p>
+    </div>
+    <div class="card">
+      <h3>Pairwise</h3>
+      <p>Learn which of two documents is more relevant. Pairwise preference loss. Closer to IR goal but doesn't account for full list structure.</p>
+      <p style="color:var(--text2); margin-top:8px; font-size:0.9rem;">E.g., RankNet: minimise P(wrong ordering)</p>
+    </div>
+    <div class="card">
+      <h3>Listwise</h3>
+      <p>Optimise the full ranked list directly. Uses list-level metrics (NDCG). Most effective but more complex. State-of-the-art.</p>
+      <p style="color:var(--text2); margin-top:8px; font-size:0.9rem;">E.g., LambdaMART: gradient boosted trees with NDCG-weighted gradients</p>
+    </div>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">RankNet Loss (Pairwise — repeated for context)</div>
+    <div>\[ P_{ij} = P(d_i \succ d_j) = \frac{1}{1 + e^{-\sigma(s_i - s_j)}} \]</div>
+    <div style="margin-top:12px;">\[ \mathcal{L} = -\bar{P}_{ij} \log P_{ij} - (1 - \bar{P}_{ij}) \log(1 - P_{ij}) \]</div>
+    <p style="color:var(--text2);margin-top:10px;">P̄_ij = 1 if dᵢ more relevant than dⱼ, 0.5 if equal, 0 otherwise. σ controls steepness.</p>
+  </div>
+
+  <div class="card">
+    <h3>Python: LTR with PyTerrier</h3>
+    <pre><code><span class="kw">import</span> pyterrier <span class="kw">as</span> pt
+<span class="kw">from</span> lightgbm <span class="kw">import</span> LGBMRanker
+
+<span class="cm"># Stage 1: Candidate retrieval</span>
+bm25 = pt.terrier.Retriever(index, wmodel=<span class="str">"BM25"</span>)
+
+<span class="cm"># Stage 2: Feature extraction (BM25 + PL2 features)</span>
+features = bm25 ** pt.terrier.Retriever(index, wmodel=<span class="str">"PL2"</span>)
+
+<span class="cm"># Stage 3: Train LTR model (LambdaMART via LightGBM)</span>
+ltr_pipeline = bm25 % <span class="num">1000</span> >> features >> pt.ltr.apply_learned_model(
+    LGBMRanker(), <span class="str">"NDCG"</span>
+)
+
+<span class="cm"># Train on training topics with qrels</span>
+ltr_pipeline.fit(train_topics, train_qrels)
+
+<span class="cm"># Apply to test queries</span>
+results = ltr_pipeline.transform(test_topics)</code></pre>
+  </div>
+</section>
+
+<!-- ─── LAMBDARANK ─── -->
+<section id="lambdarank">
+  <h2 class="section-title">LambdaRank: NDCG-Weighted Gradients <span class="new-badge">NEW — EXAM CRITICAL</span></h2>
+
+  <div class="def-box">
+    <span class="term">The Problem with Optimising NDCG Directly</span>
+    <p style="color:var(--text2);margin-top:8px;">NDCG (and MAP, ERR) are non-differentiable functions of the ranked list — they depend on rank positions, which are discrete. We cannot compute ∂NDCG/∂s directly. LambdaRank bypasses this by defining surrogate gradients that approximate the direction NDCG would improve.</p>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">LambdaRank: Lambda Gradient</div>
+    <div>\[ \lambda_{ij} = \frac{\partial \mathcal{L}_{RankNet}}{\partial s_i} \cdot |\Delta \text{NDCG}_{ij}| \]</div>
+    <p style="color:var(--text2);margin-top:10px;">Expanded form:</p>
+    <div style="margin-top:10px;">\[ \lambda_{ij} = -\sigma \cdot |\Delta \text{NDCG}_{ij}| \cdot \left(1 - P_{ij}\right) \]</div>
+    <p style="color:var(--text2);margin-top:12px;">
+      Where:<br>
+      &bull; |ΔNDCG_ij| = the absolute change in NDCG if documents dᵢ and dⱼ were swapped in the ranked list<br>
+      &bull; (1 − Pᵢⱼ) = the RankNet gradient (how wrong the current ordering is)<br>
+      &bull; σ = sigmoid steepness parameter<br><br>
+      <strong>Key insight:</strong> pairs where swapping would cause a large NDCG gain get a large gradient — learning focuses on the most impactful ordering corrections.
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>LambdaRank: Computing |ΔNDCG_ij|</h3>
+    <p style="color:var(--text2);">Recall NDCG@k:</p>
+    <div style="margin:10px 0;">\[ \text{NDCG}@k = \frac{1}{\text{IDCG}@k} \sum_{i=1}^k \frac{2^{r_i} - 1}{\log_2(i+1)} \]</div>
+    <p style="color:var(--text2);">When documents at positions i and j are swapped, ΔNDCG changes by:</p>
+    <div style="margin:10px 0;">\[ |\Delta\text{NDCG}_{ij}| = \left| \frac{2^{r_i}-1}{\log_2(i+1)} + \frac{2^{r_j}-1}{\log_2(j+1)} - \frac{2^{r_j}-1}{\log_2(i+1)} - \frac{2^{r_i}-1}{\log_2(j+1)} \right| \cdot \frac{1}{\text{IDCG}} \]</div>
+    <p style="color:var(--text2);">Swapping two documents at positions close to the top (small i, j) causes larger |ΔNDCG| and thus larger gradients — the model learns more from top-position errors.</p>
+  </div>
+
+  <div class="practice-box">
+    <h5>LambdaRank Worked Example</h5>
+    <p style="color:var(--text2);">
+      Suppose sᵢ=2.0 (rel=3, at rank 5) and sⱼ=3.0 (rel=0, at rank 2). The model currently ranks dⱼ above dᵢ (wrong — dᵢ is more relevant). σ=1.<br><br>
+      P_ij = σ(sᵢ−sⱼ) = σ(2−3) = σ(−1) = 1/(1+e) ≈ 0.269<br>
+      (1−Pᵢⱼ) = 0.731 — large because model order is wrong<br><br>
+      |ΔNDCG| is large because: rank-2 doc has rel=0 (should be low) and rank-5 doc has rel=3 (should be high). Swapping them would dramatically improve NDCG.<br><br>
+      Therefore λᵢⱼ is large → large gradient → model strongly updates to push dᵢ above dⱼ.
+    </p>
+  </div>
+</section>
+
+<!-- ─── MART / GBM ─── -->
+<section id="mart">
+  <h2 class="section-title">MART / Gradient Boosted Regression Trees <span class="new-badge">NEW</span></h2>
+
+  <div class="def-box">
+    <span class="term">MART (Multiple Additive Regression Trees) / GBRT</span>
+    <p style="color:var(--text2);margin-top:8px;">Gradient Boosted Regression Trees (GBRT), also called MART or GBM (Gradient Boosted Machines). An ensemble method that sequentially adds regression trees, each fitting the residual error (or gradient) of the previous ensemble. The final score is the sum of all tree outputs.</p>
+  </div>
+
+  <div class="card">
+    <h3>LambdaMART = LambdaRank + MART</h3>
+    <div class="grid-2">
+      <div>
+        <p class="hi2" style="margin-bottom:10px;">Training algorithm (simplified):</p>
+        <ol style="color:var(--text2);padding-left:20px;line-height:2;">
+          <li>Initialise all document scores to 0</li>
+          <li>For each boosting round t = 1 to T:
+            <ol style="margin-left:20px;">
+              <li>Compute λ_ij for all document pairs using LambdaRank formula</li>
+              <li>Sum lambdas per document: Λᵢ = Σⱼ λᵢⱼ</li>
+              <li>Fit a regression tree hₜ(x) to the pseudo-residuals Λᵢ</li>
+              <li>Update scores: sᵢ ← sᵢ + η × hₜ(xᵢ)</li>
+            </ol>
+          </li>
+          <li>Final score: F(x) = Σₜ η × hₜ(x)</li>
+        </ol>
+      </div>
+      <div>
+        <p class="hi" style="margin-bottom:10px;">Key properties:</p>
+        <ul style="color:var(--text2);">
+          <li>η = learning rate (step size)</li>
+          <li>T = number of trees (typically 100–1000)</li>
+          <li>Each tree has limited depth (typically 2–8 leaves)</li>
+          <li>Trained on NDCG-weighted gradients → optimises NDCG indirectly</li>
+          <li>Implemented in: LightGBM, XGBoost, Microsoft MART library</li>
+          <li>Used by Bing, Baidu, Yandex in production</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Gradient Boosted Trees: Visual Intuition</h3>
+    <svg width="500" height="160" viewBox="0 0 500 160" style="max-width:100%;display:block;margin:16px auto;">
+      <rect x="10" y="40" width="80" height="80" rx="8" fill="rgba(124,58,237,.2)" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="50" y="75" text-anchor="middle" fill="#7c3aed" font-size="10">Tree 1</text>
+      <text x="50" y="90" text-anchor="middle" fill="#94a3b8" font-size="9">fits Λ (lambdas)</text>
+      <text x="105" y="83" fill="#06b6d4" font-size="14">+</text>
+      <rect x="120" y="40" width="80" height="80" rx="8" fill="rgba(124,58,237,.2)" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="160" y="75" text-anchor="middle" fill="#7c3aed" font-size="10">Tree 2</text>
+      <text x="160" y="90" text-anchor="middle" fill="#94a3b8" font-size="9">fits residuals</text>
+      <text x="215" y="83" fill="#06b6d4" font-size="14">+ … +</text>
+      <rect x="270" y="40" width="80" height="80" rx="8" fill="rgba(124,58,237,.2)" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="310" y="75" text-anchor="middle" fill="#7c3aed" font-size="10">Tree T</text>
+      <text x="310" y="90" text-anchor="middle" fill="#94a3b8" font-size="9">final correction</text>
+      <text x="365" y="83" fill="#06b6d4" font-size="14">=</text>
+      <rect x="385" y="55" width="100" height="50" rx="8" fill="rgba(16,185,129,.2)" stroke="#10b981" stroke-width="1.5"/>
+      <text x="435" y="83" text-anchor="middle" fill="#10b981" font-size="10">Final Score</text>
+      <text x="435" y="97" text-anchor="middle" fill="#94a3b8" font-size="9">F(x) = Σ ηhₜ(x)</text>
+    </svg>
+  </div>
+
+  <div class="warn-box">
+    <h4>Why Trees (not Neural Nets) for LTR?</h4>
+    <p style="color:var(--text2);">For tabular/structured feature data (BM25 scores, PageRank, etc.), gradient boosted trees typically outperform neural networks. Trees: (1) handle missing features naturally, (2) require no feature normalisation, (3) are interpretable (feature importance), (4) train faster on CPU. Neural LTR (e.g., DSSM, BERT-based) is used when raw text is available (deep semantic features), but classical LTR with GBRT still dominates for structured features.</p>
+  </div>
+</section>
+
+<!-- ─── RISK IN LTR ─── -->
+<section id="risk">
+  <h2 class="section-title">Risk in Learning to Rank <span class="new-badge">NEW</span></h2>
+
+  <div class="def-box">
+    <span class="term">LTR Risk</span>
+    <p style="color:var(--text2);margin-top:8px;">A LTR model may improve average-case performance across the test set but perform <em>worse</em> than a strong baseline (e.g., BM25) on individual queries. This is the risk of LTR — trading off reliability for average gain.</p>
+  </div>
+
+  <div class="card">
+    <h3>Sources of LTR Risk</h3>
+    <ul>
+      <li><span class="hi">Training data mismatch:</span> test queries not well represented in training data → model generalises poorly</li>
+      <li><span class="hi2">Feature bias:</span> model learns spurious correlations from noisy click data</li>
+      <li><span class="hi3">Overfitting:</span> with too many trees/features, model memorises training queries</li>
+      <li><span class="hi">Query type mismatch:</span> navigational queries behave differently from informational — a model trained on one type may fail on the other</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Risk-Sensitive LTR</h3>
+    <p style="color:var(--text2);">One approach: penalise the LTR model when it performs worse than a safe baseline (BM25). The risk-sensitive objective adds a penalty term:</p>
+    <div style="margin:12px 0;">\[ \text{Objective} = \text{E}[\text{NDCG}_{LTR}] - \alpha \cdot \text{E}[\max(0, \text{NDCG}_{baseline} - \text{NDCG}_{LTR})] \]</div>
+    <p style="color:var(--text2);">α controls the trade-off between average gain and safety. Higher α → more conservative (closer to baseline on bad queries).</p>
+  </div>
+</section>
+
+<!-- ─── SUMMARY ─── -->
+<section id="summary">
+  <h2 class="section-title">Summary</h2>
+  <div class="sum-card"><h4>LTR Motivation</h4><p style="color:var(--text2);">Generative models (BM25) can't easily combine hundreds of heterogeneous features. LTR learns optimal feature weights from click data and relevance judgments. Consistently outperforms BM25 on average with sufficient training data.</p></div>
+  <div class="sum-card"><h4>Features</h4><p style="color:var(--text2);">Query-dependent (BM25, TF-IDF per field, proximity), query-independent (PageRank, spam, age), query features (length, type). 100s of features typical in web LTR systems.</p></div>
+  <div class="sum-card"><h4>Training Data</h4><p style="color:var(--text2);">LETOR (benchmark, ~46 features), MS MARCO (1M queries from Bing), TREC Deep Learning (dense NIST judgments). Click data: large-scale but noisy; position bias must be corrected.</p></div>
+  <div class="sum-card"><h4>Approaches</h4><p style="color:var(--text2);">Pointwise (MSE, simple) → Pairwise (RankNet cross-entropy, O(n²) pairs) → Listwise (LambdaMART, best). Listwise approaches are state-of-the-art for web search.</p></div>
+  <div class="sum-card"><h4>RankNet</h4><p style="color:var(--text2);">Pairwise LTR. Pᵢⱼ = σ(σ_param×(sᵢ−sⱼ)). Loss = cross-entropy. Gradient penalises wrong pairwise orderings. Foundation for LambdaRank/LambdaMART.</p></div>
+  <div class="sum-card"><h4>LambdaRank / LambdaMART</h4><p style="color:var(--text2);">λᵢⱼ = |ΔNDCG_ij| × RankNet gradient. Focuses learning on document swaps that maximise NDCG improvement. LambdaMART = LambdaRank + Gradient Boosted Trees. Used by Bing, Baidu, Yandex.</p></div>
+  <div class="sum-card"><h4>Risk</h4><p style="color:var(--text2);">LTR improves average but may degrade performance for individual queries. Risk-sensitive LTR adds penalty for underperforming the BM25 baseline. Important for deployment in production search systems.</p></div>
+</section>
+
+<!-- ─── QUESTIONS ─── -->
+<section id="questions" class="q-section">
+  <h2 class="section-title" style="border:none;padding-left:0;">Questions &amp; Practice</h2>
+
+  <div class="q-type">Multiple Choice Questions</div>
+
+  <div class="mcq"><div class="qtext">Q1. Listwise LTR approaches are considered most effective because:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) They optimise the full ranked list using metrics like NDCG directly</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) They require the least amount of training data</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) They only need query features (no document features)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) They use probabilistic models instead of machine learning</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q2. PageRank is an example of a:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) Query-dependent feature</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) Query-independent feature</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Query feature</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Listwise loss function</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q3. LambdaMART extends LambdaRank by:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Using gradient boosted regression trees as the base learner</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) Only using binary relevance labels</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Ignoring document length</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Applying BM25 as the base retrieval model</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q4. Discriminative models generally outperform generative models when:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Large amounts of training data are available</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) The collection contains fewer than 100 documents</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Queries are all navigational</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Stopword removal has been applied</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q5. In RankNet, the pairwise preference probability P(dᵢ ≻ dⱼ) equals 0.5 when:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) The model's scores sᵢ and sⱼ are equal</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) Document dᵢ has more relevant terms than dⱼ</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Both documents have the same BM25 score</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The sigmoid parameter σ is set to 0.5</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q6. The LambdaRank gradient λᵢⱼ is large when:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Swapping documents dᵢ and dⱼ would cause a large improvement in NDCG, AND the model currently gets their order wrong</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) Both documents have high BM25 scores</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) dᵢ appears more than dⱼ in the collection</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The query contains named entities</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q7. Which dataset is the standard large-scale benchmark for LTR in web search?</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) MS MARCO</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) TREC TIPSTER</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Reuters-21578</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) OHSUMED only</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q8. Position bias in click-through data means that:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Documents ranked higher receive more clicks regardless of their actual relevance</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) Longer documents always rank higher in LTR models</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Query-independent features dominate query-dependent ones</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Click data is always more reliable than human judgments</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q9. The MSE loss in pointwise LTR has a key drawback: it:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Does not directly correlate with ranking metrics like NDCG — minimising MSE does not guarantee good NDCG</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) Cannot handle more than two relevance levels</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Requires O(n²) pairs and is too slow</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Always leads to overfitting with tree models</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q10. In LambdaMART, what do the "lambda" values (Λᵢ) represent in each boosting round?</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Pseudo-residuals — the NDCG-weighted gradient signals that each regression tree fits to</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) The actual NDCG gain for each document swap</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) The BM25 score of each document</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The number of pairwise comparisons involving each document</div>
+  </div>
+
+  <div class="q-type">True / False</div>
+  <div class="tf-row">
+    <span class="tf-q">NDCG is directly differentiable with respect to document scores, making it easy to use as a training objective.</span>
+    <div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+    <div class="tf-ans wa">FALSE — NDCG depends on rank positions, which are discrete and non-differentiable. LambdaRank uses surrogate gradients to approximate NDCG optimisation.</div></div>
+  </div>
+  <div class="tf-row">
+    <span class="tf-q">LambdaMART has been used in production by major search engines including Bing and Baidu.</span>
+    <div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+    <div class="tf-ans ca">TRUE — LambdaMART (and variants) has been deployed by Bing, Baidu, and Yandex as a core ranking component.</div></div>
+  </div>
+  <div class="tf-row">
+    <span class="tf-q">In pairwise LTR, the number of training pairs grows linearly with the number of candidate documents per query.</span>
+    <div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+    <div class="tf-ans wa">FALSE — pairwise LTR creates O(n²) pairs for n candidates per query, which can be expensive for large candidate sets.</div></div>
+  </div>
+  <div class="tf-row">
+    <span class="tf-q">Query length is an example of a query-independent feature in LTR.</span>
+    <div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+    <div class="tf-ans wa">FALSE — query length depends only on the query, so it is a "query feature" (Q), not a query-independent feature (which depends only on the document).</div></div>
+  </div>
+  <div class="tf-row">
+    <span class="tf-q">The LambdaRank gradient gives larger updates to document pairs at the top of the ranking whose swap would cause a large NDCG change.</span>
+    <div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+    <div class="tf-ans ca">TRUE — λᵢⱼ is weighted by |ΔNDCG_ij|, which is larger for top-ranked positions, focusing learning effort on high-impact ranking corrections.</div></div>
+  </div>
+
+  <div class="q-type">Short Answer Questions</div>
+  <div class="sa"><div class="qt">Q1. Describe three types of features used in Learning to Rank, giving two examples of each.</div>
+    <button class="rbtn" onclick="rev(this)">Reveal Answer</button>
+    <div class="ans">(1) Query-Dependent (QD): change per (query,doc) pair. E.g. BM25 score on body, cosine similarity between query and document. (2) Query-Independent (QI): fixed per document. E.g. PageRank, spam score (document-level). (3) Query Features (Q): fixed per query. E.g. query length (number of terms), query type classification (navigational vs informational).</div>
+  </div>
+  <div class="sa"><div class="qt">Q2. Why might a learning-to-rank model introduce risk (worse performance for some queries)?</div>
+    <button class="rbtn" onclick="rev(this)">Reveal Answer</button>
+    <div class="ans">LTR learns an average-case model from training data. For queries poorly represented in training (e.g., rare query types, languages), the model may activate wrong sub-trees or features. Click-through training data has position bias (top results clicked more regardless of relevance). Risk-sensitive LTR adds a penalty for underperforming vs BM25 baseline (with α parameter) to reduce the chance of catastrophic failure on individual queries.</div>
+  </div>
+  <div class="sa"><div class="qt">Q3. Why can't we directly optimise NDCG in gradient-based LTR, and how does LambdaRank address this?</div>
+    <button class="rbtn" onclick="rev(this)">Reveal Answer</button>
+    <div class="ans">NDCG (and MAP, ERR) are functions of rank positions, which depend on the sorted order of scores. Sorting is a non-differentiable operation — ∂NDCG/∂score does not exist in the usual sense. LambdaRank addresses this by defining surrogate gradients (λᵢⱼ) that combine the RankNet gradient (how wrong the pairwise ordering is) with |ΔNDCG_ij| (how much NDCG would improve if the pair were swapped). This provides a useful gradient direction even though the true gradient is undefined.</div>
+  </div>
+
+  <div class="q-type">Exam-Style Questions</div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[10 marks]</span>
+    <div class="q-text"><strong>Q1.</strong> Compare and contrast pointwise, pairwise, and listwise approaches to Learning to Rank. For each approach: (a) describe how it formulates the learning problem, (b) give a named example algorithm, (c) state one advantage and one disadvantage. [10]</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">Pointwise [3]: Formulation: predict relevance of individual (q,d) pairs independently using regression/classification. Example: regression tree. Advantage: simple to implement and understand; standard ML tooling applies. Disadvantage: ignores rank order structure — treating position 1 and position 10 equally; MSE not correlated with NDCG.<br><br>Pairwise [3]: Formulation: learn preference between pairs of documents (dᵢ ≻ dⱼ). Example: RankNet (minimise cross-entropy on pairwise preference probabilities). Advantage: closer to IR goal than pointwise; directly penalises wrong orderings. Disadvantage: O(n²) pairs per query — expensive; treats all pair swaps equally regardless of rank position impact on NDCG.<br><br>Listwise [4]: Formulation: optimise the entire ranked list using a list-level metric. Example: LambdaMART (NDCG-weighted gradients with gradient boosted trees). Advantage: directly targets NDCG; state-of-the-art effectiveness; large-impact swaps get large gradients. Disadvantage: more complex; non-differentiable metrics require surrogate gradients; requires more training data.</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[10 marks]</span>
+    <div class="q-text"><strong>Q2.</strong> Explain the RankNet algorithm in detail. (a) Write the pairwise preference probability formula and explain each component [3]. (b) Write the cross-entropy loss for a pair (dᵢ, dⱼ) and explain when it is minimised [3]. (c) How does LambdaRank extend RankNet to optimise NDCG? [4]</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) Preference probability [3]: Pᵢⱼ = P(dᵢ≻dⱼ) = 1/(1+exp(−σ(sᵢ−sⱼ))). sᵢ = model score for dᵢ; σ = sigmoid function; σ_param controls steepness. When sᵢ &gt; sⱼ, Pᵢⱼ &gt; 0.5 (model predicts dᵢ ranked above dⱼ). When sᵢ = sⱼ, Pᵢⱼ = 0.5 (no preference).<br><br>(b) Cross-entropy loss [3]: L = −P̄ᵢⱼ log Pᵢⱼ − (1−P̄ᵢⱼ) log(1−Pᵢⱼ). P̄ᵢⱼ = ground truth: 1 if dᵢ truly more relevant, 0.5 if tied, 0 if dⱼ more relevant. Loss is minimised when the model's probability Pᵢⱼ matches the ground truth P̄ᵢⱼ: if dᵢ is truly more relevant (P̄=1), loss minimised when Pᵢⱼ → 1 (model assigns much higher score to dᵢ).<br><br>(c) LambdaRank extension [4]: RankNet treats all pairs equally regardless of their position in the ranking. LambdaRank multiplies the RankNet gradient by |ΔNDCG_ij| — the change in NDCG if dᵢ and dⱼ were swapped: λᵢⱼ = −σ × |ΔNDCG_ij| × (1−Pᵢⱼ). This means: pairs at top positions whose swap causes large NDCG gain get larger gradients → learning focuses on the most impactful rank corrections. NDCG is not directly differentiable, so |ΔNDCG_ij| acts as a surrogate weight that guides gradient descent toward better NDCG.</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q3.</strong> (a) What is LambdaMART, and how does it differ from LambdaRank? [3] (b) Describe the MART (gradient boosted trees) training procedure for LTR in pseudocode or clearly numbered steps. [5]</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) LambdaRank vs LambdaMART [3]: LambdaRank is the gradient signal — it defines the λᵢⱼ = |ΔNDCG_ij| × (1−Pᵢⱼ) gradient for pairwise document comparisons. LambdaMART combines these gradients with MART (Multiple Additive Regression Trees / Gradient Boosted Trees) as the learning algorithm. Instead of using a neural network to generate scores, LambdaMART fits shallow regression trees sequentially to the lambda pseudo-residuals.<br><br>(b) MART training procedure for LTR [5]:<br>1. Initialise all document scores F₀(x) = 0<br>2. For t = 1 to T (number of trees):<br>&nbsp;&nbsp;a. Compute λᵢⱼ for all document pairs using LambdaRank formula<br>&nbsp;&nbsp;b. Aggregate per-document gradient: Λᵢ = Σⱼ λᵢⱼ (sum over all paired documents)<br>&nbsp;&nbsp;c. Fit a regression tree hₜ(x) to predict Λᵢ from features xᵢ (leaf values via Newton step)<br>&nbsp;&nbsp;d. Update the ensemble: Fₜ(x) = Fₜ₋₁(x) + η × hₜ(x) (η = learning rate)<br>3. Final model: F(x) = Σₜ η × hₜ(x). At test time, score document x using F(x) and rank by descending score.</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q4.</strong> (a) Describe the sources and limitations of training data used for Learning to Rank, contrasting explicit relevance judgments with click-through data. [4] (b) What is position bias in click data and how can it be corrected? [4]</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) Training data [4]: Explicit judgments (e.g., LETOR, TREC assessors): human annotators label (query,doc) pairs on relevance scale. High quality, reliable. Limitation: expensive and slow to collect — typically thousands to tens of thousands of pairs. Not scalable to billions of queries. Click-through data (e.g., from Bing/Google search logs): user clicks, dwell time, CTR collected automatically at massive scale (billions of interactions). Limitation: noisy — clicks ≠ relevance (user may click on irrelevant result). Subject to position bias. MS MARCO combines both: click-derived relevance labels from Bing at scale.<br><br>(b) Position bias [4]: Users tend to click on results ranked higher in the list regardless of their actual relevance (presentation bias). This is because higher-ranked results receive more attention (eye-tracking studies confirm this). Effect: training data overestimates the relevance of top-ranked documents. Corrections: (1) Inverse Propensity Scoring (IPS): down-weight clicks from top positions by a propensity factor p(rank), give more weight to clicks at lower positions; (2) Interleaving experiments: interleave results from two systems, measure clicks as unbiased comparison; (3) Unbiased LTR: jointly learn propensity model and relevance model from click data; (4) Randomisation: occasionally shuffle results to collect random click data (costly to serve).</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q5.</strong> A retrieval system uses a multi-stage ranking pipeline. (a) Describe the three stages of a typical web-scale ranking cascade and justify why multiple stages are used. [4] (b) At what stage would LambdaMART typically be applied, and what features would it use? [4]</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) Three-stage cascade [4]: Stage 1 (Candidate Generation): Fast lexical matching (Boolean retrieval, BM25) over the entire collection (billions of documents) to retrieve ~1000 candidates per query. Millisecond latency. Coarse but high-recall. Stage 2 (Learning to Rank): LambdaMART or similar LTR model with 100s of features (BM25 per field, PageRank, proximity) applied to the ~1000 candidates. Reduces to top ~20. Hundreds of milliseconds. Stage 3 (Re-ranking): Slow, accurate neural model (BERT cross-encoder, ColBERT) applied to the top 20. Produces final ranking. Seconds of latency. Reason for multiple stages: balances cost vs accuracy — running a BERT re-ranker over billions of documents is computationally infeasible; each stage filters candidates for the next more expensive model.<br><br>(b) LambdaMART at Stage 2 [4]: LambdaMART is applied to the ~1000 BM25 candidates from Stage 1. Features used include: (QD) BM25 scores for body, title, anchor, URL separately and BM25F combined; PL2 scores; proximity/MRF scores; deep semantic similarity scores from fast dense retrieval. (QI) PageRank, spam score, URL depth, document age, number of inlinks. (Q) Query length, query type (navigational vs informational). LambdaMART then learns the optimal combination of these 100s of features to maximise NDCG on training data, producing a reranked top-20 for Stage 3.</div>
+  </div>
+
+  <div class="q-type">Flashcards</div>
+  <div class="fc-grid">
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Learning to Rank</div><div class="fcb">ML technique to learn optimal ranking from training data with relevance labels. Uses 100s of features. Deployed by Bing, Baidu, Yandex.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">LambdaMART</div><div class="fcb">State-of-the-art listwise LTR. LambdaRank gradients (|ΔNDCG|×(1−Pᵢⱼ)) + Gradient Boosted Trees. Focuses on impactful document swaps.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">RankNet</div><div class="fcb">Pairwise LTR. Pᵢⱼ=σ(σ·(sᵢ−sⱼ)). Minimise cross-entropy loss of pairwise preference probabilities. Foundation for LambdaRank.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">LambdaRank Gradient</div><div class="fcb">λᵢⱼ = −σ·|ΔNDCG_ij|·(1−Pᵢⱼ). Multiplies RankNet gradient by NDCG gain from swapping. Large gradient for high-impact wrong orderings.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Ranking Cascade</div><div class="fcb">Multi-stage retrieval: cheap BM25 (1B→1K) → LambdaMART with 100s features (1K→20) → BERT re-ranker (20→10). Each stage trades cost for accuracy.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Click-through Data</div><div class="fcb">User clicks in search logs. Used as implicit relevance signal. High quantity but noisy — position bias: top results clicked more. Enables large-scale LTR training.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Position Bias</div><div class="fcb">Users click on high-ranked results regardless of relevance. Biases training data. Corrected by IPS (inverse propensity scoring) or interleaving experiments.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">MART / GBRT</div><div class="fcb">Multiple Additive Regression Trees. Sequentially fit regression trees to gradient residuals. LambdaMART uses NDCG-weighted pseudo-residuals (lambda values).</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">MS MARCO</div><div class="fcb">Microsoft dataset: ~1M queries from real Bing search logs. Standard LTR/neural IR benchmark. TREC Deep Learning adds dense NIST judgments on top.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">QD / QI / Q Features</div><div class="fcb">QD: vary per (query,doc) — BM25, TF-IDF. QI: vary per doc only — PageRank, spam. Q: vary per query only — query length, type.</div></div></div>
+  </div>
+</section>
+
+</div></main>
+
+<script>
+window.addEventListener('scroll',()=>{
+  const p=document.getElementById('pb');
+  p.style.width=(window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%';
+  document.getElementById('bt').style.display=window.scrollY>400?'block':'none';
+  document.querySelectorAll('nav a').forEach(a=>{
+    const s=document.querySelector(a.getAttribute('href'));
+    if(s){const r=s.getBoundingClientRect();a.classList.toggle('active',r.top<=100&&r.bottom>100);}
+  });
+});
+function toggleTheme(){document.body.dataset.theme=document.body.dataset.theme==='light'?'':'light';}
+function answerMCQ(el,t){const i=el.parentElement;i.querySelectorAll('.opt').forEach(o=>o.classList.remove('c','w'));el.classList.add(t==='correct'?'c':'w');}
+function tfA(btn){const i=btn.closest('.tf-row');i.querySelector('.tf-ans').style.display='block';}
+function rev(btn){const b=btn.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';btn.textContent=b.style.display==='block'?'Hide Answer':'Reveal Answer';}
+function rvb(el){el.classList.add('rv');}
+document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=document.querySelector(a.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}));
+</script>
+
+</body>
+</html>

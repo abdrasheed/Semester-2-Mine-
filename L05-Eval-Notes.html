@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 05 · Evaluation: Evaluation Methodology</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+  :root { --bg:#0f0f1a;--bg2:#1a1a2e;--bg3:#16213e;--accent:#7c3aed;--accent2:#06b6d4;--accent3:#10b981;--text:#e2e8f0;--text2:#94a3b8;--yellow:#f59e0b;--red:#ef4444;--card:#1e293b; }
+  [data-theme="light"]{--bg:#f8fafc;--bg2:#f1f5f9;--bg3:#e2e8f0;--text:#0f172a;--text2:#475569;--card:#ffffff;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;overflow-x:hidden;}
+  #pb{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;z-index:1000;transition:width .1s;}
+  header{background:linear-gradient(135deg,#0f0f1a 0%,#1a0533 50%,#0a1628 100%);padding:80px 40px 60px;text-align:center;position:relative;overflow:hidden;}
+  header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at center,rgba(124,58,237,.15) 0%,transparent 60%);animation:rotate 20s linear infinite;}
+  @keyframes rotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes slideInLeft{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+  .badge{display:inline-block;background:var(--accent);color:#fff;padding:6px 18px;border-radius:20px;font-size:.85rem;margin-bottom:16px;animation:fadeInUp .6s ease;}
+  h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;margin-bottom:16px;background:linear-gradient(135deg,#fff 0%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:fadeInUp .8s ease;}
+  .subtitle{color:var(--text2);font-size:1.1rem;animation:fadeInUp 1s ease;}
+  .container{max-width:1200px;margin:0 auto;padding:0 24px;}
+  nav{position:fixed;right:20px;top:50%;transform:translateY(-50%);background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:16px;z-index:100;max-width:220px;max-height:70vh;overflow-y:auto;}
+  nav h3{font-size:.75rem;color:var(--accent2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+  nav a{display:block;color:var(--text2);text-decoration:none;font-size:.8rem;padding:4px 8px;border-left:2px solid transparent;transition:all .2s;}
+  nav a:hover,nav a.active{color:var(--accent);border-left-color:var(--accent);}
+  .theme-btn{position:fixed;left:20px;top:20px;background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:8px;padding:8px 16px;color:var(--text);cursor:pointer;z-index:100;font-size:.85rem;}
+  .back-top{position:fixed;bottom:30px;right:30px;background:var(--accent);color:#fff;border:none;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:none;z-index:100;box-shadow:0 4px 15px rgba(124,58,237,.4);}
+  main{padding:60px 0;}
+  section{margin-bottom:60px;animation:fadeIn .6s ease;}
+  .section-title{font-size:1.8rem;font-weight:700;margin-bottom:24px;padding-left:16px;border-left:4px solid var(--accent);color:var(--text);}
+  .card{background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:28px;margin-bottom:20px;transition:transform .2s,box-shadow .2s;}
+  .card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3);}
+  .card h3{color:var(--accent2);margin-bottom:12px;font-size:1.1rem;}
+  .card p,.card li{color:var(--text2);line-height:1.7;}
+  .card ul{padding-left:20px;}.card ul li{margin-bottom:8px;}
+  .hi{color:var(--accent);font-weight:600;}.hi2{color:var(--accent2);font-weight:600;}.hi3{color:var(--accent3);font-weight:600;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  @media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr;}nav{display:none;}}
+  @media(min-width:769px){body{padding-right:260px;}}
+  .def-box{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:20px;margin:20px 0;}
+  .def-box .term{color:var(--accent);font-weight:700;font-size:1.05rem;}
+  .ex-box{background:rgba(16,185,129,.08);border-left:4px solid var(--accent3);border-radius:0 12px 12px 0;padding:20px;margin:20px 0;}
+  .ex-box h4{color:var(--accent3);margin-bottom:10px;}
+  .warn-box{background:rgba(245,158,11,.08);border-left:4px solid var(--yellow);border-radius:0 12px 12px 0;padding:20px;margin:20px 0;}
+  .warn-box h4{color:var(--yellow);margin-bottom:10px;}
+  .svg-cont{background:var(--bg2);border-radius:16px;padding:30px;margin:30px 0;text-align:center;}
+  .svg-cont h4{color:var(--accent2);margin-bottom:20px;}
+  /* Equations */
+  .eq-block{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.4);border-radius:12px;padding:24px;margin:24px 0;text-align:center;}
+  .eq-block .eq-title{color:var(--accent);font-weight:700;margin-bottom:12px;font-size:1rem;}
+  .practice-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.4);border-radius:12px;padding:20px;margin:12px 0;}
+  .practice-box h5{color:var(--yellow);margin-bottom:10px;}
+  .solved-box{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.4);border-radius:12px;padding:20px;margin:12px 0;}
+  .solved-box h5{color:var(--accent3);margin-bottom:10px;}
+  /* Questions */
+  .q-section{background:var(--bg2);border-radius:20px;padding:40px;margin-top:40px;}
+  .q-type{font-size:1.4rem;font-weight:700;color:var(--accent);margin:30px 0 16px;padding-bottom:8px;border-bottom:2px solid rgba(124,58,237,.3);}
+  .mcq{background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .mcq .qtext{font-weight:600;color:var(--text);margin-bottom:12px;}
+  .opt{padding:8px 14px;border-radius:8px;cursor:pointer;color:var(--text2);border:1px solid rgba(255,255,255,.07);margin:4px 0;transition:all .2s;}
+  .opt:hover{background:rgba(124,58,237,.15);border-color:var(--accent);}
+  .opt.c{background:rgba(16,185,129,.2);border-color:var(--accent3);color:var(--accent3);}
+  .opt.w{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red);}
+  .tf-row{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .tf-q{flex:1;color:var(--text2);}
+  .tb{padding:6px 16px;border-radius:6px;border:none;cursor:pointer;font-size:.85rem;transition:all .2s;}
+  .tb.tt{background:rgba(16,185,129,.2);color:var(--accent3);}
+  .tb.tf{background:rgba(239,68,68,.15);color:var(--red);}
+  .tf-ans{display:none;font-size:.85rem;padding:6px 10px;border-radius:6px;margin-top:8px;}
+  .tf-ans.ca{background:rgba(16,185,129,.15);color:var(--accent3);}
+  .tf-ans.wa{background:rgba(239,68,68,.1);color:var(--red);}
+  .sa{background:var(--card);border-radius:12px;padding:20px;margin-bottom:12px;}
+  .sa .qt{color:var(--text2);margin-bottom:12px;font-weight:600;}
+  .rbtn{background:var(--accent);color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .2s;}
+  .rbtn:hover{background:#6d28d9;}
+  .ans{display:none;margin-top:12px;background:rgba(16,185,129,.08);border-left:3px solid var(--accent3);padding:14px;border-radius:0 8px 8px 0;color:var(--text2);line-height:1.6;}
+  .fitb{background:var(--card);border-radius:10px;padding:16px 20px;margin-bottom:10px;color:var(--text2);}
+  .blank{display:inline-block;min-width:100px;border-bottom:2px solid var(--accent);margin:0 6px;text-align:center;color:transparent;cursor:pointer;transition:all .3s;padding:0 4px;}
+  .blank.rv{color:var(--accent);}
+  .fc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;margin-top:20px;}
+  .fc{perspective:1000px;height:150px;cursor:pointer;}
+  .fci{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d;}
+  .fc:hover .fci,.fc.flipped .fci{transform:rotateY(180deg);}
+  .fcf,.fcb{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;}
+  .fcf{background:linear-gradient(135deg,var(--accent),#5b21b6);color:#fff;font-weight:600;}
+  .fcb{background:var(--card);border:1px solid rgba(6,182,212,.3);color:var(--text2);font-size:.9rem;transform:rotateY(180deg);}
+  .exam-q{background:var(--bg3);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .tag{display:inline-block;background:var(--yellow);color:#000;font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:4px;margin-right:8px;}
+  .marks{display:inline-block;background:rgba(245,158,11,.2);color:var(--yellow);font-size:.75rem;padding:2px 8px;border-radius:4px;}
+  .obj-list{list-style:none;}.obj-list li{padding:10px 16px;margin-bottom:8px;background:var(--card);border-radius:8px;color:var(--text2);display:flex;align-items:flex-start;gap:10px;animation:slideInLeft .5s ease;}
+  .obj-list li::before{content:"✓";color:var(--accent3);font-weight:700;margin-top:1px;}
+  .sum-card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border-radius:16px;padding:24px;border-left:4px solid var(--accent);margin-bottom:16px;}
+  .sum-card h4{color:var(--accent2);margin-bottom:10px;}
+  code{background:rgba(124,58,237,.15);color:var(--accent2);padding:2px 6px;border-radius:4px;font-family:monospace;}
+  pre{background:#0d1117;border-radius:12px;padding:24px;overflow-x:auto;margin:20px 0;border:1px solid rgba(255,255,255,.05);}
+  pre code{background:none;padding:0;color:#c9d1d9;}
+  .kw{color:#ff7b72;}.fn{color:#d2a8ff;}.str{color:#a5d6ff;}.cm{color:#8b949e;}.num{color:#79c0ff;}
+  table{width:100%;border-collapse:collapse;margin:16px 0;}
+  th{background:rgba(124,58,237,.2);color:var(--accent2);padding:10px 14px;text-align:left;font-size:.9rem;}
+  td{padding:10px 14px;color:var(--text2);border-bottom:1px solid rgba(255,255,255,.05);font-size:.9rem;}
+  tr:hover td{background:rgba(124,58,237,.05);}
+</style>
+</head>
+<body>
+<div id="pb"></div>
+<button class="theme-btn" onclick="toggleTheme()">🌓 Theme</button>
+<button class="back-top" id="bt" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<nav><h3>Contents</h3>
+<a href="#objectives">Objectives</a>
+<a href="#why-eval">Why Evaluate?</a>
+<a href="#cranfield">Cranfield Paradigm</a>
+<a href="#confusion">Confusion Matrix</a>
+<a href="#precision-recall">P, R, F1, P@k</a>
+<a href="#ap-map">AP, MAP, MRR</a>
+<a href="#ndcg">NDCG</a>
+<a href="#pr-curve">P-R Curves</a>
+<a href="#trec">TREC Methodology</a>
+<a href="#online-eval">Online Evaluation</a>
+<a href="#significance">Significance Testing</a>
+<a href="#user-studies">User Studies</a>
+<a href="#summary">Summary</a>
+<a href="#questions">Questions</a></nav>
+<header>
+  <div class="badge">Lecture 05 · Evaluation</div>
+  <h1>Evaluation Methodology</h1>
+  <p class="subtitle">IR H/M Course · Sean MacAvaney · 2026</p>
+</header>
+<main><div class="container">
+
+<section id="objectives">
+  <h2 class="section-title">Learning Objectives</h2>
+  <ul class="obj-list">
+    <li>Explain why IR systems need evaluation and the Cranfield paradigm</li>
+    <li>Compute Precision, Recall, F-measure, MAP, MRR, NDCG from a ranked list</li>
+    <li>Understand TREC test collections, pooling, and track types</li>
+    <li>Interpret and construct recall-precision curves with interpolation</li>
+    <li>Apply statistical significance testing (t-test, Wilcoxon) to compare IR systems</li>
+    <li>Distinguish offline vs online evaluation methods (A/B testing, interleaving)</li>
+  </ul>
+</section>
+
+<section id="why-eval">
+  <h2 class="section-title">Why Evaluate?</h2>
+  <div class="grid-3">
+    <div class="card"><h3>💰 Economic</h3><p>Buyers want to know system effectiveness before purchasing.</p></div>
+    <div class="card"><h3>🔬 Scientific</h3><p>Researchers need to show their method is better than alternatives.</p></div>
+    <div class="card"><h3>✅ Verification</h3><p>System builders must verify their system performs as intended.</p></div>
+  </div>
+  <div class="card">
+    <h3>Test Collections</h3>
+    <p style="color:var(--text2);">A test collection consists of: (1) a set of documents, (2) a set of queries (topics), (3) <span class="hi">relevance assessments (qrels)</span> — ground-truth judgments of which documents are relevant for each query. The TREC (Text Retrieval Conference) standard, started in 1992, provides such collections.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="cranfield">
+  <h2 class="section-title">The Cranfield Paradigm</h2>
+
+  <div class="def-box">
+    <div class="term">Cranfield Paradigm</div>
+    <p style="color:var(--text2);margin-top:8px;">The gold-standard methodology for IR evaluation, originating from Cyril Cleverdon's Cranfield experiments (1960s). A reusable, system-independent, offline evaluation framework built on four components:</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Four Components</h3>
+      <ul>
+        <li><span class="hi">Test Collection</span> — a static set of documents (the corpus)</li>
+        <li><span class="hi2">Queries (Topics)</span> — a representative sample of information needs, often with a title, description, and narrative</li>
+        <li><span class="hi3">Relevance Judgements (qrels)</span> — ground-truth labels: for each (query, document) pair, is the document relevant? Usually binary (relevant/not), sometimes graded.</li>
+        <li><span class="hi" style="color:var(--yellow);">Evaluation Measure</span> — a metric such as MAP, NDCG, or MRR computed from the system output vs qrels</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Why Cranfield Works</h3>
+      <ul>
+        <li><strong>Reusability:</strong> Many systems can be compared on the same collection without re-judging</li>
+        <li><strong>Reproducibility:</strong> Offline evaluation — no need for live users</li>
+        <li><strong>Cost-effective:</strong> Judgements are done once, reused many times</li>
+        <li><strong>Limitations:</strong> Static snapshots of user needs; relevance is subjective; pooled judgements may miss unjudged relevant docs</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <h4>Key Assumption</h4>
+    <p style="color:var(--text2);">The Cranfield paradigm assumes <span class="hi">relevance is binary</span> (or graded) and <span class="hi">stable</span> — i.e., a document's relevance to a query does not change between systems. This is a simplification: in practice relevance is subjective and context-dependent.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="confusion">
+  <h2 class="section-title">Confusion Matrix for IR</h2>
+
+  <div class="card">
+    <h3>The Four Cells</h3>
+    <p style="color:var(--text2);margin-bottom:16px;">Every document in the collection falls into one of four categories with respect to a query:</p>
+    <table>
+      <tr>
+        <th></th>
+        <th>Retrieved</th>
+        <th>Not Retrieved</th>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--accent3);">Relevant</strong></td>
+        <td><span class="hi3">True Positive (TP)</span> — correctly retrieved relevant docs</td>
+        <td><span class="hi" style="color:var(--red);">False Negative (FN)</span> — relevant but missed</td>
+      </tr>
+      <tr>
+        <td><strong style="color:var(--red);">Not Relevant</strong></td>
+        <td><span class="hi" style="color:var(--yellow);">False Positive (FP)</span> — irrelevant but retrieved</td>
+        <td><span class="hi2">True Negative (TN)</span> — correctly not retrieved</td>
+      </tr>
+    </table>
+    <div class="ex-box">
+      <h4>Example</h4>
+      <p style="color:var(--text2);">Collection = 1000 docs. Query has 20 relevant docs. System retrieves 50 docs, of which 12 are relevant.<br>
+      TP = 12 &nbsp;|&nbsp; FP = 38 &nbsp;|&nbsp; FN = 8 &nbsp;|&nbsp; TN = 942<br>
+      Precision = 12/50 = <strong>0.24</strong> &nbsp;|&nbsp; Recall = 12/20 = <strong>0.60</strong></p>
+    </div>
+    <div class="warn-box" style="margin-top:12px;">
+      <h4>Why TN is usually ignored in IR</h4>
+      <p style="color:var(--text2);">The number of non-relevant, non-retrieved documents (TN) is typically enormous (millions of web pages). Including TN inflates accuracy to near 1.0 for any reasonable system, making it useless. IR metrics focus on TP, FP, FN instead.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="precision-recall">
+  <h2 class="section-title">Precision, Recall &amp; F-Measure</h2>
+
+  <div class="eq-block">
+    <div class="eq-title">Precision and Recall</div>
+    <div>\[ \text{Precision} = \frac{|\text{Relevant} \cap \text{Retrieved}|}{|\text{Retrieved}|} = \frac{\text{TP}}{\text{TP} + \text{FP}} \]</div>
+    <div style="margin-top:16px;">\[ \text{Recall} = \frac{|\text{Relevant} \cap \text{Retrieved}|}{|\text{Relevant}|} = \frac{\text{TP}}{\text{TP} + \text{FN}} \]</div>
+    <div class="practice-box">
+      <h5>Practice Example</h5>
+      <p style="color:var(--text2);">A system retrieves 8 documents for a query. The collection contains 10 relevant documents. 5 of the retrieved documents are relevant. Compute Precision and Recall.</p>
+    </div>
+    <div class="solved-box">
+      <h5>✅ Solved Example</h5>
+      <p style="color:var(--text2);">|Retrieved| = 8, |Relevant| = 10, |Rel ∩ Ret| = 5<br>
+      <strong>Precision</strong> = 5/8 = <strong>0.625</strong> (62.5% of retrieved are relevant)<br>
+      <strong>Recall</strong> = 5/10 = <strong>0.500</strong> (50% of relevant are retrieved)<br>
+      The system is reasonably precise but misses half the relevant documents.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Precision-Recall Trade-off</h3>
+    <p style="color:var(--text2);">There is an inherent trade-off between precision and recall:</p>
+    <ul>
+      <li>Retrieving <em>more</em> documents increases recall (fewer FN) but lowers precision (more FP).</li>
+      <li>Being <em>more selective</em> raises precision but reduces recall.</li>
+      <li>Systems can be tuned to favour one over the other depending on the application (e.g., legal search favours recall; spam filtering favours precision).</li>
+    </ul>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">F-Measure (van Rijsbergen)</div>
+    <div>\[ F_1 = \frac{2 \cdot \text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}} \]</div>
+    <div style="margin-top:12px;">\[ F_\beta = \frac{(1+\beta^2) \cdot \text{Precision} \cdot \text{Recall}}{\beta^2 \cdot \text{Precision} + \text{Recall}} \]</div>
+    <p style="color:var(--text2);margin-top:10px;">β controls balance: β=1 balances P and R equally; β&lt;1 favours Precision; β&gt;1 favours Recall. Harmonic mean is used because it penalises extreme imbalance — a system cannot score well with P=0 or R=0.</p>
+    <div class="practice-box">
+      <h5>Practice Example</h5>
+      <p style="color:var(--text2);">System A: P=0.8, R=0.3. System B: P=0.5, R=0.5. Compute F₁ for both and determine which is better.</p>
+    </div>
+    <div class="solved-box">
+      <h5>✅ Solved Example</h5>
+      <p style="color:var(--text2);">F₁(A) = 2×0.8×0.3/(0.8+0.3) = 0.48/1.1 = <strong>0.436</strong><br>
+      F₁(B) = 2×0.5×0.5/(0.5+0.5) = 0.5/1.0 = <strong>0.500</strong><br>
+      System B is better by F₁ despite lower precision — its balanced P/R gives a better harmonic mean.</p>
+    </div>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Precision at Rank k (P@k) and Recall at Rank k (R@k)</div>
+    <div>\[ P@k = \frac{|\text{Relevant documents in top-}k \text{ results}|}{k} \]</div>
+    <div style="margin-top:12px;">\[ R@k = \frac{|\text{Relevant documents in top-}k \text{ results}|}{|\text{Relevant}|} \]</div>
+    <p style="color:var(--text2);margin-top:10px;">P@k: useful for web search — users typically only see the first page. R@k: what fraction of all relevant docs are in the top k? Commonly used P@5, P@10, P@20. R@k useful for understanding coverage at a given cut-off.</p>
+    <div class="practice-box">
+      <h5>Practice Example</h5>
+      <p style="color:var(--text2);">Ranked list: [R, N, R, N, R, N, R, N, N, R] (R=relevant, N=non-relevant). Total relevant in collection = 8. Compute P@3, P@5, P@10, R@5, R@10.</p>
+    </div>
+    <div class="solved-box">
+      <h5>✅ Solved Example</h5>
+      <p style="color:var(--text2);">P@3 = 2/3 ≈ <strong>0.667</strong> (ranks 1,3 are relevant out of top 3)<br>
+      P@5 = 3/5 = <strong>0.600</strong> (ranks 1,3,5 are relevant)<br>
+      P@10 = 5/10 = <strong>0.500</strong> (ranks 1,3,5,7,10 are relevant)<br>
+      R@5 = 3/8 = <strong>0.375</strong> (3 of 8 relevant docs in top 5)<br>
+      R@10 = 5/8 = <strong>0.625</strong> (5 of 8 relevant docs in top 10)</p>
+    </div>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">R-Precision</div>
+    <div>\[ \text{R-Precision} = P@R \]</div>
+    <p style="color:var(--text2);margin-top:10px;">Where R = total number of relevant documents for the query. R-Precision is the precision at the rank equal to the number of relevant documents. It is equivalent to recall at that rank (P@R = R@R when R docs are retrieved). Useful as a single-number summary when you know the total relevant count.</p>
+    <div class="ex-box">
+      <h4>Example</h4>
+      <p style="color:var(--text2);">Query has 6 relevant docs. Ranked list: [R, N, R, N, R, N, N, R, N, N]<br>
+      R=6, so look at position 6. Documents at ranks 1–6: R, N, R, N, R, N → 3 relevant.<br>
+      R-Precision = 3/6 = <strong>0.500</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="ap-map">
+  <h2 class="section-title">Average Precision, MAP &amp; MRR</h2>
+
+  <div class="eq-block">
+    <div class="eq-title">Average Precision (AP)</div>
+    <div>\[ \text{AP} = \frac{1}{|R|} \sum_{k: d_k \text{ is relevant}} P@k \]</div>
+    <p style="color:var(--text2);margin-top:10px;">Average the precision values at each rank position where a relevant document is retrieved. |R| = total number of relevant documents (in the whole collection, not just retrieved). Documents not retrieved contribute P=0.</p>
+    <div class="practice-box">
+      <h5>Practice Example</h5>
+      <p style="color:var(--text2);">6 total relevant documents in collection. Ranked list: [R, N, N, R, R, N, N, R, N, N]. Compute AP.</p>
+    </div>
+    <div class="solved-box">
+      <h5>✅ Solved Example</h5>
+      <p style="color:var(--text2);">Relevant documents at ranks: 1, 4, 5, 8.<br>
+      P@1=1/1=1.0, P@4=2/4=0.5, P@5=3/5=0.6, P@8=4/8=0.5<br>
+      AP = (1.0+0.5+0.6+0.5)/6 = 2.6/6 = <strong>0.433</strong><br>
+      Note: divided by 6 (total relevant in collection), not 4 (retrieved relevant). Documents not retrieved get P=0.</p>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <h4>Why AP and not just P@k?</h4>
+    <p style="color:var(--text2);">AP rewards systems that rank relevant documents <em>early</em>. A system that retrieves the same set of relevant documents but puts them all at the bottom scores lower AP than one that places them at the top. P@k is blind to the ranking within k results and ignores what happens beyond k.</p>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Mean Average Precision (MAP)</div>
+    <div>\[ \text{MAP} = \frac{1}{|Q|} \sum_{q \in Q} \text{AP}(q) \]</div>
+    <p style="color:var(--text2);margin-top:10px;">Average AP over all queries Q. The most widely used single-number IR evaluation metric for multi-document queries. Sensitive to early placement of relevant documents across all queries.</p>
+    <div class="practice-box">
+      <h5>Practice Example</h5>
+      <p style="color:var(--text2);">3 queries with APs: AP(q1)=0.60, AP(q2)=0.35, AP(q3)=0.80. Compute MAP.</p>
+    </div>
+    <div class="solved-box">
+      <h5>✅ Solved Example</h5>
+      <p style="color:var(--text2);">MAP = (0.60 + 0.35 + 0.80) / 3 = 1.75/3 = <strong>0.583</strong></p>
+    </div>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Mean Reciprocal Rank (MRR)</div>
+    <div>\[ \text{MRR} = \frac{1}{|Q|} \sum_{q \in Q} \frac{1}{\text{rank}_q} \]</div>
+    <p style="color:var(--text2);margin-top:10px;">rank_q = rank of the first relevant document for query q. Used when only one relevant document matters (navigational search, QA). If no relevant document is found, the reciprocal rank is 0.</p>
+    <div class="practice-box">
+      <h5>Practice Example</h5>
+      <p style="color:var(--text2);">Q1: first relevant at rank 2. Q2: first relevant at rank 5. Q3: no relevant found (rank = ∞). Compute MRR.</p>
+    </div>
+    <div class="solved-box">
+      <h5>✅ Solved Example</h5>
+      <p style="color:var(--text2);">RR(Q1) = 1/2 = 0.5<br>
+      RR(Q2) = 1/5 = 0.2<br>
+      RR(Q3) = 0 (no relevant document found)<br>
+      MRR = (0.5+0.2+0)/3 = <strong>0.233</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="ndcg">
+  <h2 class="section-title">Discounted Cumulative Gain (DCG) &amp; NDCG</h2>
+
+  <div class="def-box">
+    <div class="term">Why Graded Relevance?</div>
+    <p style="color:var(--text2);margin-top:8px;">Binary relevance (relevant/not) is too coarse. A document can be <em>highly relevant</em>, <em>partially relevant</em>, or <em>not relevant</em>. NDCG uses graded relevance scores (e.g., 0–3 or 0–4) and applies a <em>logarithmic discount</em> to reward ranking high-quality results early.</p>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Discounted Cumulative Gain (DCG)</div>
+    <div>\[ \text{DCG}_k = \sum_{i=1}^{k} \frac{\text{rel}_i}{\log_2(i+1)} \]</div>
+    <p style="color:var(--text2);margin-top:10px;">rel_i = relevance grade of the document at rank i. The logarithmic discount means position 1 contributes full gain (log₂2 = 1), position 2 contributes less (log₂3 ≈ 0.63 of gain), etc.</p>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Ideal DCG and Normalised DCG</div>
+    <div>\[ \text{IDCG}_k = \text{DCG of the ideal (perfect) ranking at rank } k \]</div>
+    <div style="margin-top:12px;">\[ \text{NDCG}_k = \frac{\text{DCG}_k}{\text{IDCG}_k} \]</div>
+    <p style="color:var(--text2);margin-top:10px;">IDCG = the DCG you would get if you sorted all documents by relevance (best first). NDCG normalises to [0,1]. NDCG=1 means perfect ranking. The standard metric for web search evaluation (TREC, NIST, commercial search).</p>
+    <div class="practice-box">
+      <h5>Practice Example</h5>
+      <p style="color:var(--text2);">5 ranked documents with graded relevance [3, 2, 3, 0, 1]. Compute DCG@5. The ideal ranking is [3,3,2,1,0]. Compute NDCG@5.</p>
+    </div>
+    <div class="solved-box">
+      <h5>✅ Solved Example</h5>
+      <p style="color:var(--text2);"><strong>DCG@5:</strong><br>
+      rank 1: 3/log₂(2) = 3/1 = 3.000<br>
+      rank 2: 2/log₂(3) = 2/1.585 = 1.262<br>
+      rank 3: 3/log₂(4) = 3/2 = 1.500<br>
+      rank 4: 0/log₂(5) = 0<br>
+      rank 5: 1/log₂(6) = 1/2.585 = 0.387<br>
+      DCG@5 = 3.000+1.262+1.500+0+0.387 = <strong>6.149</strong><br>
+      <br>
+      <strong>Ideal ranking [3,3,2,1,0]:</strong><br>
+      IDCG@5 = 3/1 + 3/1.585 + 2/2 + 1/2.322 + 0 = 3+1.893+1+0.431 = <strong>6.324</strong><br>
+      <strong>NDCG@5</strong> = 6.149/6.324 = <strong>0.972</strong></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Two Key Assumptions of NDCG</h3>
+    <ul>
+      <li><span class="hi">Highly relevant documents are more valuable</span> — captured by the graded relevance score (rel_i) in the numerator.</li>
+      <li><span class="hi2">Lower-ranked documents are less useful</span> — users are less likely to examine them. Captured by the log₂(i+1) denominator discount.</li>
+    </ul>
+    <div class="warn-box" style="margin-top:12px;">
+      <h4>Alternative DCG formula</h4>
+      <p style="color:var(--text2);">Some implementations use: \(\text{DCG}_k = \sum_{i=1}^{k} \frac{2^{\text{rel}_i}-1}{\log_2(i+1)}\). This variant emphasises highly relevant documents even more (exponential numerator). Check which formula your exam/course uses.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="pr-curve">
+  <h2 class="section-title">Precision-Recall Curves &amp; Interpolation</h2>
+
+  <div class="card">
+    <h3>What is a P-R Curve?</h3>
+    <p style="color:var(--text2);">As you retrieve more documents (expanding the result set), recall increases and precision generally decreases. Plotting precision vs recall at each rank produces a P-R curve. The curve is used to compare systems across all operating points.</p>
+    <div class="ex-box">
+      <h4>Step-by-Step Construction</h4>
+      <p style="color:var(--text2);">Ranked list: [R, N, R, R, N, R]. Total relevant = 6.<br>
+      After rank 1: P=1/1=1.0, R=1/6=0.167<br>
+      After rank 2: P=1/2=0.5, R=1/6=0.167<br>
+      After rank 3: P=2/3=0.667, R=2/6=0.333<br>
+      After rank 4: P=3/4=0.75, R=3/6=0.500<br>
+      After rank 5: P=3/5=0.6, R=3/6=0.500<br>
+      After rank 6: P=4/6=0.667, R=4/6=0.667<br>
+      Plot these (R, P) pairs → the P-R curve.</p>
+    </div>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Interpolated Precision at Standard Recall Levels</div>
+    <div>\[ P(r) = \max_{r' \geq r} P(r') \]</div>
+    <p style="color:var(--text2);margin-top:10px;">Precision at recall level r is defined as the <em>maximum precision observed at any recall ≥ r</em>. This "right-pessimistic" interpolation creates a step-function that allows averaging across queries at standard 11-point recall levels (0.0, 0.1, 0.2, …, 1.0).</p>
+    <div class="ex-box" style="text-align:left;">
+      <h4>Why Interpolate?</h4>
+      <p style="color:var(--text2);">Different queries achieve recall at different rank positions, so raw P-R points don't align. By interpolating to standard recall levels, you can average across queries and compare systems at the same recall levels.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Reading a P-R Curve</h3>
+    <ul>
+      <li>A curve that is <em>higher and to the right</em> is better (more precision at each recall level).</li>
+      <li>The <span class="hi">area under the P-R curve (AUC-PR)</span> approximates MAP.</li>
+      <li>A <em>steep drop</em> in precision as recall increases indicates the system has few relevant documents ranked early.</li>
+      <li><strong>11-point average precision</strong> = average of interpolated precision at recall 0.0, 0.1, …, 1.0 — an older but still-used summary statistic.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="trec">
+  <h2 class="section-title">TREC Methodology</h2>
+
+  <div class="def-box">
+    <div class="term">TREC — Text REtrieval Conference</div>
+    <p style="color:var(--text2);margin-top:8px;">Organised by NIST (USA) since 1992. Provides shared tasks, document collections, and relevance judgements (qrels) to enable fair, reproducible comparisons of IR systems. The global standard for IR evaluation infrastructure.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>TREC Test Collection Components</h3>
+      <ul>
+        <li><span class="hi">Documents</span> — large static corpus (news articles, web snapshots, etc.)</li>
+        <li><span class="hi2">Topics (queries)</span> — structured with Title (short query), Description (1–2 sentences), Narrative (detailed relevance criteria)</li>
+        <li><span class="hi3">Qrels</span> — relevance judgements: for each (topic, doc) pair, a relevance grade (often binary 0/1, sometimes graded 0–3)</li>
+        <li><span class="hi" style="color:var(--yellow);">Submissions</span> — participating teams submit ranked result lists (run files)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>TREC Pooling Technique</h3>
+      <ul>
+        <li>Exhaustive relevance assessment of all documents is impossible for large collections</li>
+        <li><strong>Pooling:</strong> take the top-k (e.g., 100) results from each participating system and merge into a pool</li>
+        <li>Human assessors judge only the documents in the pool</li>
+        <li>Unjudged documents are assumed non-relevant — creates a <em>depth-k pool</em></li>
+        <li>Works well for systems submitted to TREC; may underestimate recall for novel systems</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>TREC Track Types</h3>
+    <div class="grid-3">
+      <div>
+        <p class="hi">Ad Hoc</p>
+        <p style="color:var(--text2);font-size:.9rem;">New queries against a static collection. The classic TREC track: judges submit a query, receive ranked results.</p>
+      </div>
+      <div>
+        <p class="hi2">Filtering</p>
+        <p style="color:var(--text2);font-size:.9rem;">Classifying streaming documents as relevant/not relevant to a standing query profile. Online binary decision.</p>
+      </div>
+      <div>
+        <p class="hi3">Question Answering (QA)</p>
+        <p style="color:var(--text2);font-size:.9rem;">Return an exact answer string, not a document. Evaluated with exact/partial string match, MRR.</p>
+      </div>
+      <div style="margin-top:16px;">
+        <p class="hi" style="color:var(--yellow);">Web Track</p>
+        <p style="color:var(--text2);font-size:.9rem;">Navigational + informational queries on ClueWeb / Common Crawl. Uses NDCG@k, ERR.</p>
+      </div>
+      <div style="margin-top:16px;">
+        <p class="hi2">Genomics / Legal</p>
+        <p style="color:var(--text2);font-size:.9rem;">Domain-specific tracks. Legal discovery requires very high recall; uses recall-focused metrics.</p>
+      </div>
+      <div style="margin-top:16px;">
+        <p class="hi3">Deep Learning Track</p>
+        <p style="color:var(--text2);font-size:.9rem;">MS MARCO-based; large-scale passage/document retrieval. Graded relevance, NDCG@10.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="online-eval">
+  <h2 class="section-title">Online Evaluation</h2>
+
+  <div class="card">
+    <h3>Offline vs Online Evaluation</h3>
+    <div class="grid-2">
+      <div>
+        <p class="hi">Offline (Cranfield)</p>
+        <ul>
+          <li>Static test collection + qrels</li>
+          <li>Cheap, reproducible, no live users needed</li>
+          <li>May not reflect real user behaviour</li>
+          <li>Metrics: MAP, NDCG, MRR</li>
+        </ul>
+      </div>
+      <div>
+        <p class="hi2">Online</p>
+        <ul>
+          <li>Uses real users and live traffic</li>
+          <li>Reflects actual user satisfaction</li>
+          <li>Expensive, irreversible, ethical concerns</li>
+          <li>Metrics: CTR, session length, conversion rate</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>A/B Testing</h3>
+      <p style="color:var(--text2);">Randomly split users into two groups: Group A sees the control system, Group B sees the new system. Measure engagement metrics (click-through rate CTR, time-to-click, session depth, conversion).</p>
+      <div class="ex-box" style="margin-top:12px;">
+        <h4>Click-Through Rate (CTR)</h4>
+        <p style="color:var(--text2);">\[ \text{CTR} = \frac{\text{number of clicks on result}}{\text{number of impressions}} \]</p>
+        <p style="color:var(--text2);">A higher CTR on relevant results suggests better ranking. Used at scale by commercial search engines.</p>
+      </div>
+      <div class="warn-box" style="margin-top:12px;">
+        <h4>Limitations</h4>
+        <p style="color:var(--text2);">Position bias: users click rank 1 more regardless of relevance. Clicks != relevance (e.g., clickbait). Requires large traffic to detect small differences.</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Interleaving</h3>
+      <p style="color:var(--text2);">A more sensitive online method than A/B testing. Instead of showing one system to each group, <em>interleave</em> results from both systems into a single ranked list shown to all users.</p>
+      <ul style="margin-top:12px;">
+        <li><strong>Team Draft Interleaving:</strong> alternately pick top documents from each system's ranking to build a merged list</li>
+        <li>Infer which system wins based on which system's documents receive more clicks</li>
+        <li>More statistically efficient than A/B: same user sees both systems simultaneously, reducing variance</li>
+        <li>Used by Microsoft Bing for sensitivity at small scale</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Implicit Feedback Signals</h3>
+    <div class="grid-3">
+      <div>
+        <p class="hi">Clicks</p>
+        <p style="color:var(--text2);font-size:.9rem;">Which results the user clicks on. Noisy signal — affected by position bias and snippet quality.</p>
+      </div>
+      <div>
+        <p class="hi2">Dwell Time</p>
+        <p style="color:var(--text2);font-size:.9rem;">Time spent on a clicked page. Long dwell time often indicates relevance; short dwell = "pogo-sticking" (quick back-click).</p>
+      </div>
+      <div>
+        <p class="hi3">Eye-Tracking</p>
+        <p style="color:var(--text2);font-size:.9rem;">In lab studies, eye-tracking shows where users look. Reveals attention patterns and the "golden triangle" of user focus on top results.</p>
+      </div>
+      <div style="margin-top:16px;">
+        <p class="hi" style="color:var(--yellow);">Query Reformulation</p>
+        <p style="color:var(--text2);font-size:.9rem;">When users rephrase queries after seeing results, it signals dissatisfaction with the first attempt.</p>
+      </div>
+      <div style="margin-top:16px;">
+        <p class="hi2">Bookmarks / Saves</p>
+        <p style="color:var(--text2);font-size:.9rem;">Strong positive signal; users explicitly saved the result for later use.</p>
+      </div>
+      <div style="margin-top:16px;">
+        <p class="hi3">Session Length</p>
+        <p style="color:var(--text2);font-size:.9rem;">Short sessions can mean either great success (found it fast) or failure (gave up). Context-dependent.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="significance">
+  <h2 class="section-title">Statistical Significance Testing</h2>
+
+  <div class="card">
+    <h3>Why Significance Testing?</h3>
+    <p style="color:var(--text2);">If System B scores MAP=0.45 and System A scores MAP=0.40, is B actually better, or could this difference be due to chance (random variation across queries)? Statistical significance testing answers this question.</p>
+    <ul style="margin-top:12px;">
+      <li><span class="hi">Null hypothesis (H₀):</span> no difference between systems (mean difference = 0)</li>
+      <li>We compute a test statistic and p-value from per-query metric differences</li>
+      <li>If p &lt; α (usually 0.05), we reject H₀ and conclude the difference is statistically significant</li>
+      <li>More queries = higher statistical power = easier to detect small differences</li>
+    </ul>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Paired t-Test</h3>
+      <p style="color:var(--text2);">Used when per-query metric differences are approximately normally distributed. "Paired" because we compare the same query on both systems.</p>
+      <ul style="margin-top:10px;">
+        <li>Compute d_i = metric_B(q_i) − metric_A(q_i) for each query q_i</li>
+        <li>t-statistic: \( t = \frac{\bar{d}}{s_d / \sqrt{n}} \) where \(\bar{d}\) = mean difference, s_d = std dev of differences, n = number of queries</li>
+        <li>Look up t in t-distribution with n−1 degrees of freedom</li>
+      </ul>
+      <div class="ex-box" style="margin-top:12px;">
+        <h4>Example</h4>
+        <p style="color:var(--text2);">System A avg MAP = 41.1%, System B avg MAP = 62.5%. t-test gives t=2.33, p=0.02 &lt; 0.05 → B is significantly better than A at α=0.05.</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Wilcoxon Signed-Rank Test</h3>
+      <p style="color:var(--text2);">A <em>non-parametric</em> alternative to the paired t-test. Does not assume normality of differences. More robust for small n or skewed distributions.</p>
+      <ul style="margin-top:10px;">
+        <li>Ranks the absolute differences |d_i| across queries</li>
+        <li>Sums the ranks for positive vs negative differences</li>
+        <li>W-statistic compared to critical values</li>
+        <li>Often preferred in IR because per-query AP differences are not always normally distributed</li>
+      </ul>
+      <div class="warn-box" style="margin-top:12px;">
+        <h4>Which to use?</h4>
+        <p style="color:var(--text2);">Wilcoxon is safer for IR — AP values are often skewed (many queries with AP near 0). Bootstrap or permutation tests are also used. Always report the test used alongside p-values.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Practical Guidelines</h3>
+    <ul>
+      <li>Minimum ~30 queries recommended for reasonable power; TREC tracks typically use 50</li>
+      <li>Multiple comparisons problem: testing many pairs inflates Type I error — use Bonferroni correction</li>
+      <li>Statistical significance ≠ practical significance: a tiny MAP improvement may be statistically significant with 1000 queries but meaningless in practice</li>
+      <li>Report effect size (e.g., relative improvement %) alongside p-values</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="user-studies">
+  <h2 class="section-title">User Studies &amp; Task-Completion Evaluation</h2>
+
+  <div class="card">
+    <h3>Lab-Based User Studies</h3>
+    <p style="color:var(--text2);">Participants given specific information tasks; researchers observe search behaviour and measure outcomes. More ecologically valid than offline evaluation but costly and small-scale.</p>
+    <div class="grid-2" style="margin-top:16px;">
+      <div>
+        <p class="hi">Task Completion Rate</p>
+        <p style="color:var(--text2);font-size:.9rem;">Proportion of users who successfully complete the assigned information task. Direct measure of system utility.</p>
+      </div>
+      <div>
+        <p class="hi2">Time on Task</p>
+        <p style="color:var(--text2);font-size:.9rem;">How long users take to find what they need. Lower time = more efficient system (but context-dependent).</p>
+      </div>
+      <div style="margin-top:12px;">
+        <p class="hi3">Number of Queries</p>
+        <p style="color:var(--text2);font-size:.9rem;">How many query reformulations the user needed. Fewer = better — system found the answer sooner.</p>
+      </div>
+      <div style="margin-top:12px;">
+        <p class="hi" style="color:var(--yellow);">User Satisfaction Surveys</p>
+        <p style="color:var(--text2);font-size:.9rem;">Post-task questionnaires (e.g., Likert scale ratings) capture subjective satisfaction not visible in log data.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <h4>Evaluation Paradigm Comparison</h4>
+    <p style="color:var(--text2);">
+    <strong>Offline (Cranfield):</strong> cheap, reproducible, scalable, but may not reflect real user needs.<br>
+    <strong>Online (A/B, interleaving):</strong> reflects real users, but expensive, risky, ethically complex.<br>
+    <strong>User studies:</strong> rich behavioural data but small n, expensive, not scalable.<br>
+    Best practice: use offline evaluation for rapid iteration, online for final validation.
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>Python: Evaluation Metrics</h3>
+    <pre><code><span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="fn">def</span> <span class="fn">average_precision</span>(ranked_list, total_relevant):
+    ap, n_relevant = <span class="num">0.0</span>, <span class="num">0</span>
+    <span class="kw">for</span> i, rel <span class="kw">in</span> <span class="fn">enumerate</span>(ranked_list, <span class="num">1</span>):
+        <span class="kw">if</span> rel:
+            n_relevant += <span class="num">1</span>
+            ap += n_relevant / i  <span class="cm"># P@rank</span>
+    <span class="kw">return</span> ap / total_relevant <span class="kw">if</span> total_relevant > <span class="num">0</span> <span class="kw">else</span> <span class="num">0</span>
+
+<span class="fn">def</span> <span class="fn">dcg</span>(ranked_rels, k):
+    result = <span class="num">0.0</span>
+    <span class="kw">for</span> i, rel <span class="kw">in</span> <span class="fn">enumerate</span>(ranked_rels[:k], <span class="num">1</span>):
+        result += rel / np.log2(i + <span class="num">1</span>)
+    <span class="kw">return</span> result
+
+<span class="fn">def</span> <span class="fn">ndcg</span>(ranked_rels, k):
+    actual = dcg(ranked_rels, k)
+    ideal = dcg(<span class="fn">sorted</span>(ranked_rels, reverse=<span class="kw">True</span>), k)
+    <span class="kw">return</span> actual / ideal <span class="kw">if</span> ideal > <span class="num">0</span> <span class="kw">else</span> <span class="num">0</span>
+
+<span class="fn">def</span> <span class="fn">mrr</span>(first_relevant_ranks):
+    <span class="cm"># list of rank positions of first relevant doc per query (0 = not found)</span>
+    <span class="kw">return</span> np.mean([<span class="num">1</span>/r <span class="kw">if</span> r > <span class="num">0</span> <span class="kw">else</span> <span class="num">0</span> <span class="kw">for</span> r <span class="kw">in</span> first_relevant_ranks])
+
+<span class="cm"># Example</span>
+ranked = [<span class="num">1</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">1</span>,<span class="num">1</span>,<span class="num">0</span>,<span class="num">0</span>,<span class="num">1</span>,<span class="num">0</span>,<span class="num">0</span>]  <span class="cm"># binary relevance</span>
+graded = [<span class="num">3</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">0</span>,<span class="num">1</span>]
+<span class="fn">print</span>(<span class="str">f"AP  = {average_precision(ranked, 6):.4f}"</span>)
+<span class="fn">print</span>(<span class="str">f"DCG@5 = {dcg(graded, 5):.4f}"</span>)
+<span class="fn">print</span>(<span class="str">f"NDCG@5 = {ndcg(graded, 5):.4f}"</span>)
+<span class="fn">print</span>(<span class="str">f"MRR = {mrr([1, 3, 5]):.4f}"</span>)  <span class="cm"># first relevant at ranks 1,3,5</span></code></pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="summary">
+  <h2 class="section-title">Summary</h2>
+  <div class="sum-card"><h4>Cranfield Paradigm</h4><p style="color:var(--text2);">Test collection (docs) + topics (queries) + qrels (relevance judgements) + evaluation measure. The standard offline evaluation framework. Reusable: many systems compared without re-judging.</p></div>
+  <div class="sum-card"><h4>Confusion Matrix</h4><p style="color:var(--text2);">TP (relevant+retrieved), FP (irrelevant+retrieved), FN (relevant+not retrieved), TN (irrelevant+not retrieved). TN ignored in IR because it inflates accuracy. Precision = TP/(TP+FP). Recall = TP/(TP+FN).</p></div>
+  <div class="sum-card"><h4>P &amp; R, F1</h4><p style="color:var(--text2);">Precision = fraction of retrieved that are relevant. Recall = fraction of relevant that are retrieved. F1 = harmonic mean. Trade-off: more retrieval → higher R but lower P.</p></div>
+  <div class="sum-card"><h4>AP &amp; MAP</h4><p style="color:var(--text2);">Average Precision averages P at relevant ranks for one query, divided by total relevant. MAP averages AP over all queries. Rewards early placement of relevant docs. Most widely used IR metric.</p></div>
+  <div class="sum-card"><h4>NDCG</h4><p style="color:var(--text2);">Uses graded relevance. Discounts gains at lower ranks logarithmically. Normalised to [0,1] via IDCG. Standard for web search evaluation. Two assumptions: graded value + position discount.</p></div>
+  <div class="sum-card"><h4>MRR &amp; R-Precision</h4><p style="color:var(--text2);">MRR = mean of 1/rank of first relevant doc. Best for navigational/QA. R-Precision = P@R = precision when exactly R docs are retrieved.</p></div>
+  <div class="sum-card"><h4>TREC &amp; Pooling</h4><p style="color:var(--text2);">TREC (since 1992) provides standard IR infrastructure. Pooling: judge top-k from all systems, assume unjudged = not relevant. Avoids judging billions of documents.</p></div>
+  <div class="sum-card"><h4>Significance Testing</h4><p style="color:var(--text2);">Paired t-test (normal differences) or Wilcoxon signed-rank (non-parametric). Per-query differences tested against H₀: no difference. p &lt; 0.05 → reject H₀. Need sufficient queries (≥30).</p></div>
+  <div class="sum-card"><h4>Online Evaluation</h4><p style="color:var(--text2);">A/B testing: split users between systems, measure CTR/satisfaction. Interleaving: merge ranked lists, infer winner from clicks — more efficient. Implicit feedback: clicks, dwell time, eye-tracking.</p></div>
+</section>
+
+<!-- ============================================================ -->
+<section id="questions" class="q-section">
+  <h2 class="section-title" style="border:none;padding-left:0;">📝 Questions &amp; Practice</h2>
+
+  <div class="q-type">Multiple Choice Questions</div>
+
+  <div class="mcq"><div class="qtext">Q1. Precision measures:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) The fraction of retrieved documents that are relevant</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) The fraction of relevant documents that are retrieved</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) The total number of relevant documents in the collection</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The rank of the first relevant document</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q2. MAP (Mean Average Precision) is the average of:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) Precision values at standard recall levels</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) Average Precision values across all queries</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) DCG values at rank 10</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Reciprocal ranks for each query</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q3. NDCG uses a logarithmic discount because:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Documents at lower ranks are less likely to be examined by users</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) IDF follows a logarithmic distribution</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Relevance judgments are graded on a log scale</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Zipf's Law requires log weighting</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q4. The TREC pooling technique:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Merges top results from multiple systems for manual judging, avoiding exhaustive assessment</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) Randomly samples documents for relevance assessment</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Uses crowdsourcing to judge all documents</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Automatically assigns relevance using LLMs</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q5. MRR is most appropriate for evaluating:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Navigational search or question answering (one relevant document)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) Informational search requiring many relevant results</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Clustering of search results</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Comparing vocabulary growth of collections</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q6. The Cranfield paradigm requires which four components?</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Test collection, queries, relevance judgements, evaluation measure</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) Search engine, user study, click log, p-value</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Inverted index, BM25, neural reranker, pooling</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Training data, validation set, test set, model</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q7. True Negative (TN) is largely ignored in IR evaluation because:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) TN documents are always highly relevant</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) TN count is enormous, making accuracy misleadingly close to 1.0</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) TN documents are included in the pool</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) TN equals FN in practice</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q8. In the interpolated P-R curve, P(r) = max P(r') for all r' ≥ r. This means:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) Precision at recall r is the minimum future precision</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) Precision at recall r is the highest precision achievable at that or higher recall</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Precision is averaged over all future recall values</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Precision at recall r equals recall at precision r</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q9. Which online evaluation method is more statistically efficient than A/B testing for the same traffic?</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) User studies with eye-tracking</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) Interleaving (e.g., Team Draft Interleaving)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Cranfield offline evaluation</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Wilcoxon significance testing</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q10. When computing Average Precision, the denominator |R| refers to:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) The number of relevant documents retrieved</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) The total number of relevant documents in the entire collection</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) The rank of the last relevant document retrieved</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The size of the result list</div>
+  </div>
+
+  <div class="q-type">True / False</div>
+  <div class="tf-row"><span class="tf-q">The F₁ measure is the arithmetic mean of Precision and Recall.</span><button class="tb tf" onclick="tfA(this)">False</button><div class="tf-ans wa">FALSE — F₁ is the <em>harmonic</em> mean: 2PR/(P+R). The harmonic mean penalises extreme imbalance between P and R.</div></div>
+  <div class="tf-row"><span class="tf-q">NDCG@k = 1 means the system produced a perfect ranking up to rank k.</span><button class="tb tt" onclick="tfA(this)">True</button><div class="tf-ans ca">TRUE — NDCG@k = DCG@k / IDCG@k. When the ranking is ideal, DCG = IDCG, so NDCG = 1.</div></div>
+  <div class="tf-row"><span class="tf-q">AP penalises a system for missing relevant documents that it never retrieves.</span><button class="tb tt" onclick="tfA(this)">True</button><div class="tf-ans ca">TRUE — AP divides by the total number of relevant docs |R|. Unretrieved relevant docs contribute 0 to the sum, lowering AP.</div></div>
+  <div class="tf-row"><span class="tf-q">Interleaving requires twice as much user traffic as A/B testing to achieve the same statistical power.</span><button class="tb tf" onclick="tfA(this)">False</button><div class="tf-ans wa">FALSE — Interleaving is more efficient than A/B testing. Because both systems are shown to the same users simultaneously, variance is lower and you need less traffic for the same power.</div></div>
+  <div class="tf-row"><span class="tf-q">The Wilcoxon signed-rank test assumes that per-query differences are normally distributed.</span><button class="tb tf" onclick="tfA(this)">False</button><div class="tf-ans wa">FALSE — Wilcoxon is a non-parametric test. It does NOT assume normality, making it more robust than the t-test for skewed IR metrics.</div></div>
+
+  <div class="q-type">Calculation Problems</div>
+
+  <div class="sa"><div class="qt">Full worked problem: 10 ranked docs, graded relevance [3,2,3,0,0,1,2,2,3,0]. Compute: DCG@5, ideal ranking, NDCG@5.</div>
+    <button class="rbtn" onclick="rev(this)">Solution</button>
+    <div class="ans"><strong>DCG@5:</strong><br>
+    Rank 1: 3/log₂2 = 3/1 = 3.000<br>
+    Rank 2: 2/log₂3 = 2/1.585 = 1.262<br>
+    Rank 3: 3/log₂4 = 3/2 = 1.500<br>
+    Rank 4: 0/log₂5 = 0<br>
+    Rank 5: 0/log₂6 = 0<br>
+    DCG@5 = 3+1.262+1.5+0+0 = <strong>5.762</strong><br>
+    <br><strong>Ideal ranking (top 5 by rel): [3,3,2,2,2]:</strong><br>
+    IDCG@5 = 3/1 + 3/1.585 + 2/2 + 2/2.322 + 2/2.585 = 3+1.893+1+0.861+0.774 = <strong>7.528</strong><br>
+    <strong>NDCG@5</strong> = 5.762/7.528 = <strong>0.765</strong></div>
+  </div>
+
+  <div class="sa"><div class="qt">Ranked list: [N,R,N,N,R,R,N,R,N,N]. Total relevant = 8. Compute: Precision@5, Recall@5, AP.</div>
+    <button class="rbtn" onclick="rev(this)">Solution</button>
+    <div class="ans">Relevant at ranks: 2, 5, 6, 8.<br>
+    <strong>P@5:</strong> 2 relevant in top 5 → 2/5 = <strong>0.400</strong><br>
+    <strong>R@5:</strong> 2 retrieved relevant out of 8 total → 2/8 = <strong>0.250</strong><br>
+    <strong>AP:</strong> P at each relevant rank: P@2=1/2=0.5, P@5=2/5=0.4, P@6=3/6=0.5, P@8=4/8=0.5. AP = (0.5+0.4+0.5+0.5)/8 = 1.9/8 = <strong>0.238</strong></div>
+  </div>
+
+  <div class="sa"><div class="qt">Compute R-Precision for a query with 5 relevant documents. Ranked list: [R, N, R, N, N, R, N, N, N, N].</div>
+    <button class="rbtn" onclick="rev(this)">Solution</button>
+    <div class="ans">Total relevant R = 5. R-Precision = P@5 = (number of relevant docs in top 5) / 5.<br>
+    Top 5 documents: R, N, R, N, N → 2 relevant.<br>
+    R-Precision = 2/5 = <strong>0.400</strong><br>
+    Equivalently, Recall@5 = 2/5 = 0.400 (same value — R-Precision = P@R = R@R).</div>
+  </div>
+
+  <div class="sa"><div class="qt">Three queries. Q1 first relevant at rank 1. Q2 first relevant at rank 3. Q3 first relevant at rank 7. Compute MRR.</div>
+    <button class="rbtn" onclick="rev(this)">Solution</button>
+    <div class="ans">RR(Q1) = 1/1 = 1.000<br>
+    RR(Q2) = 1/3 = 0.333<br>
+    RR(Q3) = 1/7 = 0.143<br>
+    MRR = (1.000 + 0.333 + 0.143) / 3 = 1.476/3 = <strong>0.492</strong></div>
+  </div>
+
+  <div class="q-type">Exam-Style Questions</div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[10 marks]</span>
+    <div class="q-text"><strong>Q1.</strong> (a) Define Average Precision and explain why it is preferred over P@k for evaluating IR systems. [4] (b) For the following ranked list with 10 total relevant documents in the collection, compute AP: [R, N, R, N, N, R, N, N, R, N]. [6]</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) AP = average P at ranks where relevant docs retrieved. Preferred over P@k because: (1) considers the full ranked list, not just a cutoff; (2) rewards systems that rank relevant docs higher; (3) accounts for all relevant docs (penalises missing ones); (4) single number that captures both P and R aspects; (5) more informative for comparing systems. [4] (b) Relevant at ranks 1, 3, 6, 9. P@1=1/1=1.0. P@3=2/3=0.667. P@6=3/6=0.500. P@9=4/9=0.444. AP = (1.0+0.667+0.500+0.444)/10 = 2.611/10 = 0.261. [6 marks: 1 for each P@k (4), 1 for sum, 1 for dividing by 10 not 4]</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q2.</strong> Explain Normalised Discounted Cumulative Gain (NDCG). What are its two key assumptions and why does it use a logarithmic discount? Compute NDCG@3 for ranked relevance [2, 3, 1] with ideal [3, 2, 1].</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">NDCG uses graded relevance; discounts gains at lower ranks; normalised by ideal [2]. Two assumptions: (1) highly relevant docs more useful than marginally relevant [1]; (2) lower-ranked docs are less useful (less likely to be examined) [1]. Log discount: gradual, realistic model of diminishing attention [1]. DCG@3: 2/log₂2 + 3/log₂3 + 1/log₂4 = 2+1.893+0.5 = 4.393. IDCG@3: 3/1 + 2/1.585 + 1/2 = 3+1.262+0.5 = 4.762. NDCG@3 = 4.393/4.762 = 0.923 [3 marks for correct computation]</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[10 marks]</span>
+    <div class="q-text"><strong>Q3.</strong> Describe the Cranfield evaluation paradigm. What are its four components? What is the TREC pooling technique and why is it necessary? What is one key limitation of the Cranfield approach?</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">Cranfield paradigm: reusable offline IR evaluation framework (from Cleverdon's 1960s experiments). [1] Four components: (1) test collection (document corpus) [1]; (2) topics/queries — structured information needs [1]; (3) relevance judgements/qrels — ground truth relevance labels for (query, doc) pairs [1]; (4) evaluation measure — metric computed from system output vs qrels (e.g., MAP, NDCG) [1]. Pooling: since exhaustive judging of all documents is impossible for large collections, TREC pools the top-k results from all submitted systems, and human assessors judge only the merged pool. Unjudged docs assumed not relevant. [2 marks] Pooling allows practical judging at scale while maintaining fairness across participants. [1] Limitation (any one of): relevance is subjective/context-dependent; static snapshot may not reflect evolving information needs; unjudged docs penalise novel systems; binary/graded relevance is an oversimplification. [2]</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q4.</strong> Compare offline and online evaluation of IR systems. What is A/B testing and what is interleaving? Why is interleaving considered more statistically efficient? What implicit feedback signals can be used for online evaluation?</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">Offline: static test collection + qrels; cheap, reproducible, no live users; may not reflect real behaviour [1]. Online: live users, real traffic; reflects actual satisfaction; expensive, ethically complex [1]. A/B testing: randomly split users into control (A) and treatment (B) groups; measure engagement metrics (CTR, session length, conversion) between groups [2]. Interleaving: both systems' results merged into one ranked list shown to all users; winner inferred from which system's documents are clicked more [2]. Interleaving is more efficient because both systems are shown simultaneously to the same users, eliminating user-cohort variance — requires less traffic for equivalent statistical power [1]. Implicit signals: clicks (noisy but abundant), dwell time (long = satisfied, short = pogo-sticking), eye-tracking (attention patterns in lab), query reformulations (dissatisfaction signal), session depth [1]</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[6 marks]</span>
+    <div class="q-text"><strong>Q5.</strong> Explain statistical significance testing in IR evaluation. Why is the Wilcoxon test preferred over the paired t-test for IR metrics? What is the minimum recommended number of queries and why?</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">Significance testing determines whether a difference in MAP/NDCG between two systems is due to the system or random variation across queries [1]. H₀: no difference; if p &lt; 0.05 we conclude the difference is significant [1]. Wilcoxon signed-rank is preferred because: it is non-parametric (no normality assumption); per-query AP values are often skewed (many near 0), violating t-test assumptions; Wilcoxon ranks differences rather than averaging them, making it more robust to outliers [2]. Minimum ~30 queries: statistical tests have low power with few queries — small n means high variance in the test statistic, making it hard to detect genuine differences. TREC uses 50 topics for this reason [2].</div>
+  </div>
+
+  <div class="q-type">Flashcards</div>
+  <div class="fc-grid">
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Precision</div><div class="fcb">|Rel∩Ret|/|Ret|. Fraction of retrieved documents that are relevant. High precision = fewer false positives.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Recall</div><div class="fcb">|Rel∩Ret|/|Rel|. Fraction of relevant documents that are retrieved. High recall = fewer false negatives.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">F₁ Measure</div><div class="fcb">Harmonic mean of P and R: 2PR/(P+R). Penalises extreme imbalance between P and R. NOT arithmetic mean.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">MAP</div><div class="fcb">Mean Average Precision: average AP over all queries. Most widely used IR metric. Rewards early placement of relevant docs.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">NDCG</div><div class="fcb">Normalised DCG: uses graded relevance + log discount. NDCG = DCG/IDCG. Range [0,1]. Standard for web search eval.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">MRR</div><div class="fcb">Mean Reciprocal Rank: average of 1/rank of first relevant doc across queries. Best for navigational/QA tasks.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">TREC</div><div class="fcb">Text Retrieval Conference (since 1992). Standard IR evaluation infrastructure: collections, topics, qrels, shared tasks.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Pooling</div><div class="fcb">TREC technique: take top-k from multiple systems, judge merged pool. Avoids judging billions of docs. Unjudged = not relevant.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Cranfield Paradigm</div><div class="fcb">4 components: test collection + queries + qrels + evaluation measure. Offline, reusable, reproducible. From Cleverdon 1960s.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">R-Precision</div><div class="fcb">P@R where R = number of relevant docs. Precision when exactly R documents are retrieved. Equals Recall@R.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Interpolated P-R</div><div class="fcb">P(r) = max P(r') for r' ≥ r. Maximum future precision at or beyond recall r. Allows averaging P-R curves across queries.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">A/B Testing</div><div class="fcb">Online eval: split users into control/treatment groups. Measure CTR, session length. Requires large traffic for statistical power.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Interleaving</div><div class="fcb">Online eval: merge results from two systems, infer winner from clicks. More statistically efficient than A/B testing.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Wilcoxon Test</div><div class="fcb">Non-parametric significance test. No normality assumption. Better than t-test for skewed IR metrics. Ranks absolute differences.</div></div></div>
+  </div>
+</section>
+
+</div></main>
+
+<script>
+window.addEventListener('scroll',()=>{
+  const p=document.getElementById('pb');
+  p.style.width=(window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%';
+  document.getElementById('bt').style.display=window.scrollY>400?'block':'none';
+  document.querySelectorAll('nav a').forEach(a=>{
+    const s=document.querySelector(a.getAttribute('href'));
+    if(s){const r=s.getBoundingClientRect();a.classList.toggle('active',r.top<=100&&r.bottom>100);}
+  });
+});
+function toggleTheme(){document.body.dataset.theme=document.body.dataset.theme==='light'?'':'light';}
+function answerMCQ(el,t){const i=el.parentElement;i.querySelectorAll('.opt').forEach(o=>o.classList.remove('c','w'));el.classList.add(t==='correct'?'c':'w');}
+function tfA(btn){const i=btn.closest('.tf-row');i.querySelector('.tf-ans').style.display='block';}
+function rev(btn){const b=btn.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';btn.textContent=b.style.display==='block'?'Hide Answer':'Reveal Answer';}
+function rvb(el){el.classList.add('rv');}
+document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=document.querySelector(a.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}));
+</script>
+
+</body>
+</html>

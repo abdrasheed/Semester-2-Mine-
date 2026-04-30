@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 04 · VSM: Vector Space Model &amp; Language Models</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+  :root { --bg:#0f0f1a;--bg2:#1a1a2e;--bg3:#16213e;--accent:#7c3aed;--accent2:#06b6d4;--accent3:#10b981;--text:#e2e8f0;--text2:#94a3b8;--yellow:#f59e0b;--red:#ef4444;--card:#1e293b; }
+  [data-theme="light"]{--bg:#f8fafc;--bg2:#f1f5f9;--bg3:#e2e8f0;--text:#0f172a;--text2:#475569;--card:#ffffff;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;overflow-x:hidden;}
+  #pb{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;z-index:1000;transition:width .1s;}
+  header{background:linear-gradient(135deg,#0f0f1a 0%,#1a0533 50%,#0a1628 100%);padding:80px 40px 60px;text-align:center;position:relative;overflow:hidden;}
+  header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at center,rgba(124,58,237,.15) 0%,transparent 60%);animation:rotate 20s linear infinite;}
+  @keyframes rotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes slideInLeft{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+  .badge{display:inline-block;background:var(--accent);color:#fff;padding:6px 18px;border-radius:20px;font-size:.85rem;margin-bottom:16px;animation:fadeInUp .6s ease;}
+  h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;margin-bottom:16px;background:linear-gradient(135deg,#fff 0%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:fadeInUp .8s ease;}
+  .subtitle{color:var(--text2);font-size:1.1rem;animation:fadeInUp 1s ease;}
+  .container{max-width:1200px;margin:0 auto;padding:0 24px;}
+  nav{position:fixed;right:20px;top:50%;transform:translateY(-50%);background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:16px;z-index:100;max-width:220px;max-height:70vh;overflow-y:auto;}
+  nav h3{font-size:.75rem;color:var(--accent2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+  nav a{display:block;color:var(--text2);text-decoration:none;font-size:.8rem;padding:4px 8px;border-left:2px solid transparent;transition:all .2s;}
+  nav a:hover,nav a.active{color:var(--accent);border-left-color:var(--accent);}
+  .theme-btn{position:fixed;left:20px;top:20px;background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:8px;padding:8px 16px;color:var(--text);cursor:pointer;z-index:100;font-size:.85rem;}
+  .back-top{position:fixed;bottom:30px;right:30px;background:var(--accent);color:#fff;border:none;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:none;z-index:100;box-shadow:0 4px 15px rgba(124,58,237,.4);}
+  main{padding:60px 0;}
+  section{margin-bottom:60px;animation:fadeIn .6s ease;}
+  .section-title{font-size:1.8rem;font-weight:700;margin-bottom:24px;padding-left:16px;border-left:4px solid var(--accent);color:var(--text);}
+  .card{background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:28px;margin-bottom:20px;transition:transform .2s,box-shadow .2s;}
+  .card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3);}
+  .card h3{color:var(--accent2);margin-bottom:12px;font-size:1.1rem;}
+  .card p,.card li{color:var(--text2);line-height:1.7;}
+  .card ul{padding-left:20px;}.card ul li{margin-bottom:8px;}
+  .hi{color:var(--accent);font-weight:600;}.hi2{color:var(--accent2);font-weight:600;}.hi3{color:var(--accent3);font-weight:600;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  @media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr;}nav{display:none;}}
+  @media(min-width:769px){body{padding-right:260px;}}
+  .def-box{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:20px;margin:20px 0;}
+  .def-box .term{color:var(--accent);font-weight:700;font-size:1.05rem;}
+  .ex-box{background:rgba(16,185,129,.08);border-left:4px solid var(--accent3);border-radius:0 12px 12px 0;padding:20px;margin:20px 0;}
+  .ex-box h4{color:var(--accent3);margin-bottom:10px;}
+  .warn-box{background:rgba(245,158,11,.08);border-left:4px solid var(--yellow);border-radius:0 12px 12px 0;padding:20px;margin:20px 0;}
+  .warn-box h4{color:var(--yellow);margin-bottom:10px;}
+  .svg-cont{background:var(--bg2);border-radius:16px;padding:30px;margin:30px 0;text-align:center;}
+  .svg-cont h4{color:var(--accent2);margin-bottom:20px;}
+  /* Equations */
+  .eq-block{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.4);border-radius:12px;padding:24px;margin:24px 0;text-align:center;}
+  .eq-block .eq-title{color:var(--accent);font-weight:700;margin-bottom:12px;font-size:1rem;}
+  .practice-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.4);border-radius:12px;padding:20px;margin:12px 0;}
+  .practice-box h5{color:var(--yellow);margin-bottom:10px;}
+  .solved-box{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.4);border-radius:12px;padding:20px;margin:12px 0;}
+  .solved-box h5{color:var(--accent3);margin-bottom:10px;}
+  /* Questions */
+  .q-section{background:var(--bg2);border-radius:20px;padding:40px;margin-top:40px;}
+  .q-type{font-size:1.4rem;font-weight:700;color:var(--accent);margin:30px 0 16px;padding-bottom:8px;border-bottom:2px solid rgba(124,58,237,.3);}
+  .mcq{background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .mcq .qtext{font-weight:600;color:var(--text);margin-bottom:12px;}
+  .opt{padding:8px 14px;border-radius:8px;cursor:pointer;color:var(--text2);border:1px solid rgba(255,255,255,.07);margin:4px 0;transition:all .2s;}
+  .opt:hover{background:rgba(124,58,237,.15);border-color:var(--accent);}
+  .opt.c{background:rgba(16,185,129,.2);border-color:var(--accent3);color:var(--accent3);}
+  .opt.w{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red);}
+  .tf-row{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .tf-q{flex:1;color:var(--text2);}
+  .tb{padding:6px 16px;border-radius:6px;border:none;cursor:pointer;font-size:.85rem;transition:all .2s;}
+  .tb.tt{background:rgba(16,185,129,.2);color:var(--accent3);}
+  .tb.tf{background:rgba(239,68,68,.15);color:var(--red);}
+  .tf-ans{display:none;font-size:.85rem;padding:6px 10px;border-radius:6px;margin-top:8px;}
+  .tf-ans.ca{background:rgba(16,185,129,.15);color:var(--accent3);}
+  .tf-ans.wa{background:rgba(239,68,68,.1);color:var(--red);}
+  .sa{background:var(--card);border-radius:12px;padding:20px;margin-bottom:12px;}
+  .sa .qt{color:var(--text2);margin-bottom:12px;font-weight:600;}
+  .rbtn{background:var(--accent);color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .2s;}
+  .rbtn:hover{background:#6d28d9;}
+  .ans{display:none;margin-top:12px;background:rgba(16,185,129,.08);border-left:3px solid var(--accent3);padding:14px;border-radius:0 8px 8px 0;color:var(--text2);line-height:1.6;}
+  .fitb{background:var(--card);border-radius:10px;padding:16px 20px;margin-bottom:10px;color:var(--text2);}
+  .blank{display:inline-block;min-width:100px;border-bottom:2px solid var(--accent);margin:0 6px;text-align:center;color:transparent;cursor:pointer;transition:all .3s;padding:0 4px;}
+  .blank.rv{color:var(--accent);}
+  .fc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;margin-top:20px;}
+  .fc{perspective:1000px;height:160px;cursor:pointer;}
+  .fci{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d;}
+  .fc:hover .fci,.fc.flipped .fci{transform:rotateY(180deg);}
+  .fcf,.fcb{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;}
+  .fcf{background:linear-gradient(135deg,var(--accent),#5b21b6);color:#fff;font-weight:600;}
+  .fcb{background:var(--card);border:1px solid rgba(6,182,212,.3);color:var(--text2);font-size:.9rem;transform:rotateY(180deg);}
+  .exam-q{background:var(--bg3);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .tag{display:inline-block;background:var(--yellow);color:#000;font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:4px;margin-right:8px;}
+  .marks{display:inline-block;background:rgba(245,158,11,.2);color:var(--yellow);font-size:.75rem;padding:2px 8px;border-radius:4px;}
+  .obj-list{list-style:none;}.obj-list li{padding:10px 16px;margin-bottom:8px;background:var(--card);border-radius:8px;color:var(--text2);display:flex;align-items:flex-start;gap:10px;animation:slideInLeft .5s ease;}
+  .obj-list li::before{content:"✓";color:var(--accent3);font-weight:700;margin-top:1px;}
+  .sum-card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border-radius:16px;padding:24px;border-left:4px solid var(--accent);margin-bottom:16px;}
+  .sum-card h4{color:var(--accent2);margin-bottom:10px;}
+  code{background:rgba(124,58,237,.15);color:var(--accent2);padding:2px 6px;border-radius:4px;font-family:monospace;}
+  pre{background:#0d1117;border-radius:12px;padding:24px;overflow-x:auto;margin:20px 0;border:1px solid rgba(255,255,255,.05);}
+  pre code{background:none;padding:0;color:#c9d1d9;}
+  .kw{color:#ff7b72;}.fn{color:#d2a8ff;}.str{color:#a5d6ff;}.cm{color:#8b949e;}.num{color:#79c0ff;}
+  table{width:100%;border-collapse:collapse;margin:16px 0;}
+  th{background:rgba(124,58,237,.2);color:var(--accent);padding:10px 14px;text-align:left;font-size:.9rem;}
+  td{padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.05);color:var(--text2);font-size:.88rem;}
+  tr:hover td{background:rgba(124,58,237,.05);}
+</style>
+</head>
+<body>
+<div id="pb"></div>
+<button class="theme-btn" onclick="toggleTheme()">&#127763; Theme</button>
+<button class="back-top" id="bt" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8593;</button>
+<nav><h3>Contents</h3>
+<a href="#objectives">Objectives</a>
+<a href="#vsm">Vector Space Model</a>
+<a href="#cosine">Cosine Similarity</a>
+<a href="#tfidf-variants">TF-IDF Variants &amp; SMART</a>
+<a href="#rsv">RSV Computation</a>
+<a href="#rocchio">Rocchio Algorithm</a>
+<a href="#language-models">Language Models</a>
+<a href="#smoothing">Smoothing Methods</a>
+<a href="#summary">Summary</a>
+<a href="#questions">Questions</a></nav>
+<header>
+  <div class="badge">Lecture 04 &middot; VSM</div>
+  <h1>Vector Space Model &amp; Language Models</h1>
+  <p class="subtitle">IR H/M Course &middot; Sean MacAvaney &middot; 2026</p>
+</header>
+<main><div class="container">
+
+<!-- ============================================================ -->
+<!-- OBJECTIVES -->
+<!-- ============================================================ -->
+<section id="objectives">
+  <h2 class="section-title">Learning Objectives</h2>
+  <ul class="obj-list">
+    <li>Represent documents and queries as vectors in term space</li>
+    <li>Compute cosine similarity between document and query vectors</li>
+    <li>Understand the geometric intuition of the vector space model</li>
+    <li>Evaluate advantages and disadvantages of VSM</li>
+    <li>Distinguish cosine, Dice, and coordination level similarity</li>
+    <li>Apply SMART notation to describe TF-IDF weighting schemes</li>
+    <li>Understand RSV (Retrieval Status Value) and its computation</li>
+    <li>Apply the Rocchio algorithm for relevance feedback</li>
+    <li>Explain the language modelling approach to IR</li>
+    <li>Compute query likelihood using Jelinek-Mercer and Dirichlet smoothing</li>
+  </ul>
+</section>
+
+<!-- ============================================================ -->
+<!-- VSM -->
+<!-- ============================================================ -->
+<section id="vsm">
+  <h2 class="section-title">The Vector Space Model</h2>
+  <div class="card">
+    <h3>Documents as Vectors — Formal Definition</h3>
+    <p style="color:var(--text2);">The VSM (Salton, Wong &amp; Yang, 1975) represents every document and query as a vector in a <strong>|V|-dimensional real-valued space</strong>, where |V| is the vocabulary size. Each dimension corresponds to a unique term in the vocabulary.</p>
+    <ul>
+      <li>Document d &rarr; vector <strong>d</strong> = (w<sub>1d</sub>, w<sub>2d</sub>, ..., w<sub>|V|d</sub>)</li>
+      <li>Query q &rarr; vector <strong>q</strong> = (w<sub>1q</sub>, w<sub>2q</sub>, ..., w<sub>|V|q</sub>)</li>
+      <li>Each w<sub>kd</sub> is the TF-IDF weight of term k in document d</li>
+      <li>Vectors are <strong>sparse</strong>: most entries are 0 (most terms absent from any given doc)</li>
+    </ul>
+  </div>
+
+  <div class="svg-cont">
+    <h4>2D Vector Space Intuition</h4>
+    <svg width="500" height="380" viewBox="0 0 500 380" style="max-width:100%;">
+      <defs><marker id="ax" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#94a3b8"/></marker></defs>
+      <!-- Axes -->
+      <line x1="60" y1="320" x2="460" y2="320" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ax)"/>
+      <line x1="60" y1="320" x2="60" y2="30" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#ax)"/>
+      <text x="470" y="325" fill="#94a3b8" font-size="12">term&#8321;</text>
+      <text x="20" y="25" fill="#94a3b8" font-size="12">term&#8322;</text>
+      <!-- Grid lines -->
+      <line x1="60" y1="220" x2="460" y2="220" stroke="#1e293b" stroke-width="1"/>
+      <line x1="60" y1="120" x2="460" y2="120" stroke="#1e293b" stroke-width="1"/>
+      <line x1="160" y1="30" x2="160" y2="320" stroke="#1e293b" stroke-width="1"/>
+      <line x1="260" y1="30" x2="260" y2="320" stroke="#1e293b" stroke-width="1"/>
+      <line x1="360" y1="30" x2="360" y2="320" stroke="#1e293b" stroke-width="1"/>
+      <!-- Documents -->
+      <line x1="60" y1="320" x2="350" y2="120" stroke="#7c3aed" stroke-width="2" stroke-dasharray="5"/>
+      <circle cx="350" cy="120" r="8" fill="#7c3aed"/>
+      <text x="360" y="115" fill="#7c3aed" font-size="12" font-weight="600">D&#8321;</text>
+      <line x1="60" y1="320" x2="200" y2="80" stroke="#06b6d4" stroke-width="2" stroke-dasharray="5"/>
+      <circle cx="200" cy="80" r="8" fill="#06b6d4"/>
+      <text x="210" y="75" fill="#06b6d4" font-size="12" font-weight="600">D&#8322;</text>
+      <line x1="60" y1="320" x2="400" y2="160" stroke="#10b981" stroke-width="2" stroke-dasharray="5"/>
+      <circle cx="400" cy="160" r="8" fill="#10b981"/>
+      <text x="410" y="155" fill="#10b981" font-size="12" font-weight="600">D&#8323;</text>
+      <!-- Query -->
+      <line x1="60" y1="320" x2="280" y2="100" stroke="#f59e0b" stroke-width="2.5"/>
+      <circle cx="280" cy="100" r="10" fill="#f59e0b"/>
+      <text x="290" y="95" fill="#f59e0b" font-size="13" font-weight="700">Q</text>
+      <!-- Angle -->
+      <text x="100" y="295" fill="#94a3b8" font-size="10">&#952; = angle(Q, D&#7522;)</text>
+      <text x="60" y="350" fill="#94a3b8" font-size="10">Documents closer to Q (smaller &#952;, larger cos &#952;) are more relevant</text>
+    </svg>
+  </div>
+
+  <div class="def-box">
+    <span class="term">Core Assumption of VSM:</span>
+    <p style="color:var(--text2);margin-top:8px;">Documents that are "close together" in vector space "talk about" the same things. Relevance is estimated by how close (similar) the query vector is to each document vector. This is the <strong>geometric interpretation</strong> of relevance.</p>
+  </div>
+
+  <div class="card">
+    <h3>Matrix Representation</h3>
+    <p style="color:var(--text2);">A document collection can be represented as a <strong>term-document matrix</strong> M where M[i][j] = w<sub>ij</sub> (weight of term i in document j).</p>
+    <table>
+      <tr><th>Term / Doc</th><th>D1</th><th>D2</th><th>D3</th><th>Q</th></tr>
+      <tr><td>cat</td><td>0.352</td><td>0.176</td><td>0.000</td><td>1.000</td></tr>
+      <tr><td>mat</td><td>0.176</td><td>0.000</td><td>0.352</td><td>1.000</td></tr>
+      <tr><td>dog</td><td>0.000</td><td>0.954</td><td>0.000</td><td>0.000</td></tr>
+      <tr><td>fish</td><td>0.000</td><td>0.000</td><td>0.477</td><td>0.000</td></tr>
+    </table>
+    <p style="color:var(--text2); margin-top:8px;">Each column is a document vector. Each row is a term vector across the collection. The matrix is typically very sparse — most cells are 0.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- COSINE SIMILARITY -->
+<!-- ============================================================ -->
+<section id="cosine">
+  <h2 class="section-title">Cosine Similarity</h2>
+
+  <div class="eq-block">
+    <div class="eq-title">Cosine Similarity</div>
+    <div>\[ \text{sim}(d, q) = \cos(\theta) = \frac{\vec{d} \cdot \vec{q}}{|\vec{d}| \cdot |\vec{q}|} = \frac{\sum_{k=1}^{t} w_{kd} \cdot w_{kq}}{\sqrt{\sum_{k=1}^{t} w_{kd}^2} \cdot \sqrt{\sum_{k=1}^{t} w_{kq}^2}} \]</div>
+    <p style="color:var(--text2);margin-top:12px;">Cosine ranges from 0 (orthogonal = no shared terms) to 1 (identical direction). In IR we use 0&ndash;1 (not &minus;1 to 1) because TF-IDF weights are non-negative.</p>
+    <div class="practice-box">
+      <h5>Practice Example</h5>
+      <p style="color:var(--text2);">D&#8321; = (0.5, 0.8, 0.3), D&#8322; = (0.9, 0.4, 0.2), Q = (1.5, 1.0, 0). Compute cosine similarity of Q with D&#8321; and D&#8322;. Which document is more relevant?</p>
+    </div>
+    <div class="solved-box">
+      <h5>Solved Example</h5>
+      <p style="color:var(--text2);">
+      <strong>Step 1 — Dot products:</strong><br>
+      Q&middot;D&#8321; = 1.5&times;0.5 + 1.0&times;0.8 + 0&times;0.3 = 0.75 + 0.8 + 0 = <strong>1.55</strong><br>
+      Q&middot;D&#8322; = 1.5&times;0.9 + 1.0&times;0.4 + 0&times;0.2 = 1.35 + 0.4 + 0 = <strong>1.75</strong><br>
+      <br>
+      <strong>Step 2 — Magnitudes:</strong><br>
+      |D&#8321;| = &radic;(0.25+0.64+0.09) = &radic;0.98 &asymp; 0.990<br>
+      |D&#8322;| = &radic;(0.81+0.16+0.04) = &radic;1.01 &asymp; 1.005<br>
+      |Q| = &radic;(2.25+1.0+0) = &radic;3.25 &asymp; 1.803<br>
+      <br>
+      <strong>Step 3 — Cosine:</strong><br>
+      cos(Q,D&#8321;) = 1.55 / (0.990 &times; 1.803) = 1.55 / 1.785 &asymp; <strong>0.868</strong><br>
+      cos(Q,D&#8322;) = 1.75 / (1.005 &times; 1.803) = 1.75 / 1.812 &asymp; <strong>0.966</strong><br>
+      <br>
+      <strong>D&#8322; is more relevant</strong> (cosine = 0.966 &gt; 0.868).
+      </p>
+    </div>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Vector Magnitude (Length)</div>
+    <div>\[ |\vec{X}| = \sqrt{\sum_{i=1}^{t} x_i^2} \]</div>
+    <p style="color:var(--text2);margin-top:8px;">If |X|=1, X is a unit vector (length-normalised). Cosine on unit vectors equals the dot product.</p>
+    <div class="practice-box">
+      <h5>Practice Example</h5>
+      <p style="color:var(--text2);">Compute the magnitude of vector V = (3, 4, 0). Then normalise V to a unit vector.</p>
+    </div>
+    <div class="solved-box">
+      <h5>Solved Example</h5>
+      <p style="color:var(--text2);">|V| = &radic;(9+16+0) = &radic;25 = <strong>5</strong><br>
+      Unit vector: V&#770; = (3/5, 4/5, 0/5) = <strong>(0.6, 0.8, 0.0)</strong><br>
+      Verify: |V&#770;| = &radic;(0.36+0.64+0) = &radic;1 = 1 &#10003;</p>
+    </div>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Dice Coefficient</div>
+    <div>\[ \text{Dice}(X, Y) = \frac{2 |X \cap Y|}{|X| + |Y|} \]</div>
+    <p style="color:var(--text2);margin-top:8px;">Normalises for length by dividing by total non-zero entries. Ranges 0&ndash;1. 2&times; to get [0,1] range.</p>
+    <div class="practice-box">
+      <h5>Practice Example</h5>
+      <p style="color:var(--text2);">Binary vectors: X = (1,1,0,1,0), Y = (1,0,0,1,1). Compute Dice coefficient.</p>
+    </div>
+    <div class="solved-box">
+      <h5>Solved Example</h5>
+      <p style="color:var(--text2);">|X| = 3 (non-zero positions: 1,2,4), |Y| = 3 (positions: 1,4,5)<br>
+      |X &cap; Y| = 2 (shared non-zero positions: 1 and 4)<br>
+      Dice = 2&times;2 / (3+3) = 4/6 = <strong>0.667</strong></p>
+    </div>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Coordination Level (Matching Coefficient)</div>
+    <div>\[ \text{CL}(X, Y) = |X \cap Y| = \sum_i x_i \cdot y_i \quad (\text{binary vectors}) \]</div>
+    <p style="color:var(--text2);margin-top:8px;">Simply counts shared non-zero dimensions. Doesn't normalise for document length — shorter docs with all matches score same as longer docs.</p>
+  </div>
+
+  <div class="card">
+    <h3>Similarity Metrics Comparison</h3>
+    <table>
+      <tr><th>Metric</th><th>Formula</th><th>Normalises length?</th><th>Range</th></tr>
+      <tr><td>Cosine</td><td>(d&middot;q)/(|d||q|)</td><td>Yes (by both doc and query length)</td><td>[0, 1]</td></tr>
+      <tr><td>Dice</td><td>2|X&cap;Y|/(|X|+|Y|)</td><td>Partially</td><td>[0, 1]</td></tr>
+      <tr><td>Coordination Level</td><td>|X&cap;Y|</td><td>No</td><td>[0, min(|X|,|Y|)]</td></tr>
+      <tr><td>Jaccard</td><td>|X&cap;Y|/|X&cup;Y|</td><td>Yes</td><td>[0, 1]</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Python: Cosine Similarity</h3>
+    <pre><code><span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="fn">def</span> <span class="fn">cosine_similarity</span>(d, q):
+    dot = np.dot(d, q)
+    norm_d = np.linalg.norm(d)
+    norm_q = np.linalg.norm(q)
+    <span class="kw">if</span> norm_d == <span class="num">0</span> <span class="kw">or</span> norm_q == <span class="num">0</span>:
+        <span class="kw">return</span> <span class="num">0.0</span>
+    <span class="kw">return</span> dot / (norm_d * norm_q)
+
+D1 = np.array([<span class="num">0.5</span>, <span class="num">0.8</span>, <span class="num">0.3</span>])
+D2 = np.array([<span class="num">0.9</span>, <span class="num">0.4</span>, <span class="num">0.2</span>])
+Q  = np.array([<span class="num">1.5</span>, <span class="num">1.0</span>, <span class="num">0.0</span>])
+
+<span class="fn">print</span>(<span class="str">f"sim(Q, D1) = {cosine_similarity(D1, Q):.4f}"</span>)  <span class="cm"># 0.8680</span>
+<span class="fn">print</span>(<span class="str">f"sim(Q, D2) = {cosine_similarity(D2, Q):.4f}"</span>)  <span class="cm"># 0.9657</span>
+<span class="fn">print</span>(<span class="str">"D2 is more relevant to Q"</span>)</code></pre>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Advantages of VSM</h3>
+      <ul>
+        <li>Simple geometric interpretation</li>
+        <li>Any similarity measure can be used</li>
+        <li>Easy to compute and adapt</li>
+        <li>Provision for ranked output</li>
+        <li>Well-understood theoretically</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Disadvantages of VSM</h3>
+      <ul>
+        <li>High dimensionality (millions of terms)</li>
+        <li>Term independence assumption</li>
+        <li>Ad-hoc similarity metric</li>
+        <li>Ad-hoc term weighting (not theoretically grounded)</li>
+        <li>No guidance on when to stop ranking</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- TF-IDF VARIANTS & SMART -->
+<!-- ============================================================ -->
+<section id="tfidf-variants">
+  <h2 class="section-title">TF-IDF Variants &amp; SMART Notation</h2>
+
+  <div class="card">
+    <h3>SMART Notation System</h3>
+    <p style="color:var(--text2);">The SMART IR system (Salton, 1971) introduced a notation for describing TF-IDF weighting schemes. A scheme is written as <strong>xxx.yyy</strong> where the 3-letter prefix applies to documents and the 3-letter suffix applies to queries. Each letter codes TF type, DF type, and normalisation type.</p>
+  </div>
+
+  <div class="card">
+    <h3>SMART: TF Options (first letter)</h3>
+    <table>
+      <tr><th>Code</th><th>Name</th><th>Formula</th><th>When to use</th></tr>
+      <tr><td><code>n</code></td><td>Natural</td><td>tf</td><td>Raw count; simple but unbounded</td></tr>
+      <tr><td><code>l</code></td><td>Log</td><td>1 + log(tf) if tf&gt;0, else 0</td><td>Sublinear; preferred for docs</td></tr>
+      <tr><td><code>a</code></td><td>Augmented</td><td>0.5 + 0.5 &times; tf/max_tf</td><td>Normalised to [0.5, 1]; for long docs</td></tr>
+      <tr><td><code>b</code></td><td>Boolean</td><td>1 if tf&gt;0, else 0</td><td>Presence/absence only</td></tr>
+      <tr><td><code>L</code></td><td>Log avg</td><td>(1+log(tf))/(1+log(avg_tf))</td><td>Normalised log TF</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>SMART: DF Options (second letter)</h3>
+    <table>
+      <tr><th>Code</th><th>Name</th><th>Formula</th><th>Notes</th></tr>
+      <tr><td><code>n</code></td><td>No IDF</td><td>1</td><td>All terms equally weighted</td></tr>
+      <tr><td><code>t</code></td><td>Standard IDF</td><td>log(N/df)</td><td>Classic Sparck Jones IDF</td></tr>
+      <tr><td><code>p</code></td><td>Prob IDF</td><td>max(0, log((N-df)/df))</td><td>Probabilistic version</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>SMART: Normalisation Options (third letter)</h3>
+    <table>
+      <tr><th>Code</th><th>Name</th><th>Formula</th><th>Notes</th></tr>
+      <tr><td><code>n</code></td><td>None</td><td>1</td><td>No normalisation</td></tr>
+      <tr><td><code>c</code></td><td>Cosine</td><td>1/&radic;(&Sigma; w&#178;)</td><td>L2 normalisation; standard VSM</td></tr>
+      <tr><td><code>u</code></td><td>Pivoted</td><td>1/u</td><td>Unique term count normalisation</td></tr>
+      <tr><td><code>b</code></td><td>Byte size</td><td>char_count^(-0.25)</td><td>For varied document formats</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Common SMART Schemes in Practice</h3>
+    <table>
+      <tr><th>Scheme</th><th>Document</th><th>Query</th><th>Use case</th></tr>
+      <tr><td><code>lnc.ltc</code></td><td>Log TF, no IDF, cosine norm</td><td>Log TF, IDF, cosine norm</td><td>Standard ad-hoc retrieval</td></tr>
+      <tr><td><code>nnn.ntn</code></td><td>Raw TF, no IDF, no norm</td><td>Binary, IDF, no norm</td><td>Simple baseline</td></tr>
+      <tr><td><code>bnn.bnn</code></td><td>Boolean, no IDF, no norm</td><td>Boolean, no IDF, no norm</td><td>Pure Boolean model</td></tr>
+      <tr><td><code>ann.bpn</code></td><td>Augmented, no IDF, no norm</td><td>Boolean, prob IDF, no norm</td><td>Query terms weighted by prob IDF</td></tr>
+    </table>
+  </div>
+
+  <div class="ex-box">
+    <h4>SMART lnc.ltc Worked Example</h4>
+    <p style="color:var(--text2);">Vocab = {cat, dog, fish}. N=3 docs, df(cat)=2, df(dog)=1, df(fish)=1.<br>
+    Doc D1 = "cat cat dog" (tf: cat=2, dog=1, fish=0)<br>
+    Query Q = "cat fish" (tf: cat=1, dog=0, fish=1)<br><br>
+
+    <strong>Document side (lnc): log TF, no IDF, cosine norm</strong><br>
+    Raw log TF: cat = 1+log(2)=1.301, dog = 1+log(1)=1.000, fish = 0<br>
+    Before norm: (1.301, 1.000, 0). Magnitude = &radic;(1.301&#178;+1&#178;+0) = &radic;(1.693+1) = &radic;2.693 = 1.641<br>
+    Normalised doc: (1.301/1.641, 1.000/1.641, 0) = <strong>(0.793, 0.609, 0)</strong><br><br>
+
+    <strong>Query side (ltc): log TF, standard IDF, cosine norm</strong><br>
+    Log TF: cat=1+log(1)=1.0, fish=1+log(1)=1.0<br>
+    IDF: cat=log(3/2)=0.176, fish=log(3/1)=0.477<br>
+    Weighted: cat=1.0&times;0.176=0.176, fish=1.0&times;0.477=0.477<br>
+    Magnitude = &radic;(0.176&#178;+0.477&#178;) = &radic;(0.031+0.228) = &radic;0.259 = 0.509<br>
+    Normalised query: (0.176/0.509, 0, 0.477/0.509) = <strong>(0.346, 0, 0.937)</strong><br><br>
+
+    <strong>Cosine(D1, Q)</strong> = 0.793&times;0.346 + 0.609&times;0 + 0&times;0.937 = 0.274 + 0 + 0 = <strong>0.274</strong>
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- RSV -->
+<!-- ============================================================ -->
+<section id="rsv">
+  <h2 class="section-title">RSV — Retrieval Status Value</h2>
+
+  <div class="def-box">
+    <span class="term">Retrieval Status Value (RSV):</span>
+    <p style="color:var(--text2); margin-top:8px;">The RSV is the numeric score assigned to a document d for a given query q. In VSM, RSV(d,q) = cosine similarity. In BM25, RSV(d,q) = BM25 score. Documents are ranked in descending order of RSV. The RSV is the output of the ranking function — it has no direct probabilistic interpretation in VSM.</p>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">RSV in Vector Space Model</div>
+    <div>\[ \text{RSV}(d, q) = \frac{\vec{d} \cdot \vec{q}}{|\vec{d}| \cdot |\vec{q}|} = \sum_{k \in q \cap d} \frac{w_{kd} \cdot w_{kq}}{|\vec{d}| \cdot |\vec{q}|} \]</div>
+    <p style="color:var(--text2); margin-top:10px;">Since query vectors are typically sparse (few terms), the sum only iterates over terms appearing in the query. Documents not containing any query term get RSV = 0 (orthogonal to query).</p>
+  </div>
+
+  <div class="card">
+    <h3>Computing RSV Efficiently</h3>
+    <p style="color:var(--text2);">In practice, RSV is computed using the <strong>inverted index</strong>:</p>
+    <ol style="color:var(--text2); padding-left:20px; line-height:2;">
+      <li>For each query term t, fetch the posting list (document IDs + TF weights)</li>
+      <li>Accumulate scores: for each document in the posting list, add w<sub>td</sub> &times; w<sub>tq</sub> to an accumulator</li>
+      <li>After all query terms processed, divide each accumulator by |d| &times; |q|</li>
+      <li>Sort documents by accumulated RSV in descending order</li>
+    </ol>
+    <div class="warn-box">
+      <h4>Efficiency note:</h4>
+      <p>Pre-computing and storing |d| (document length norm) for each document avoids recomputing it at query time. |q| is a constant for a given query and can be ignored for ranking (doesn't change the order).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- ROCCHIO -->
+<!-- ============================================================ -->
+<section id="rocchio">
+  <h2 class="section-title">Rocchio Algorithm — Relevance Feedback</h2>
+
+  <div class="card">
+    <h3>Motivation: Query Expansion via Feedback</h3>
+    <p style="color:var(--text2);">The Rocchio algorithm (1971) modifies the query vector based on relevance feedback — the user marks which retrieved documents are relevant and which are not. The query is then moved toward relevant documents and away from non-relevant ones in vector space.</p>
+    <ul>
+      <li>Relevant documents: cluster in a region of vector space</li>
+      <li>Non-relevant documents: cluster elsewhere</li>
+      <li>Optimal query: centroid of relevant documents</li>
+    </ul>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Rocchio Algorithm</div>
+    <div>\[
+      \vec{q}_{new} = \alpha \cdot \vec{q}_{orig} + \frac{\beta}{|R|} \sum_{d_r \in R} \vec{d}_r - \frac{\gamma}{|NR|} \sum_{d_{nr} \in NR} \vec{d}_{nr}
+    \]</div>
+    <p style="color:var(--text2); margin-top:12px;">Where: <strong>&alpha;</strong> = weight on original query (typically 1.0), <strong>&beta;</strong> = weight on relevant docs (typically 0.75), <strong>&gamma;</strong> = weight on non-relevant docs (typically 0.15), <strong>R</strong> = set of relevant documents, <strong>NR</strong> = set of non-relevant documents.</p>
+  </div>
+
+  <div class="def-box">
+    <span class="term">Pseudo-Relevance Feedback (PRF):</span>
+    <p style="color:var(--text2); margin-top:8px;">When real user feedback is unavailable, assume the top-k retrieved documents are relevant and apply Rocchio. Common in practice: take top 10–20 documents as "pseudo-relevant". Also called <em>blind relevance feedback</em>.</p>
+  </div>
+
+  <div class="ex-box">
+    <h4>Rocchio Worked Example</h4>
+    <p style="color:var(--text2);">2D space (terms: "neural", "network"). Original query q = (1, 1).<br>
+    Relevant doc R1 = (3, 2), Non-relevant doc NR1 = (0, 3).<br>
+    &alpha;=1, &beta;=0.75, &gamma;=0.25.<br><br>
+    q<sub>new</sub> = 1&times;(1,1) + (0.75/1)&times;(3,2) - (0.25/1)&times;(0,3)<br>
+    = (1,1) + (2.25,1.5) - (0,0.75)<br>
+    = (1+2.25-0, 1+1.5-0.75) = <strong>(3.25, 1.75)</strong><br><br>
+    The new query moves toward R1 (more weight on "neural") and away from NR1 (less weight on "network" relative to before).</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>Advantages of Rocchio</h3>
+      <ul>
+        <li>Improves recall by expanding query with new terms</li>
+        <li>Improves precision by penalising non-relevant terms</li>
+        <li>Simple, computationally efficient</li>
+        <li>Works well with pseudo-relevance feedback</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Limitations of Rocchio</h3>
+      <ul>
+        <li>Assumes query/relevance in a Euclidean space — may not hold</li>
+        <li>Single prototype (centroid) may not capture multiple relevant topics</li>
+        <li>Can drift away from original intent if feedback is noisy</li>
+        <li>Requires user interaction or PRF assumption</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- LANGUAGE MODELS -->
+<!-- ============================================================ -->
+<section id="language-models">
+  <h2 class="section-title">Language Models for IR</h2>
+
+  <div class="card">
+    <h3>A Different Perspective on IR</h3>
+    <p style="color:var(--text2);">Instead of asking "how similar is document d to query q?", language models ask: <span class="hi">"What is the probability that query q was generated by document d?"</span></p>
+    <ul>
+      <li>Each document d is modelled as a <strong>probability distribution over words</strong></li>
+      <li>We estimate P(q | d): the probability that the query would be generated by the document's language model</li>
+      <li>Documents are ranked by P(q | d) in descending order</li>
+      <li>This is the <strong>Query Likelihood Model</strong></li>
+    </ul>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Unigram Language Model for Document d</div>
+    <div>\[ P(w | d) = \frac{f_{wd}}{|d|} \]</div>
+    <p style="color:var(--text2); margin-top:10px;">Where f<sub>wd</sub> = frequency of word w in document d, |d| = total words in d. This is the <strong>maximum likelihood estimate (MLE)</strong>. Problem: any query term not in d gives P(q|d) = 0.</p>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Query Likelihood — Unigram Model</div>
+    <div>\[ P(q | d) = \prod_{w \in q} P(w | d)^{f_{wq}} \]</div>
+    <p style="color:var(--text2); margin-top:10px;">For a query q with term frequencies f<sub>wq</sub>, the probability of generating q from document d's model. Take log for numerical stability:</p>
+    <div style="margin-top:12px;">\[ \log P(q | d) = \sum_{w \in q} f_{wq} \cdot \log P(w | d) \]</div>
+  </div>
+
+  <div class="warn-box">
+    <h4>The Zero-Probability Problem:</h4>
+    <p>If any query term w is absent from document d, then P(w|d)=0, making P(q|d)=0. This kills the score for any document not containing all query terms, which is too harsh. <strong>Smoothing</strong> is needed to assign non-zero probabilities to unseen words.</p>
+  </div>
+
+  <div class="card">
+    <h3>Intuition: Why Smoothing Works</h3>
+    <p style="color:var(--text2);">The key insight: we smooth document language models with the <strong>collection language model</strong> (language model estimated from the whole collection). A word not seen in d may still be topically related — if it appears in the collection, it gets some probability mass. This also naturally implements IDF-like behaviour: terms common in the collection get discounted.</p>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Collection Language Model (MLE)</div>
+    <div>\[ P(w | C) = \frac{f_{wC}}{|C|} \]</div>
+    <p style="color:var(--text2); margin-top:10px;">Where f<sub>wC</sub> = total occurrences of w in collection C, |C| = total words in collection. Used as the background model for smoothing.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SMOOTHING -->
+<!-- ============================================================ -->
+<section id="smoothing">
+  <h2 class="section-title">Language Model Smoothing Methods</h2>
+
+  <!-- Jelinek-Mercer -->
+  <div class="eq-block">
+    <div class="eq-title">Jelinek-Mercer Smoothing (Linear Interpolation)</div>
+    <div>\[ P_{JM}(w | d) = (1 - \lambda) \cdot \frac{f_{wd}}{|d|} + \lambda \cdot P(w | C) \]</div>
+    <p style="color:var(--text2); margin-top:12px;">Where <strong>&lambda;</strong> &isin; [0,1] is the interpolation parameter (typically 0.1&ndash;0.5). Linearly interpolates between the document MLE and the collection MLE. Every word gets at least &lambda;&times;P(w|C) &gt; 0 probability, solving the zero-probability problem.</p>
+  </div>
+
+  <div class="card">
+    <h3>Jelinek-Mercer: Intuition</h3>
+    <div class="grid-2">
+      <div>
+        <p class="hi">&lambda; close to 0:</p>
+        <p style="color:var(--text2);">Trust the document model mostly. Good for long queries where document model is well-estimated.</p>
+      </div>
+      <div>
+        <p class="hi2">&lambda; close to 1:</p>
+        <p style="color:var(--text2);">Trust the collection model mostly. Good for short documents where document model is noisy.</p>
+      </div>
+    </div>
+    <div class="warn-box">
+      <h4>Query likelihood with JM smoothing:</h4>
+      <p>For single-term queries, P<sub>JM</sub>(q|d) = (1-&lambda;)&times;tf/|d| + &lambda;&times;P(w|C). Terms rare in collection get high relative boost for documents that contain them — mimicking IDF.</p>
+    </div>
+  </div>
+
+  <div class="ex-box">
+    <h4>Jelinek-Mercer Worked Example</h4>
+    <p style="color:var(--text2);">Collection: 10,000 total words. Word "quantum": f<sub>wC</sub>=50, so P(w|C)=50/10000=0.005.<br>
+    Doc D1: 200 words, "quantum" appears f=4, so P(w|D1)=4/200=0.020.<br>
+    Doc D2: 100 words, "quantum" NOT present, so P(w|D2)=0.<br>
+    &lambda;=0.3.<br><br>
+    <strong>P<sub>JM</sub>(quantum|D1)</strong> = (1-0.3)&times;0.020 + 0.3&times;0.005 = 0.014 + 0.0015 = <strong>0.0155</strong><br>
+    <strong>P<sub>JM</sub>(quantum|D2)</strong> = (1-0.3)&times;0 + 0.3&times;0.005 = 0 + 0.0015 = <strong>0.0015</strong><br>
+    D1 scores 10&times; higher for "quantum" — it actually contains the term. D2 still gets non-zero probability via the collection model.</p>
+  </div>
+
+  <!-- Dirichlet -->
+  <div class="eq-block">
+    <div class="eq-title">Dirichlet Smoothing (Bayesian)</div>
+    <div>\[ P_{Dir}(w | d) = \frac{f_{wd} + \mu \cdot P(w | C)}{|d| + \mu} \]</div>
+    <p style="color:var(--text2); margin-top:12px;">Where <strong>&mu;</strong> &gt; 0 is the Dirichlet prior (pseudo-count, typically &mu; = 1000&ndash;2000 for web collections). Adds &mu;&times;P(w|C) pseudo-counts to every word. Short documents (|d| &lt;&lt; &mu;) rely heavily on the collection model; long documents trust their own statistics.</p>
+  </div>
+
+  <div class="card">
+    <h3>Dirichlet: Intuition</h3>
+    <p style="color:var(--text2);">Dirichlet smoothing automatically adapts to document length:</p>
+    <ul>
+      <li><strong>Short document</strong>: |d| &lt;&lt; &mu;, so the collection model dominates &rarr; high smoothing</li>
+      <li><strong>Long document</strong>: |d| &gt;&gt; &mu;, so the document model dominates &rarr; little smoothing</li>
+      <li>This is generally preferred over Jelinek-Mercer for ad-hoc retrieval</li>
+      <li>Equivalent to adding &mu; virtual "average document" words to each real document</li>
+    </ul>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Dirichlet: Simplification for Ranking</div>
+    <div>\[
+      \log P_{Dir}(q | d) = \sum_{w \in q} f_{wq} \cdot \log \frac{f_{wd} + \mu \cdot P(w|C)}{|d| + \mu}
+    \]</div>
+    <p style="color:var(--text2); margin-top:10px;">This can be split into a document-dependent part and a query-dependent part. For ranking, the collection-frequency part is a constant across all documents, allowing some simplification.</p>
+  </div>
+
+  <div class="ex-box">
+    <h4>Dirichlet Worked Example</h4>
+    <p style="color:var(--text2);">Same setup: P(quantum|C)=0.005, &mu;=1000.<br>
+    Doc D1: |d|=200, f=4.<br>
+    Doc D2: |d|=100, f=0.<br><br>
+    <strong>P<sub>Dir</sub>(quantum|D1)</strong> = (4 + 1000&times;0.005) / (200 + 1000) = (4+5) / 1200 = 9/1200 = <strong>0.0075</strong><br>
+    <strong>P<sub>Dir</sub>(quantum|D2)</strong> = (0 + 1000&times;0.005) / (100 + 1000) = 5/1100 = <strong>0.00455</strong><br>
+    D1 still scores higher, and D2 gets a non-zero score. Note: D1's effective smoothing is less (200 words) vs D2 (100 words), reflecting that longer documents need less smoothing.</p>
+  </div>
+
+  <div class="card">
+    <h3>JM vs Dirichlet Smoothing: Comparison</h3>
+    <table>
+      <tr><th>Property</th><th>Jelinek-Mercer</th><th>Dirichlet</th></tr>
+      <tr><td>Formula</td><td>(1-&lambda;)&times;P(w|d) + &lambda;&times;P(w|C)</td><td>(f+&mu;&times;P(w|C))/(|d|+&mu;)</td></tr>
+      <tr><td>Length adaptation</td><td>No (fixed &lambda;)</td><td>Yes (denominator |d|+&mu; adapts)</td></tr>
+      <tr><td>Parameter</td><td>&lambda; &isin; (0,1)</td><td>&mu; &gt; 0 (pseudo-count)</td></tr>
+      <tr><td>Typical value</td><td>&lambda;=0.1&ndash;0.5</td><td>&mu;=1000&ndash;2000</td></tr>
+      <tr><td>Better for</td><td>Verbose queries</td><td>Ad-hoc IR (short queries)</td></tr>
+      <tr><td>Bias</td><td>Fixed across all doc lengths</td><td>Short docs smoothed more</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Language Model vs VSM: Key Differences</h3>
+    <table>
+      <tr><th>Aspect</th><th>Vector Space Model</th><th>Language Model</th></tr>
+      <tr><td>Theoretical basis</td><td>Geometric / algebraic (ad hoc)</td><td>Probabilistic (generative)</td></tr>
+      <tr><td>Query representation</td><td>Query vector (same space as docs)</td><td>Query as an observation</td></tr>
+      <tr><td>Score meaning</td><td>RSV = cosine similarity (no prob. meaning)</td><td>P(q|d): probability of generating query</td></tr>
+      <tr><td>Handles missing terms?</td><td>Zero weight (no problem for ranking)</td><td>Needs smoothing (zero kills product)</td></tr>
+      <tr><td>IDF equivalent</td><td>Explicit IDF weight</td><td>Emerges naturally from smoothing</td></tr>
+      <tr><td>Tuning</td><td>&alpha;/&beta; for term weights</td><td>&lambda; or &mu; for smoothing</td></tr>
+    </table>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Full Query Likelihood Score with Dirichlet</div>
+    <div>\[
+      \text{score}(d, q) = \sum_{w \in q \cap d} f_{wq} \cdot \log \frac{f_{wd} + \mu \cdot P(w|C)}{|d| + \mu} + \sum_{w \in q \setminus d} f_{wq} \cdot \log \frac{\mu \cdot P(w|C)}{|d| + \mu}
+    \]</div>
+    <p style="color:var(--text2); margin-top:10px;">The second term is constant with respect to terms in the document (only depends on query and collection). For ranking, terms present in the document contribute the first term; absent terms contribute a negative constant (hurts documents that are long without mentioning the query term).</p>
+  </div>
+
+  <div class="card">
+    <h3>Python: Query Likelihood with JM Smoothing</h3>
+    <pre><code><span class="kw">import</span> math
+<span class="kw">from</span> collections <span class="kw">import</span> Counter
+
+<span class="fn">def</span> <span class="fn">query_likelihood_jm</span>(doc_tokens, query_tokens, collection_tokens, lam=<span class="num">0.3</span>):
+    doc_tf = Counter(doc_tokens)
+    col_tf = Counter(collection_tokens)
+    doc_len = <span class="fn">len</span>(doc_tokens)
+    col_len = <span class="fn">len</span>(collection_tokens)
+
+    log_prob = <span class="num">0.0</span>
+    <span class="kw">for</span> w <span class="kw">in</span> query_tokens:
+        p_w_doc = doc_tf.get(w, <span class="num">0</span>) / doc_len  <span class="cm"># MLE in doc</span>
+        p_w_col = col_tf.get(w, <span class="num">1</span>) / col_len  <span class="cm"># MLE in collection (+1 smoothing)</span>
+        p_jm = (<span class="num">1</span> - lam) * p_w_doc + lam * p_w_col
+        <span class="kw">if</span> p_jm > <span class="num">0</span>:
+            log_prob += math.log(p_jm)
+    <span class="kw">return</span> log_prob
+
+<span class="cm"># Example</span>
+doc1 = [<span class="str">'machine'</span>,<span class="str">'learning'</span>,<span class="str">'machine'</span>,<span class="str">'neural'</span>,<span class="str">'network'</span>]
+doc2 = [<span class="str">'cooking'</span>,<span class="str">'recipe'</span>,<span class="str">'food'</span>,<span class="str">'baking'</span>]
+query = [<span class="str">'machine'</span>,<span class="str">'learning'</span>]
+collection = doc1 + doc2
+
+<span class="fn">print</span>(query_likelihood_jm(doc1, query, collection))  <span class="cm"># Higher — doc1 more relevant</span>
+<span class="fn">print</span>(query_likelihood_jm(doc2, query, collection))  <span class="cm"># Lower</span></code></pre>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SUMMARY -->
+<!-- ============================================================ -->
+<section id="summary">
+  <h2 class="section-title">Summary</h2>
+  <div class="sum-card"><h4>VSM</h4><p style="color:var(--text2);">Documents and queries are t-dimensional vectors where each dimension = TF-IDF weight of a term. Relevance = vector similarity. Sparse vectors. Formal space: R^|V|.</p></div>
+  <div class="sum-card"><h4>Cosine Similarity</h4><p style="color:var(--text2);">sim = (d&middot;q)/(|d||q|). Measures angle between vectors. Range [0,1] for non-negative weights. The most widely used similarity in VSM.</p></div>
+  <div class="sum-card"><h4>SMART Notation</h4><p style="color:var(--text2);">3-letter codes for TF &times; IDF &times; normalisation, separately for documents and queries. E.g., lnc.ltc = log-TF, no-IDF, cosine-norm for docs; log-TF, IDF, cosine-norm for queries.</p></div>
+  <div class="sum-card"><h4>RSV</h4><p style="color:var(--text2);">Retrieval Status Value: the score assigned to document d for query q. In VSM = cosine. Documents ranked by RSV descending. Computed efficiently via inverted index accumulators.</p></div>
+  <div class="sum-card"><h4>Rocchio</h4><p style="color:var(--text2);">q_new = &alpha;q + &beta;&Sigma;R/|R| - &gamma;&Sigma;NR/|NR|. Moves query toward relevant docs, away from non-relevant. Pseudo-relevance feedback uses top-k as assumed relevant.</p></div>
+  <div class="sum-card"><h4>Language Models</h4><p style="color:var(--text2);">Model each document as a probability distribution. Query likelihood P(q|d) = product of P(w|d) for w in q. Needs smoothing to avoid zero probabilities.</p></div>
+  <div class="sum-card"><h4>Jelinek-Mercer</h4><p style="color:var(--text2);">P<sub>JM</sub>(w|d) = (1-&lambda;)&times;P(w|d) + &lambda;&times;P(w|C). Fixed interpolation. &lambda;&asymp;0.1&ndash;0.5. Better for long queries.</p></div>
+  <div class="sum-card"><h4>Dirichlet Smoothing</h4><p style="color:var(--text2);">P<sub>Dir</sub>(w|d) = (f+&mu;&times;P(w|C))/(|d|+&mu;). Adapts to doc length — short docs smoothed more. &mu;&asymp;1000&ndash;2000. Generally preferred for ad-hoc IR.</p></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- QUESTIONS -->
+<!-- ============================================================ -->
+<section id="questions" class="q-section">
+  <h2 class="section-title" style="border:none;padding-left:0;">Questions &amp; Practice</h2>
+
+  <!-- MCQs -->
+  <div class="q-type">Multiple Choice Questions</div>
+  <div class="mcq"><div class="qtext">Q1. In VSM, what does each dimension of a document vector correspond to?</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) A word position in the document</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) A unique term in the collection vocabulary</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) A sentence in the document</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) A document in the collection</div>
+  </div>
+  <div class="mcq"><div class="qtext">Q2. Cosine similarity of 0 between a query and document means:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) They are identical</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) They share no common terms (orthogonal)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) The document is very long</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The query has no terms</div>
+  </div>
+  <div class="mcq"><div class="qtext">Q3. The denominator of the cosine similarity formula serves to:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) Increase the score for longer documents</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) Normalise for document and query length</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Weight terms by their IDF</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Count the number of matching terms</div>
+  </div>
+  <div class="mcq"><div class="qtext">Q4. In VSM, why are document vectors typically sparse?</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Each document contains only a small fraction of all possible terms in the vocabulary</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) TF-IDF weights are always between 0 and 1</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Only stopwords are included in the vector</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Stemming reduces all words to common roots</div>
+  </div>
+  <div class="mcq"><div class="qtext">Q5. The Dice coefficient uses:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) 2|X∩Y| / (|X|+|Y|)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) |X∩Y| / |X∪Y|</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) |X·Y| / max(|X|,|Y|)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) (X-Y)² / (|X|+|Y|)</div>
+  </div>
+  <div class="mcq"><div class="qtext">Q6. In SMART notation lnc.ltc, what does the 'c' at position 3 indicate?</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) Collection-level normalisation</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) Cosine normalisation (L2 normalisation of the document vector)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Count-based TF</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Categorical IDF weighting</div>
+  </div>
+  <div class="mcq"><div class="qtext">Q7. In the query likelihood model, what problem does smoothing solve?</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) The document is too long to fit in memory</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) Query terms not present in a document give P(q|d)=0, making scores meaningless</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) The query vector has too many dimensions</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Cosine similarity cannot handle negative weights</div>
+  </div>
+  <div class="mcq"><div class="qtext">Q8. In Jelinek-Mercer smoothing, λ=0 (approximately) means:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Rely entirely on the document model (MLE, no smoothing)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) Rely entirely on the collection model</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Equal weight to document and collection models</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The query is ignored</div>
+  </div>
+  <div class="mcq"><div class="qtext">Q9. Dirichlet smoothing naturally adapts to document length. For a very short document:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) The document model dominates (less smoothing)</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) The collection model dominates (more smoothing)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) The smoothing effect is identical to all other documents</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The Dirichlet prior μ increases automatically</div>
+  </div>
+  <div class="mcq"><div class="qtext">Q10. In the Rocchio algorithm, what is the effect of increasing γ?</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) The query moves more strongly toward relevant documents</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) The query moves more strongly away from non-relevant documents</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) The original query terms are given more weight</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The smoothing parameter increases</div>
+  </div>
+  <div class="mcq"><div class="qtext">Q11. RSV (Retrieval Status Value) is:</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) The binary relevance label assigned by a human assessor</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) The numeric score assigned by the retrieval model to rank documents</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) The total number of relevant documents in the collection</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The recall rate at rank 10</div>
+  </div>
+  <div class="mcq"><div class="qtext">Q12. Which SMART scheme is equivalent to a pure Boolean retrieval model (term presence only, no weighting)?</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) bnn.bnn</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) lnc.ltc</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) ntn.ntn</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) atc.atc</div>
+  </div>
+
+  <!-- True/False -->
+  <div class="q-type">True / False</div>
+  <div class="tf-row"><div class="tf-q">T1. In VSM, increasing a document's length while keeping the same TF values will not change the cosine similarity with a query.</div>
+    <div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button></div>
+    <div class="tf-ans wa" style="width:100%;">FALSE. Increasing document length while keeping TF values means the document vector has the same entries, so the cosine similarity is unchanged. BUT in practice, a longer document has more terms, which changes TF values (same term count but larger denominator if we use normalised TF). If raw TF-IDF weights are unchanged, cosine IS unchanged. The statement is technically ambiguous — the key insight is that cosine normalises for length.</div>
+  </div>
+  <div class="tf-row"><div class="tf-q">T2. The query likelihood model P(q|d) ranks documents by how likely they are to have generated the observed query.</div>
+    <div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button></div>
+    <div class="tf-ans ca" style="width:100%;">TRUE. The generative interpretation: imagine document d as a language model; rank by P(q|θ_d) where θ_d is the estimated language model for d. Documents whose model is more likely to produce the query are ranked higher.</div>
+  </div>
+  <div class="tf-row"><div class="tf-q">T3. In SMART notation, the document and query weighting schemes must be identical (e.g., lnc.lnc).</div>
+    <div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button></div>
+    <div class="tf-ans wa" style="width:100%;">FALSE. The document scheme (before the dot) and query scheme (after the dot) are independent. A common combination is lnc.ltc — log TF with cosine norm for documents, log TF with IDF and cosine norm for queries.</div>
+  </div>
+  <div class="tf-row"><div class="tf-q">T4. Pseudo-relevance feedback (PRF) in Rocchio always improves retrieval effectiveness.</div>
+    <div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button></div>
+    <div class="tf-ans wa" style="width:100%;">FALSE. PRF assumes top-k retrieved documents are relevant, which is often but not always true. If the initial query is poor and top documents are non-relevant, PRF can hurt performance by moving the query in the wrong direction.</div>
+  </div>
+  <div class="tf-row"><div class="tf-q">T5. With Dirichlet smoothing, a document of length 5000 words will be smoothed more heavily than a document of 50 words.</div>
+    <div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button></div>
+    <div class="tf-ans wa" style="width:100%;">FALSE. The opposite: shorter documents (|d|≪μ) are smoothed more heavily because the denominator |d|+μ is dominated by μ. For the long document (|d|=5000), if μ=1000, then (f+1000×P(w|C))/(5000+1000) — the collection model has less influence. For the short document (|d|=50): (f+1000×P(w|C))/(50+1000) — the collection model dominates.</div>
+  </div>
+  <div class="tf-row"><div class="tf-q">T6. Two documents with different TF-IDF vectors can have the same cosine similarity with a query.</div>
+    <div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button></div>
+    <div class="tf-ans ca" style="width:100%;">TRUE. Two different vectors can have the same angle with a third vector. Also, any two vectors in the same direction (scalar multiples of each other) have the same cosine similarity with any query.</div>
+  </div>
+
+  <!-- Calculation Problems -->
+  <div class="q-type">Calculation Problems</div>
+  <div class="sa"><div class="qt">Problem 1. D = (2, 0, 3, 1), Q = (1, 0, 2, 0). Compute cosine similarity step by step.</div>
+    <button class="rbtn" onclick="rev(this)">Solution</button>
+    <div class="ans">Dot product: D&middot;Q = 2&times;1 + 0&times;0 + 3&times;2 + 1&times;0 = 2+0+6+0 = 8<br>|D| = &radic;(4+0+9+1) = &radic;14 &asymp; 3.742<br>|Q| = &radic;(1+0+4+0) = &radic;5 &asymp; 2.236<br>cos(D,Q) = 8 / (3.742 &times; 2.236) = 8 / 8.366 &asymp; <strong>0.956</strong><br>High similarity — D and Q share term&#8321; and term&#8323; with strong weights.</div>
+  </div>
+
+  <div class="sa"><div class="qt">Problem 2. Compute cosine similarity for: D1=(0,1,1,0), D2=(1,1,0,0), Q=(0,1,0,1). Which document ranks higher?</div>
+    <button class="rbtn" onclick="rev(this)">Solution</button>
+    <div class="ans">Q&middot;D1 = 0&times;0+1&times;1+0&times;1+1&times;0 = 1. |D1|=&radic;2&asymp;1.414, |Q|=&radic;2&asymp;1.414. cos(Q,D1)=1/(1.414&times;1.414)=1/2=<strong>0.5</strong><br>Q&middot;D2 = 0&times;1+1&times;1+0&times;0+1&times;0 = 1. |D2|=&radic;2&asymp;1.414. cos(Q,D2)=1/2=<strong>0.5</strong><br>Both score equally. Tie — the system could use other signals (e.g., PageRank, recency) to break the tie.</div>
+  </div>
+
+  <div class="sa"><div class="qt">Problem 3 (SMART). Vocab: {cat, dog, fish}. N=4 docs, df(cat)=2, df(dog)=3, df(fish)=1. Doc D = "cat cat fish" (tf: cat=2, dog=0, fish=1). Apply lnc weighting scheme to D. Then normalise.</div>
+    <button class="rbtn" onclick="rev(this)">Solution</button>
+    <div class="ans">
+      <strong>l (log TF):</strong> cat = 1+log(2)=1.301; dog = 0 (not present); fish = 1+log(1)=1.000<br>
+      <strong>n (no IDF):</strong> weights stay as-is: (1.301, 0, 1.000)<br>
+      <strong>c (cosine normalise):</strong> magnitude = &radic;(1.301&#178;+0+1&#178;) = &radic;(1.693+1) = &radic;2.693 = 1.641<br>
+      Normalised: (1.301/1.641, 0, 1.000/1.641) = <strong>(0.793, 0, 0.609)</strong>
+    </div>
+  </div>
+
+  <div class="sa"><div class="qt">Problem 4 (Language Model). Collection: 5000 total words. P(neural|C)=0.004. Doc D1: 100 words, f(neural)=3. λ=0.3. Compute P_JM(neural|D1). What is log P_JM?</div>
+    <button class="rbtn" onclick="rev(this)">Solution</button>
+    <div class="ans">
+      P(neural|D1) = 3/100 = 0.030<br>
+      P<sub>JM</sub>(neural|D1) = (1-0.3)&times;0.030 + 0.3&times;0.004 = 0.021 + 0.0012 = <strong>0.0222</strong><br>
+      log P<sub>JM</sub> = ln(0.0222) &asymp; <strong>&minus;3.806</strong> (natural log)<br>
+      For a single-term query q="neural", this doc scores log P = &minus;3.806. Higher (less negative) = more relevant.
+    </div>
+  </div>
+
+  <div class="sa"><div class="qt">Problem 5 (Dirichlet). Same setup: P(neural|C)=0.004, μ=1000. Doc D1: 100 words, f=3. Doc D2: 500 words, f=3. Compare P_Dir for both. What does the difference tell us?</div>
+    <button class="rbtn" onclick="rev(this)">Solution</button>
+    <div class="ans">
+      <strong>P<sub>Dir</sub>(neural|D1)</strong> = (3 + 1000&times;0.004)/(100+1000) = (3+4)/1100 = 7/1100 = <strong>0.00636</strong><br>
+      <strong>P<sub>Dir</sub>(neural|D2)</strong> = (3 + 1000&times;0.004)/(500+1000) = 7/1500 = <strong>0.00467</strong><br>
+      D1 scores higher despite same tf=3 in both. D2 is longer so the same 3 occurrences are less significant (the document is less "focused" on "neural"). This is automatic length normalisation via Dirichlet — no separate length normalisation step needed.
+    </div>
+  </div>
+
+  <div class="sa"><div class="qt">Problem 6 (Rocchio). Original query q=(2,1) in 2D space. One relevant doc R=(4,3), one non-relevant NR=(1,5). α=1, β=0.8, γ=0.2. Compute q_new and describe the direction it moved.</div>
+    <button class="rbtn" onclick="rev(this)">Solution</button>
+    <div class="ans">
+      q<sub>new</sub> = 1&times;(2,1) + (0.8/1)&times;(4,3) - (0.2/1)&times;(1,5)<br>
+      = (2,1) + (3.2,2.4) - (0.2,1.0)<br>
+      = (2+3.2-0.2, 1+2.4-1.0) = <strong>(5.0, 2.4)</strong><br>
+      The query moved strongly toward R (which has a high first-dimension value) and away from NR (which had a high second-dimension value). In retrieval terms: more weight on term&#8321; (matching the relevant doc), less on term&#8322; (prominent in non-relevant doc).
+    </div>
+  </div>
+
+  <!-- Exam-style Questions -->
+  <div class="q-type">Exam-Style Questions</div>
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q1.</strong> Describe the Vector Space Model for Information Retrieval. Include in your answer: (a) document representation, (b) query representation, (c) relevance estimation using cosine similarity, (d) one advantage and one disadvantage. Provide a small worked example.</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) Document representation: each document is a |V|-dim vector where the i-th component is the TF-IDF weight of term i in the document. Most entries are 0 (sparse). [2 marks] (b) Query representation: identical — query terms are also weighted (e.g., binary or IDF-weighted). [1 mark] (c) Cosine similarity: sim(d,q)=(d&middot;q)/(|d||q|). Measures cosine of angle between vectors. Higher cosine = more similar = more relevant. [2 marks] (d) Advantage: simple geometric interpretation, easy to implement. Disadvantage: assumes term independence — "New York" treated as two separate terms, losing the phrase meaning. [2 marks] Example: D=(2,1,0), Q=(1,1,0). D&middot;Q=3, |D|=&radic;5&asymp;2.24, |Q|=&radic;2&asymp;1.41. cos=3/(2.24&times;1.41)=3/3.16&asymp;0.95. [1 mark]</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[10 marks]</span>
+    <div class="q-text"><strong>Q2.</strong> Explain the SMART notation system for TF-IDF weighting. What does the scheme lnc.ltc mean? Work through a full example: given a 3-term vocabulary {alpha, beta, gamma} and documents D1="alpha alpha beta" and query Q="alpha gamma", compute the cosine similarity using lnc.ltc with N=3, df(alpha)=2, df(beta)=2, df(gamma)=1.</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">SMART notation: 6-character code, first 3 for documents, last 3 for queries. Each position: TF variant, DF (IDF) variant, normalisation. [2 marks]<br>
+    lnc: log TF (l = 1+log(tf)), no IDF (n), cosine normalisation (c). ltc: log TF, standard IDF (t = log(N/df)), cosine norm. [2 marks]<br>
+    Document D1 ("alpha alpha beta"), lnc:<br>
+    log TF: alpha=1+log(2)=1.301, beta=1+log(1)=1.0, gamma=0. Vector = (1.301, 1.0, 0).<br>
+    No IDF. Cosine norm: |D1|=&radic;(1.693+1+0)=&radic;2.693=1.641. Normalised: (0.793, 0.609, 0). [2 marks]<br>
+    Query Q ("alpha gamma"), ltc:<br>
+    log TF: alpha=1.0, gamma=1.0, beta=0. IDF: alpha=log(3/2)=0.176, gamma=log(3/1)=0.477. Weighted: (0.176, 0, 0.477).<br>
+    Cosine norm: |Q|=&radic;(0.031+0+0.228)=&radic;0.259=0.509. Normalised: (0.346, 0, 0.937). [2 marks]<br>
+    Cosine(D1,Q) = 0.793&times;0.346 + 0.609&times;0 + 0&times;0.937 = 0.274. [2 marks]</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[12 marks]</span>
+    <div class="q-text"><strong>Q3.</strong> (a) Describe the language modelling approach to IR, including the unigram language model and query likelihood model. [4] (b) Why is smoothing necessary? What is the zero-probability problem? [2] (c) Describe Jelinek-Mercer and Dirichlet smoothing. When would you prefer each? [4] (d) Compute P_JM(q|d) and P_Dir(q|d) for query q="deep learning", document d (100 words, f_deep=2, f_learning=3), λ=0.3, μ=500, P(deep|C)=0.003, P(learning|C)=0.006. [2]</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) Language modelling approach: each document is a generative probability distribution over words, called a language model &theta;_d. Unigram LM: P(w|d) = f_wd/|d| (MLE). Query likelihood: P(q|&theta;_d) = &prod; P(w|&theta;_d)^f_wq — the probability that doc d's model would generate query q. Rank documents by P(q|&theta;_d). [4 marks] (b) Zero-probability problem: if any query term w is absent from d, P(w|d)=0, making P(q|d)=0 (product includes a zero). This unfairly eliminates all documents not containing every query term. Smoothing assigns non-zero probability to unseen words. [2 marks] (c) JM: P_JM(w|d) = (1-&lambda;)P(w|d)+&lambda;P(w|C). Fixed interpolation, all docs smoothed equally. Use for long queries. Dirichlet: P_Dir(w|d) = (f+&mu;P(w|C))/(|d|+&mu;). Adapts to doc length — short docs smoothed more. Use for ad-hoc IR with short queries. [4 marks] (d) JM: P_JM(deep|d)=(1-0.3)&times;2/100+0.3&times;0.003=0.014+0.0009=0.0149. P_JM(learning|d)=0.7&times;3/100+0.3&times;0.006=0.021+0.0018=0.0228. log P_JM(q|d)=log(0.0149)+log(0.0228)=&minus;4.207+(&minus;3.780)=&minus;7.987. Dir: P_Dir(deep)=(2+500&times;0.003)/(100+500)=(2+1.5)/600=3.5/600=0.00583. P_Dir(learning)=(3+500&times;0.006)/600=(3+3)/600=6/600=0.01. log P_Dir=log(0.00583)+log(0.01)=&minus;5.143+(&minus;4.605)=&minus;9.748. [2 marks]</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[10 marks]</span>
+    <div class="q-text"><strong>Q4.</strong> (a) Describe the Rocchio algorithm for relevance feedback. State the formula and explain each parameter. [5] (b) A query is q=(1,2,0) in a 3D term space. Relevant doc R=(2,3,1), non-relevant doc NR=(0,4,2). Apply Rocchio with α=1, β=0.75, γ=0.25. Compute q_new and explain what terms the query now emphasises. [5]</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) Rocchio: q_new = &alpha;&times;q + (&beta;/|R|)&times;&Sigma;R - (&gamma;/|NR|)&times;&Sigma;NR. &alpha; (typically 1.0): weight on original query — preserves user's original intent [1]. &beta; (typically 0.75): weight on centroid of relevant docs — moves query toward relevant region of space [1]. &gamma; (typically 0.15): weight on centroid of non-relevant docs — moves query away from non-relevant region [1]. R = set of relevant documents; NR = set of non-relevant documents. Pseudo-relevance feedback uses top-k retrieved as R [2]. (b) q_new = 1&times;(1,2,0) + (0.75/1)&times;(2,3,1) - (0.25/1)&times;(0,4,2). = (1,2,0) + (1.5,2.25,0.75) - (0,1,0.5) = (1+1.5-0, 2+2.25-1, 0+0.75-0.5) = <strong>(2.5, 3.25, 0.25)</strong>. Interpretation: term&#8321; increased (1&rarr;2.5) — relevant doc had high term&#8321;. term&#8322; increased moderately (2&rarr;3.25) — both R and NR had term&#8322;, so it increased less. term&#8323; barely increased (0&rarr;0.25) — NR had term&#8323;, so the negative pull partially cancelled the positive. Overall query now emphasises term&#8321; much more, which distinguishes R from NR. [5 marks]</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q5.</strong> Compare the Vector Space Model with the Language Modelling approach to IR. For each of the following aspects, explain how VSM and LM handle them differently: (a) theoretical basis, (b) handling of unseen query terms, (c) the role of document length, (d) interpretability of the score.</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) Theoretical basis: VSM is geometric/algebraic — documents and queries as vectors, similarity as angle. It is ad-hoc in the sense that cosine similarity has no explicit probabilistic justification. LM is probabilistic — each document is a generative model; the score P(q|d) is a proper probability with a clear generative story [2]. (b) Handling of unseen query terms: in VSM, a query term not in a document contributes 0 to the dot product — this is fine because cosine handles it gracefully (the missing dimension is 0 in both vectors). In LM, an unseen term causes P(w|d)=0, which kills the entire product (log sum becomes &minus;&infin;). Smoothing (JM or Dirichlet) is required — this is a fundamental difference [2]. (c) Document length: VSM handles length via explicit normalisation (cosine divides by vector magnitude). LM handles length implicitly: MLE P(w|d)=tf/|d| already normalises by length; Dirichlet smoothing adds automatic length adaptation. [2] (d) Score interpretability: VSM cosine is not a probability — it is a similarity in [0,1] but does not have a direct probabilistic meaning. LM score P(q|d) is a probability — it is interpretable as "the probability that document d's model would generate this query", which has a clean Bayesian interpretation. [2]</div>
+  </div>
+
+  <!-- Flashcards -->
+  <div class="q-type">Flashcards</div>
+  <div class="fc-grid">
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Vector Space Model</div><div class="fcb">Documents &amp; queries as |V|-dim TF-IDF vectors. Relevance = cosine similarity. Geometric: closer = more relevant. Sparse vectors.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Cosine Similarity</div><div class="fcb">sim = (d·q)/(|d||q|). Range [0,1] for non-negative weights. Measures angle between vectors. Normalises for length.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Unit Vector</div><div class="fcb">A vector with magnitude 1. Created by dividing each component by the vector's length. Cosine on unit vectors = dot product.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Sparse Vector</div><div class="fcb">A vector with mostly zero entries. Document vectors are sparse because each doc contains only a tiny fraction of all vocabulary terms.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Term Independence</div><div class="fcb">Assumption in VSM that terms occur independently. Limitation: ignores phrases (e.g., "New York" ≠ "New" + "York").</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">SMART lnc</div><div class="fcb">Log TF (1+log tf), No IDF, Cosine normalisation. Standard document weighting in VSM. Applied to document side.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">SMART ltc</div><div class="fcb">Log TF, standard IDF (log N/df), Cosine normalisation. Applied to query side. Discriminates rare query terms.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">RSV</div><div class="fcb">Retrieval Status Value: the score assigned by the system to document d for query q. Documents ranked by RSV descending.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Rocchio Algorithm</div><div class="fcb">q_new = α·q + β/|R|·ΣR − γ/|NR|·ΣNR. Moves query toward relevant, away from non-relevant. Standard relevance feedback.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Pseudo-Relevance Feedback</div><div class="fcb">Assume top-k retrieved documents are relevant, apply Rocchio without user input. Also called blind relevance feedback.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Query Likelihood Model</div><div class="fcb">Rank documents by P(q|d) = Π P(w|d)^f_wq. The probability that document d's language model generated the query q.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Unigram LM (MLE)</div><div class="fcb">P(w|d) = tf_wd / |d|. Maximum likelihood estimate of word probability from document d. Problem: zero for unseen words.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Jelinek-Mercer</div><div class="fcb">P_JM(w|d) = (1−λ)·P(w|d) + λ·P(w|C). Fixed interpolation. λ≈0.1–0.5. Better for verbose queries.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Dirichlet Smoothing</div><div class="fcb">P_Dir(w|d) = (f+μ·P(w|C))/(|d|+μ). Length-adaptive. μ≈1000–2000. Short docs smoothed more. Best for ad-hoc IR.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Collection LM P(w|C)</div><div class="fcb">f_wC / |C|. Background model: probability of word in the whole collection. Used for smoothing to avoid zero probabilities.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Dice Coefficient</div><div class="fcb">2|X∩Y|/(|X|+|Y|). Overlap-based similarity. Symmetric. Range [0,1]. For binary vectors: twice the shared terms over total terms.</div></div></div>
+  </div>
+</section>
+
+</div></main>
+
+<script>
+window.addEventListener('scroll',()=>{
+  const p=document.getElementById('pb');
+  p.style.width=(window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%';
+  document.getElementById('bt').style.display=window.scrollY>400?'block':'none';
+  document.querySelectorAll('nav a').forEach(a=>{
+    const s=document.querySelector(a.getAttribute('href'));
+    if(s){const r=s.getBoundingClientRect();a.classList.toggle('active',r.top<=100&&r.bottom>100);}
+  });
+});
+function toggleTheme(){document.body.dataset.theme=document.body.dataset.theme==='light'?'':'light';}
+function answerMCQ(el,t){const i=el.parentElement;i.querySelectorAll('.opt').forEach(o=>o.classList.remove('c','w'));el.classList.add(t==='correct'?'c':'w');}
+function tfA(btn){const i=btn.closest('.tf-row');i.querySelector('.tf-ans').style.display='block';}
+function rev(btn){const b=btn.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';btn.textContent=b.style.display==='block'?'Hide Answer':'Reveal Answer';}
+function rvb(el){el.classList.add('rv');}
+document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=document.querySelector(a.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}));
+</script>
+
+</body>
+</html>

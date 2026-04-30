@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 09 · Web Search: Overview & Challenges</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  :root { --bg:#0f0f1a;--bg2:#1a1a2e;--bg3:#16213e;--accent:#7c3aed;--accent2:#06b6d4;--accent3:#10b981;--text:#e2e8f0;--text2:#94a3b8;--yellow:#f59e0b;--red:#ef4444;--card:#1e293b; }
+  [data-theme="light"]{--bg:#f8fafc;--bg2:#f1f5f9;--bg3:#e2e8f0;--text:#0f172a;--text2:#475569;--card:#ffffff;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;overflow-x:hidden;}
+  #pb{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;z-index:1000;transition:width .1s;}
+  header{background:linear-gradient(135deg,#0f0f1a 0%,#1a0533 50%,#0a1628 100%);padding:80px 40px 60px;text-align:center;position:relative;overflow:hidden;}
+  header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at center,rgba(124,58,237,.15) 0%,transparent 60%);animation:rotate 20s linear infinite;}
+  @keyframes rotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes slideInLeft{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+  .badge{display:inline-block;background:var(--accent);color:#fff;padding:6px 18px;border-radius:20px;font-size:.85rem;margin-bottom:16px;animation:fadeInUp .6s ease;}
+  h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;margin-bottom:16px;background:linear-gradient(135deg,#fff 0%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:fadeInUp .8s ease;}
+  .subtitle{color:var(--text2);font-size:1.1rem;animation:fadeInUp 1s ease;}
+  .container{max-width:1200px;margin:0 auto;padding:0 24px;}
+  nav{position:fixed;right:20px;top:50%;transform:translateY(-50%);background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:16px;z-index:100;max-width:220px;max-height:80vh;overflow-y:auto;}
+  nav h3{font-size:.75rem;color:var(--accent2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+  nav a{display:block;color:var(--text2);text-decoration:none;font-size:.8rem;padding:4px 8px;border-left:2px solid transparent;transition:all .2s;}
+  nav a:hover,nav a.active{color:var(--accent);border-left-color:var(--accent);}
+  .theme-btn{position:fixed;left:20px;top:20px;background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:8px;padding:8px 16px;color:var(--text);cursor:pointer;z-index:100;font-size:.85rem;}
+  .back-top{position:fixed;bottom:30px;right:30px;background:var(--accent);color:#fff;border:none;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:none;z-index:100;box-shadow:0 4px 15px rgba(124,58,237,.4);}
+  main{padding:60px 0;}
+  section{margin-bottom:60px;animation:fadeIn .6s ease;}
+  .section-title{font-size:1.8rem;font-weight:700;margin-bottom:24px;padding-left:16px;border-left:4px solid var(--accent);color:var(--text);}
+  .card{background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:28px;margin-bottom:20px;transition:transform .2s,box-shadow .2s;}
+  .card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3);}
+  .card h3{color:var(--accent2);margin-bottom:12px;font-size:1.1rem;}
+  .card p,.card li{color:var(--text2);line-height:1.7;}
+  .card ul{padding-left:20px;}.card ul li{margin-bottom:8px;}
+  .hi{color:var(--accent);font-weight:600;}.hi2{color:var(--accent2);font-weight:600;}.hi3{color:var(--accent3);font-weight:600;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+  @media(max-width:768px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}nav{display:none;}}
+  @media(min-width:769px){body{padding-right:260px;}}
+  .def-box{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:20px;margin:20px 0;}
+  .def-box .term{color:var(--accent);font-weight:700;font-size:1.05rem;}
+  .ex-box{background:rgba(16,185,129,.08);border-left:4px solid var(--accent3);border-radius:0 12px 12px 0;padding:20px;margin:20px 0;}
+  .ex-box h4{color:var(--accent3);margin-bottom:10px;}
+  .warn-box{background:rgba(245,158,11,.08);border-left:4px solid var(--yellow);border-radius:0 12px 12px 0;padding:20px;margin:20px 0;}
+  .warn-box h4{color:var(--yellow);margin-bottom:10px;}
+  .svg-cont{background:var(--bg2);border-radius:16px;padding:30px;margin:30px 0;text-align:center;}
+  .svg-cont h4{color:var(--accent2);margin-bottom:20px;}
+  .eq-block{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.4);border-radius:12px;padding:24px;margin:24px 0;text-align:center;}
+  .eq-block .eq-title{color:var(--accent);font-weight:700;margin-bottom:12px;font-size:1rem;}
+  .practice-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.4);border-radius:12px;padding:20px;margin:12px 0;}
+  .practice-box h5{color:var(--yellow);margin-bottom:10px;}
+  .solved-box{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.4);border-radius:12px;padding:20px;margin:12px 0;}
+  .solved-box h5{color:var(--accent3);margin-bottom:10px;}
+  .q-section{background:var(--bg2);border-radius:20px;padding:40px;margin-top:40px;}
+  .q-type{font-size:1.4rem;font-weight:700;color:var(--accent);margin:30px 0 16px;padding-bottom:8px;border-bottom:2px solid rgba(124,58,237,.3);}
+  .mcq{background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .mcq .qtext{font-weight:600;color:var(--text);margin-bottom:12px;}
+  .opt{padding:8px 14px;border-radius:8px;cursor:pointer;color:var(--text2);border:1px solid rgba(255,255,255,.07);margin:4px 0;transition:all .2s;}
+  .opt:hover{background:rgba(124,58,237,.15);border-color:var(--accent);}
+  .opt.c{background:rgba(16,185,129,.2);border-color:var(--accent3);color:var(--accent3);}
+  .opt.w{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red);}
+  .tf-row{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .tf-q{flex:1;color:var(--text2);}
+  .tb{padding:6px 16px;border-radius:6px;border:none;cursor:pointer;font-size:.85rem;transition:all .2s;}
+  .tb.tt{background:rgba(16,185,129,.2);color:var(--accent3);}
+  .tb.tf{background:rgba(239,68,68,.15);color:var(--red);}
+  .tf-ans{display:none;font-size:.85rem;padding:6px 10px;border-radius:6px;margin-top:8px;}
+  .tf-ans.ca{background:rgba(16,185,129,.15);color:var(--accent3);}
+  .tf-ans.wa{background:rgba(239,68,68,.1);color:var(--red);}
+  .sa{background:var(--card);border-radius:12px;padding:20px;margin-bottom:12px;}
+  .sa .qt{color:var(--text2);margin-bottom:12px;font-weight:600;}
+  .rbtn{background:var(--accent);color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .2s;}
+  .rbtn:hover{background:#6d28d9;}
+  .ans{display:none;margin-top:12px;background:rgba(16,185,129,.08);border-left:3px solid var(--accent3);padding:14px;border-radius:0 8px 8px 0;color:var(--text2);line-height:1.6;}
+  .fitb{background:var(--card);border-radius:10px;padding:16px 20px;margin-bottom:10px;color:var(--text2);}
+  .blank{display:inline-block;min-width:100px;border-bottom:2px solid var(--accent);margin:0 6px;text-align:center;color:transparent;cursor:pointer;transition:all .3s;padding:0 4px;}
+  .blank.rv{color:var(--accent);}
+  .fc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;margin-top:20px;}
+  .fc{perspective:1000px;height:150px;cursor:pointer;}
+  .fci{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d;}
+  .fc:hover .fci,.fc.flipped .fci{transform:rotateY(180deg);}
+  .fcf,.fcb{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;}
+  .fcf{background:linear-gradient(135deg,var(--accent),#5b21b6);color:#fff;font-weight:600;}
+  .fcb{background:var(--card);border:1px solid rgba(6,182,212,.3);color:var(--text2);font-size:.9rem;transform:rotateY(180deg);}
+  .exam-q{background:var(--bg3);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .tag{display:inline-block;background:var(--yellow);color:#000;font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:4px;margin-right:8px;}
+  .marks{display:inline-block;background:rgba(245,158,11,.2);color:var(--yellow);font-size:.75rem;padding:2px 8px;border-radius:4px;}
+  .obj-list{list-style:none;}.obj-list li{padding:10px 16px;margin-bottom:8px;background:var(--card);border-radius:8px;color:var(--text2);display:flex;align-items:flex-start;gap:10px;animation:slideInLeft .5s ease;}
+  .obj-list li::before{content:"✓";color:var(--accent3);font-weight:700;margin-top:1px;}
+  .sum-card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border-radius:16px;padding:24px;border-left:4px solid var(--accent);margin-bottom:16px;}
+  .sum-card h4{color:var(--accent2);margin-bottom:10px;}
+  .stat-box{background:linear-gradient(135deg,rgba(6,182,212,.1),rgba(16,185,129,.05));border:1px solid rgba(6,182,212,.3);border-radius:12px;padding:20px;text-align:center;}
+  .stat-num{font-size:2rem;font-weight:800;color:var(--accent2);}
+  .stat-lbl{color:var(--text2);font-size:.85rem;margin-top:4px;}
+  table{width:100%;border-collapse:collapse;margin:16px 0;}
+  th{background:rgba(124,58,237,.2);color:var(--accent);padding:10px 14px;text-align:left;font-size:.9rem;}
+  td{padding:10px 14px;color:var(--text2);border-bottom:1px solid rgba(255,255,255,.05);font-size:.9rem;}
+  tr:hover td{background:rgba(255,255,255,.03);}
+  code{background:rgba(124,58,237,.15);color:var(--accent2);padding:2px 6px;border-radius:4px;font-family:monospace;}
+  pre{background:#0d1117;border-radius:12px;padding:24px;overflow-x:auto;margin:20px 0;border:1px solid rgba(255,255,255,.05);}
+  pre code{background:none;padding:0;color:#c9d1d9;}
+  .kw{color:#ff7b72;}.fn{color:#d2a8ff;}.str{color:#a5d6ff;}.cm{color:#8b949e;}.num{color:#79c0ff;}
+</style>
+</head>
+<body>
+<div id="pb"></div>
+<button class="theme-btn" onclick="toggleTheme()">🌓 Theme</button>
+<button class="back-top" id="bt" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<nav><h3>Contents</h3>
+<a href="#objectives">Objectives</a>
+<a href="#query-taxonomy">Query Taxonomy</a>
+<a href="#web-costs">Web Costs &amp; Actors</a>
+<a href="#web-dynamics">Web Dynamics</a>
+<a href="#ranking-framework">Ranking Framework</a>
+<a href="#pagerank">PageRank</a>
+<a href="#link-analysis">Link Analysis</a>
+<a href="#qi-qd-features">QI &amp; QD Features</a>
+<a href="#hits">HITS Algorithm</a>
+<a href="#ltr-training">LTR Training Data</a>
+<a href="#summary">Summary</a>
+<a href="#questions">Questions</a>
+</nav>
+
+<header>
+  <div class="badge">Lecture 09 · Web Search</div>
+  <h1>Web Search: Overview &amp; Challenges</h1>
+  <p class="subtitle">IR H/M Course · Sean MacAvaney · 2026</p>
+</header>
+
+<main><div class="container">
+
+<!-- ═══════════════════════════════════════════════════════ OBJECTIVES -->
+<section id="objectives">
+  <h2 class="section-title">Learning Objectives</h2>
+  <ul class="obj-list">
+    <li>Describe the Broder (2002) taxonomy of web queries: navigational, informational, transactional</li>
+    <li>Explain query log statistics: repeat queries, re-finding behaviour, query length growth</li>
+    <li>Describe the three actor perspectives in web search (User, Search Engine, Advertiser)</li>
+    <li>Explain the four web dynamics types (Size, Content, Query, Usage) with statistics</li>
+    <li>Apply the p(r|d,x) ranking framework and classify features as QI, QD, or Query</li>
+    <li>Compute PageRank using matrix formulation, understand convergence and teleportation</li>
+    <li>Describe PageRank problems and how the Google Matrix solves them</li>
+    <li>Compute HITS hub and authority scores; apply the formal iterative algorithm</li>
+    <li>Understand training data construction for Learning-to-Rank (pooling, editors, graded)</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ QUERY TAXONOMY -->
+<section id="query-taxonomy">
+  <h2 class="section-title">Query Taxonomy &amp; Web Characteristics</h2>
+
+  <div class="def-box">
+    <span class="term">Broder (2002) Query Taxonomy</span>
+    <p style="color:var(--text2);margin-top:8px;">The canonical classification of web queries into three types based on user <em>intent</em>, not content.</p>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <h3>🧭 Navigational (~20%)</h3>
+      <p>Reach a specific website. User already has a target in mind. E.g. "facebook login", "university of glasgow". The correct answer is a single page. Measured by MRR.</p>
+    </div>
+    <div class="card">
+      <h3>📖 Informational (~48%)</h3>
+      <p>Acquire information available on the web. E.g. "how do vaccines work", "history of glasgow". Reading is the primary action. Multiple relevant pages exist.</p>
+    </div>
+    <div class="card">
+      <h3>🛒 Transactional (~30%)</h3>
+      <p>Reach a site for further interaction. E.g. "buy iPhone", "download python". A goal exists beyond just reading — purchase, download, sign up, etc.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Query Log Statistics</h3>
+    <div class="grid-4" style="margin-top:16px;">
+      <div class="stat-box">
+        <div class="stat-num">33%</div>
+        <div class="stat-lbl">Queries are repeats of earlier queries (query dynamics)</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">40%</div>
+        <div class="stat-lbl">Queries are "re-finding" — user seeking same page again (Teevan et al. 2007)</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">2.4→3.08</div>
+        <div class="stat-lbl">Average query length growth (words per query) — users formulate longer queries over time</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">~48%</div>
+        <div class="stat-lbl">Queries are informational — most common type by volume</div>
+      </div>
+    </div>
+    <p style="color:var(--text2);margin-top:16px;font-size:.9rem;">Source: Teevan et al. (2005) showed re-finding is common; later work (2007) quantified at 40%. Query length growth reflects users becoming more sophisticated searchers.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ WEB COSTS & ACTORS -->
+<section id="web-costs">
+  <h2 class="section-title">Web Search Costs &amp; Actor Perspectives</h2>
+
+  <div class="grid-3">
+    <div class="stat-box card" style="border:1px solid rgba(6,182,212,.3);">
+      <div class="stat-num">1 KJ</div>
+      <div class="stat-lbl">Energy per web search query (~0.3 Wh)</div>
+    </div>
+    <div class="stat-box card" style="border:1px solid rgba(6,182,212,.3);">
+      <div class="stat-num">1.1–1.5%</div>
+      <div class="stat-lbl">Global electricity consumption attributable to web search</div>
+    </div>
+    <div class="stat-box card" style="border:1px solid rgba(6,182,212,.3);">
+      <div class="stat-num">30T+</div>
+      <div class="stat-lbl">Web pages indexed by Google (2013 estimate)</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:20px;">
+    <h3>Three Actor Perspectives</h3>
+    <p style="color:var(--text2);margin-bottom:16px;">Web search involves three stakeholders with different — and sometimes conflicting — objectives:</p>
+    <div class="grid-3">
+      <div class="def-box">
+        <span class="term">User</span>
+        <p style="color:var(--text2);margin-top:8px;">Wants <em>relevant</em> results for their information need. Measures success by satisfaction — finding what they were looking for quickly. Cares about precision, recall, and speed.</p>
+      </div>
+      <div class="def-box">
+        <span class="term">Search Engine</span>
+        <p style="color:var(--text2);margin-top:8px;">Wants to provide <em>quality</em> results to retain users, while also generating <em>profit</em> through advertising. Balances organic (relevance-based) results with paid placements.</p>
+      </div>
+      <div class="def-box">
+        <span class="term">Advertiser</span>
+        <p style="color:var(--text2);margin-top:8px;">Wants <em>conversions</em> — clicks that lead to purchases, sign-ups, or other actions. Bids for ad placements on high-intent queries (transactional queries most valuable).</p>
+      </div>
+    </div>
+    <div class="warn-box" style="margin-top:16px;">
+      <h4>⚠️ Tension Between Actors</h4>
+      <p style="color:var(--text2);">Advertisers want maximum visibility for their pages regardless of true relevance; users want purely relevant results; search engines must balance both to stay profitable <em>and</em> useful. This creates incentives for spam, SEO manipulation, and link farm creation.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ WEB DYNAMICS -->
+<section id="web-dynamics">
+  <h2 class="section-title">Web Dynamics</h2>
+
+  <div class="def-box">
+    <span class="term">Four Types of Web Dynamics</span>
+    <p style="color:var(--text2);margin-top:8px;">The web is not static — it changes continuously along four dimensions that each pose different challenges for search engines.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>📐 Size Dynamics</h3>
+      <p>The total number of indexed pages grows continuously. Google estimated 30 trillion+ pages in 2013. New sites created, old ones deleted. A search engine's index is always a <em>snapshot</em> of the web, not the full current web.</p>
+      <div class="ex-box" style="margin-top:12px;"><h4>Implication</h4><p>Crawlers must continuously discover new pages. Index growth strains storage and processing infrastructure.</p></div>
+    </div>
+    <div class="card">
+      <h3>📝 Content Dynamics</h3>
+      <p>Pages change their content over time. Key finding from <span class="hi">Adar et al. (2009)</span>:</p>
+      <ul style="margin-top:8px;">
+        <li><span class="hi2">34% of pages never change</span> (static content)</li>
+        <li>Average page changes every <span class="hi3">~123 hours</span></li>
+        <li>Popular/news pages change much more frequently</li>
+      </ul>
+      <div class="ex-box" style="margin-top:12px;"><h4>Implication</h4><p>Crawl scheduling must prioritise frequently-changing pages. Stale index = wrong results for dynamic content.</p></div>
+    </div>
+    <div class="card">
+      <h3>🔍 Query Dynamics</h3>
+      <p>User query patterns change over time. What people search for shifts with current events, seasons, and culture:</p>
+      <ul style="margin-top:8px;">
+        <li>Query popularity fluctuates (trending topics)</li>
+        <li><span class="hi2">33%</span> of queries are repeats of previous queries</li>
+        <li>Average query length grew from <span class="hi">2.4 → 3.08 words</span></li>
+        <li>Seasonal patterns (e.g., "flu symptoms" spikes in winter)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>📍 Location/Usage Dynamics</h3>
+      <p>The same query from different locations or users means different things. <em>Local intent</em> is a key challenge:</p>
+      <ul style="margin-top:8px;">
+        <li>"pizza" in Glasgow vs. New York → different results needed</li>
+        <li>Device type (mobile vs. desktop) affects results</li>
+        <li>Time of day changes query intent</li>
+        <li><span class="hi2">40% of queries</span> are re-finding queries (same user, same page)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Temporal Dynamics in Detail</h3>
+    <p style="color:var(--text2);">Temporal dynamics cut across all four types. A query's intent can shift over time (e.g., "super bowl" means different things before vs. during vs. after the event). Result freshness (index recency) is a ranking signal — newer pages may be more relevant for time-sensitive queries even if they have fewer inlinks.</p>
+    <div class="warn-box" style="margin-top:12px;">
+      <h4>⚠️ Freshness vs. Authority Trade-off</h4>
+      <p style="color:var(--text2);">A new Wikipedia article about a breaking event may be more relevant than an old authoritative page. Search engines blend freshness signals (publication date, crawl date, content change rate) with authority signals (PageRank, inlinks).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ RANKING FRAMEWORK -->
+<section id="ranking-framework">
+  <h2 class="section-title">Ranking Framework for Web Search</h2>
+
+  <div class="eq-block">
+    <div class="eq-title">Probabilistic Ranking Framework: p(r | d, x)</div>
+    <div>\[ \text{score}(d, q) = P(\text{relevant} \mid d, x) \]</div>
+    <p style="color:var(--text2);margin-top:12px;">Where <strong>x</strong> = context = (query q, user features, session, device, location, time). This generalises classic IR: instead of estimating relevance purely from document-query term matching, we estimate the probability of relevance given all available context.</p>
+  </div>
+
+  <div class="card">
+    <h3>Feature Taxonomy for Web Ranking</h3>
+    <p style="color:var(--text2);margin-bottom:16px;">Web ranking features are classified into three groups based on what they depend on:</p>
+    <div class="grid-3">
+      <div class="def-box">
+        <span class="term">Query-Independent (QI) Features</span>
+        <p style="color:var(--text2);margin-top:8px;">Computed from document alone — no query needed. Pre-computable and stored in index. Examples: PageRank, spam score, page quality, load time, social signals. <em>Same value for all queries.</em></p>
+      </div>
+      <div class="def-box">
+        <span class="term">Query-Dependent (QD) Features</span>
+        <p style="color:var(--text2);margin-top:8px;">Computed from both document AND query. Examples: BM25, TF-IDF, query term coverage, anchor text match, semantic similarity. <em>Different value per (query, document) pair.</em></p>
+      </div>
+      <div class="def-box">
+        <span class="term">Query Features</span>
+        <p style="color:var(--text2);margin-top:8px;">Computed from query alone — no document needed. Examples: query length, query type (nav/info/trans), query frequency in logs, query clarity. <em>Same for all documents returned for that query.</em></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Hyperlink Intuitions</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">Hyperlinks are more than navigation — they encode two types of information:</p>
+    <div class="grid-2">
+      <div class="ex-box">
+        <h4>Quality Signal</h4>
+        <p>A link from page A to page B is an endorsement — A's author chose to point to B. Many inlinks = many endorsements = likely high-quality page. This is the basis of PageRank ("wisdom of crowd" signal).</p>
+      </div>
+      <div class="ex-box">
+        <h4>Content Enhancement (Anchor Text)</h4>
+        <p>The text of a hyperlink describes the linked page from an <em>outsider's perspective</em>. Anchor text "click here for cheap flights" tells us about the destination page — often better than the page itself.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ PAGERANK -->
+<section id="pagerank">
+  <h2 class="section-title">PageRank</h2>
+
+  <div class="eq-block">
+    <div class="eq-title">PageRank Formula (Random Surfer Model)</div>
+    <div>\[ PR(d) = \frac{1-\alpha}{N} + \alpha \sum_{d' \in \text{inlinks}(d)} \frac{PR(d')}{|\text{outlinks}(d')|} \]</div>
+    <p style="color:var(--text2);margin-top:12px;">α = damping factor (typically 0.85), N = total pages. Intuition: a random surfer follows links with probability α, teleports to a random page with probability 1−α. PageRank = long-run fraction of time spent at each page.</p>
+  </div>
+
+  <div class="card">
+    <h3>Matrix Formulation</h3>
+    <p style="color:var(--text2);margin-bottom:16px;">PageRank can be formulated as a matrix power iteration problem:</p>
+    <div class="eq-block" style="text-align:left;">
+      <div class="eq-title">Step 1: Adjacency Matrix A</div>
+      <p style="color:var(--text2);">A[i][j] = 1 if page i links to page j, else 0.</p>
+      <div class="eq-title" style="margin-top:16px;">Step 2: Transition Matrix T</div>
+      <p style="color:var(--text2);">Normalise rows of A by out-degree: T[i][j] = A[i][j] / outdegree(i). Row i sums to 1. T describes probabilities of moving from page i to any linked page.</p>
+      <div class="eq-title" style="margin-top:16px;">Step 3: PageRank Vector M = T<sup>T</sup></div>
+      <div>\[ \mathbf{r} = M \cdot \mathbf{r} \]</div>
+      <p style="color:var(--text2);">PageRank vector r is the left eigenvector of M with eigenvalue 1. Computed by power iteration: r ← M·r, normalise, repeat until convergence.</p>
+    </div>
+
+    <div class="practice-box">
+      <h5>🔶 Matrix Example: 3-page web</h5>
+      <p style="color:var(--text2);">Pages: 1, 2, 3. Links: 1→2, 1→3, 2→3, 3→1.<br><br>
+      Adjacency A:<br>
+      &nbsp;&nbsp;[0, 1, 1]<br>
+      &nbsp;&nbsp;[0, 0, 1]<br>
+      &nbsp;&nbsp;[1, 0, 0]<br><br>
+      Transition T (normalise each row):<br>
+      &nbsp;&nbsp;Row 1: outdegree=2 → [0, 0.5, 0.5]<br>
+      &nbsp;&nbsp;Row 2: outdegree=1 → [0, 0, 1]<br>
+      &nbsp;&nbsp;Row 3: outdegree=1 → [1, 0, 0]<br><br>
+      M = T<sup>T</sup>:<br>
+      &nbsp;&nbsp;[0, 0, 1]<br>
+      &nbsp;&nbsp;[0.5, 0, 0]<br>
+      &nbsp;&nbsp;[0.5, 1, 0]</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>PageRank Convergence</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">Starting from uniform distribution, PageRank converges iteratively. Example convergence values for a 5-page graph (k = iteration number):</p>
+    <table>
+      <tr><th>Iteration k</th><th>PR(page 1)</th><th>PR(page 2)</th><th>PR(page 3)</th><th>PR(page 4)</th><th>PR(page 5)</th></tr>
+      <tr><td>k=0 (uniform)</td><td>0.200</td><td>0.200</td><td>0.200</td><td>0.200</td><td>0.200</td></tr>
+      <tr><td>k=1</td><td>0.387</td><td>0.290</td><td>0.129</td><td>0.129</td><td>0.065</td></tr>
+      <tr><td>k=4</td><td>0.387</td><td>0.194</td><td>0.129</td><td>0.194</td><td>0.097</td></tr>
+      <tr><td>k=∞ (converged)</td><td>0.387</td><td>0.194</td><td>0.129</td><td>0.194</td><td>0.097</td></tr>
+    </table>
+    <p style="color:var(--text2);font-size:.9rem;margin-top:8px;">Convergence is typically fast (20–100 iterations for most graphs). The stationary distribution exists when the graph is strongly connected and aperiodic.</p>
+  </div>
+
+  <div class="card">
+    <h3>PageRank Problems</h3>
+    <div class="grid-3">
+      <div class="warn-box">
+        <h4>⚠️ Disconnected Graphs</h4>
+        <p style="color:var(--text2);">If the web graph has disconnected components, the random surfer can get "stuck" in one component and never visit others. The stationary distribution depends on the starting component.</p>
+      </div>
+      <div class="warn-box">
+        <h4>⚠️ Dangling Nodes</h4>
+        <p style="color:var(--text2);">Pages with no outlinks (PDF files, dead-end pages). The random surfer gets stuck here with no link to follow. Transition matrix row for dangling nodes sums to 0 — violates stochastic property.</p>
+      </div>
+      <div class="warn-box">
+        <h4>⚠️ Rank Sinks</h4>
+        <p style="color:var(--text2);">A group of pages that link only among themselves but receive links from outside. They "absorb" PageRank from the rest of the web without redistributing it back — ranks accumulate without bound (relative to others).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Teleportation: The Google Matrix</h3>
+    <p style="color:var(--text2);margin-bottom:16px;">All three problems above are solved by adding <em>teleportation</em> — a small probability of jumping to a completely random page:</p>
+    <div class="eq-block">
+      <div class="eq-title">Google Matrix G</div>
+      <div>\[ G = (1 - \lambda) M + \lambda S \]</div>
+      <p style="color:var(--text2);margin-top:12px;">Where:<br>
+      • M = PageRank transition matrix (with dangling node handling)<br>
+      • S = teleportation matrix (uniform: S[i][j] = 1/N for all i,j)<br>
+      • λ = teleportation probability (Google uses λ = 0.15, so α = 0.85)</p>
+    </div>
+    <div class="ex-box">
+      <h4>Why This Fixes All Problems</h4>
+      <ul>
+        <li><strong>Disconnected graphs:</strong> Teleportation connects all components — surfer can jump to any page</li>
+        <li><strong>Dangling nodes:</strong> Replace dangling node row with uniform 1/N — surfer teleports from dead ends</li>
+        <li><strong>Rank sinks:</strong> Teleportation drains PageRank from sinks — some always "leaks" out</li>
+      </ul>
+    </div>
+
+    <div class="practice-box">
+      <h5>🔶 Teleportation Worked Example (λ=0.15, N=5)</h5>
+      <p style="color:var(--text2);">5-page graph. After convergence with teleportation, PageRank vector:<br><br>
+      [page1, page2, page3, page4, page5] = [0.200, 0.200, 0.285, 0.285, 0.030]<br><br>
+      Note: pages 3 and 4 have highest PR (linked-to by high-degree pages), page 5 has very low PR (few/no inlinks). The teleportation floor prevents any page from having PR=0.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Python: PageRank (Power Iteration)</h3>
+    <pre><code><span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="fn">def</span> <span class="fn">pagerank</span>(adjacency, alpha=<span class="num">0.85</span>, max_iter=<span class="num">100</span>, tol=<span class="num">1e-6</span>):
+    N = <span class="fn">len</span>(adjacency)
+    pr = np.ones(N) / N  <span class="cm"># initialise uniform</span>
+
+    <span class="cm"># Build transition matrix (handle dangling nodes)</span>
+    out_degree = adjacency.sum(axis=<span class="num">1</span>)
+    dangling = (out_degree == <span class="num">0</span>)
+    out_degree[dangling] = <span class="num">1</span>  <span class="cm"># avoid div-by-zero</span>
+    transition = (adjacency.T / out_degree).T
+    transition[dangling] = <span class="num">1.0</span> / N  <span class="cm"># dangling → uniform teleport</span>
+
+    S = np.ones((N, N)) / N  <span class="cm"># teleportation matrix</span>
+    G = (<span class="num">1</span> - alpha) * S + alpha * transition  <span class="cm"># Google Matrix</span>
+
+    <span class="kw">for</span> _ <span class="kw">in</span> <span class="fn">range</span>(max_iter):
+        new_pr = G.T @ pr
+        <span class="kw">if</span> np.linalg.norm(new_pr - pr) < tol:
+            <span class="kw">break</span>
+        pr = new_pr
+    <span class="kw">return</span> pr
+
+<span class="cm"># Example: A=0, B=1, C=2. A→B, A→C, B→A, C→A</span>
+adj = np.array([[<span class="num">0</span>,<span class="num">1</span>,<span class="num">1</span>],[<span class="num">1</span>,<span class="num">0</span>,<span class="num">0</span>],[<span class="num">1</span>,<span class="num">0</span>,<span class="num">0</span>]], dtype=float)
+scores = pagerank(adj)
+<span class="fn">print</span>(<span class="str">f"PR(A)={scores[0]:.3f}, PR(B)={scores[1]:.3f}, PR(C)={scores[2]:.3f}"</span>)</code></pre>
+  </div>
+
+  <div class="svg-cont">
+    <h4>PageRank: Random Surfer with Teleportation</h4>
+    <svg width="560" height="300" viewBox="0 0 560 300" style="max-width:100%;">
+      <defs>
+        <marker id="pra" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#7c3aed"/></marker>
+        <marker id="pra2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#10b981"/></marker>
+        <marker id="teleport" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#f59e0b"/></marker>
+      </defs>
+      <circle cx="280" cy="60" r="40" fill="rgba(245,158,11,.15)" stroke="#f59e0b" stroke-width="2"/>
+      <text x="280" y="55" text-anchor="middle" fill="#f59e0b" font-weight="700" font-size="16">A</text>
+      <text x="280" y="72" text-anchor="middle" fill="#94a3b8" font-size="10">High PR</text>
+      <circle cx="100" cy="210" r="40" fill="rgba(124,58,237,.15)" stroke="#7c3aed" stroke-width="2"/>
+      <text x="100" y="205" text-anchor="middle" fill="#7c3aed" font-weight="700" font-size="16">B</text>
+      <text x="100" y="222" text-anchor="middle" fill="#94a3b8" font-size="10">Med PR</text>
+      <circle cx="460" cy="210" r="40" fill="rgba(6,182,212,.15)" stroke="#06b6d4" stroke-width="2"/>
+      <text x="460" y="205" text-anchor="middle" fill="#06b6d4" font-weight="700" font-size="16">C</text>
+      <text x="460" y="222" text-anchor="middle" fill="#94a3b8" font-size="10">Med PR</text>
+      <line x1="245" y1="88" x2="130" y2="182" stroke="#f59e0b" stroke-width="2" marker-end="url(#pra)"/>
+      <line x1="315" y1="88" x2="430" y2="182" stroke="#f59e0b" stroke-width="2" marker-end="url(#pra)"/>
+      <line x1="125" y1="178" x2="250" y2="88" stroke="#7c3aed" stroke-width="2" marker-end="url(#pra2)"/>
+      <line x1="435" y1="178" x2="310" y2="88" stroke="#06b6d4" stroke-width="2" marker-end="url(#pra2)"/>
+      <text x="185" y="260" fill="#f59e0b" font-size="11" text-anchor="middle">Teleport (15%): Jump to any page uniformly</text>
+      <line x1="155" y1="268" x2="280" y2="100" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#teleport)"/>
+      <text x="280" y="290" text-anchor="middle" fill="#94a3b8" font-size="10">A receives PageRank from B and C → high authority; teleportation prevents rank sinks</text>
+    </svg>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ LINK ANALYSIS -->
+<section id="link-analysis">
+  <h2 class="section-title">Link Analysis &amp; Web Signals</h2>
+
+  <div class="card">
+    <h3>Wisdom of the Crowd — In-degree as Relevance</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">The simplest link feature is <em>in-degree</em> — the number of pages that link to a document. The intuition:</p>
+    <ul style="color:var(--text2);padding-left:20px;">
+      <li>Each hyperlink is an editorial choice by a human author</li>
+      <li>More inlinks = more authors chose to point to this page</li>
+      <li>"Wisdom of the crowd" — many independent endorsements signal quality</li>
+      <li>In-degree is query-independent (same for all queries)</li>
+    </ul>
+    <div class="warn-box" style="margin-top:12px;">
+      <h4>⚠️ Problem: Link Spam</h4>
+      <p style="color:var(--text2);">Link spammers create many low-quality pages linking to a target to inflate its in-degree. PageRank is more robust than raw in-degree because it weights links by the PageRank of the linking page — links from authoritative pages count more.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Najork et al. (2007): How Much Does PageRank Matter?</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">An empirical study that measured the contribution of different feature types to ranking quality (NDCG):</p>
+    <div class="grid-2">
+      <div class="stat-box" style="padding:20px;">
+        <div class="stat-num" style="color:var(--accent3);">NDCG 0.221</div>
+        <div class="stat-lbl">BM25F score alone (content matching)</div>
+      </div>
+      <div class="stat-box" style="padding:20px;">
+        <div class="stat-num" style="color:var(--red);">NDCG 0.092</div>
+        <div class="stat-lbl">PageRank alone (link features)</div>
+      </div>
+    </div>
+    <div class="warn-box" style="margin-top:16px;">
+      <h4>⚠️ Key Finding: Link Features Are Surprisingly Weak</h4>
+      <p style="color:var(--text2);">PageRank contributes significantly less to retrieval quality than content matching (BM25F). This challenges the popular assumption that PageRank is the dominant ranking signal. The study suggests link features are useful primarily as a <em>quality filter</em> to remove spam and low-quality pages, not as the primary relevance signal.</p>
+    </div>
+    <div class="ex-box" style="margin-top:12px;">
+      <h4>Interpretation</h4>
+      <p>Content still dominates relevance. PageRank is best understood as a <em>prior</em> on document quality — useful for filtering, less useful for query-specific ranking. Modern systems combine both with hundreds of features via Learning-to-Rank.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ QI & QD FEATURES -->
+<section id="qi-qd-features">
+  <h2 class="section-title">Query-Independent &amp; Query-Dependent Features</h2>
+
+  <div class="card">
+    <h3>Full List of Query-Independent (QI) Features</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">These are pre-computed and stored — no query required at retrieval time:</p>
+    <table>
+      <tr><th>Feature</th><th>Description</th><th>Signal Type</th></tr>
+      <tr><td><span class="hi">PageRank / In-degree</span></td><td>Link-based authority. High PR = many endorsements from other authoritative pages.</td><td>Link</td></tr>
+      <tr><td><span class="hi2">Spam Score</span></td><td>Classifier predicting whether the page is spam (link farm, keyword stuffing, etc.).</td><td>Quality</td></tr>
+      <tr><td><span class="hi3">Quality Score (QualT5)</span></td><td>ML model predicting overall page quality — grammar, readability, information density.</td><td>Quality</td></tr>
+      <tr><td>Click-Through Rate (CTR)</td><td>Historical fraction of times this page was clicked when shown in results. Query-independent version: avg CTR across all queries.</td><td>User Behaviour</td></tr>
+      <tr><td>Dwell Time</td><td>Average time users spend on the page after clicking — a post-click quality signal.</td><td>User Behaviour</td></tr>
+      <tr><td>Page Load Time</td><td>Faster pages preferred. Google uses Core Web Vitals as ranking signals.</td><td>Technical</td></tr>
+      <tr><td>Social Signals</td><td>Shares, likes, mentions on social media — social endorsement of quality.</td><td>Social</td></tr>
+      <tr><td>Neural Quality Score</td><td>BERT/T5-based models predicting page quality without a query.</td><td>Neural/ML</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Query-Dependent (QD) Features</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">Computed at retrieval time using both query and document:</p>
+    <table>
+      <tr><th>Feature</th><th>Description</th></tr>
+      <tr><td><span class="hi">BM25 / TF-IDF</span></td><td>Classical term-matching relevance score. Core QD feature.</td></tr>
+      <tr><td><span class="hi2">BM25F</span></td><td>BM25 extended to field-weighted matching (title, body, URL, anchor text weighted differently).</td></tr>
+      <tr><td><span class="hi3">Anchor Text Match</span></td><td>How well the query matches the anchor text used in hyperlinks pointing to this page.</td></tr>
+      <tr><td>Query Term Coverage</td><td>Fraction of query terms found in the document (or specific fields).</td></tr>
+      <tr><td>Semantic Similarity</td><td>Dense retrieval score — cosine similarity between query and document embeddings (e.g., DPR).</td></tr>
+      <tr><td>Click Probability (CTR<sub>q</sub>)</td><td>Historical click rate for THIS document given THIS query specifically.</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>Anchor Text: Power and Problems</h3>
+    <div class="grid-2">
+      <div class="ex-box">
+        <h4>Why Anchor Text Is Valuable</h4>
+        <ul>
+          <li>Describes the linked page from an <em>outsider's perspective</em></li>
+          <li>Compensates for missing content (a PDF might have no descriptive text)</li>
+          <li>Aggregates descriptions from thousands of authors linking to a page</li>
+          <li>Anchor text for a page forms a "virtual document" of descriptors</li>
+        </ul>
+      </div>
+      <div class="warn-box">
+        <h4>⚠️ Anchor Text Manipulation: "Evil Empire"</h4>
+        <p style="color:var(--text2);">Classic example: Google bombing — coordinated link campaigns where many pages link to a target with specific anchor text. The "miserable failure" Google bomb linked George W. Bush's biography. Another: "evil empire" was bomb-linked to Microsoft. This led Google to discount anchor text from clearly orchestrated campaigns.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ HITS -->
+<section id="hits">
+  <h2 class="section-title">HITS Algorithm</h2>
+
+  <div class="def-box">
+    <span class="term">HITS — Hyperlink-Induced Topic Search (Kleinberg, 1999)</span>
+    <p style="color:var(--text2);margin-top:8px;">Unlike PageRank (query-independent, offline), HITS is <em>query-dependent</em> — it builds a subgraph around the query results and computes two scores per page: <strong>hub</strong> and <strong>authority</strong>.</p>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">HITS Update Rules</div>
+    <div>\[ \text{auth}(d) = \sum_{d' \rightarrow d} \text{hub}(d') \qquad \text{hub}(d) = \sum_{d \rightarrow d''} \text{auth}(d'') \]</div>
+    <p style="color:var(--text2);margin-top:12px;">After each iteration: normalise both vectors (divide by L2 norm). Repeat until convergence.</p>
+  </div>
+
+  <div class="card">
+    <h3>Formal HITS Algorithm (3-Step Process)</h3>
+    <div class="ex-box">
+      <h4>Step 1: Build Query Subgraph</h4>
+      <p>Issue query → retrieve top-k documents (root set). Expand to "base set" by adding all pages that link <em>to</em> or are linked <em>from</em> any root set page. Typically base set = hundreds of pages.</p>
+    </div>
+    <div class="ex-box">
+      <h4>Step 2: Iterative Scoring</h4>
+      <p>Initialise: hub(d) = auth(d) = 1 for all pages in base set.<br>
+      Repeat until convergence:<br>
+      &nbsp;&nbsp;1. auth update: auth(d) = Σ hub(d') for all d' → d<br>
+      &nbsp;&nbsp;2. Normalise auth: auth(d) = auth(d) / ||auth||₂<br>
+      &nbsp;&nbsp;3. hub update: hub(d) = Σ auth(d'') for all d → d''<br>
+      &nbsp;&nbsp;4. Normalise hub: hub(d) = hub(d) / ||hub||₂</p>
+    </div>
+    <div class="ex-box">
+      <h4>Step 3: Rank by Authority</h4>
+      <p>Return documents ranked by authority score. Hub scores are secondary but useful for finding "directories" or "topic overview" pages.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>HITS Comparative 6-Node Example</h3>
+    <p style="color:var(--text2);margin-bottom:12px;">Consider a 6-node graph: A→C, A→D, B→C, B→D, B→E, C→F, D→F.</p>
+    <div class="solved-box">
+      <h5>✅ Analysis</h5>
+      <p style="color:var(--text2);">After convergence:<br>
+      <strong>High Authority pages:</strong> F (receives links from C and D), C and D (receive from A and B)<br>
+      <strong>High Hub pages:</strong> A and B (link to multiple authorities C, D, E)<br><br>
+      A and B never have high authority (nothing links to them)<br>
+      F never has high hub score (links to nothing)<br>
+      C and D have moderate hub and authority (both linked-to and link-out)</p>
+    </div>
+    <div class="warn-box" style="margin-top:12px;">
+      <h4>⚠️ HITS "Topic Drift" Problem</h4>
+      <p style="color:var(--text2);">The base set expansion can introduce pages on unrelated topics. If many pages about topic X link to pages about topic Y, Y may get high authority for topic X queries. HITS authority can drift away from the original query topic.</p>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>PageRank vs HITS</h3>
+      <table>
+        <tr><th>Property</th><th>PageRank</th><th>HITS</th></tr>
+        <tr><td>Query-dependent?</td><td>No (offline)</td><td>Yes (per query)</td></tr>
+        <tr><td>Scores per page</td><td>1 (PR)</td><td>2 (hub + auth)</td></tr>
+        <tr><td>Graph scope</td><td>Entire web</td><td>Query subgraph</td></tr>
+        <tr><td>Computation</td><td>Offline, cheap at query time</td><td>Online, expensive</td></tr>
+        <tr><td>Spam resistance</td><td>Moderate</td><td>Vulnerable (hub pages)</td></tr>
+        <tr><td>Practical use</td><td>Widely used</td><td>Rarely in production</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>HITS Solved Example (Iteration 1)</h3>
+      <p style="color:var(--text2);">Graph: A→B, A→C, D→B, D→C. Initial: hub(A)=hub(D)=1, auth(B)=auth(C)=1.</p>
+      <div class="solved-box" style="margin-top:8px;">
+        <h5>✅ One Iteration</h5>
+        <p style="color:var(--text2);">Auth update:<br>
+        auth(B) = hub(A)+hub(D) = 2; auth(C) = 2<br>
+        Normalise: ||auth||₂ = √8 ≈ 2.83; auth(B)=auth(C)=0.707<br><br>
+        Hub update:<br>
+        hub(A) = auth(B)+auth(C) = 1.414; hub(D) = 1.414<br>
+        Normalise: ||hub||₂ = √4 = 2; hub(A)=hub(D)=0.707<br><br>
+        A and D are equal hubs; B and C are equal authorities.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ LTR TRAINING DATA -->
+<section id="ltr-training">
+  <h2 class="section-title">Learning-to-Rank: Training Data</h2>
+
+  <div class="def-box">
+    <span class="term">Learning-to-Rank (LTR)</span>
+    <p style="color:var(--text2);margin-top:8px;">Supervised ML approach to ranking. Given query q and a set of documents, learn a ranking function using labeled training data. Requires relevance-labeled (query, document) pairs.</p>
+  </div>
+
+  <div class="card">
+    <h3>Training Data Construction Methods</h3>
+    <div class="grid-3">
+      <div class="def-box">
+        <span class="term">Pooling</span>
+        <p style="color:var(--text2);margin-top:8px;">Retrieve top-k results from multiple IR systems for each query. Union these into a "pool". Human assessors label pooled documents for relevance. Documents not in pool assumed non-relevant (but may be judged later via "move to front").</p>
+      </div>
+      <div class="def-box">
+        <span class="term">Editorial Judgements</span>
+        <p style="color:var(--text2);margin-top:8px;">Trained human assessors (editors) evaluate each (query, document) pair. More expensive but higher quality than crowdsourcing. TREC and LETOR datasets use editorial judgements. Time-consuming: TREC assessors spend ~1 min per document.</p>
+      </div>
+      <div class="def-box">
+        <span class="term">Multi-Graded Relevance</span>
+        <p style="color:var(--text2);margin-top:8px;">Instead of binary relevant/not-relevant, use graded scale (e.g., 0–4 or TREC 6-grade). Enables use of NDCG as evaluation metric. Graded judgements capture that "highly relevant" is better than "somewhat relevant".</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>TREC Relevance Grade Scale (6 grades)</h3>
+    <table>
+      <tr><th>Grade</th><th>Label</th><th>Description</th></tr>
+      <tr><td><span class="hi3">4</span></td><td>Perfect</td><td>Document is exactly what the user wanted — definitively answers the query</td></tr>
+      <tr><td><span class="hi3">3</span></td><td>Excellent</td><td>Highly relevant, very good answer to the query</td></tr>
+      <tr><td><span class="hi2">2</span></td><td>Good</td><td>Relevant and useful, though may miss some aspects</td></tr>
+      <tr><td><span class="hi2">1</span></td><td>Fair</td><td>Some relevance but significant gaps or tangential</td></tr>
+      <tr><td><span class="hi">0</span></td><td>Bad</td><td>Not relevant; does not address the query</td></tr>
+      <tr><td><span class="hi">−1</span></td><td>Junk/Spam</td><td>Spam, offensive, or malicious content; harmful to show</td></tr>
+    </table>
+    <p style="color:var(--text2);font-size:.9rem;margin-top:8px;">NDCG is computed using these grades — a perfect result at rank 1 contributes much more than a fair result. The gain G(r) = (2^grade − 1) in standard NDCG.</p>
+  </div>
+
+  <div class="card">
+    <h3>LTR: Pointwise, Pairwise, Listwise</h3>
+    <div class="grid-3">
+      <div class="def-box">
+        <span class="term">Pointwise</span>
+        <p style="color:var(--text2);margin-top:8px;">Predict relevance grade of individual (q,d) pairs. Loss = MSE. Simple but ignores relative ordering between documents for same query.</p>
+      </div>
+      <div class="def-box">
+        <span class="term">Pairwise</span>
+        <p style="color:var(--text2);margin-top:8px;">Learn that document d₁ should rank above d₂. Loss = hinge/cross-entropy on pairs. RankNet, LambdaMART. More natural for ranking tasks.</p>
+      </div>
+      <div class="def-box">
+        <span class="term">Listwise</span>
+        <p style="color:var(--text2);margin-top:8px;">Optimise the entire ranked list directly. Loss approximates NDCG. ListNet, AdaRank. Theoretically best but computationally expensive.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ SUMMARY -->
+<section id="summary">
+  <h2 class="section-title">Summary</h2>
+  <div class="sum-card"><h4>Query Taxonomy (Broder 2002)</h4><p style="color:var(--text2);">Navigational (20%), Informational (48%), Transactional (30%). 33% of queries are repeats; 40% are re-finding. Query length grew from 2.4→3.08 words. Three actor perspectives: User (relevance), Search Engine (quality+profit), Advertiser (conversions).</p></div>
+  <div class="sum-card"><h4>Web Dynamics</h4><p style="color:var(--text2);">Four types: Size (30T+ pages), Content (34% never change; avg 123h to change — Adar 2009), Query (seasonal/temporal shifts), Location/Usage (local intent, re-finding). These demand continuous crawling, index refreshing, and localisation.</p></div>
+  <div class="sum-card"><h4>Ranking Framework</h4><p style="color:var(--text2);">p(r|d,x) — probability of relevance given document and context. Features: QI (PageRank, spam, quality, CTR, dwell, load time — precomputed), QD (BM25, anchor text, semantic similarity — computed per query), Query (length, type — per query).</p></div>
+  <div class="sum-card"><h4>PageRank</h4><p style="color:var(--text2);">Random surfer model. Matrix formulation: G = (1−λ)M + λS (Google Matrix, λ=0.15). Problems: disconnected graphs, dangling nodes, rank sinks — all solved by teleportation. Najork 2007: BM25F NDCG=0.221 vs PageRank NDCG=0.092 — link features are surprisingly weak.</p></div>
+  <div class="sum-card"><h4>HITS</h4><p style="color:var(--text2);">Hub and Authority scores. 3-step: build query subgraph, iterate auth/hub updates with normalisation, rank by authority. Query-dependent, computed online. Vulnerable to topic drift and hub manipulation. Less practical than PageRank.</p></div>
+  <div class="sum-card"><h4>LTR Training Data</h4><p style="color:var(--text2);">Pooling + editorial judgements + TREC 6-grade scale (Perfect/Excellent/Good/Fair/Bad/Junk). Pointwise/pairwise/listwise loss formulations. Hundreds of QI, QD, and query features fed into models like LambdaMART.</p></div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ QUESTIONS -->
+<section id="questions" class="q-section">
+  <h2 class="section-title" style="border:none;padding-left:0;">📝 Questions &amp; Practice</h2>
+
+  <div class="q-type">Multiple Choice Questions</div>
+
+  <div class="mcq"><div class="qtext">Q1. According to Broder (2002), what percentage of web queries are informational?</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) 20%</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) 48%</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) 30%</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) 60%</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q2. In the Google Matrix G = (1−λ)M + λS, what is the typical value of λ?</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) 0.85</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) 0.15</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) 0.5</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) 1.0</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q3. According to Najork et al. (2007), which feature produces higher NDCG when used alone?</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) BM25F (content matching, NDCG ≈ 0.221)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) PageRank (link authority, NDCG ≈ 0.092)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) They are approximately equal</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Anchor text matching</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q4. In HITS, a high hub score means that the page:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Links to many high-authority pages</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) Is linked to by many high-authority pages</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Has many total outlinks</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Has a high PageRank score</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q5. Which of the following is a Query-Independent (QI) feature?</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) BM25 score</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) Anchor text match to query</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">C) Page load time</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Query term coverage</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q6. According to Adar et al. (2009), what fraction of web pages never change their content?</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) 10%</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) 20%</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">C) 34%</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) 50%</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q7. What problem does teleportation in PageRank primarily solve?</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) Slow convergence speed</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) Rank sinks, dangling nodes, and disconnected graphs</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Anchor text spam</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Query-independent bias</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q8. In TREC's 6-grade relevance scale, what does grade 4 (Perfect) mean?</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">A) Highly relevant but misses some aspects</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">B) Document definitively answers the query — exactly what the user wanted</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Good answer to the query</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Spam or junk content</div>
+  </div>
+
+  <div class="q-type">True / False</div>
+
+  <div class="tf-row"><div class="tf-q">T1. PageRank is computed online for each query using a query-specific subgraph.</div>
+    <button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+    <div class="tf-ans wa">FALSE — PageRank is computed offline on the full web graph and is query-independent. HITS computes on a query-specific subgraph.</div>
+  </div>
+
+  <div class="tf-row"><div class="tf-q">T2. According to query log studies, approximately 33% of web queries are repeats of earlier queries.</div>
+    <button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+    <div class="tf-ans ca">TRUE — Query dynamics studies show about one-third of queries are re-submissions of previously issued queries.</div>
+  </div>
+
+  <div class="tf-row"><div class="tf-q">T3. Anchor text describes the linking page (the page containing the link), not the linked page.</div>
+    <button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+    <div class="tf-ans wa">FALSE — Anchor text describes the <em>linked page</em> (the destination), from the perspective of the page containing the link.</div>
+  </div>
+
+  <div class="tf-row"><div class="tf-q">T4. The Google Matrix G = (1−λ)M + λS ensures PageRank is well-defined even for dangling nodes.</div>
+    <button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+    <div class="tf-ans ca">TRUE — The teleportation component λS adds uniform probability across all pages, giving dangling nodes a valid probability distribution.</div>
+  </div>
+
+  <div class="tf-row"><div class="tf-q">T5. In the Najork et al. (2007) study, PageRank alone achieved higher NDCG than BM25F alone.</div>
+    <button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+    <div class="tf-ans wa">FALSE — BM25F alone achieved NDCG ≈ 0.221, while PageRank alone achieved only NDCG ≈ 0.092. Content features significantly outperformed link features.</div>
+  </div>
+
+  <div class="q-type">Calculation Problems</div>
+
+  <div class="sa"><div class="qt">PageRank Calculation: 4-page web. A→B, A→C, B→D, C→D, D→A. α=0.85, N=4. Initial PR=0.25 each. Compute one iteration for A and D.</div>
+    <button class="rbtn" onclick="rev(this)">Solution</button>
+    <div class="ans">Base = (1−0.85)/4 = 0.0375.<br>
+    <strong>PR(A):</strong> Only D links to A. D has 1 outlink. PR(A) = 0.0375 + 0.85×(0.25/1) = 0.0375+0.2125 = <strong>0.25</strong><br>
+    <strong>PR(D):</strong> B links to D (1 outlink), C links to D (1 outlink). PR(D) = 0.0375+0.85×(0.25/1+0.25/1) = 0.0375+0.425 = <strong>0.4625</strong><br>
+    D gains PageRank because both B and C point to it.</div>
+  </div>
+
+  <div class="sa"><div class="qt">HITS Iteration: Graph: A→B, A→C, B→C, D→A, D→B. All initial hub=1, auth=1. Compute auth(B) and auth(C) after one iteration, then normalise.</div>
+    <button class="rbtn" onclick="rev(this)">Solution</button>
+    <div class="ans">
+    <strong>Auth update (auth = sum of hub scores of pages that link to it):</strong><br>
+    auth(A): D links to A → auth(A) = hub(D) = 1<br>
+    auth(B): A and D link to B → auth(B) = hub(A) + hub(D) = 1 + 1 = <strong>2</strong><br>
+    auth(C): A and B link to C → auth(C) = hub(A) + hub(B) = 1 + 1 = <strong>2</strong><br>
+    auth(D): Nobody links to D → auth(D) = 0<br><br>
+    <strong>Normalise:</strong> ||auth||₂ = √(1² + 2² + 2² + 0²) = √9 = 3<br>
+    auth(A) = 1/3 ≈ 0.333; auth(B) = 2/3 ≈ 0.667; auth(C) = 2/3 ≈ 0.667; auth(D) = 0<br>
+    B and C are the top authorities as they receive links from multiple pages.</div>
+  </div>
+
+  <div class="sa"><div class="qt">Google Matrix: A 3-page web has PageRank matrix M (after transition matrix construction). With λ=0.15 and N=3, write the full Google Matrix G formula and explain what each component contributes.</div>
+    <button class="rbtn" onclick="rev(this)">Solution</button>
+    <div class="ans">
+    G = (1 − 0.15) × M + 0.15 × S = 0.85M + 0.15S<br>
+    Where S[i][j] = 1/3 for all i,j (uniform teleportation for N=3).<br><br>
+    So G[i][j] = 0.85 × M[i][j] + 0.15 × (1/3) = 0.85 × M[i][j] + 0.05<br><br>
+    <strong>Component M (weight 0.85):</strong> Follows actual web links — surfer follows a link from current page with probability 0.85. This captures link structure and propagates authority.<br><br>
+    <strong>Component S (weight 0.15):</strong> Uniform teleportation — with probability 0.15, surfer jumps to any page at random. This prevents rank sinks, handles dangling nodes, and ensures all pages have minimum PageRank floor of 0.15/N = 0.05.</div>
+  </div>
+
+  <div class="q-type">Exam-Style Questions</div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[10 marks]</span>
+    <div class="q-text"><strong>Q1.</strong> (a) Define the three types in Broder's (2002) query taxonomy. Give one example for each and state the approximate percentage of queries in each category. [3] (b) Explain the concept of "web dynamics" and describe TWO of the four types with relevant statistics. [4] (c) Explain the three-actor perspective in web search and describe one tension between actor objectives. [3]</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) Navigational (~20%): user wants a specific page (e.g. "facebook login"). Informational (~48%): user wants information (e.g. "how do vaccines work"). Transactional (~30%): user wants to interact or act (e.g. "buy iPhone"). [3]<br><br>
+    (b) Any two of: Size dynamics — number of indexed pages grows continuously (30T+ by 2013); Content dynamics — 34% of pages never change, average page changes every ~123 hours (Adar 2009); Query dynamics — 33% of queries are repeats, average length grew 2.4→3.08 words; Location dynamics — same query means different things in different places, 40% of queries are re-finding (Teevan 2007). [4]<br><br>
+    (c) Three actors: User (wants relevant results quickly), Search Engine (wants quality results + profit from ads), Advertiser (wants conversions/clicks for their pages). Tension example: advertisers want maximum visibility regardless of relevance; users want purely relevant results. Search engines must balance organic (relevance) ranking with paid placements, creating incentives for SEO manipulation. [3]</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[12 marks]</span>
+    <div class="q-text"><strong>Q2.</strong> (a) Write the PageRank formula and explain the role of the damping factor. [3] (b) Describe THREE problems with the basic PageRank formulation and explain how the Google Matrix G = (1−λ)M + λS solves each. [6] (c) State and interpret the key finding of Najork et al. (2007) regarding the importance of PageRank for web ranking. [3]</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) PR(d) = (1−α)/N + α × Σ_{d'→d} PR(d')/outdegree(d'). Damping factor α (typically 0.85): probability that random surfer follows a link rather than teleporting. With probability (1−α)=0.15, surfer jumps to a random page. Models realistic browsing behaviour. [3]<br><br>
+    (b) Problem 1 — Disconnected graphs: if web graph has multiple components, surfer gets stuck. Solution: teleportation (λS) connects all components — surfer can jump to any page. Problem 2 — Dangling nodes: pages with no outlinks (PDFs) have row summing to 0 in transition matrix. Solution: treat dangling nodes as pointing to all pages with uniform probability (equivalent to teleportation). Problem 3 — Rank sinks: groups of pages that link only internally absorb PageRank without redistribution. Solution: teleportation drains rank from sinks — surfer always has probability λ of escaping. [6]<br><br>
+    (c) Najork 2007: using BM25F alone achieves NDCG ≈ 0.221; using PageRank alone achieves NDCG ≈ 0.092. Interpretation: link features are significantly weaker than content matching for retrieval quality. PageRank is best used as a quality/spam filter rather than the primary relevance signal. This means content-based features dominate web ranking even though PageRank is often cited as revolutionary. [3]</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q3.</strong> (a) Distinguish between query-independent (QI) and query-dependent (QD) features in web ranking. Give TWO examples of each. [4] (b) Explain the value and problems of using anchor text as a ranking feature. Give a specific example of anchor text manipulation. [4]</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) QI features: computed from document alone, no query needed, pre-computable. Examples: PageRank (link authority), spam score, page load time, social signals, dwell time. QD features: computed from query AND document at retrieval time. Examples: BM25/TF-IDF score, anchor text match to query, query term coverage, semantic embedding similarity. [4]<br><br>
+    (b) Value: anchor text describes the linked page from an outsider's perspective — often better than the page's own content. Multiple anchor texts from thousands of linking pages form a "virtual document" of descriptions. Useful for pages with little indexable text (PDFs, images). Problem: can be deliberately manipulated via coordinated link campaigns. Example: "Google bombing" — many pages linking to a target with specific anchor text artificially inflates its ranking for that text. Classic case: pages linking "miserable failure" to George W. Bush's biography; "evil empire" bomb-linked to Microsoft. Led Google to discount orchestrated anchor text campaigns. [4]</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q4.</strong> (a) Describe the HITS algorithm: what are hub and authority scores, and outline the 3-step process. [4] (b) Compare HITS and PageRank on four dimensions: query-dependence, number of scores, spam resistance, and practical deployment. [4]</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) Hub score: how well a page points to good authorities (high hub = links to many authoritative pages). Authority score: how many good hubs link to this page (high authority = linked by many good hubs). 3-step process: (1) Build query subgraph — retrieve top-k for query, expand by following links in and out (root set → base set). (2) Iterate: auth(d) = Σ hub(d') for all d'→d; hub(d) = Σ auth(d'') for all d→d''; normalise both vectors; repeat until convergence. (3) Rank results by authority score. [4]<br><br>
+    (b) Query-dependence: HITS is query-dependent (different subgraph per query), PageRank is query-independent (single global score). Number of scores: HITS produces 2 scores per page (hub + authority), PageRank produces 1. Spam resistance: PageRank more resistant — links from high-PR pages count more; HITS vulnerable to artificial hub pages created by spammers. Practical deployment: PageRank widely used in production (offline-precomputed, cheap at query time); HITS rarely used in production (expensive online computation, topic drift problem). [4]</div>
+  </div>
+
+  <div class="q-type">Flashcards</div>
+  <div class="fc-grid">
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Broder Taxonomy</div><div class="fcb">Nav (20%), Informational (48%), Trans (30%). Broder 2002. Based on user INTENT, not content.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">PageRank Formula</div><div class="fcb">PR(d) = (1−α)/N + α × Σ PR(d')/out(d'). α=0.85. Random surfer model. Query-independent.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Google Matrix</div><div class="fcb">G = (1−λ)M + λS, λ=0.15. Fixes rank sinks, dangling nodes, disconnected graphs via teleportation.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">HITS</div><div class="fcb">Hub = links to good authorities. Auth = linked by good hubs. Query-dependent, 3-step: subgraph → iterate → rank by auth.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Najork 2007</div><div class="fcb">BM25F NDCG=0.221 vs PageRank NDCG=0.092. Content >> link features for retrieval quality.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Web Dynamics</div><div class="fcb">4 types: Size (30T+ pages), Content (34% never change, avg 123h), Query (33% repeats), Location (local intent, 40% re-finding).</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">QI vs QD Features</div><div class="fcb">QI: precomputed, no query (PageRank, spam, load time). QD: query+doc at runtime (BM25, anchor match, semantic sim).</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Anchor Text</div><div class="fcb">Describes linked page from outsider perspective. Valuable (virtual document) but gameable (Google bombing, "evil empire").</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">TREC 6-Grade Scale</div><div class="fcb">4=Perfect, 3=Excellent, 2=Good, 1=Fair, 0=Bad, -1=Junk. Used for NDCG with gain G=(2^grade−1).</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Three Actors</div><div class="fcb">User (relevance), Search Engine (quality+profit), Advertiser (conversions). Tensions: relevance vs ad placement vs spam.</div></div></div>
+  </div>
+</section>
+
+</div></main>
+
+<script>
+window.addEventListener('scroll',()=>{
+  const p=document.getElementById('pb');
+  p.style.width=(window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%';
+  document.getElementById('bt').style.display=window.scrollY>400?'block':'none';
+  document.querySelectorAll('nav a').forEach(a=>{
+    const s=document.querySelector(a.getAttribute('href'));
+    if(s){const r=s.getBoundingClientRect();a.classList.toggle('active',r.top<=100&&r.bottom>100);}
+  });
+});
+function toggleTheme(){document.body.dataset.theme=document.body.dataset.theme==='light'?'':'light';}
+function answerMCQ(el,t){const i=el.parentElement;i.querySelectorAll('.opt').forEach(o=>o.classList.remove('c','w'));el.classList.add(t==='correct'?'c':'w');}
+function tfA(btn){const i=btn.closest('.tf-row');i.querySelector('.tf-ans').style.display='block';}
+function rev(btn){const b=btn.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';btn.textContent=b.style.display==='block'?'Hide Answer':'Reveal Answer';}
+function rvb(el){el.classList.add('rv');}
+document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=document.querySelector(a.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}));
+</script>
+
+</body>
+</html>

@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 07 · Advanced Models: BM25, LM, DFR</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style>
+  :root { --bg:#0f0f1a;--bg2:#1a1a2e;--bg3:#16213e;--accent:#7c3aed;--accent2:#06b6d4;--accent3:#10b981;--text:#e2e8f0;--text2:#94a3b8;--yellow:#f59e0b;--red:#ef4444;--card:#1e293b; }
+  [data-theme="light"]{--bg:#f8fafc;--bg2:#f1f5f9;--bg3:#e2e8f0;--text:#0f172a;--text2:#475569;--card:#ffffff;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;overflow-x:hidden;}
+  #pb{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;z-index:1000;transition:width .1s;}
+  header{background:linear-gradient(135deg,#0f0f1a 0%,#1a0533 50%,#0a1628 100%);padding:80px 40px 60px;text-align:center;position:relative;overflow:hidden;}
+  header::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at center,rgba(124,58,237,.15) 0%,transparent 60%);animation:rotate 20s linear infinite;}
+  @keyframes rotate{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes slideInLeft{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+  .badge{display:inline-block;background:var(--accent);color:#fff;padding:6px 18px;border-radius:20px;font-size:.85rem;margin-bottom:16px;animation:fadeInUp .6s ease;}
+  h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;margin-bottom:16px;background:linear-gradient(135deg,#fff 0%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:fadeInUp .8s ease;}
+  .subtitle{color:var(--text2);font-size:1.1rem;animation:fadeInUp 1s ease;}
+  .container{max-width:1200px;margin:0 auto;padding:0 24px;}
+  nav{position:fixed;right:20px;top:50%;transform:translateY(-50%);background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:16px;z-index:100;max-width:220px;max-height:70vh;overflow-y:auto;}
+  nav h3{font-size:.75rem;color:var(--accent2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+  nav a{display:block;color:var(--text2);text-decoration:none;font-size:.8rem;padding:4px 8px;border-left:2px solid transparent;transition:all .2s;}
+  nav a:hover,nav a.active{color:var(--accent);border-left-color:var(--accent);}
+  .theme-btn{position:fixed;left:20px;top:20px;background:var(--card);border:1px solid rgba(124,58,237,.3);border-radius:8px;padding:8px 16px;color:var(--text);cursor:pointer;z-index:100;font-size:.85rem;}
+  .back-top{position:fixed;bottom:30px;right:30px;background:var(--accent);color:#fff;border:none;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:none;z-index:100;box-shadow:0 4px 15px rgba(124,58,237,.4);}
+  main{padding:60px 0;}
+  section{margin-bottom:60px;animation:fadeIn .6s ease;}
+  .section-title{font-size:1.8rem;font-weight:700;margin-bottom:24px;padding-left:16px;border-left:4px solid var(--accent);color:var(--text);}
+  .card{background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:28px;margin-bottom:20px;transition:transform .2s,box-shadow .2s;}
+  .card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,.3);}
+  .card h3{color:var(--accent2);margin-bottom:12px;font-size:1.1rem;}
+  .card p,.card li{color:var(--text2);line-height:1.7;}
+  .card ul{padding-left:20px;}.card ul li{margin-bottom:8px;}
+  .hi{color:var(--accent);font-weight:600;}.hi2{color:var(--accent2);font-weight:600;}.hi3{color:var(--accent3);font-weight:600;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  @media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr;}nav{display:none;}}
+  @media(min-width:769px){body{padding-right:260px;}}
+  .def-box{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:20px;margin:20px 0;}
+  .def-box .term{color:var(--accent);font-weight:700;font-size:1.05rem;}
+  .ex-box{background:rgba(16,185,129,.08);border-left:4px solid var(--accent3);border-radius:0 12px 12px 0;padding:20px;margin:20px 0;}
+  .ex-box h4{color:var(--accent3);margin-bottom:10px;}
+  .warn-box{background:rgba(245,158,11,.08);border-left:4px solid var(--yellow);border-radius:0 12px 12px 0;padding:20px;margin:20px 0;}
+  .warn-box h4{color:var(--yellow);margin-bottom:10px;}
+  .svg-cont{background:var(--bg2);border-radius:16px;padding:30px;margin:30px 0;text-align:center;}
+  .svg-cont h4{color:var(--accent2);margin-bottom:20px;}
+  .eq-block{background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(6,182,212,.05));border:1px solid rgba(124,58,237,.4);border-radius:12px;padding:24px;margin:24px 0;text-align:center;}
+  .eq-block .eq-title{color:var(--accent);font-weight:700;margin-bottom:12px;font-size:1rem;}
+  .practice-box{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.4);border-radius:12px;padding:20px;margin:12px 0;}
+  .practice-box h5{color:var(--yellow);margin-bottom:10px;}
+  .solved-box{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.4);border-radius:12px;padding:20px;margin:12px 0;}
+  .solved-box h5{color:var(--accent3);margin-bottom:10px;}
+  .q-section{background:var(--bg2);border-radius:20px;padding:40px;margin-top:40px;}
+  .q-type{font-size:1.4rem;font-weight:700;color:var(--accent);margin:30px 0 16px;padding-bottom:8px;border-bottom:2px solid rgba(124,58,237,.3);}
+  .mcq{background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .mcq .qtext{font-weight:600;color:var(--text);margin-bottom:12px;}
+  .opt{padding:8px 14px;border-radius:8px;cursor:pointer;color:var(--text2);border:1px solid rgba(255,255,255,.07);margin:4px 0;transition:all .2s;}
+  .opt:hover{background:rgba(124,58,237,.15);border-color:var(--accent);}
+  .opt.c{background:rgba(16,185,129,.2);border-color:var(--accent3);color:var(--accent3);}
+  .opt.w{background:rgba(239,68,68,.15);border-color:var(--red);color:var(--red);}
+  .tf-row{background:var(--card);border-radius:12px;padding:16px 20px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .tf-q{flex:1;color:var(--text2);}
+  .tb{padding:6px 16px;border-radius:6px;border:none;cursor:pointer;font-size:.85rem;transition:all .2s;}
+  .tb.tt{background:rgba(16,185,129,.2);color:var(--accent3);}
+  .tb.tf{background:rgba(239,68,68,.15);color:var(--red);}
+  .tf-ans{display:none;font-size:.85rem;padding:6px 10px;border-radius:6px;margin-top:8px;}
+  .tf-ans.ca{background:rgba(16,185,129,.15);color:var(--accent3);}
+  .tf-ans.wa{background:rgba(239,68,68,.1);color:var(--red);}
+  .sa{background:var(--card);border-radius:12px;padding:20px;margin-bottom:12px;}
+  .sa .qt{color:var(--text2);margin-bottom:12px;font-weight:600;}
+  .rbtn{background:var(--accent);color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .2s;}
+  .rbtn:hover{background:#6d28d9;}
+  .ans{display:none;margin-top:12px;background:rgba(16,185,129,.08);border-left:3px solid var(--accent3);padding:14px;border-radius:0 8px 8px 0;color:var(--text2);line-height:1.6;}
+  .fitb{background:var(--card);border-radius:10px;padding:16px 20px;margin-bottom:10px;color:var(--text2);}
+  .blank{display:inline-block;min-width:100px;border-bottom:2px solid var(--accent);margin:0 6px;text-align:center;color:transparent;cursor:pointer;transition:all .3s;padding:0 4px;}
+  .blank.rv{color:var(--accent);}
+  .fc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;margin-top:20px;}
+  .fc{perspective:1000px;height:150px;cursor:pointer;}
+  .fci{position:relative;width:100%;height:100%;transition:transform .6s;transform-style:preserve-3d;}
+  .fc:hover .fci,.fc.flipped .fci{transform:rotateY(180deg);}
+  .fcf,.fcb{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:12px;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;}
+  .fcf{background:linear-gradient(135deg,var(--accent),#5b21b6);color:#fff;font-weight:600;}
+  .fcb{background:var(--card);border:1px solid rgba(6,182,212,.3);color:var(--text2);font-size:.9rem;transform:rotateY(180deg);}
+  .exam-q{background:var(--bg3);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:20px;margin-bottom:16px;}
+  .tag{display:inline-block;background:var(--yellow);color:#000;font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:4px;margin-right:8px;}
+  .marks{display:inline-block;background:rgba(245,158,11,.2);color:var(--yellow);font-size:.75rem;padding:2px 8px;border-radius:4px;}
+  .obj-list{list-style:none;}.obj-list li{padding:10px 16px;margin-bottom:8px;background:var(--card);border-radius:8px;color:var(--text2);display:flex;align-items:flex-start;gap:10px;animation:slideInLeft .5s ease;}
+  .obj-list li::before{content:"✓";color:var(--accent3);font-weight:700;margin-top:1px;}
+  .sum-card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border-radius:16px;padding:24px;border-left:4px solid var(--accent);margin-bottom:16px;}
+  .sum-card h4{color:var(--accent2);margin-bottom:10px;}
+  code{background:rgba(124,58,237,.15);color:var(--accent2);padding:2px 6px;border-radius:4px;font-family:monospace;}
+  pre{background:#0d1117;border-radius:12px;padding:24px;overflow-x:auto;margin:20px 0;border:1px solid rgba(255,255,255,.05);}
+  pre code{background:none;padding:0;color:#c9d1d9;}
+  .kw{color:#ff7b72;}.fn{color:#d2a8ff;}.str{color:#a5d6ff;}.cm{color:#8b949e;}.num{color:#79c0ff;}
+  .new-badge{display:inline-block;background:var(--accent3);color:#fff;font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:4px;margin-left:8px;vertical-align:middle;}
+</style>
+</head>
+<body>
+<div id="pb"></div>
+<button class="theme-btn" onclick="toggleTheme()">🌓 Theme</button>
+<button class="back-top" id="bt" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<nav><h3>Contents</h3>
+<a href="#objectives">Objectives</a>
+<a href="#prob-models">Probabilistic Models</a>
+<a href="#bim">BIM &amp; RSJ Weights</a>
+<a href="#bm25">BM25</a>
+<a href="#language-models">Language Models</a>
+<a href="#dirichlet">Dirichlet Smoothing</a>
+<a href="#dfr">DFR Framework</a>
+<a href="#dfr-models">DFR Models (PL2, BB2…)</a>
+<a href="#prf">PRF &amp; RM3</a>
+<a href="#axiomatic">Axiomatic IR</a>
+<a href="#bm25-full">Field &amp; Proximity</a>
+<a href="#summary">Summary</a>
+<a href="#questions">Questions</a>
+</nav>
+<header>
+  <div class="badge">Lecture 07 · Advanced Models</div>
+  <h1>Advanced IR Models: BM25, LM, DFR</h1>
+  <p class="subtitle">IR H/M Course · Craig Macdonald · 2026</p>
+</header>
+<main><div class="container">
+
+<!-- ─── OBJECTIVES ─── -->
+<section id="objectives">
+  <h2 class="section-title">Learning Objectives</h2>
+  <ul class="obj-list">
+    <li>Explain the Probability Ranking Principle</li>
+    <li>Derive Robertson-Sparck Jones (RSJ) weights from the Binary Independence Model</li>
+    <li>Derive and compute BM25 scores step by step</li>
+    <li>Understand Language Models for IR (Query Likelihood) and smoothing methods</li>
+    <li>Explain and apply Dirichlet prior smoothing (μ parameter)</li>
+    <li>Explain the Divergence From Randomness (DFR) framework and compute PL2 scores</li>
+    <li>Name and distinguish DFR models: BB2, GL2, IFB2, In_expB2, In_expC2, PL2</li>
+    <li>Understand Pseudo-Relevance Feedback and the RM3 model</li>
+    <li>State the key axiomatic IR constraints (TF, IDF, document length)</li>
+    <li>Apply field-based models (BM25F, PL2F) and proximity/MRF models</li>
+  </ul>
+</section>
+
+<!-- ─── PROBABILISTIC MODELS ─── -->
+<section id="prob-models">
+  <h2 class="section-title">Probabilistic Models</h2>
+  <div class="card">
+    <h3>Why Probabilities?</h3>
+    <p style="color:var(--text2);">IR deals with uncertain information: document representation is imperfect, queries are vague, relevance is subjective. Probability theory is the natural framework for quantifying uncertainty.</p>
+  </div>
+
+  <div class="def-box">
+    <span class="term">Probability Ranking Principle (Robertson 1977):</span>
+    <p style="color:var(--text2);margin-top:8px;">If a system ranks documents in decreasing order of P(Relevance|Document), then the overall effectiveness will be the best obtainable on the basis of available data.</p>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Bayes Decision Rule for Relevance</div>
+    <div>\[ P(R|D) = \frac{P(D|R) \cdot P(R)}{P(D)} \]</div>
+    <p style="color:var(--text2);margin-top:10px;">Document D is ranked as relevant if P(R|D) > P(NR|D). Use Bayes' rule to estimate from training data.</p>
+  </div>
+</section>
+
+<!-- ─── BIM ─── -->
+<section id="bim">
+  <h2 class="section-title">Binary Independence Model (BIM) &amp; RSJ Weights <span class="new-badge">EXPANDED</span></h2>
+
+  <div class="card">
+    <h3>Binary Independence Model (BIM / BIR)</h3>
+    <p style="color:var(--text2);">The BIM is the original probabilistic retrieval model. Key assumptions:</p>
+    <ul>
+      <li><span class="hi2">Binary representation:</span> each term is either present (1) or absent (0) in a document — no term frequencies</li>
+      <li><span class="hi2">Term independence:</span> terms are assumed to be independent given relevance status</li>
+      <li><span class="hi2">Goal:</span> estimate P(R=1 | d, q) for each document d and query q</li>
+    </ul>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">BIM Ranking Score (log-odds of relevance)</div>
+    <div>\[ \text{score}(d,q) = \sum_{t \in q \cap d} \log \frac{p_t(1-q_t)}{q_t(1-p_t)} \]</div>
+    <p style="color:var(--text2);margin-top:10px;">
+      Where:<br>
+      &bull; \(p_t = P(\text{term } t \text{ in doc} \mid \text{relevant})\)<br>
+      &bull; \(q_t = P(\text{term } t \text{ in doc} \mid \text{non-relevant})\)<br>
+      Sum is over query terms that appear in the document.
+    </p>
+  </div>
+
+  <div class="def-box">
+    <span class="term">Robertson-Sparck Jones (RSJ) Weights</span>
+    <p style="color:var(--text2);margin-top:8px;">When relevance information is available (e.g., from judged documents), the RSJ weight for term t is:</p>
+    <div style="text-align:center;margin-top:12px;">\[ w_t^{RSJ} = \log \frac{(r_t + 0.5)(N - n_t - R + r_t + 0.5)}{(n_t - r_t + 0.5)(R - r_t + 0.5)} \]</div>
+    <p style="color:var(--text2);margin-top:10px;">
+      Where:<br>
+      &bull; \(N\) = total number of documents in collection<br>
+      &bull; \(R\) = number of known relevant documents<br>
+      &bull; \(n_t\) = number of documents containing term t (df)<br>
+      &bull; \(r_t\) = number of <em>relevant</em> documents containing term t<br>
+      &bull; The 0.5 values are Laplace smoothing to avoid log(0).
+    </p>
+  </div>
+
+  <div class="warn-box">
+    <h4>RSJ → IDF Approximation</h4>
+    <p style="color:var(--text2);">When no relevance information is available (R=0, r_t=0), the RSJ weight simplifies to the standard IDF:</p>
+    <div style="text-align:center;margin:10px 0;">\[ w_t^{RSJ} \approx \log \frac{N - n_t + 0.5}{n_t + 0.5} \approx \log \frac{N}{n_t} \]</div>
+    <p style="color:var(--text2);">This is exactly the IDF formula used in BM25. So BM25's IDF is a special case of the RSJ weight with no feedback.</p>
+  </div>
+
+  <div class="card">
+    <h3>From BIM to BM25: Adding Term Frequencies</h3>
+    <p style="color:var(--text2);">BIM only uses binary term occurrence. To incorporate term frequency and document length, BM25 extends BIM with:</p>
+    <ul>
+      <li>A <span class="hi">saturating TF function</span> that gives diminishing returns for higher tf</li>
+      <li>A <span class="hi2">document length normalisation</span> factor (penalises long documents that are long by chance)</li>
+      <li>The RSJ weight as the IDF component</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ─── BM25 ─── -->
+<section id="bm25">
+  <h2 class="section-title">BM25 — Best Match 25</h2>
+
+  <div class="eq-block">
+    <div class="eq-title">BM25 Score</div>
+    <div>\[ \text{BM25}(d, q) = \sum_{t \in q} \underbrace{\log \frac{N - df_t + 0.5}{df_t + 0.5}}_{\text{IDF (RSJ approx.)}} \cdot \underbrace{\frac{(k_1 + 1) \cdot tf_{td}}{k_1 \left(1 - b + b \cdot \frac{|d|}{\text{avgdl}}\right) + tf_{td}}}_{\text{TF factor (saturating)}} \]</div>
+    <p style="color:var(--text2);margin-top:12px;">Parameters: k₁ ∈ [1.2, 2.0] (TF saturation), b ∈ [0, 1] (length normalisation, typically 0.75), |d| = doc length, avgdl = average doc length.</p>
+    <div class="practice-box">
+      <h5>Practice Example</h5>
+      <p style="color:var(--text2);">N=1000, df(cat)=100, |d|=200, avgdl=150, tf(cat,d)=5, k₁=1.2, b=0.75. Compute BM25 score contribution of term "cat".</p>
+    </div>
+    <div class="solved-box">
+      <h5>Solved Example</h5>
+      <p style="color:var(--text2);"><strong>Step 1 — IDF:</strong><br>
+      IDF(cat) = log((1000−100+0.5)/(100+0.5)) = log(900.5/100.5) = log(8.96) ≈ <strong>2.19</strong><br>
+      <br>
+      <strong>Step 2 — TF normalisation:</strong><br>
+      Norm = k₁(1−b + b×|d|/avgdl) + tf<br>
+      = 1.2(1−0.75 + 0.75×200/150) + 5<br>
+      = 1.2(0.25 + 1.0) + 5<br>
+      = 1.2×1.25 + 5 = 1.5 + 5 = 6.5<br>
+      <br>
+      <strong>Step 3 — TF factor:</strong><br>
+      TF_factor = (k₁+1)×tf / Norm = 2.2×5/6.5 ≈ <strong>1.692</strong><br>
+      <br>
+      <strong>BM25 contribution = IDF × TF_factor = 2.19 × 1.692 ≈ 3.705</strong></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>BM25 Parameter Intuition</h3>
+    <div class="grid-2">
+      <div>
+        <p class="hi2">k₁ (TF saturation):</p>
+        <ul>
+          <li>k₁=0 → binary (presence/absence only)</li>
+          <li>k₁→∞ → raw tf (no saturation)</li>
+          <li>Typical: k₁=1.2. High tf gets diminishing returns</li>
+        </ul>
+      </div>
+      <div>
+        <p class="hi">b (length normalisation):</p>
+        <ul>
+          <li>b=0 → no length normalisation</li>
+          <li>b=1 → full length normalisation</li>
+          <li>Typical: b=0.75. Long docs penalised less than TF-IDF</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Python: BM25 Implementation</h3>
+    <pre><code><span class="kw">import</span> math
+
+<span class="fn">def</span> <span class="fn">bm25_score</span>(query_terms, doc_tf, doc_len, df, N, avgdl, k1=<span class="num">1.2</span>, b=<span class="num">0.75</span>):
+    score = <span class="num">0.0</span>
+    <span class="kw">for</span> term <span class="kw">in</span> query_terms:
+        tf = doc_tf.get(term, <span class="num">0</span>)
+        dft = df.get(term, <span class="num">0</span>)
+        <span class="kw">if</span> dft == <span class="num">0</span>: <span class="kw">continue</span>
+        idf = math.log((N - dft + <span class="num">0.5</span>) / (dft + <span class="num">0.5</span>))
+        tf_norm = tf * (k1 + <span class="num">1</span>) / (tf + k1 * (<span class="num">1</span> - b + b * doc_len / avgdl))
+        score += idf * tf_norm
+    <span class="kw">return</span> score
+
+<span class="cm"># Example</span>
+query = [<span class="str">'information'</span>, <span class="str">'retrieval'</span>]
+doc_tf = {<span class="str">'information'</span>: <span class="num">3</span>, <span class="str">'retrieval'</span>: <span class="num">2</span>}
+df = {<span class="str">'information'</span>: <span class="num">500</span>, <span class="str">'retrieval'</span>: <span class="num">100</span>}
+N, avgdl = <span class="num">10000</span>, <span class="num">200</span>
+score = bm25_score(query, doc_tf, <span class="num">180</span>, df, N, avgdl)
+<span class="fn">print</span>(<span class="str">f"BM25 score: {score:.4f}"</span>)</code></pre>
+  </div>
+</section>
+
+<!-- ─── LANGUAGE MODELS ─── -->
+<section id="language-models">
+  <h2 class="section-title">Language Models for IR</h2>
+
+  <div class="card">
+    <h3>Unigram Language Model</h3>
+    <p style="color:var(--text2);">Each document d defines a unigram language model M_d — a probability distribution over the vocabulary. The probability of each word is estimated from the document. Different smoothing methods combine the document model with the collection model to handle unseen terms.</p>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Query Likelihood Model</div>
+    <div>\[ \text{Score}(d, q) = P(q | M_d) = \prod_{t \in q} P(t | M_d) \]</div>
+    <p style="color:var(--text2);margin-top:10px;">Each document d has a language model M_d. Rank documents by the probability that M_d generated the query q. MLE estimate: P(t|M_d) = tf(t,d)/|d|.</p>
+    <div class="practice-box">
+      <h5>Practice Example</h5>
+      <p style="color:var(--text2);">Doc d: "the cat sat on the mat" (6 tokens). Query: "cat mat". Compute P(q|M_d) using MLE (no smoothing). What is the problem?</p>
+    </div>
+    <div class="solved-box">
+      <h5>Solved Example</h5>
+      <p style="color:var(--text2);">P(cat|M_d) = 1/6 ≈ 0.167<br>
+      P(mat|M_d) = 1/6 ≈ 0.167<br>
+      P(q|M_d) = 0.167 × 0.167 ≈ <strong>0.028</strong><br>
+      Problem: If any query term has tf=0 in d, P(q|M_d) = 0 — the document is excluded even if it's otherwise relevant. Solution: <strong>smoothing</strong>.</p>
+    </div>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Jelinek-Mercer (JM) Smoothing</div>
+    <div>\[ P(t|M_d) = (1-\lambda)\frac{tf(t,d)}{|d|} + \lambda \cdot P(t|M_c) \]</div>
+    <p style="color:var(--text2);margin-top:10px;">λ ∈ [0,1] controls the mix. P(t|M_c) = collection language model = cf(t)/|C| (cf = collection frequency, |C| = total tokens in collection). Prevents zero probabilities for unseen terms.</p>
+    <div class="practice-box">
+      <h5>Practice Example</h5>
+      <p style="color:var(--text2);">λ=0.5. Doc d: "cat sat" (2 tokens). Collection: 1000 tokens, "dog" appears 10 times, "cat" 50 times. Doc has tf(dog)=0, tf(cat)=1. Compute P(cat|M_d) and P(dog|M_d) with JM smoothing.</p>
+    </div>
+    <div class="solved-box">
+      <h5>Solved Example</h5>
+      <p style="color:var(--text2);">P(cat|M_c) = 50/1000 = 0.05. P(cat|M_d) MLE = 1/2 = 0.5.<br>
+      P(cat|M_d) JM = 0.5×0.5 + 0.5×0.05 = 0.25+0.025 = <strong>0.275</strong><br>
+      P(dog|M_c) = 10/1000 = 0.01. P(dog|M_d) MLE = 0.<br>
+      P(dog|M_d) JM = 0.5×0 + 0.5×0.01 = <strong>0.005</strong> (no longer zero!)</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─── DIRICHLET SMOOTHING ─── -->
+<section id="dirichlet">
+  <h2 class="section-title">Dirichlet Prior Smoothing <span class="new-badge">NEW</span></h2>
+
+  <div class="def-box">
+    <span class="term">Dirichlet Prior Smoothing</span>
+    <p style="color:var(--text2);margin-top:8px;">Bayesian smoothing: places a Dirichlet prior on document word probabilities. Uses a single parameter μ (mu) that controls how much the collection model is blended in. Typical value: <strong>μ = 2000</strong>.</p>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Dirichlet Smoothed Language Model</div>
+    <div>\[ P(t | M_d) = \frac{tf(t,d) + \mu \cdot P(t|M_c)}{|d| + \mu} \]</div>
+    <p style="color:var(--text2);margin-top:10px;">
+      Where:<br>
+      &bull; tf(t,d) = term frequency of t in document d<br>
+      &bull; |d| = length of document d<br>
+      &bull; P(t|M_c) = collection probability of term t (= cf(t)/|C|)<br>
+      &bull; μ = Dirichlet smoothing parameter (controls collection prior strength; typical value 2000)
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>Intuition behind Dirichlet Smoothing</h3>
+    <ul>
+      <li>Think of adding μ "pseudo-counts" drawn from the collection distribution to every document</li>
+      <li>For <span class="hi">short documents</span> (small |d|), μ dominates → heavier smoothing toward collection model</li>
+      <li>For <span class="hi2">long documents</span> (large |d|), the document's own counts dominate → less smoothing needed</li>
+      <li>This provides automatic document-length-sensitive smoothing — unlike JM (fixed λ)</li>
+    </ul>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">Dirichlet: Worked Example</div>
+    <p style="color:var(--text2);margin-bottom:12px;">Query: "machine learning". Doc d has |d|=500. tf("machine",d)=3, tf("learning",d)=0. Collection: P("machine"|Mc)=0.002, P("learning"|Mc)=0.005. μ=2000.</p>
+    <div style="text-align:left;color:var(--text2);">
+      P("machine"|Md) = (3 + 2000×0.002) / (500 + 2000) = (3 + 4) / 2500 = 7/2500 = <strong>0.0028</strong><br><br>
+      P("learning"|Md) = (0 + 2000×0.005) / (500 + 2000) = 10/2500 = <strong>0.004</strong> (not zero!)
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>JM vs Dirichlet Comparison</h3>
+      <ul>
+        <li><span class="hi">JM:</span> fixed interpolation weight λ for all documents and all terms</li>
+        <li><span class="hi2">Dirichlet:</span> effective weight depends on |d| → longer docs get less smoothing</li>
+        <li>Dirichlet generally preferred for ad-hoc retrieval</li>
+        <li>JM preferred for routing/filtering tasks</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Dirichlet Log-Score Form</h3>
+      <p style="color:var(--text2);">Taking logs for the query likelihood model:</p>
+      <div style="margin-top:10px;">\[ \log P(q|M_d) = \sum_{t \in q} \log \frac{tf(t,d) + \mu \cdot P(t|M_c)}{|d| + \mu} \]</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── DFR FRAMEWORK ─── -->
+<section id="dfr">
+  <h2 class="section-title">Divergence From Randomness (DFR) Framework <span class="new-badge">NEW — EXAM CRITICAL</span></h2>
+
+  <div class="def-box">
+    <span class="term">DFR Core Intuition</span>
+    <p style="color:var(--text2);margin-top:8px;">A term is <em>informative</em> in a document if its frequency in that document <strong>diverges</strong> significantly from what would be expected if words were placed randomly (Poisson/random process). The greater the divergence from random, the more informative the term. Proposed by Amati &amp; Van Rijsbergen (2002).</p>
+  </div>
+
+  <div class="card">
+    <h3>DFR Framework: Two-Component Design</h3>
+    <p style="color:var(--text2);">Every DFR model is a product of two components:</p>
+    <div class="grid-2" style="margin-top:16px;">
+      <div class="def-box">
+        <span class="term">Component 1: Basic Model (Randomness)</span>
+        <p style="color:var(--text2);margin-top:8px;">Models the "elite" distribution — the probability that a term's frequency arose by chance. Penalises terms that could occur randomly. Models: <strong>Bose-Einstein (BE), Geometric (G), In-expB, In-expC, Poisson (PO)</strong></p>
+      </div>
+      <div class="def-box">
+        <span class="term">Component 2: Normalisation</span>
+        <p style="color:var(--text2);margin-top:8px;">Normalises term frequency by document length and collection statistics. Models: <strong>Normalisation 1 (H1), Normalisation 2 (H2), Laplace Normalisation (L)</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">DFR General Weighting Formula</div>
+    <div>\[ w(t,d) = \text{Inf}_1(t,d) \times \text{Inf}_2(t,d) \]</div>
+    <p style="color:var(--text2);margin-top:12px;">
+      <strong>Inf₁</strong> = information content from the basic model = measures how much the observed tf diverges from the random baseline.<br>
+      <strong>Inf₂</strong> = normalisation = adjusts for document length and term informativeness in the collection.
+    </p>
+    <div style="margin-top:16px;text-align:left;color:var(--text2);">
+      More concretely, the DFR weight can be expressed as:<br>
+      \[ w(t,d) = -\log_2 P_\text{rand}(TF \geq tf_{t,d} \mid \text{collection}) \times \text{normalisation} \]
+      The first factor penalises terms that appear often by random chance (low weight to common terms in collection).
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <h4>Key Insight: DFR vs BM25</h4>
+    <p style="color:var(--text2);">Both BM25 and DFR models use IDF-like weighting and TF normalisation. The key difference: DFR derives the IDF and TF components from an explicit probabilistic model of randomness (Poisson distribution for PL2, or Bose-Einstein/geometric for others). BM25 uses a more heuristic-based derivation from BIM.</p>
+  </div>
+</section>
+
+<!-- ─── DFR MODELS ─── -->
+<section id="dfr-models">
+  <h2 class="section-title">DFR Models: PL2, BB2, GL2 and Others <span class="new-badge">NEW — EXAM CRITICAL</span></h2>
+
+  <div class="card">
+    <h3>Naming Convention for DFR Models</h3>
+    <p style="color:var(--text2);">Each DFR model is named by combining its basic model and normalisation:</p>
+    <ul>
+      <li><span class="hi">First letter(s):</span> basic randomness model (e.g., P = Poisson, B = Bose-Einstein, G = Geometric, In_exp = Inverse Expected)</li>
+      <li><span class="hi2">Last letter:</span> normalisation type (L = Laplace, 2 = Normalisation 2, etc.)</li>
+    </ul>
+  </div>
+
+  <div class="grid-2">
+    <div class="def-box">
+      <span class="term">PL2 — Poisson + Laplace Normalisation 2</span>
+      <p style="color:var(--text2);margin-top:8px;">Most commonly used DFR model. Uses Poisson distribution as the randomness baseline, combined with Laplace normalisation (parameter c).</p>
+      <div style="margin-top:10px;">\[ w_{PL2}(t,d) = \frac{tf_n}{tf_n + 1} \cdot \left( tf_n \cdot \log_2 \frac{tf_n}{\lambda} + (\lambda - tf_n)\log_2 e + 0.5 \log_2(2\pi \cdot tf_n) \right) \]</div>
+      <p style="color:var(--text2);margin-top:8px;">where tf_n = normalised term frequency = tf·log(1 + c·avgdl/|d|) and λ = F/N (expected term frequency in collection; F = collection frequency, N = number of docs).</p>
+    </div>
+    <div class="def-box">
+      <span class="term">BB2 — Bose-Einstein 1 + Normalisation 2</span>
+      <p style="color:var(--text2);margin-top:8px;">Uses the Bose-Einstein distribution (non-parametric, based on sampling without replacement). Generally performs slightly differently from PL2 on different collection types.</p>
+      <div style="margin-top:10px;">\[ w_{BB2}(t,d) \propto \log_2 \frac{(F+N)(tf_n+1)}{N(F-tf_n+N)} \]</div>
+      <p style="color:var(--text2);margin-top:8px;">where F = collection frequency of t, N = collection size.</p>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:20px;">
+    <div class="def-box">
+      <span class="term">GL2 — Geometric + Normalisation 2</span>
+      <p style="color:var(--text2);margin-top:8px;">Uses a geometric distribution as the randomness model. The geometric model is simpler to compute than Poisson.</p>
+    </div>
+    <div class="def-box">
+      <span class="term">In_expB2 / In_expC2 — Inverse Expected</span>
+      <p style="color:var(--text2);margin-top:8px;"><strong>In_expB2</strong>: uses an inverse expected frequency model with Normalisation 2 (Stirling's approximation). <strong>In_expC2</strong>: same basic model but with a different normalisation. Both have been shown competitive with BM25 and PL2.</p>
+    </div>
+  </div>
+
+  <div class="def-box">
+    <span class="term">IFB2 — Inverse Term Frequency + Normalisation 2</span>
+    <p style="color:var(--text2);margin-top:8px;">Based on inverse document frequency as the randomness model. Bridges the gap between DFR and classical IDF weighting. Often used as a strong baseline within the DFR family.</p>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">PL2: The c Parameter (Term Frequency Normalisation)</div>
+    <div>\[ tf_n = tf \cdot \log_2\!\left(1 + c \cdot \frac{\text{avgdl}}{|d|}\right) \]</div>
+    <p style="color:var(--text2);margin-top:10px;">
+      <strong>c</strong> is PL2's single free parameter (analogous to BM25's b):<br>
+      &bull; c controls how much term frequency is normalised by document length<br>
+      &bull; Larger c = more normalisation (similar to higher b in BM25)<br>
+      &bull; Typical value: c = 1.0<br>
+      &bull; When avgdl/|d| is large (short doc), tf_n is amplified; when doc is long, tf_n is reduced
+    </p>
+  </div>
+
+  <div class="card">
+    <h3>PL2: Full Worked Example</h3>
+    <div class="practice-box">
+      <h5>Problem</h5>
+      <p style="color:var(--text2);">Collection: N=10,000 docs, F(term)=200 (collection frequency), avgdl=300. Document d: tf=4, |d|=150. c=1. Compute tf_n and the approximate PL2 score (use simplified form).</p>
+    </div>
+    <div class="solved-box">
+      <h5>Step-by-Step Solution</h5>
+      <p style="color:var(--text2);">
+        <strong>Step 1 — Collection probability λ:</strong><br>
+        λ = F/N = 200/10000 = <strong>0.02</strong><br><br>
+        <strong>Step 2 — Normalised TF:</strong><br>
+        tf_n = tf × log₂(1 + c × avgdl/|d|) = 4 × log₂(1 + 1 × 300/150)<br>
+        = 4 × log₂(1 + 2) = 4 × log₂(3) = 4 × 1.585 = <strong>6.34</strong><br><br>
+        <strong>Step 3 — Poisson information (simplified):</strong><br>
+        Core = tf_n × log₂(tf_n/λ) = 6.34 × log₂(6.34/0.02) = 6.34 × log₂(317)<br>
+        = 6.34 × 8.31 ≈ <strong>52.7</strong><br><br>
+        <strong>Step 4 — Apply length normalisation factor:</strong><br>
+        w = tf_n/(tf_n + 1) × core = (6.34/7.34) × 52.7 ≈ 0.864 × 52.7 ≈ <strong>45.5</strong><br><br>
+        (Full formula also includes the (λ − tf_n)log₂e term but the tf_n×log₂(tf_n/λ) term dominates at high tf_n.)
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>DFR Models Summary Table</h3>
+    <table style="width:100%;border-collapse:collapse;color:var(--text2);margin-top:12px;">
+      <tr style="color:var(--accent2);border-bottom:1px solid rgba(255,255,255,.1);">
+        <th style="text-align:left;padding:8px;">Model</th>
+        <th style="text-align:left;padding:8px;">Basic Model</th>
+        <th style="text-align:left;padding:8px;">Normalisation</th>
+        <th style="text-align:left;padding:8px;">Parameter</th>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,.05);">
+        <td style="padding:8px;font-weight:700;color:var(--accent);">PL2</td>
+        <td style="padding:8px;">Poisson</td>
+        <td style="padding:8px;">Laplace (Normalisation 2)</td>
+        <td style="padding:8px;">c (typical=1)</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,.05);">
+        <td style="padding:8px;font-weight:700;color:var(--accent);">BB2</td>
+        <td style="padding:8px;">Bose-Einstein 1</td>
+        <td style="padding:8px;">Normalisation 2</td>
+        <td style="padding:8px;">c (typical=1)</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,.05);">
+        <td style="padding:8px;font-weight:700;color:var(--accent);">GL2</td>
+        <td style="padding:8px;">Geometric</td>
+        <td style="padding:8px;">Normalisation 2</td>
+        <td style="padding:8px;">c</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,.05);">
+        <td style="padding:8px;font-weight:700;color:var(--accent);">In_expB2</td>
+        <td style="padding:8px;">Inverse Expected (Stirling)</td>
+        <td style="padding:8px;">Normalisation 2</td>
+        <td style="padding:8px;">c</td>
+      </tr>
+      <tr style="border-bottom:1px solid rgba(255,255,255,.05);">
+        <td style="padding:8px;font-weight:700;color:var(--accent);">In_expC2</td>
+        <td style="padding:8px;">Inverse Expected (Stirling)</td>
+        <td style="padding:8px;">Complement Normalisation 2</td>
+        <td style="padding:8px;">c</td>
+      </tr>
+      <tr>
+        <td style="padding:8px;font-weight:700;color:var(--accent);">IFB2</td>
+        <td style="padding:8px;">Inverse Term Frequency</td>
+        <td style="padding:8px;">Normalisation 2</td>
+        <td style="padding:8px;">c</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="ex-box">
+    <h4>PyTerrier: Using DFR Models</h4>
+    <pre style="background:#0d1117;border-radius:8px;padding:16px;overflow-x:auto;"><code style="color:#c9d1d9;background:none;"><span class="kw">import</span> pyterrier <span class="kw">as</span> pt
+
+<span class="cm"># PL2 with c=1</span>
+pl2 = pt.terrier.Retriever(index, wmodel=<span class="str">"PL2"</span>, controls={<span class="str">"c"</span>: <span class="num">1.0</span>})
+
+<span class="cm"># BB2 model</span>
+bb2 = pt.terrier.Retriever(index, wmodel=<span class="str">"BB2"</span>, controls={<span class="str">"c"</span>: <span class="num">1.0</span>})
+
+<span class="cm"># In_expB2</span>
+inexpb2 = pt.terrier.Retriever(index, wmodel=<span class="str">"In_expB2"</span>, controls={<span class="str">"c"</span>: <span class="num">1.0</span>})</code></pre>
+  </div>
+</section>
+
+<!-- ─── PRF & RM3 ─── -->
+<section id="prf">
+  <h2 class="section-title">Pseudo-Relevance Feedback (PRF) &amp; RM3 <span class="new-badge">NEW</span></h2>
+
+  <div class="def-box">
+    <span class="term">Pseudo-Relevance Feedback (PRF)</span>
+    <p style="color:var(--text2);margin-top:8px;">Assume the top-k documents returned by an initial retrieval are relevant (whether or not they actually are). Use these "pseudo-relevant" documents to expand or reweight the query, then re-retrieve. Usually improves recall significantly.</p>
+  </div>
+
+  <div class="card">
+    <h3>PRF Pipeline</h3>
+    <ol style="color:var(--text2);padding-left:20px;line-height:2;">
+      <li>Run initial retrieval with original query q → top-k documents D_fb</li>
+      <li>Extract expansion terms from D_fb (terms not in original query that appear frequently)</li>
+      <li>Re-weight or expand the original query with these terms</li>
+      <li>Re-retrieve with expanded query to get final ranked list</li>
+    </ol>
+  </div>
+
+  <div class="eq-block">
+    <div class="eq-title">RM3 (Relevance Model 3) — Mixture Approach</div>
+    <div>\[ P(t | q_{exp}) = (1 - \alpha) \cdot P_{RM1}(t | D_{fb}) + \alpha \cdot P_{MLE}(t | q) \]</div>
+    <p style="color:var(--text2);margin-top:12px;">
+      Where:<br>
+      &bull; RM1 = Relevance Model: \(P_{RM1}(t | D_{fb}) = \sum_{d \in D_{fb}} P(t|M_d) \cdot P(q|M_d) \cdot P(d)\)<br>
+      &bull; \(P_{MLE}(t|q)\) = MLE from original query terms (original query weight)<br>
+      &bull; α controls the interpolation between feedback model and original query (typical: α=0.5)<br>
+      &bull; Top fb_terms terms by RM1 weight are added to the query
+    </p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3>RM3 Parameters</h3>
+      <ul>
+        <li><span class="hi">fb_docs:</span> number of feedback documents to use (typical: 3–10)</li>
+        <li><span class="hi2">fb_terms:</span> number of expansion terms to add (typical: 10–50)</li>
+        <li><span class="hi3">α (alpha):</span> weight of original query vs feedback model (0.5 is common)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>PRF Risk</h3>
+      <p style="color:var(--text2);">PRF can fail ("query drift") if:</p>
+      <ul>
+        <li>The top-k documents are not truly about the topic</li>
+        <li>The query is ambiguous and top-k docs are for the wrong sense</li>
+        <li>The collection contains a lot of spam/noise near the top</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="ex-box">
+    <h4>PyTerrier: RM3 in Practice</h4>
+    <pre style="background:#0d1117;border-radius:8px;padding:16px;overflow-x:auto;"><code style="color:#c9d1d9;background:none;"><span class="kw">from</span> pyterrier_pisa <span class="kw">import</span> PisaIndex
+<span class="kw">import</span> pyterrier <span class="kw">as</span> pt
+<span class="kw">from</span> pyterrier.rewrite <span class="kw">import</span> RM3
+
+bm25 = pt.terrier.Retriever(index, wmodel=<span class="str">"BM25"</span>, num_results=<span class="num">1000</span>)
+
+<span class="cm"># RM3 PRF: 10 feedback docs, 50 terms, alpha=0.5</span>
+rm3_pipeline = bm25 >> RM3(index, fb_docs=<span class="num">10</span>, fb_terms=<span class="num">50</span>, alpha=<span class="num">0.5</span>) >> bm25</code></pre>
+  </div>
+</section>
+
+<!-- ─── AXIOMATIC IR ─── -->
+<section id="axiomatic">
+  <h2 class="section-title">Axiomatic IR <span class="new-badge">NEW</span></h2>
+
+  <div class="def-box">
+    <span class="term">Axiomatic Approach to IR</span>
+    <p style="color:var(--text2);margin-top:8px;">Rather than deriving a retrieval model from probabilistic first principles, axiomatic IR defines a set of formal constraints (axioms) that any "good" retrieval function should satisfy. A model is then designed or evaluated based on how well it satisfies these constraints. (Fang, Tao, Zhai, 2004.)</p>
+  </div>
+
+  <div class="card">
+    <h3>Key Axiomatic Constraints</h3>
+    <div class="grid-3">
+      <div class="def-box">
+        <span class="term">TF Constraint (TFC1)</span>
+        <p style="color:var(--text2);margin-top:8px;">If doc d₁ and d₂ are identical except d₁ has a higher frequency of a query term, then d₁ should be ranked higher: <br><em>tf(t,d₁) &gt; tf(t,d₂) → score(d₁) &gt; score(d₂)</em></p>
+      </div>
+      <div class="def-box">
+        <span class="term">IDF Constraint</span>
+        <p style="color:var(--text2);margin-top:8px;">Rare query terms should contribute more to the score than common ones. If df(t₁) &lt; df(t₂) and both appear once in a document, the doc should score higher on t₁ than t₂.</p>
+      </div>
+      <div class="def-box">
+        <span class="term">Document Length Normalisation (LNC)</span>
+        <p style="color:var(--text2);margin-top:8px;">A document with the same term density (tf/|d|) as another but longer should not be ranked higher simply by being longer. Length normalisation penalises "verbose" documents that inflate term counts.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>TF Saturation Constraint</h3>
+    <p style="color:var(--text2);">A basic TF constraint alone is not enough — the <em>saturation</em> constraint requires:</p>
+    <div style="margin:12px 0;">\[ \frac{\partial \text{score}}{\partial \text{tf}} > 0 \quad \text{and} \quad \frac{\partial^2 \text{score}}{\partial \text{tf}^2} < 0 \]</div>
+    <p style="color:var(--text2);">i.e., score increases with tf (positive first derivative) but the increase slows down (negative second derivative — diminishing returns). BM25 satisfies this: the TF factor approaches k₁+1 asymptotically.</p>
+  </div>
+
+  <div class="warn-box">
+    <h4>Why Axiomatic IR Matters for Exams</h4>
+    <p style="color:var(--text2);">Examiners often ask: "Does model X satisfy constraint Y?" You need to be able to check whether a given scoring formula satisfies TF, IDF, and length normalisation constraints by inspection or by taking partial derivatives.</p>
+  </div>
+</section>
+
+<!-- ─── FIELD & PROXIMITY ─── -->
+<section id="bm25-full">
+  <h2 class="section-title">Field-Based &amp; Proximity Models</h2>
+  <div class="card">
+    <h3>BM25F — Field-based BM25</h3>
+    <p style="color:var(--text2);">Web documents have fields: title, body, URL, anchor text. Different fields should be weighted differently. BM25F normalises TF within each field before combining:</p>
+    <div>\[ \text{score}(d,Q) = \sum_{t \in Q} \text{IDF}(t) \cdot \frac{(k_1+1) \cdot \tilde{tf}}{k_1 + \tilde{tf}} \]</div>
+    <div style="margin-top:10px;">\[ \tilde{tf} = \sum_f w_f \cdot \frac{tf_f}{1-b_f + b_f \cdot |d_f|/\text{avgdl}_f} \]</div>
+    <p style="color:var(--text2);margin-top:10px;">w_f = field weight, b_f = field-specific length normalisation parameter.</p>
+  </div>
+
+  <div class="card">
+    <h3>PL2F — Field-based PL2</h3>
+    <p style="color:var(--text2);">Same idea as BM25F but applied to the DFR PL2 model. Combines per-field normalised TF values using field weights, then applies the Poisson information measure. Uses per-field c parameters (c_f).</p>
+    <div style="margin-top:10px;">\[ \tilde{tf}_{PL2} = \sum_f w_f \cdot tf_f \cdot \log_2\!\left(1 + c_f \cdot \frac{\text{avgdl}_f}{|d_f|}\right) \]</div>
+  </div>
+
+  <div class="card">
+    <h3>Proximity Models (Markov Random Fields)</h3>
+    <p style="color:var(--text2);">Documents where query terms appear in close proximity may be more relevant. MRF models term dependencies:</p>
+    <div>\[ \text{score}(d,Q) = \lambda_1 \sum_{t \in Q} w(t,d) + \lambda_2 \sum_{c \in Q_o} w(c,d) + \lambda_3 \sum_{c \in Q_u} w(c,d) \]</div>
+    <p style="color:var(--text2);margin-top:10px;">Q_o = ordered pairs ("white house"), Q_u = unordered pairs ("white...house"). Sequential dependence λ₁=0.8, λ₂=λ₃=0.1 is a typical setting.</p>
+  </div>
+</section>
+
+<!-- ─── SUMMARY ─── -->
+<section id="summary">
+  <h2 class="section-title">Summary</h2>
+  <div class="sum-card"><h4>BIM &amp; RSJ Weights</h4><p style="color:var(--text2);">Binary Independence Model: terms are binary, independent. RSJ weights = log-odds ratio using relevance statistics. With no relevance info, simplifies to IDF — the foundation of BM25.</p></div>
+  <div class="sum-card"><h4>BM25</h4><p style="color:var(--text2);">State-of-the-art classical retrieval. IDF × saturated TF × length normalisation. k₁ controls saturation, b controls length normalisation. Still widely used as a strong baseline.</p></div>
+  <div class="sum-card"><h4>Language Models + Smoothing</h4><p style="color:var(--text2);">Rank by P(q|document model). JM smoothing: fixed λ mix with collection. Dirichlet prior: document-length-sensitive smoothing with parameter μ (typical 2000). Dirichlet preferred for ad-hoc retrieval.</p></div>
+  <div class="sum-card"><h4>DFR Framework</h4><p style="color:var(--text2);">Term informativeness = divergence from random. Two-component design: basic randomness model × normalisation. Main models: PL2 (Poisson+Laplace, parameter c), BB2, GL2, In_expB2, In_expC2, IFB2. All implemented in Terrier.</p></div>
+  <div class="sum-card"><h4>PRF &amp; RM3</h4><p style="color:var(--text2);">Pseudo-relevance feedback assumes top-k retrieved docs are relevant, extracts expansion terms, re-retrieves. RM3 interpolates feedback model with original query (α parameter). Risk: query drift.</p></div>
+  <div class="sum-card"><h4>Axiomatic IR</h4><p style="color:var(--text2);">Formal constraints: TF (more term occurrences → higher score, with saturation), IDF (rare terms weighted more), length normalisation (penalise verbose docs). Good retrieval models satisfy all three.</p></div>
+  <div class="sum-card"><h4>Field &amp; Proximity</h4><p style="color:var(--text2);">BM25F/PL2F weight different document fields (title, body, URL) independently. MRF proximity models reward documents where query terms appear close together.</p></div>
+</section>
+
+<!-- ─── QUESTIONS ─── -->
+<section id="questions" class="q-section">
+  <h2 class="section-title" style="border:none;padding-left:0;">Questions &amp; Practice</h2>
+
+  <div class="q-type">Multiple Choice Questions</div>
+
+  <div class="mcq"><div class="qtext">Q1. In BM25, the k₁ parameter controls:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) How quickly term frequency saturates (diminishing returns)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) The IDF calculation</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) The average document length</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The number of relevant documents</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q2. Setting b=0 in BM25 means:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) No document length normalisation is applied</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) All documents are normalised to unit length</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) BM25 reduces to raw TF weighting</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The IDF component is disabled</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q3. The Probability Ranking Principle states that:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Ranking by P(R|D) in decreasing order maximises effectiveness</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) All documents have equal probability of being relevant</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Probability of a term equals its frequency divided by vocabulary size</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Relevant documents always contain all query terms</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q4. Language model smoothing is necessary because:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) Some query terms may not appear in a relevant document, giving probability 0</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) Query terms are too long</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) IDF values are always negative</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) Documents have variable length</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q5. The core intuition of Divergence From Randomness (DFR) is:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) A term is informative if its occurrence in a document diverges from what random placement would predict</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) Documents are ranked by their divergence from the query vector</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) Term weights should always decrease with increasing term frequency</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) DFR models do not use IDF components</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q6. In PL2, the c parameter controls:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) How much term frequency is normalised by document length</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) The number of documents in the collection</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) The Poisson rate λ directly</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The interpolation between document and collection models</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q7. In Dirichlet smoothing with parameter μ=2000, for a short document of length 50:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) The collection model dominates, giving heavy smoothing</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) The document model dominates, giving light smoothing</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) No smoothing is applied for short documents</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) μ has no effect on documents shorter than avgdl</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q8. The RSJ weight reduces to IDF when:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) No relevant documents are known (R=0, r_t=0)</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) All documents in the collection are relevant</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) b=0 is set in the normalisation formula</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) The query contains only one term</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q9. Which DFR model uses the Poisson distribution as its randomness baseline?</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) PL2</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) BB2</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) GL2</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) IFB2</div>
+  </div>
+
+  <div class="mcq"><div class="qtext">Q10. Pseudo-Relevance Feedback (PRF) can cause "query drift" when:</div>
+    <div class="opt" onclick="answerMCQ(this,'correct')">A) The top-k initially retrieved documents are not truly relevant to the query</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">B) The original query is too long</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">C) μ is set too high in Dirichlet smoothing</div>
+    <div class="opt" onclick="answerMCQ(this,'wrong')">D) BM25 is used instead of PL2 for initial retrieval</div>
+  </div>
+
+  <div class="q-type">True / False</div>
+  <div class="tf-row">
+    <span class="tf-q">The BIM assumes each document term is independent given relevance status.</span>
+    <div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+    <div class="tf-ans ca">TRUE — term independence is a core BIM assumption, enabling the product decomposition.</div></div>
+  </div>
+  <div class="tf-row">
+    <span class="tf-q">Dirichlet smoothing applies the same degree of smoothing to all documents regardless of length.</span>
+    <div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+    <div class="tf-ans wa">FALSE — Dirichlet smoothing is length-sensitive: short documents get more smoothing because |d| is small relative to μ.</div></div>
+  </div>
+  <div class="tf-row">
+    <span class="tf-q">PL2 is a member of the DFR family of retrieval models.</span>
+    <div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+    <div class="tf-ans ca">TRUE — PL2 (Poisson + Laplace Normalisation 2) is one of the main DFR models implemented in Terrier.</div></div>
+  </div>
+  <div class="tf-row">
+    <span class="tf-q">RM3 uses only the feedback model and discards the original query entirely.</span>
+    <div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+    <div class="tf-ans wa">FALSE — RM3 interpolates the feedback model with the original query (RM1) using parameter α, preserving the original query influence.</div></div>
+  </div>
+  <div class="tf-row">
+    <span class="tf-q">Setting k₁=0 in BM25 produces a purely binary retrieval model (like BIM).</span>
+    <div><button class="tb tt" onclick="tfA(this)">True</button><button class="tb tf" onclick="tfA(this)">False</button>
+    <div class="tf-ans ca">TRUE — with k₁=0 the TF factor becomes (0+1)×tf/(0+tf) = 1, making BM25 use only IDF × 1, equivalent to binary term weighting.</div></div>
+  </div>
+
+  <div class="q-type">Calculation Problems</div>
+  <div class="sa"><div class="qt">BM25 problem: N=500, df(IR)=25, df(system)=50. Doc d: tf(IR)=4, tf(system)=2, |d|=300, avgdl=250. k₁=1.5, b=0.75. Compute BM25 score.</div>
+    <button class="rbtn" onclick="rev(this)">Solution</button>
+    <div class="ans"><strong>IDF calculations:</strong><br>
+    IDF(IR) = log((500−25+0.5)/(25+0.5)) = log(475.5/25.5) = log(18.65) ≈ 2.927<br>
+    IDF(system) = log((500−50+0.5)/(50+0.5)) = log(450.5/50.5) ≈ log(8.921) ≈ 2.188<br>
+    <strong>TF normalisation factor:</strong> k₁(1−b + b×|d|/avgdl) = 1.5(0.25 + 0.75×300/250) = 1.5(0.25+0.9) = 1.5×1.15 = 1.725<br>
+    <strong>TF_IR:</strong> (k₁+1)×4/(1.725+4) = 2.5×4/5.725 = 10/5.725 ≈ 1.747<br>
+    <strong>TF_system:</strong> 2.5×2/(1.725+2) = 5/3.725 ≈ 1.342<br>
+    <strong>BM25</strong> = 2.927×1.747 + 2.188×1.342 ≈ 5.113 + 2.936 ≈ <strong>8.049</strong></div>
+  </div>
+
+  <div class="sa"><div class="qt">Dirichlet Smoothing: Collection has 100,000 tokens total. cf("neural")=500, cf("network")=800. Doc d: |d|=200, tf("neural")=0, tf("network")=2. μ=2000. Query: "neural network". Compute log P(q|Md) with Dirichlet smoothing.</div>
+    <button class="rbtn" onclick="rev(this)">Solution</button>
+    <div class="ans">
+    P("neural"|Mc) = 500/100000 = 0.005<br>
+    P("network"|Mc) = 800/100000 = 0.008<br>
+    P("neural"|Md) = (0 + 2000×0.005)/(200+2000) = 10/2200 = 0.00455<br>
+    P("network"|Md) = (2 + 2000×0.008)/(200+2000) = (2+16)/2200 = 18/2200 = 0.00818<br>
+    log P(q|Md) = log(0.00455) + log(0.00818) = −5.39 + −4.80 = <strong>−10.19</strong> (natural log)<br>
+    Note: "neural" would give 0 with MLE but Dirichlet gives non-zero probability!</div>
+  </div>
+
+  <div class="sa"><div class="qt">RSJ Weights: N=1000, R=20 known relevant docs. Term t: df(t)=100, r_t=8 (term appears in 8 relevant docs). Compute the RSJ weight for t. Then compute the IDF approximation (no relevance info) and compare.</div>
+    <button class="rbtn" onclick="rev(this)">Solution</button>
+    <div class="ans">
+    <strong>RSJ weight:</strong> w = log[(r_t+0.5)(N−n_t−R+r_t+0.5) / ((n_t−r_t+0.5)(R−r_t+0.5))]<br>
+    = log[(8.5)(1000−100−20+8+0.5) / ((100−8+0.5)(20−8+0.5))]<br>
+    = log[(8.5 × 888.5) / (92.5 × 12.5)]<br>
+    = log[7552.25 / 1156.25] = log(6.53) ≈ <strong>1.876</strong><br><br>
+    <strong>IDF approximation:</strong> log((1000−100+0.5)/(100+0.5)) = log(900.5/100.5) = log(8.96) ≈ <strong>2.193</strong><br><br>
+    <strong>Comparison:</strong> RSJ weight (1.876) is lower than IDF (2.193). This makes sense: the term appears in 8/20 = 40% of relevant docs, suggesting it's not as strongly discriminative as IDF would suggest. RSJ leverages relevance information for a better estimate.</div>
+  </div>
+
+  <div class="q-type">Exam-Style Questions</div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[10 marks]</span>
+    <div class="q-text"><strong>Q1.</strong> (a) Write the BM25 scoring formula and explain the role of each parameter (k₁, b). [5] (b) Explain why language models require smoothing and describe the Jelinek-Mercer method. [5]</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) BM25 = Σ IDF(t)×(k₁+1)×tf/(k₁(1−b+b×|d|/avgdl)+tf). k₁: TF saturation — how quickly increasing tf gives diminishing returns; k₁=0 → binary; k₁→∞ → raw tf. b: length normalisation — b=0 → no normalisation; b=1 → full normalisation by avgdl. Typical: k₁=1.2, b=0.75. IDF = log((N−df+0.5)/(df+0.5)). [5] (b) MLE P(t|Md)=tf/|d|. If a query term never appears in d, P=0 → document excluded even if otherwise relevant [2]. JM: P(t|Md)=(1−λ)×tf/|d| + λ×P(t|Mc). Mixes document model with collection model. λ controls how much background collection is used; prevents zero probabilities; penalises all documents equally for query terms absent from the collection [3].</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[12 marks]</span>
+    <div class="q-text"><strong>Q2.</strong> Explain the Divergence From Randomness (DFR) framework for information retrieval. Your answer should: (a) explain the core intuition behind DFR [3]; (b) describe the two-component structure of DFR weighting functions [3]; (c) explain the PL2 model specifically, including what P, L and 2 stand for, and the role of the c parameter [4]; (d) name two other DFR models and their basic randomness components [2].</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) DFR intuition [3]: A term is considered informative in a document if its frequency in that document diverges significantly from what would be expected if the term were distributed randomly across the collection (following a Poisson or similar random process). The greater this divergence, the higher the term's weight. This formalises the intuition that surprising/unexpected term occurrences carry more information.<br><br>(b) Two-component structure [3]: Every DFR model has: (1) a basic randomness model (e.g., Poisson, Bose-Einstein, Geometric) that computes the probability of the observed term frequency arising by chance — this is the "Inf₁" component; and (2) a normalisation component (e.g., Laplace Normalisation, H2) that adjusts tf for document length and collection statistics — this is "Inf₂". The final weight = Inf₁ × Inf₂.<br><br>(c) PL2 [4]: P = Poisson (the randomness model — assumes terms distributed according to Poisson distribution in the collection); L = Laplace normalisation (the normalisation method); 2 = Normalisation 2 (the specific normalisation formula variant). The c parameter controls how strongly tf is normalised by document length: tf_n = tf × log₂(1 + c × avgdl/|d|). Larger c → more normalisation (short documents amplified, long penalised). Typical c=1.<br><br>(d) Other DFR models [2]: BB2 (Bose-Einstein distribution as randomness model + Normalisation 2); GL2 (Geometric distribution + Normalisation 2); In_expB2 (Inverse Expected/Stirling approximation + Normalisation 2).</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[10 marks]</span>
+    <div class="q-text"><strong>Q3.</strong> (a) Describe the Binary Independence Model (BIM) and state its two key assumptions. [3] (b) What are Robertson-Sparck Jones (RSJ) weights and how do they relate to the standard IDF formula? [4] (c) What does BM25 add to the BIM to improve retrieval? [3]</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) BIM [3]: The Binary Independence Model represents each document as a binary vector (1=term present, 0=absent) and ranks documents by P(R=1|d,q) — the probability of relevance given the query and document. Key assumptions: (1) Binary representation — each term is either present or absent (no term frequency); (2) Term independence — terms are conditionally independent given the relevance status.<br><br>(b) RSJ weights [4]: RSJ weights are log-odds ratios computed from relevance judgments: w_t = log[(r_t+0.5)(N−n_t−R+r_t+0.5) / ((n_t−r_t+0.5)(R−r_t+0.5))], where N=collection size, R=relevant set size, n_t=df of t, r_t=number of relevant docs containing t. When no relevance information is available (R=0, r_t=0), the RSJ weight simplifies to log((N−n_t+0.5)/(n_t+0.5)), which is exactly the IDF formula used in BM25. Therefore IDF is a special (no-relevance-feedback) case of RSJ weighting.<br><br>(c) BM25 improvements [3]: BM25 extends BIM by: (1) Term frequency — BIM only uses binary presence; BM25 uses a saturating TF function (diminishing returns via k₁); (2) Document length normalisation — long documents are penalised via the b parameter and avgdl; (3) The RSJ weight (IDF approximation) is retained as the IDF component. Together these give a much more effective ranking than binary BIM.</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q4.</strong> Compare Jelinek-Mercer (JM) smoothing and Dirichlet prior smoothing for language models in IR. For each: state the formula, describe the parameter, and identify a key advantage and disadvantage. Which is generally preferred for ad-hoc retrieval and why? [8]</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">JM Smoothing [3]: P(t|Md)=(1−λ)×tf(t,d)/|d| + λ×P(t|Mc). Parameter λ ∈ [0,1] controls the mixing. Advantage: simple, single global parameter easy to tune. Disadvantage: same smoothing for all documents regardless of length — short documents get too little smoothing, long documents too much.<br><br>Dirichlet Smoothing [3]: P(t|Md)=(tf(t,d)+μ×P(t|Mc))/(|d|+μ). Parameter μ (typical=2000) controls prior strength. Advantage: document-length sensitive — short documents get heavier smoothing (μ dominates when |d| small), long documents less smoothing (|d| dominates). Also has Bayesian motivation. Disadvantage: slightly more complex, one more hyperparameter.<br><br>Preference [2]: Dirichlet is generally preferred for ad-hoc retrieval because the document-length-sensitive smoothing is more appropriate — short documents genuinely need more smoothing as they have fewer observations of the underlying distribution.</div>
+  </div>
+
+  <div class="exam-q"><span class="tag">H/M</span><span class="marks">[8 marks]</span>
+    <div class="q-text"><strong>Q5.</strong> (a) What are the three core axiomatic constraints that a good IR model should satisfy? [3] (b) For each constraint, explain whether BM25 satisfies it, with brief justification. [5]</div>
+    <button class="rbtn" onclick="rev(this)" style="margin-top:10px;">Reveal Answer</button>
+    <div class="ans">(a) Three axiomatic constraints [3]: (1) TF constraint with saturation: score increases with term frequency but with diminishing returns (∂score/∂tf > 0 and ∂²score/∂tf² &lt; 0); (2) IDF constraint: terms appearing in fewer documents should receive higher weight (more discriminative); (3) Length normalisation constraint (LNC): documents should not be rewarded simply for being longer — a document with the same density of relevant content as another but longer should not score higher.<br><br>(b) BM25 satisfies all three [5]: (1) TF + saturation: BM25's TF factor (k₁+1)×tf/(k₁(…)+tf) is monotonically increasing in tf (satisfies TF constraint) but approaches the asymptote k₁+1 as tf→∞ (satisfies saturation). (2) IDF: BM25 uses IDF=log((N−df+0.5)/(df+0.5)), which decreases as df increases — rare terms get higher weight. (3) LNC: the denominator includes k₁×b×|d|/avgdl, which grows with document length, penalising long documents — satisfies length normalisation. BM25 satisfies all three constraints, which partly explains its strong empirical performance.</div>
+  </div>
+
+  <div class="q-type">Flashcards</div>
+  <div class="fc-grid">
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">BM25</div><div class="fcb">Best Match 25: IDF × saturated TF / length-normalised denominator. k₁ controls saturation, b controls length normalisation. Gold standard classical model.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Language Model (IR)</div><div class="fcb">Each document has a language model Md. Score = P(q|Md) — probability the doc's model generated the query. Requires smoothing.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">JM Smoothing</div><div class="fcb">P(t|Md) = (1-λ)×tf/|d| + λ×P(t|Mc). Fixed λ mix with collection. Simple but not length-sensitive.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Dirichlet Smoothing</div><div class="fcb">P(t|Md)=(tf+μP(t|Mc))/(|d|+μ). μ≈2000. Length-sensitive: short docs get heavier smoothing. Preferred for ad-hoc retrieval.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">DFR Framework</div><div class="fcb">Divergence From Randomness. Informative term = frequency diverges from random (Poisson/BE/Geometric). Two components: basic model × normalisation.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">PL2</div><div class="fcb">Poisson + Laplace Normalisation 2. DFR model. tf_n = tf×log₂(1+c×avgdl/|d|). c parameter controls length normalisation strength.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">BIM / BIR</div><div class="fcb">Binary Independence Model. Binary term vectors + term independence assumption. Ranks by P(R|d,q). RSJ weights derived from this. Foundation of BM25.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">RSJ Weights</div><div class="fcb">Robertson-Sparck Jones weights = log-odds of relevance with Laplace smoothing. Simplify to IDF when no relevance judgments are available.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">PRP</div><div class="fcb">Probability Ranking Principle (Robertson 1977): ranking by P(R|D) in decreasing order maximises expected effectiveness.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">RM3 / PRF</div><div class="fcb">Pseudo-Relevance Feedback: assume top-k docs relevant, extract expansion terms, re-retrieve. RM3 interpolates feedback model with original query (α parameter).</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">BM25F</div><div class="fcb">Field-based BM25: normalises TF within each field (title, body, URL) independently before combining. Allows per-field weights w_f and b_f.</div></div></div>
+    <div class="fc" onclick="this.classList.toggle('flipped')"><div class="fci"><div class="fcf">Axiomatic IR Constraints</div><div class="fcb">TF (more occurrences → higher score, with saturation) + IDF (rare terms weighted more) + LNC (length normalisation). BM25 satisfies all three.</div></div></div>
+  </div>
+</section>
+
+</div></main>
+
+<script>
+window.addEventListener('scroll',()=>{
+  const p=document.getElementById('pb');
+  p.style.width=(window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%';
+  document.getElementById('bt').style.display=window.scrollY>400?'block':'none';
+  document.querySelectorAll('nav a').forEach(a=>{
+    const s=document.querySelector(a.getAttribute('href'));
+    if(s){const r=s.getBoundingClientRect();a.classList.toggle('active',r.top<=100&&r.bottom>100);}
+  });
+});
+function toggleTheme(){document.body.dataset.theme=document.body.dataset.theme==='light'?'':'light';}
+function answerMCQ(el,t){const i=el.parentElement;i.querySelectorAll('.opt').forEach(o=>o.classList.remove('c','w'));el.classList.add(t==='correct'?'c':'w');}
+function tfA(btn){const i=btn.closest('.tf-row');i.querySelector('.tf-ans').style.display='block';}
+function rev(btn){const b=btn.nextElementSibling;b.style.display=b.style.display==='block'?'none':'block';btn.textContent=b.style.display==='block'?'Hide Answer':'Reveal Answer';}
+function rvb(el){el.classList.add('rv');}
+document.querySelectorAll('nav a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const t=document.querySelector(a.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}));
+</script>
+
+</body>
+</html>
