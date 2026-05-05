@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IV Notes Part 2 — Weeks 4–9 + Exam Practice</title>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  :root { --bg:#0f1117;--surface:#1a1d2e;--card:#252840;--accent:#6c63ff;--accent2:#ff6584;--accent3:#43e97b;--accent4:#f7971e;--text:#e8eaf6;--muted:#9fa8da;--border:#3a3f6e; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7}
+  nav{background:var(--surface);border-bottom:2px solid var(--accent);padding:0;position:sticky;top:0;z-index:100}
+  nav ul{display:flex;list-style:none;overflow-x:auto;padding:0 1rem;gap:2px}
+  nav a{display:block;padding:.6rem 1rem;color:var(--muted);text-decoration:none;font-size:.85rem;font-weight:600;white-space:nowrap;border-bottom:3px solid transparent;transition:.2s}
+  nav a:hover,nav a.active{color:var(--accent);border-color:var(--accent)}
+  .hero{background:linear-gradient(135deg,#1a1d2e,#252840);padding:2rem;text-align:center;border-bottom:1px solid var(--border)}
+  .hero h1{font-size:2rem;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .exam-banner{background:linear-gradient(90deg,#ff6584,#f7971e);color:white;padding:.7rem 2rem;font-weight:700;font-size:.95rem;text-align:center}
+  main{max-width:1200px;margin:0 auto;padding:2rem 1rem}
+  section{display:none}
+  section.active{display:block}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin:1.2rem 0}
+  .card h2{color:var(--accent);font-size:1.3rem;margin-bottom:.8rem}
+  .card h3{color:var(--accent3);font-size:1.05rem;margin:1rem 0 .5rem}
+  .card h4{color:var(--accent4);font-size:.95rem;margin:.8rem 0 .3rem}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+  @media(max-width:768px){.grid-2,.grid-3{grid-template-columns:1fr}}
+  .badge{display:inline-block;padding:.2rem .6rem;border-radius:20px;font-size:.75rem;font-weight:700;margin:.2rem}
+  .badge-blue{background:rgba(108,99,255,.2);color:var(--accent);border:1px solid var(--accent)}
+  .badge-red{background:rgba(255,101,132,.2);color:var(--accent2);border:1px solid var(--accent2)}
+  .badge-green{background:rgba(67,233,123,.2);color:var(--accent3);border:1px solid var(--accent3)}
+  .badge-yellow{background:rgba(247,151,30,.2);color:var(--accent4);border:1px solid var(--accent4)}
+  table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.9rem}
+  th{background:var(--accent);color:white;padding:.6rem .8rem;text-align:left}
+  td{padding:.5rem .8rem;border-bottom:1px solid var(--border)}
+  tr:nth-child(even) td{background:rgba(255,255,255,.03)}
+  pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:1rem;overflow-x:auto;font-size:.85rem;margin:.8rem 0}
+  code{font-family:'Fira Code','Consolas',monospace;color:#e8eaf6}
+  .code-label{background:var(--accent);color:white;font-size:.75rem;padding:.2rem .6rem;border-radius:4px 4px 0 0;display:inline-block;font-weight:700}
+  .math-box{background:rgba(108,99,255,.08);border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:1rem 1.2rem;margin:.8rem 0}
+  .quiz{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem;margin:1rem 0}
+  .quiz-q{font-weight:600;margin-bottom:.8rem}
+  .option{display:block;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:.6rem 1rem;margin:.4rem 0;cursor:pointer;transition:.2s;width:100%;text-align:left}
+  .option:hover{border-color:var(--accent)}
+  .option.correct{background:rgba(67,233,123,.15);border-color:var(--accent3);color:var(--accent3)}
+  .option.wrong{background:rgba(255,101,132,.15);border-color:var(--accent2);color:var(--accent2)}
+  .feedback{margin-top:.5rem;font-size:.9rem;display:none;padding:.5rem;border-radius:4px}
+  .exam-q{background:linear-gradient(135deg,rgba(108,99,255,.1),rgba(255,101,132,.05));border:1px solid var(--accent);border-radius:12px;padding:1.5rem;margin:1.2rem 0}
+  .exam-q .marks{float:right;background:var(--accent2);color:white;padding:.2rem .7rem;border-radius:20px;font-weight:700;font-size:.85rem}
+  .exam-q h3{color:var(--accent2);font-size:1rem;margin-bottom:.8rem}
+  .model-answer{background:var(--surface);border-radius:8px;padding:1rem;margin-top:.8rem;display:none}
+  .show-btn{background:var(--accent);color:white;border:none;padding:.4rem .9rem;border-radius:6px;cursor:pointer;font-size:.85rem;margin-top:.5rem}
+  .show-btn:hover{background:#7c74ff}
+  .accordion{margin:.5rem 0}
+  .acc-header{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600}
+  .acc-header:hover{border-color:var(--accent)}
+  .acc-body{display:none;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;padding:1rem}
+  .acc-body.open{display:block}
+  .pipeline{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin:1rem 0}
+  .pipe-step{background:var(--card);border:2px solid var(--accent);border-radius:8px;padding:.5rem 1rem;font-weight:600;font-size:.85rem;text-align:center}
+  .pipe-arrow{color:var(--accent);font-size:1.2rem}
+  .key-term{color:var(--accent3);font-weight:700}
+  .highlight-box{background:rgba(247,151,30,.1);border:1px solid var(--accent4);border-radius:8px;padding:1rem;margin:.8rem 0}
+  .spring-canvas{width:100%;height:220px;background:var(--surface);border-radius:10px;border:1px solid var(--border)}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .card{animation:fadeIn .3s ease}
+</style>
+</head>
+<body>
+
+<div class="exam-banner">NEW FORMAT 2025-26: 4 × 15-mark questions | No MCQs | 90 minutes</div>
+<div class="hero">
+  <h1>IV Notes — Weeks 4–9 + Full Exam Practice</h1>
+  <p>Continues from Part 1 | Open both files for complete coverage</p>
+</div>
+
+<nav>
+  <ul>
+    <li><a href="#" onclick="show('w4')" class="active">Week 4: Pipeline</a></li>
+    <li><a href="#" onclick="show('w4b')">Week 4b: Multidim</a></li>
+    <li><a href="#" onclick="show('w5')">Week 5: Networks</a></li>
+    <li><a href="#" onclick="show('w6')">Week 6: Multi-Views</a></li>
+    <li><a href="#" onclick="show('w7')">Week 7: Design & Eval</a></li>
+    <li><a href="#" onclick="show('w8')">Week 8: Rules + Design Examples</a></li>
+    <li><a href="#" onclick="show('w9')">Week 9: Cognition</a></li>
+    <li><a href="#" onclick="show('exam')">🎯 Full Exam Practice</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- WEEK 4: VISUALISATION PIPELINE & INTERACTION                  -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="w4" class="active">
+<div class="card">
+  <h2>⚙️ Week 4a: The Visualisation Pipeline</h2>
+  <p>Based on Card, Mackinlay & Shneiderman (1999). The pipeline describes how raw data becomes an interactive visual representation.</p>
+</div>
+
+<div class="card">
+  <h2>🔄 The Pipeline Stages</h2>
+  <div class="pipeline">
+    <div class="pipe-step">Raw Data</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" style="border-color:var(--accent3)">Data Tables<br><small>Transform</small></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" style="border-color:var(--accent4)">Visual Structures<br><small>Encode</small></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" style="border-color:var(--accent2)">Views<br><small>Display</small></div>
+    <div class="pipe-arrow">↺</div>
+    <div class="pipe-step" style="border-color:var(--muted)">Interaction</div>
+  </div>
+
+  <div class="grid-2" style="margin-top:1rem">
+    <div>
+      <h3>Transform Stage</h3>
+      <p>Raw data → data tables. Filtering, aggregation, derivation of new values. Example: computing % male from raw male/female counts; binning finish times into 10-minute intervals.</p>
+      <h3>Encode Stage</h3>
+      <p>Data tables → visual structures. Mapping attributes to visual channels. Must be both <strong>expressive</strong> (encodes all and only the data) and <strong>effective</strong> (uses best channels for the data type).</p>
+    </div>
+    <div>
+      <h3>Display Stage</h3>
+      <p>Visual structures → views. Rendering to screen. Resolution, colour gamut, display size all constrain what is possible.</p>
+      <h3>Interaction Stage</h3>
+      <p>User manipulates the view, which feeds back into earlier pipeline stages. Key interaction types:</p>
+      <ul style="padding-left:1.2rem;margin-top:.3rem">
+        <li>Select → change data subset displayed</li>
+        <li>Query → filter or highlight</li>
+        <li>Reconfigure → change encoding</li>
+        <li>Focus+Context → distortion/overview</li>
+        <li>Details on demand → progressive disclosure</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🖱️ Interaction Techniques</h2>
+  <div class="grid-2">
+    <div>
+      <h3>Focus + Context</h3>
+      <p>Shows detail (focus) while preserving overview (context). Examples:</p>
+      <ul style="padding-left:1.2rem">
+        <li><strong>Fisheye distortion:</strong> magnifies focal area, compresses periphery</li>
+        <li><strong>Perspective Wall:</strong> for large linear data (chronological/alphabetical)</li>
+        <li><strong>Hyperbolic trees:</strong> for large hierarchies</li>
+        <li><strong>Overview+Detail:</strong> separate overview panel alongside detail view</li>
+      </ul>
+      <div class="highlight-box">
+        <strong>Exam Definition:</strong> Focus+context is NOT the same as a zoomed view. A zoomed view loses context entirely. Focus+context retains the full data while magnifying a region — e.g., fisheye distortion of a map.
+      </div>
+    </div>
+    <div>
+      <h3>Visual Feedback Timing (Responsiveness)</h3>
+      <table>
+        <tr><th>Time</th><th>Category</th><th>Example</th></tr>
+        <tr><td>~0.1s</td><td>Perceptual</td><td>Mouseover highlighting; cursor tracking</td></tr>
+        <tr><td>~1s</td><td>Immediate</td><td>Selection highlight when dragging rectangle; popup window</td></tr>
+        <tr><td>~10s</td><td>Brief task</td><td>File loading; visualisation redraw after new file</td></tr>
+      </table>
+      <p style="color:var(--muted);font-size:.85rem;margin-top:.5rem">For large datasets: use frontbuffer for selection highlight; show progress bars for long operations; use background threads.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🔍 Week 4b: Data Selection</h2>
+  <div class="grid-2">
+    <div>
+      <h3>Selection Methods</h3>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Direct Selection <span>▼</span></div>
+        <div class="acc-body">
+          <p>Click on individual items. Simple but limited to visible, single objects. Enhanced by <strong>bubble/area cursor</strong> which selects the closest object to cursor (not just directly under it).</p>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Brushing & Linking <span>▼</span></div>
+        <div class="acc-body">
+          <p>Select (brush) items in one view → linked view shows same items highlighted. Selection propagates across all linked views simultaneously. Essential for SPLOM analysis.</p>
+          <p style="color:var(--muted);font-size:.85rem">From: Becker & Cleveland, "Brushing Scatterplots", 1987.</p>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Dynamic Queries <span>▼</span></div>
+        <div class="acc-body">
+          <p>Sliders, checkboxes, range selectors define a query. The view updates in real-time (&lt;0.1s). No typing required. Users explore the data space visually.</p>
+          <p>Advantage over SQL: <strong>no need to know what to look for in advance</strong>. Users see the effect of their query instantly — supports discovery tasks.</p>
+          <p style="color:var(--muted);font-size:.85rem">Example: Attribute Explorer (Spence & Tweedie, 1994); FSMVis demo.</p>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Generalised Selection <span>▼</span></div>
+        <div class="acc-body">
+          <p>Selection uses the <strong>semantic model</strong> of the data (hierarchy, spatial relationships, categories) rather than just pixel coordinates.</p>
+          <p><strong>Example — Cars dataset:</strong> Rather than clicking individual car dots, you select "all cars manufactured in 1978-1982 with &gt;6 cylinders". The semantic model (car attributes) defines the selection.</p>
+          <p><strong>Advantage:</strong> Can select groups that share a property but are not spatially adjacent in the view. Enables selection at different levels of abstraction.</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3>Query Representation</h3>
+      <div style="background:var(--surface);border-radius:8px;padding:1rem">
+        <h4>Tuple-based selection</h4>
+        <p>Store selected items by their data values (a list of item IDs/tuples). Simple and direct. Limited to the items currently visible.</p>
+        <h4>Query-based selection</h4>
+        <p>Store the selection as a query (e.g., "members &gt; 100 AND fees &lt; 30"). More powerful — the query can be applied to new data, used in linked views, and supports generalised selection across hierarchies.</p>
+        <p style="color:var(--accent3);margin-top:.5rem">Query-based = <strong>declarative query</strong> (what, not how). This is the basis of dynamic queries and generalised selection.</p>
+      </div>
+      <h3 style="margin-top:1rem">Dynamic Queries vs SQL</h3>
+      <table>
+        <tr><th>Feature</th><th>Dynamic Queries</th><th>SQL</th></tr>
+        <tr><td>Learning curve</td><td>Low (visual)</td><td>High (language)</td></tr>
+        <tr><td>Response time</td><td>&lt;0.1s (instant)</td><td>Seconds to minutes</td></tr>
+        <tr><td>Discovery support</td><td>Excellent (explore freely)</td><td>Poor (need to know query in advance)</td></tr>
+        <tr><td>Precision</td><td>Limited by slider/checkbox granularity</td><td>Exact (arbitrary precision)</td></tr>
+        <tr><td>Complex logic</td><td>Limited</td><td>Full boolean logic, joins</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>💻 Altair: Interactive Selection Code</h2>
+  <span class="code-label">Python / Altair — Dynamic Brush + Linked Views</span>
+  <pre><code>import altair as alt
+from vega_datasets import data as vd
+
+cars = vd.cars()
+
+# Create an interval selection (brush)
+brush = alt.selection_interval()
+
+# View 1: Scatter (horsepower vs mpg) — brush selects here
+scatter = alt.Chart(cars).mark_point(filled=True).encode(
+    x=alt.X('Horsepower:Q'),
+    y=alt.Y('Miles_per_Gallon:Q'),
+    color=alt.condition(brush,
+                        alt.Color('Origin:N',
+                                  scale=alt.Scale(scheme='category10')),
+                        alt.value('lightgray')),  # grey = not selected
+    opacity=alt.condition(brush, alt.value(0.9), alt.value(0.2)),
+    tooltip=['Name:N', 'Horsepower:Q', 'Miles_per_Gallon:Q']
+).add_params(brush).properties(width=350, height=280,
+    title='Brush to select cars')
+
+# View 2: Bar chart — linked, shows only selected cars' origin counts
+bars = alt.Chart(cars).mark_bar().encode(
+    y=alt.Y('Origin:N'),
+    x=alt.X('count():Q', title='Number of Selected Cars'),
+    color=alt.Color('Origin:N', scale=alt.Scale(scheme='category10'))
+).transform_filter(brush).properties(width=350, height=280,
+    title='Origin of selected cars')
+
+# Combine side by side
+(scatter | bars).properties(title='Brushing & Linking Demo').show()</code></pre>
+
+  <span class="code-label" style="margin-top:1rem;display:block">Python / Altair — Dynamic Queries with Sliders</span>
+  <pre><code>import altair as alt
+from vega_datasets import data as vd
+
+cars = vd.cars()
+
+# Slider for horsepower range
+hp_slider = alt.binding_range(min=0, max=230, step=5, name='Min Horsepower: ')
+hp_select = alt.param(name='hp_min', bind=hp_slider, value=0)
+
+# Origin checkbox filter
+origin_select = alt.selection_point(fields=['Origin'], bind='legend')
+
+chart = alt.Chart(cars).mark_point(filled=True, size=80).encode(
+    x=alt.X('Horsepower:Q'),
+    y=alt.Y('Miles_per_Gallon:Q'),
+    color=alt.Color('Origin:N'),
+    opacity=alt.condition(origin_select, alt.value(0.8), alt.value(0.1))
+).add_params(
+    hp_select, origin_select
+).transform_filter(
+    alt.datum.Horsepower >= hp_select  # dynamic query filter
+).properties(
+    title='Dynamic Query: Filter by Horsepower',
+    width=500, height=350
+)
+
+chart.show()</code></pre>
+</div>
+
+<div class="card">
+  <h2>📝 Exam Questions — Week 4 [15-mark format]</h2>
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 7 — Generalised Selection (from 2025 paper)</h3>
+    <p>Imagine a dataset of cars' current locations and speeds in some urban area, as tracked by a sensor network. Demonstrate the generalised selection interaction technique using this dataset. Explain what semantic model of the data you would use, and how you would apply generalised selection to it, to improve interaction and analysis when compared to normal direct selection of data objects.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Semantic model:</strong> The cars dataset has attributes including location (position), speed (quantitative), car type (categorical: taxi, private, lorry), and heading/direction (quantitative, cyclic). Spatially, the city can be modelled as zones (residential, commercial, motorway corridors). Temporally, rush hours vs. off-peak times form semantic groups.</p>
+      <p style="margin-top:.8rem"><strong>Normal direct selection (the problem):</strong> Clicking on individual car dots on a map selects exactly one car at one moment. With thousands of cars moving, this is: (1) slow — only one car per click; (2) imprecise — difficult to click tiny moving dots; (3) temporally limited — the selection is a snapshot, not a pattern.</p>
+      <p style="margin-top:.8rem"><strong>Generalised selection using the semantic model:</strong></p>
+      <p>1. <strong>Zone-based selection:</strong> Draw a region on the map → select all cars currently within that geographic zone. This is generalised because it uses the spatial semantic structure (zones), not pixel proximity. One gesture selects hundreds of cars.</p>
+      <p>2. <strong>Speed-class selection:</strong> Define a speed band (e.g., &lt;10 mph = congested). Selecting "all congested cars" via a slider highlights all matching cars across the entire map — regardless of where they are. This uses the attribute semantic model (speed as a meaningful class, not just a number).</p>
+      <p>3. <strong>Type-based hierarchical selection:</strong> Select "all lorries" using the vehicle type hierarchy (vehicles → lorries). This propagates the selection up/down the hierarchy — selecting a type selects all instances.</p>
+      <p style="margin-top:.8rem"><strong>Improvement over direct selection:</strong> Generalised selection allows a single user gesture to select a semantically meaningful group (all cars in zone A travelling over 40 mph), which direct clicking cannot achieve. The declarative query representation means the selection can be applied to linked views (e.g., a time-series chart showing selected cars' speed history) without re-selection.</p>
+    </div>
+  </div>
+
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 8 — Dynamic Queries</h3>
+    <p>Your local health service wishes to offer patients access to a database with, for each patient, a medical record with attributes such as medical conditions, prescriptions, hospital visits, and measurements (e.g., heart rate) recorded over time. The service currently has a simple web app offering SQL queries. You are asked to present an alternative design based on dynamic queries. Outline such a design, and present arguments for it compared to the SQL app.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Dynamic Query Design:</strong></p>
+      <p>The interface would consist of a main display panel (showing a scatterplot, timeline, or map of patient data) with dynamic query controls around it:</p>
+      <ul style="padding-left:1.2rem;margin:.5rem 0">
+        <li><strong>Age slider (range: 0-100):</strong> Double-ended slider → instantly filters to patients in selected age range</li>
+        <li><strong>Condition checkboxes:</strong> Tick "diabetes", "hypertension" etc. → immediately shows only matching patients</li>
+        <li><strong>Heart rate range slider:</strong> Filters by average/max heart rate value</li>
+        <li><strong>Time range selector:</strong> Date picker or timeline brush → shows patients with visits in selected period</li>
+        <li><strong>Prescription dropdown:</strong> Multi-select list → filters by prescribed medications</li>
+      </ul>
+      <p>All controls update the display in &lt;0.1 seconds. Selected patients are highlighted; unselected patients fade to grey (not removed). Patient count for current selection is shown prominently.</p>
+      <p style="margin-top:.8rem"><strong>Arguments for dynamic queries over SQL:</strong></p>
+      <p>1. <strong>No expertise required:</strong> Patients or non-technical clinicians cannot write SQL. Dynamic queries require only slider manipulation and checkbox selection.</p>
+      <p>2. <strong>Supports discovery:</strong> With SQL, you must know what you're looking for before writing the query. Dynamic queries allow exploration — moving the age slider reveals the distribution of conditions across ages without any predetermined hypothesis.</p>
+      <p>3. <strong>Instant feedback:</strong> SQL queries take time to write, execute, and return results. Dynamic queries update at 0.1s — the "as-you-move-it" feedback allows rapid iteration and exploration.</p>
+      <p>4. <strong>Visual overview preserved:</strong> SQL shows only query results (a list). Dynamic queries show all patients at all times — selected ones highlighted. This maintains context (how many patients NOT matching the query) which SQL cannot provide.</p>
+      <p>5. <strong>Error prevention:</strong> SQL queries can have syntax errors, logical errors, or return empty results without explanation. Dynamic queries cannot have syntax errors; a result of 0 is immediately visible because all dots disappear.</p>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- WEEK 4b: MULTIDIMENSIONAL VISUALISATION                       -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="w4b">
+<div class="card">
+  <h2>🔢 Week 4b: Multidimensional Visualisation</h2>
+  <p>When the number of dimensions exceeds 3, spatial position alone cannot encode all variables. Multiple strategies exist.</p>
+</div>
+
+<div class="card">
+  <h2>🌀 Dimensional Reduction — Core Concept</h2>
+  <div class="math-box">
+    <p><strong>Problem:</strong> Data has d dimensions (e.g., d=100). We want to show it in 2D while preserving relationships.</p>
+    <p style="margin-top:.5rem"><strong>Dimensional Reduction:</strong> Find a mapping f: ℝᵈ → ℝ² such that similar objects in high-D space remain close in 2D, and dissimilar objects remain far.</p>
+    \[ \text{Ideal: } \forall i,j: \; dist_{2D}(i,j) \approx dist_{highD}(i,j) \]
+    <p style="margin-top:.5rem">This is a 2D layout that retains as much high-dimensional structure as possible.</p>
+  </div>
+  <p>Methods: Spring models, PCA (matrix methods), t-SNE, UMAP.</p>
+</div>
+
+<div class="card">
+  <h2>⚙️ Spring Models (Force-Directed Layout)</h2>
+  <div class="grid-2">
+    <div>
+      <h3>Concept</h3>
+      <p>Simulate springs between every pair of objects. The ideal relaxed length of each spring ∝ high-dimensional distance between those objects.</p>
+      <ul style="padding-left:1.2rem;margin:.5rem 0">
+        <li>Similar objects (close in high-D) → short spring → pull together</li>
+        <li>Dissimilar objects (far in high-D) → long spring → push apart</li>
+        <li>System reaches equilibrium when spring forces balance</li>
+      </ul>
+
+      <h3>Algorithm (Simplified)</h3>
+      <pre><code>initialise 2D positions randomly
+for each iteration:
+  for each object i:
+    totalForce = [0, 0]
+    for each other object j:
+      totalForce += force(i, j)
+    velocity(i) += ts * totalForce
+    position(i) += ts * velocity(i)</code></pre>
+
+      <h3>Similarity Metric</h3>
+      <div class="math-box">
+        For quantitative columns: normalise each column to [0,1], then:
+        \[ s = \sum_c |M_{ic} - M_{jc}| \]
+        For categorical columns: multiply s by 1.25 for each mismatch.
+        Finally: \( s = s / D \) (D = number of dimensions)
+      </div>
+    </div>
+    <div>
+      <h3>Complexity Analysis</h3>
+      <div class="math-box">
+        <p><strong>Naïve spring model:</strong></p>
+        \[ \text{Per iteration: } O(N^2) \text{ force calculations} \]
+        \[ \text{Overall (≈N iterations): } O(N^3) \]
+        <p style="margin-top:.5rem">This limits naïve spring models to N ≈ 10,000–50,000 objects.</p>
+
+        <p style="margin-top:.8rem"><strong>Barnes-Hut approximation:</strong></p>
+        \[ \text{Per iteration: } O(N \log N) \]
+        Uses a spatial tree: nearby objects → exact forces; distant cells → one approximate force from centre of mass.
+
+        <p style="margin-top:.8rem"><strong>Chalmers' 1996 sampling method:</strong></p>
+        \[ \text{Per iteration: } O(N) \]
+        Each object maintains a neighbour set + random sample. Forces calculated only from these, not all N objects.
+      </div>
+
+      <h3>Exam Calculation Example</h3>
+      <div class="highlight-box">
+        <p><strong>Q: First, lay out 5000 objects (50 dims). Then lay out 10000 objects (same 50 dims). How much longer per iteration?</strong></p>
+        <p>Naïve: O(N²). Ratio = (10000)²/(5000)² = 4× longer.</p>
+        <p>Answer: <strong>4 times longer per iteration</strong>.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🧮 t-SNE vs UMAP vs Spring Models</h2>
+  <table>
+    <tr><th>Feature</th><th>Spring Model</th><th>t-SNE</th><th>UMAP</th></tr>
+    <tr><td>Core idea</td><td>Physics-based springs between all pairs</td><td>KL-divergence of neighbour distributions in low-D vs high-D</td><td>Manifold-based; topological structure of high-D space</td></tr>
+    <tr><td>Local structure</td><td>Good</td><td>Excellent (optimised for)</td><td>Good</td></tr>
+    <tr><td>Global structure</td><td>Good (neighbours + non-neighbours)</td><td>Poor (low penalty for non-neighbour proximity)</td><td>Good (balances local + global)</td></tr>
+    <tr><td>Scalability</td><td>O(N³) naïve; O(N) with sampling → millions</td><td>O(N²) or O(N log N) approx; typically N &lt; 50,000</td><td>Scales to millions; O(d·N^1.14) estimated</td></tr>
+    <tr><td>Cluster separation</td><td>Moderate</td><td>Very clear (may be artificial)</td><td>Clear but more honest</td></tr>
+    <tr><td>Risk</td><td>Local minima (use restarts)</td><td>Creates clusters where none exist!</td><td>Complex maths; less interpretable</td></tr>
+  </table>
+  <div class="highlight-box" style="margin-top:1rem">
+    <strong>Key exam point:</strong> The question asks which algorithm would NOT be good when fine-grained local detail AND accurate high-level cluster relationships are both important. Answer: <strong>t-SNE</strong> — because it prioritises local structure and poor global structure. UMAP and spring models both handle both local and global structure.
+  </div>
+</div>
+
+<div class="card">
+  <h2>💻 Altair: Dimensional Reduction Visualisation</h2>
+  <span class="code-label">Python — Spring Model Concept + Altair display</span>
+  <pre><code>import numpy as np
+import altair as alt
+import pandas as pd
+
+# Simplified 2D spring model for illustration
+# In practice, use: pip install umap-learn sklearn
+from sklearn.manifold import TSNE
+from sklearn.datasets import load_iris
+
+iris = load_iris()
+X, y = iris.data, iris.target  # 4 dimensions, 150 samples
+
+# t-SNE dimensional reduction to 2D
+tsne = TSNE(n_components=2, random_state=42, perplexity=30)
+X_2d = tsne.fit_transform(X)
+
+df = pd.DataFrame({
+    'x': X_2d[:, 0],
+    'y': X_2d[:, 1],
+    'species': [iris.target_names[i] for i in y]
+})
+
+chart = alt.Chart(df).mark_point(size=80, filled=True, opacity=0.8).encode(
+    x=alt.X('x:Q', title='Dimension 1 (t-SNE)'),
+    y=alt.Y('y:Q', title='Dimension 2 (t-SNE)'),
+    color=alt.Color('species:N',
+                    scale=alt.Scale(scheme='dark2'),
+                    legend=alt.Legend(title='Species')),
+    tooltip=['species:N', 'x:Q', 'y:Q']
+).properties(
+    title='t-SNE Layout of Iris Dataset (4D → 2D)',
+    width=500, height=400
+).interactive()
+
+chart.show()
+
+# For UMAP (install: pip install umap-learn)
+# import umap
+# reducer = umap.UMAP(n_components=2, random_state=42)
+# X_umap = reducer.fit_transform(X)
+# ... same plotting code with UMAP coordinates</code></pre>
+</div>
+
+<div class="card">
+  <h2>📝 Exam Questions — Week 4b [15-mark format]</h2>
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 9 — Dimensional Reduction (from 2025 paper)</h3>
+    <p>Imagine a dataset with a significant number of objects (e.g., 1,000,000) and a high number of dimensions (e.g., 100). You have one visualisation of a dimensional reduction of the data made using a spring model. You also have several other chart types (bar charts, scatterplots, selectable lists). Describe, in general terms, how and why you would link multiple views of the data.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Why link multiple views:</strong></p>
+      <p>The spring model 2D layout shows the overall clustering structure of all 100 dimensions combined — it reveals global patterns and groupings. However, it does not show which individual dimensions drive the clustering, nor does it allow inspection of specific attribute values. The bar charts and scatterplots can show individual dimensions precisely, but they cannot show the 100-dimensional structure. Linking combines both capabilities: global structure from the spring model, detail from the individual-dimension views.</p>
+      <p style="margin-top:.8rem"><strong>How to link the views:</strong></p>
+      <p>1. <strong>Shared data representation:</strong> All views must reference the same underlying dataset. Each object has an ID that is shared across all views. When an object is selected in one view, its ID is used to highlight it in all other views.</p>
+      <p>2. <strong>Brushing & Linking:</strong> User draws a rectangle over a cluster in the spring model layout → all objects in that spatial region are selected → the bar charts update to show the distribution of each dimension for only the selected objects. This reveals what attributes characterise the cluster.</p>
+      <p>3. <strong>Selectable list:</strong> The selectable list shows individual objects. Selecting an object in the list → highlights the corresponding dot in the spring model (locate interaction: target known, position unknown).</p>
+      <p>4. <strong>Cross-filtering:</strong> Applying a filter in a bar chart (e.g., select objects with dimension 1 &gt; 0.7) highlights only those objects in the spring model. This links dimensional filters to the spatial layout.</p>
+      <p style="margin-top:.8rem"><strong>With 1,000,000 objects:</strong> Full highlighting of all 1M objects is computationally expensive. Use aggregation in linked views (e.g., histograms of selected objects rather than individual dots in a linked scatterplot). For the spring model, use sampling or clustering to display a representative subset, linking back to the full dataset for detail-on-demand.</p>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- WEEK 5: NETWORKS AND TREES                                    -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="w5">
+<div class="card">
+  <h2>🕸️ Week 5: Depicting Networks and Trees</h2>
+</div>
+
+<div class="card">
+  <h2>📐 Network Terminology</h2>
+  <div class="grid-2">
+    <div>
+      <table>
+        <tr><th>Term</th><th>Definition</th></tr>
+        <tr><td>Graph / Network</td><td>Nodes (items) + Links (relationships)</td></tr>
+        <tr><td>Tree</td><td>Network with no cycles; one parent per node</td></tr>
+        <tr><td>Directed</td><td>Links have direction (arrows)</td></tr>
+        <tr><td>Weighted</td><td>Links have a quantitative value</td></tr>
+        <tr><td>Adjacency matrix</td><td>NxN matrix; cell = presence/weight of edge</td></tr>
+        <tr><td>Node-link diagram</td><td>Nodes as points, links as lines</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Network Tasks</h3>
+      <p><strong>Topology-based:</strong> find paths, find neighbours, compare centrality, identify clusters</p>
+      <p><strong>Attribute-based:</strong> distribution of node attributes, correlations</p>
+      <p><strong>Combination:</strong> "find friends-of-friends who like cats" (topology + attributes)</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🔷 Node-Link vs Adjacency Matrix</h2>
+  <table>
+    <tr><th>Feature</th><th>Node-Link Diagram</th><th>Adjacency Matrix</th></tr>
+    <tr><td>Topology understanding</td><td>Excellent — paths visible intuitively</td><td>Poor for path tracing</td></tr>
+    <tr><td>Path tracing</td><td>Excellent</td><td>Poor</td></tr>
+    <tr><td>Cluster detection</td><td>Good with good layout</td><td>Good after reordering</td></tr>
+    <tr><td>Scalability</td><td>Poor (clutter with dense graphs)</td><td>1K nodes, 1M edges</td></tr>
+    <tr><td>Predictability</td><td>Layout-dependent (varies)</td><td>Fixed grid structure</td></tr>
+    <tr><td>Training needed</td><td>None (intuitive)</td><td>Some (requires learning to read)</td></tr>
+    <tr><td>Best for</td><td>Small networks, path tracing</td><td>Large dense networks, non-path tasks</td></tr>
+  </table>
+  <div class="highlight-box">
+    <strong>Node ordering is crucial for adjacency matrices.</strong> Random ordering produces apparent randomness. Reordering by cluster membership (barycentric ordering, etc.) reveals block structure — clusters appear as dark squares along the diagonal.
+  </div>
+</div>
+
+<div class="card">
+  <h2>🌳 Tree Visualisation Methods</h2>
+  <div class="grid-2">
+    <div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Node-Link Trees (Reingold-Tilford) <span>▼</span></div>
+        <div class="acc-body">
+          <p>Hierarchical layout: parent above/left of children. Compact but without overlap. Rectilinear and radial variants. Good for topology and path tracing. Scalable to 1K-10K nodes with labels.</p>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Treemap <span>▼</span></div>
+        <div class="acc-body">
+          <p>Area containment marks. Hierarchical structure shown by nested rectangles. <strong>Leaf node area encodes a quantitative attribute</strong> (e.g., file size). Scalable to 1M leaf nodes. Excellent for attribute queries at leaves. Poor for topology/path tasks. Area perception (n=0.7) is a weakness.</p>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Sunburst / Icicle Plot <span>▼</span></div>
+        <div class="acc-body">
+          <p>Implicit tree layout: parent-child shown through position only (not containment or connection). Sunburst = radial; Icicle = rectilinear. Shows inner nodes AND leaves (unlike treemap which only shows leaves visually). Good balance of space efficiency and topology visibility.</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3>Arc Diagrams / Circular Layouts</h3>
+      <p>Nodes arranged around a circle or along a line. Arcs show connections. <strong>Node ordering is crucial</strong> — barycentric ordering minimises edge crossings, revealing structure.</p>
+      <h3>Hybrid: NodeTrix</h3>
+      <p>Combines node-link (for sparse parts of network) with adjacency matrix (for dense clusters). Best of both: topology navigation with scalable dense cluster representation.</p>
+      <h3>Altair: Network Visualisation</h3>
+      <span class="code-label">Python / Altair — Simple Node-Link</span>
+      <pre><code>import altair as alt
+import pandas as pd
+
+# Nodes (with positions from layout algorithm)
+nodes = pd.DataFrame({
+    'id': ['A','B','C','D','E'],
+    'x': [0.5, 0.2, 0.8, 0.1, 0.9],
+    'y': [0.9, 0.5, 0.5, 0.1, 0.1],
+    'size': [30, 20, 25, 15, 18],
+    'label': ['Root','Left','Right','LL','RR']
+})
+
+# Edges
+edges = pd.DataFrame({
+    'x': [0.5,0.5,0.2,0.8],
+    'y': [0.9,0.9,0.5,0.5],
+    'x2':[0.2,0.8,0.1,0.9],
+    'y2':[0.5,0.5,0.1,0.1]
+})
+
+node_chart = alt.Chart(nodes).mark_point(
+    filled=True, color='#6c63ff', opacity=0.9
+).encode(
+    x=alt.X('x:Q', axis=None, scale=alt.Scale(domain=[0,1])),
+    y=alt.Y('y:Q', axis=None, scale=alt.Scale(domain=[0,1])),
+    size=alt.Size('size:Q', legend=None),
+    tooltip='label:N'
+)
+
+labels = alt.Chart(nodes).mark_text(
+    dy=-15, color='#e8eaf6', fontSize=12
+).encode(x='x:Q', y='y:Q', text='label:N')
+
+edge_chart = alt.Chart(edges).mark_rule(
+    color='#9fa8da', opacity=0.6, strokeWidth=1.5
+).encode(
+    x='x:Q', y='y:Q', x2='x2:Q', y2='y2:Q'
+)
+
+(edge_chart + node_chart + labels).properties(
+    width=400, height=350, title='Simple Tree: Node-Link'
+).configure_view(strokeOpacity=0).show()</code></pre>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📝 Exam Questions — Week 5 [15-mark format]</h2>
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 10</h3>
+    <p>A company wants to visualise its employee hierarchy (5,000 employees, 8 levels of management) and also its internal communication network (who emails whom, with frequency data). Compare and contrast three different visualisation techniques for this data. For each technique, describe how it works, what tasks it supports well, what tasks it performs poorly on, and what scalability characteristics it has. Conclude with a recommendation for this specific use case.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Technique 1 — Node-Link Diagram:</strong> Nodes = employees, edges = communication links, line thickness = email frequency. Layout algorithm (e.g., Reingold-Tilford for tree hierarchy, force-directed for communication network). Good for: topology understanding (who reports to whom), path tracing (can this message reach the CEO through 3 hops?), intuitive understanding. Poor for: scalability — 5,000 nodes creates dense hairball; dense email networks become unreadable. Scalability: typically &lt;1,000 nodes readable without interaction; 5,000 requires significant aggregation or clustering.</p>
+      <p style="margin-top:.8rem"><strong>Technique 2 — Adjacency Matrix:</strong> Rows and columns = employees (5,000 × 5,000 matrix); cells = email frequency (colour value encoding). After reordering by department, clusters appear as dark squares. Good for: dense networks, scalability (1K+ nodes, millions of edges), finding densely connected groups, attribute-based queries. Poor for: path tracing (cannot easily follow a path across the matrix), not intuitive without training. Scalability: excellent for communication network; 5,000 × 5,000 matrix requires significant screen space but is manageable with zooming.</p>
+      <p style="margin-top:.8rem"><strong>Technique 3 — Treemap:</strong> Hierarchy of employees, leaf area encodes number of emails sent. Shows hierarchical structure and communication volume simultaneously. Good for: attribute distribution across hierarchy (which department communicates most?), scalability to leaves. Poor for: showing cross-hierarchy communication links (the email network), path tracing, topology. Area perception (n=0.7) is a weakness for precise email-count comparison.</p>
+      <p style="margin-top:.8rem"><strong>Recommendation:</strong> A hybrid approach — Treemap or node-link tree for the hierarchy view (8 levels, understanding structure), linked to an adjacency matrix for the communication network (5,000 nodes, dense connections). Brushing and linking: select a department in the treemap → highlight corresponding rows/columns in the matrix. This provides both hierarchical overview and communication pattern detail at scale.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 10b — Tree Layouts</h3>
+    <p>A university wants to visualise its academic structure: 5 faculties → 40 departments → 800 research groups → 12,000 researchers. The university also wants to show two attributes for each researcher: number of publications (quantitative) and primary research theme (one of 12 categories). (i) Describe three different tree layout techniques and evaluate each against this use case. (ii) Which technique would you recommend, and why? (iii) How would you encode the two researcher attributes in your chosen layout?</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>(i) Three tree layout techniques:</strong></p>
+      <p><strong>Node-Link Tree (Reingold-Tilford):</strong> Nodes as circles/icons, edges as lines, layout algorithm ensures no overlaps. Clearly shows hierarchy depth (5 levels) and parent-child relationships. Good for path tracing (can this researcher reach the Dean in 4 steps?), topology understanding. Poor for scalability — 12,000 leaf nodes creates an enormous diagram; at any useful zoom level, researcher-level detail is invisible. Leaf area is wasted as whitespace.</p>
+      <p style="margin-top:.5rem"><strong>Treemap:</strong> Recursive subdivision of a rectangle; leaf area = attribute value. 12,000 researchers displayed in a bounded space — excellent scalability. Inner nodes (faculty, department) visible as labelled containers. Good for: "which faculty has the most researchers?" (compare areas), "which research groups are largest?" Poor for: topology/path tracing (links not shown), deep hierarchy navigation (5 levels of containment becomes visually nested), showing connections between researchers across faculties.</p>
+      <p style="margin-top:.5rem"><strong>Sunburst / Icicle chart:</strong> Concentric rings (sunburst) or stacked rectangles (icicle) — inner rings = higher hierarchy levels. Shows all levels simultaneously, unlike treemap which hides inner structure proportionally. Allows navigation from faculty (inner) to researcher (outer ring). Angular width = number of children or attribute. Good for showing both inner nodes and leaves. 12,000 researchers → outer ring has 12,000 tiny segments — interactive zoom required for researcher detail.</p>
+      <p style="margin-top:.8rem"><strong>(ii) Recommendation: Treemap with Zoomable Interface.</strong> Treemap scales best to 12,000 leaves. Zoomable interaction (overview at faculty level → zoom to department → zoom to research group → zoom to researcher level) addresses the scalability issue. The university's primary tasks are attribute-based (how many publications? which themes dominate?) — treemap area encoding serves these tasks. Node-link fails at this scale; sunburst also struggles with 12,000 outer segments without interaction.</p>
+      <p style="margin-top:.8rem"><strong>(iii) Encoding researcher attributes:</strong> Publications (quantitative, sequential): encode as leaf tile area within the treemap — larger tiles = more publications. This overrides the equal-area-per-researcher convention, making the most prolific researchers visually prominent. Research theme (categorical, 12 categories): encode as hue (12 distinct hues — at the limit of categorical colour discrimination; use ColorBrewer qualitative palette). Within each research group, the dominant colour shows the dominant theme. Note: area encodes publications (n=0.7, some underestimation) — consider adding a tooltip with exact count for precision. Hue distinguishes theme identity (expressively correct for categorical data).</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 10c — Adjacency Matrix: Node Ordering</h3>
+    <p>The adjacency matrix is a powerful alternative to node-link diagrams for dense networks. (i) Describe how an adjacency matrix works and how it encodes edge presence, direction, and weight. (ii) Explain why node ordering is critical to the effectiveness of an adjacency matrix, using a concrete example. (iii) Describe two different ordering strategies and explain what structural patterns each one reveals. (iv) State two tasks that adjacency matrices perform better than node-link diagrams, and two tasks they perform worse on.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>(i) How adjacency matrix works:</strong> An N×N matrix where rows and columns represent nodes. A cell at (i,j) is filled (or coloured) if an edge exists between node i and node j. Edge presence: filled vs. empty cell. Direction: a directed graph has an asymmetric matrix — cell (i,j) ≠ cell (j,i); e.g., row = sender, column = receiver. Edge weight: encode weight as colour value (darker = stronger connection) or cell size. The main diagonal represents self-loops (usually empty).</p>
+      <p style="margin-top:.8rem"><strong>(ii) Why node ordering is critical:</strong> Example — a social network of 100 people from 4 departments. With random ordering, the matrix looks like noise: scattered dark cells with no apparent structure. After reordering nodes by department (all dept A together, then dept B, etc.), clusters emerge as dark 4×4 squares along the diagonal — each square = dense within-department communication. Without reordering, this structure is invisible. The same data, entirely different visual structure depending on ordering.</p>
+      <p style="margin-top:.8rem"><strong>(iii) Two ordering strategies:</strong></p>
+      <p><strong>Attribute-based ordering:</strong> Sort nodes by a node attribute (e.g., department, geographic region, or quantitative centrality score). Reveals attribute-correlated clusters — do nodes with similar attributes connect to each other? The dark squares along the diagonal reveal community structure. Best for: "do people in the same department communicate more?"</p>
+      <p><strong>Algorithmic ordering (e.g., spectral reordering or seriation):</strong> Apply an algorithm (e.g., Cuthill-McKee, spectral layout) to reorder nodes so that connected nodes are as close as possible on both axes. Reveals the network's natural block structure or gradient structure, independent of external attributes. Often produces a banded pattern along the diagonal — strongly connected subgraphs appear as boxes. Best for: discovering unknown community structure without prior attribute knowledge.</p>
+      <p style="margin-top:.8rem"><strong>(iv) Comparison:</strong></p>
+      <p><strong>Adjacency matrix better:</strong> (1) Scalability — 1,000-node networks are readable as a matrix; the same as a node-link hairball is unreadable. (2) Finding dense subgraphs — dark squares along the diagonal immediately visible; in node-link this requires manual cluster identification. (3) Large, dense networks with many crossing edges.</p>
+      <p><strong>Node-link better:</strong> (1) Path tracing — "find all paths from A to B in 3 hops" is intuitive by following edges; impossible to do visually in a matrix. (2) Topological intuition — non-experts understand node-link diagrams without training; matrices require learning the encoding. Also: trees and sparse networks look clean as node-link; a sparse matrix is mostly empty and wastes space.</p>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- WEEK 6: INTERACTIVE AND MULTIPLE VIEWS                        -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="w6">
+<div class="card">
+  <h2>🔗 Week 6: Interactive and Multiple Views</h2>
+</div>
+
+<div class="card">
+  <h2>🪟 Multiple Coordinated Views</h2>
+  <p>Multiple views of the same dataset, each showing different aspects, coordinated through shared selection/highlighting.</p>
+  <div class="grid-2">
+    <div>
+      <h3>Why Use Multiple Views?</h3>
+      <ul style="padding-left:1.2rem">
+        <li>No single vis shows all aspects of complex data</li>
+        <li>Different encodings reveal different patterns</li>
+        <li>Linking allows cross-dimension analysis</li>
+        <li>"Eyes beat memory" — side-by-side comparison easier than memory-based comparison</li>
+      </ul>
+      <h3>Linking Requirements</h3>
+      <p>To link views, they must share a common data element. If two views share no data items, linking may not be meaningful. Shared database with consistent IDs enables linking.</p>
+      <div class="highlight-box">
+        <strong>Exam trap (from 2025 paper Q15):</strong> Bar chart of yearly sales and map of shop locations seem to share no data. But if both draw from the same company database (shared attribute = company/time), they CAN be linked. First step: ensure both views reference the same dataset, with a shared key.
+      </div>
+    </div>
+    <div>
+      <h3>Types of View Coordination</h3>
+      <table>
+        <tr><th>Method</th><th>Description</th></tr>
+        <tr><td>Brushing & Linking</td><td>Select in one → highlight in all</td></tr>
+        <tr><td>Shared colour encoding</td><td>Same colour = same category across views</td></tr>
+        <tr><td>Shared filters</td><td>Filter applied to all views</td></tr>
+        <tr><td>Declarative query propagation</td><td>Query stored as tuple/expression, applied to all views</td></tr>
+        <tr><td>Focus propagation</td><td>Zoom/pan in one view syncs to others</td></tr>
+      </table>
+      <h3>Declarative vs. Tuple Selection</h3>
+      <p><strong>Declarative (query-based):</strong> Store "all cars with speed &gt; 50 AND year=1978". Can be applied to ANY view, even ones created later. More powerful.</p>
+      <p><strong>Tuple-based:</strong> Store list of IDs {1,4,7,23...}. Simple but limited to the specific items selected in one moment.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📝 Exam Questions — Week 6 [15-mark format]</h2>
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 11</h3>
+    <p>The total sales of a company's main product in each of the last five years (from a company database) is shown in a bar chart. A map, using the same database, shows the distribution of the company's shops, with each mark showing the number of staff working there. The company asks you to link these views. (i) What is the best technical first step? (ii) Describe what a linked interaction would look like in practice. (iii) What would a user gain from this linking that they cannot get from the two unlinked views?</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>(i) Best technical first step:</strong> Identify the shared data element. Both views use the same company database. The shared element could be: a shop (with a location shown on the map AND contributing to yearly sales in the bar chart). Change both charts so they reference the same underlying dataset with a shared key (e.g., shop ID). This makes linking technically possible. The bar chart may need to be augmented to allow year → shop-level detail, or the map to show yearly sales per shop. [5 marks]</p>
+      <p style="margin-top:.8rem"><strong>(ii) Linked interaction in practice:</strong> User clicks on a year's bar in the bar chart → the map highlights all shops that contributed to sales that year (or highlights shops based on relative performance in that year). Alternatively: user selects a region of shops on the map → the bar chart updates to show only the sales from those selected shops over the five years. Colour encoding should be consistent: e.g., the most profitable shops are the same colour in both views. [5 marks]</p>
+      <p style="margin-top:.8rem"><strong>(iii) What the user gains:</strong> Without linking, a user must memorise patterns from one view and mentally compare to the other. With linking: (a) Spatial-temporal correlation — "were the shops in the North performing well in the years when total sales peaked?" This question requires simultaneous inspection of map location and time-series data, only achievable through linking. (b) Outlier investigation — a spike in sales in 2022 in the bar chart → click it → the map highlights which specific shops drove that spike. (c) Hypotheses can be tested instantly: "do large-staff shops drive sales?" — select large-staff shops on map → see their contribution in bar chart. [5 marks]</p>
+    </div>
+  </div>
+
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 11b — Focus+Context and Interaction Techniques</h3>
+    <p>An analyst is exploring a large dataset of 10,000 academic papers. She wants to identify papers relevant to her current research topic while maintaining awareness of the broader literature landscape. (i) Explain the focus+context interaction paradigm and contrast it with overview+detail as a separate strategy. (ii) Describe two specific focus+context techniques and explain the trade-offs of each in the context of this use case. (iii) How does "details on demand" complement either approach? Use the Schneiderman mantra to structure your answer.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>(i) Focus+Context vs Overview+Detail:</strong></p>
+      <p><strong>Focus+Context:</strong> The focus area (detail) and the context (overview) are shown simultaneously in the same view — the context surrounds the focus. Objects of interest are shown at full resolution; peripheral objects are distorted/compressed but still visible. Benefit: spatial continuity — the user always knows where the focus is within the broader space without switching views. No "view switching" cost.</p>
+      <p><strong>Overview+Detail:</strong> Two separate views — one showing the full dataset at low resolution (overview), one showing a selected region at high resolution (detail). The user navigates by selecting in the overview. Benefit: both views can be optimised independently — the overview is not distorted. Cost: spatial discontinuity — the user must mentally map between the two views. Requires screen real estate for two panels.</p>
+      <p><strong>Key distinction:</strong> Focus+context maintains spatial context within a single view through distortion; overview+detail separates context and detail into distinct panels.</p>
+      <p style="margin-top:.8rem"><strong>(ii) Two focus+context techniques:</strong></p>
+      <p><strong>Fisheye View (Furnas, 1986):</strong> Items near the focus are magnified; items further away are compressed (geometrically distorted). The degree of interest (DOI) function determines the magnification factor: items close to the focus get high DOI → enlarged; distant items get low DOI → compressed. For 10,000 papers on a 2D canvas: the analyst's current paper is shown at full size; 20 nearest neighbours at medium size; the remaining ~9,980 papers are compressed into the periphery. Advantage: everything is visible simultaneously. Disadvantage: geometric distortion makes it hard to read peripheral paper titles; users may find the distortion disorienting.</p>
+      <p><strong>Perspective Wall:</strong> Uses 3D perspective to create a "wall" effect — the focus area occupies the flat front face; context recedes into two side "wings" using perspective foreshortening. For the paper corpus: a timeline of papers could use a perspective wall — current year's papers at full resolution in the centre; earlier years compressed by perspective into the sides. Advantage: natural "zoom" metaphor, less jarring than fisheye. Disadvantage: the 3D perspective wastes space (wings show much less data per pixel); the distortion is linear and less flexible than fisheye.</p>
+      <p style="margin-top:.8rem"><strong>(iii) Details on Demand + Schneiderman Mantra:</strong></p>
+      <p>Schneiderman's mantra: <em>"Overview first, zoom and filter, then details on demand."</em> Applied here: (1) Overview: the full 10,000-paper space is shown — perhaps as a scatter plot of papers by topic (t-SNE/UMAP layout). (2) Zoom and filter: the analyst uses fisheye to zoom into the cluster of relevant papers, or applies a dynamic query to filter to papers published after 2020 on her topic. (3) Details on demand: hovering over a paper shows its abstract and citation count in a tooltip — without cluttering the main view. Details on demand complements focus+context by ensuring that detailed information (full title, authors, abstract) does not need to be shown for all 10,000 papers at once — only the ones the analyst explicitly requests.</p>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- WEEK 7: DESIGN AND EVALUATION                                 -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="w7">
+<div class="card">
+  <h2>🔬 Week 7: Design and Evaluation</h2>
+</div>
+
+<div class="card">
+  <h2>🎨 Design Space</h2>
+  <div class="math-box">
+    <p>The design space is the set of all possible design combinations.</p>
+    \[ |\text{Design Space}| = \prod_{i} |\text{choices}_i| \]
+    <p style="margin-top:.5rem"><strong>Example:</strong> 4 datasets × 2 interaction techniques × 3 colour maps = 24 designs. Adding one more dataset: 5 × 2 × 3 = 30 designs = <strong>5/4 = 1.25× bigger</strong>. NOT 5× bigger — only the dataset dimension changes.</p>
+    <p style="margin-top:.5rem">From the 2025 exam: "four data sets × two interaction techniques × three colour maps = 24. Add one data set: 5×2×3=30. 30/24 = 1.25× bigger" — but exam answer was 5/4 = 5/4 larger... The question as stated: going from 4→5 datasets multiplies the space by 5/4 ≈ 1.25×.</p>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📊 Evaluation Methods</h2>
+  <div class="grid-2">
+    <div>
+      <h3>Formative vs Summative Evaluation</h3>
+      <table>
+        <tr><th>Type</th><th>When</th><th>Goal</th></tr>
+        <tr><td>Formative</td><td>During design process</td><td>Find and fix problems early; iterative improvement</td></tr>
+        <tr><td>Summative</td><td>After design is complete</td><td>Measure performance against baseline; proof of worth</td></tr>
+      </table>
+      <h3>Formative Evaluation Methods</h3>
+      <ul style="padding-left:1.2rem;margin:.5rem 0">
+        <li>Expert/heuristic review</li>
+        <li>Cognitive walkthrough</li>
+        <li>Think-aloud protocol</li>
+        <li>Interview (qualitative data)</li>
+        <li>Low-fidelity prototype testing</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Summative Evaluation Methods</h3>
+      <ul style="padding-left:1.2rem;margin:.5rem 0">
+        <li>Controlled experiment (with statistical analysis)</li>
+        <li>Quantitative performance metrics (time, error rate, accuracy)</li>
+        <li>Crowdsourcing (MTurk) for large N</li>
+        <li>Log analysis of system use</li>
+      </ul>
+      <h3>Database for Formative Evaluation</h3>
+      <div class="highlight-box">
+        <p>From 2025 exam Q7: Formative evaluator doing multiple interviews with same participants needs:</p>
+        <p><strong>ParticipantID, InterviewText, IterationNumber, InterviewNumber</strong></p>
+        <p>NOT ProofOfWorthMeasure (that's summative). IterationNumber tracks which design iteration; InterviewNumber tracks which interview with that participant.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📝 Exam Questions — Week 7 [15-mark format]</h2>
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 12</h3>
+    <p>A startup is building a new information visualisation tool for financial analysts. They have a prototype and a team of 3 developers. Describe a complete evaluation strategy covering both formative and summative evaluation phases. For each phase: explain what type of evaluation it is, what methods you would use, what data you would collect, and how results would feed back into design. Conclude with what makes a rigorous evaluation in the context of information visualisation research.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Formative Phase:</strong></p>
+      <p>Purpose: identify and fix usability and design problems before summative testing. Methods:</p>
+      <p>1. <strong>Expert review / heuristic evaluation:</strong> Have 2-3 IV experts evaluate the prototype against established heuristics (e.g., Munzner's nested model, Shneiderman's tasks). Record violations of expressiveness/effectiveness principles. Fast and inexpensive. Data: written violation reports with severity ratings.</p>
+      <p>2. <strong>Think-aloud protocol with financial analysts:</strong> Recruit 5-8 domain experts. Present them with realistic analysis tasks. Ask them to narrate their thoughts while using the prototype. Data: interview transcripts, screen recordings, verbal protocols. Store in database: ParticipantID, InterviewText, IterationNumber, InterviewNumber (multiple interviews per participant across iterations).</p>
+      <p>3. <strong>Iterative refinement:</strong> After each round, fix identified problems and re-test. IterationNumber tracks which design version was tested.</p>
+      <p style="margin-top:.8rem"><strong>Summative Phase:</strong></p>
+      <p>Purpose: prove the system's value relative to the existing SQL baseline (proof of worth). Methods:</p>
+      <p>1. <strong>Controlled experiment:</strong> Within-subjects design: same participants use both the new tool and SQL tool (counterbalanced order). Tasks: find the 5 highest-risk stocks, identify an anomalous trading pattern, compare two portfolios. Metrics: task completion time, error rate, number of correct answers, subjective satisfaction (Likert scales).</p>
+      <p>2. <strong>Statistical analysis:</strong> t-tests or ANOVA to determine if differences in time/accuracy are statistically significant (p &lt; 0.05). Effect size calculation (Cohen's d) for practical significance.</p>
+      <p style="margin-top:.8rem"><strong>Rigorous evaluation characteristics:</strong> Representative participants (domain experts, not students), realistic tasks (from actual analyst workflows), appropriate sample size (power analysis for statistical tests), counterbalancing to control order effects, pre-registration of hypotheses to prevent p-hacking, separation of formative and summative phases to prevent bias.</p>
+    </div>
+  </div>
+
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 12b — Design Space and Design Decisions</h3>
+    <p>A research team is designing a visualisation of climate change data: they have 3 datasets (temperature, CO₂, sea level), 4 colour maps, 3 chart types, and 2 interaction techniques to choose between. (i) Calculate the size of the design space for this project. If they add one more colour map, by what factor does the space grow? (ii) Describe Munzner's "nested model" of visualisation design and explain why it matters for structuring design decisions. (iii) A colleague suggests the team should try all designs in the space before choosing. Critique this suggestion and propose a better strategy.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>(i) Design space calculation:</strong></p>
+      <p>Design space size = 3 datasets × 4 colour maps × 3 chart types × 2 interaction techniques = <strong>72 designs</strong>.</p>
+      <p>Adding one more colour map (4→5): new space = 3 × 5 × 3 × 2 = 90 designs.</p>
+      <p>Growth factor = 90/72 = <strong>5/4 = 1.25×</strong>. The space grows by 25%, not by 5× — only the colour map dimension changes. This illustrates how the design space is multiplicative: a small addition to one dimension has proportionally small impact when other dimensions are unchanged.</p>
+      <p style="margin-top:.8rem"><strong>(ii) Munzner's Nested Model of Visualisation Design:</strong></p>
+      <p>The nested model has four layers, each dependent on the one above:</p>
+      <p><strong>Level 1 — Domain characterisation:</strong> Understand the problem domain and users. What data do climate scientists analyse? What questions do they ask? Errors here (wrong domain model) invalidate everything below.</p>
+      <p><strong>Level 2 — Data/task abstraction:</strong> Translate domain problems into IV terms: what data types, what tasks (e.g., "compare CO₂ trend to temperature trend" = compare two quantitative attributes over time). Errors: using the wrong abstraction (treating ordinal as categorical).</p>
+      <p><strong>Level 3 — Encoding/interaction design:</strong> Choose visual encoding (marks, channels) and interaction techniques. Errors: violating expressiveness (using hue for quantitative data) or effectiveness (weak channel for important attribute).</p>
+      <p><strong>Level 4 — Algorithm design:</strong> Efficient implementation. Errors here (slow rendering) don't change the visual encoding — but affect usability.</p>
+      <p>Why it matters: errors cascade downward. If the domain model is wrong (Level 1), even a perfect encoding (Level 3) solves the wrong problem. Evaluate at each level separately — formative evaluation should check the domain model first, encoding design second.</p>
+      <p style="margin-top:.8rem"><strong>(iii) Critique and better strategy:</strong></p>
+      <p>Trying all 72 designs is impractical: even 72 designs × 30 minutes of testing per design = 36 person-hours, likely with different orderings for each participant. Statistical testing of 72 designs requires extremely large sample sizes (multiple comparisons problem — familywise error rate explodes).</p>
+      <p>Better strategy: Use the nested model to prune the space. (a) At Level 2, the task "compare trends over time" eliminates chart types that don't support temporal encoding — a pie chart is eliminated. (b) At Level 3, the expressiveness principle eliminates colour maps that use hue for quantitative temperature data — sequential value-based maps remain. (c) Prune to ~4-6 viable designs, then test these with think-aloud (formative) to identify the 1-2 best candidates, followed by a controlled experiment (summative) with those 2 candidates to determine the best with statistical rigour.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🧪 Week 7b: Data Collection &amp; Experimental Design</h2>
+  <p>From Purchase (2012) — <em>Experimental Human-Computer Interaction</em>. Covers how to design and run rigorous IV evaluations and experiments.</p>
+</div>
+
+<div class="card">
+  <h2>📋 The Five P's of Evaluation Data</h2>
+  <p>What data can you collect from participants? (Purchase, 2012)</p>
+  <table>
+    <tr><th>P</th><th>Type</th><th>Example in IV context</th></tr>
+    <tr><td><strong>Performance</strong></td><td>Response time, errors, accuracy</td><td>How quickly did a user find an outlier? How many errors made identifying a trend?</td></tr>
+    <tr><td><strong>Preference</strong></td><td>User preference in a comparative task</td><td>"Which chart did you prefer for this task?"</td></tr>
+    <tr><td><strong>Perception</strong></td><td>Free-form opinions about the system</td><td>Think-aloud or interview: "What did you find confusing?"</td></tr>
+    <tr><td><strong>Process</strong></td><td>Actions performed during the task</td><td>Action logs, screen recordings — how did they navigate? What did they click?</td></tr>
+    <tr><td><strong>Product</strong></td><td>Artefact created by participant</td><td>An annotation, a report, a data selection — output of their work with the vis</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>📊 Data Collection Methods</h2>
+  <div class="grid-2">
+    <div>
+      <table>
+        <tr><th>Method</th><th>Best for</th><th>Strengths</th><th>Weaknesses</th></tr>
+        <tr><td>Questionnaire</td><td>Preference, Perception</td><td>Easy to administer; large N possible</td><td>Hard to design; difficult to get detailed qualitative answers</td></tr>
+        <tr><td>Interview</td><td>Perception, Process</td><td>Rich qualitative detail; can probe answers</td><td>Time-consuming; hard to get participants; difficult to analyse systematically</td></tr>
+        <tr><td>Task sheet</td><td>Performance, Preference</td><td>Direct task-based quantitative responses</td><td>Must be carefully designed; duration = task time</td></tr>
+        <tr><td>Observation</td><td>Process</td><td>Captures what users actually do</td><td>Qualitative; systematic analysis difficult</td></tr>
+        <tr><td>Automatic collection</td><td>Performance, Process</td><td>Quantitative; time-stamped; precise</td><td>Tempting to collect too much; requires system instrumentation</td></tr>
+        <tr><td>Artefact storage</td><td>Product</td><td>Captures output of user's work</td><td>Qualitative analysis required</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Evaluation vs Experiment</h3>
+      <table>
+        <tr><th>Feature</th><th>Evaluation</th><th>Experiment</th></tr>
+        <tr><td>Data type</td><td>Qualitative focus</td><td>Quantitative focus</td></tr>
+        <tr><td>Purpose</td><td>Formative — find problems</td><td>Summative — prove worth</td></tr>
+        <tr><td>N participants</td><td>Small (5 for formative)</td><td>Large (30+ for stats)</td></tr>
+        <tr><td>Task scope</td><td>Lengthy, realistic</td><td>Brief, controlled</td></tr>
+        <tr><td>What is tested</td><td>Vis tool (holistic)</td><td>Vis method/idea (specific)</td></tr>
+      </table>
+      <div class="highlight-box" style="margin-top:.8rem">
+        <strong>Nielsen's Rule:</strong> Jakob Nielsen (2000) — "You only need to test with 5 users" for formative evaluation. 5 users find ~85% of usability problems. For summative proof-of-worth, use ≥10. For statistical experiments, ≥30 (often cited minimum for reliable statistics).
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>⚗️ Experiment Design: Variables</h2>
+  <p>A well-designed experiment controls what changes and what stays the same:</p>
+  <div class="grid-2">
+    <div>
+      <table>
+        <tr><th>Variable Type</th><th>Definition</th><th>Example (chart comparison study)</th></tr>
+        <tr><td><span class="badge badge-blue">Independent</span></td><td>What you deliberately change (the thing being tested). Defined by a set of <strong>conditions</strong>.</td><td>Chart type: A=stacked area, B=clustered bar, C=line chart</td></tr>
+        <tr><td><span class="badge badge-green">Control</span></td><td>Kept constant throughout — cannot affect the dependent variable if constant.</td><td>The dataset presented; the tasks; colour palette used</td></tr>
+        <tr><td><span class="badge badge-yellow">Random</span></td><td>Allowed to vary randomly — you don't care about them.</td><td>Screen size; age of participant; running ability</td></tr>
+        <tr><td><span class="badge badge-red">Confounding</span></td><td>Changed unexpectedly during the experiment — threatens validity because you can't be sure what caused the change in results.</td><td>Room temperature changed between sessions; lab computer crashed mid-task</td></tr>
+        <tr><td><span class="badge badge-blue">Dependent</span></td><td>The data you collect — what you measure.</td><td>Accuracy in reading values off the chart (% correct)</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Why Confounding Factors Are Dangerous</h3>
+      <div class="highlight-box">
+        <p>A confounding factor changes during your experiment and <em>may also</em> affect the dependent variable. You cannot then be sure whether the change in your results was caused by your independent variable or by the confounding factor.</p>
+        <p style="margin-top:.5rem"><strong>Example:</strong> You run chart comparison tasks in the morning (chart A) and afternoon (chart B). It turns out participants are more tired in the afternoon. Their reduced accuracy on chart B might be due to fatigue (confounding) rather than chart B being worse. The experiment is now invalid for its intended purpose.</p>
+        <p style="margin-top:.5rem"><strong>Fix:</strong> Counterbalancing — randomise the order of conditions across participants, so fatigue is a random variable, not a confound.</p>
+      </div>
+      <h3>Pilot Testing</h3>
+      <p>Always run a pilot study with 1-2 participants before the main experiment. Check: task phrasing is unambiguous, training is adequate, session duration is correct, data collected makes sense. "Create dummy data to see if it makes any sense."</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📑 Qualitative Data Analysis: Thematic / Grounded Theory</h2>
+  <p>Used for interview transcripts, open-ended questionnaires, think-aloud protocols. Method: inductive coding (grounded theory — no preconceived theories, let themes emerge from data).</p>
+  <div class="grid-2">
+    <div>
+      <h3>Three Coding Stages</h3>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Stage 1: Open Coding <span>▼</span></div>
+        <div class="acc-body">
+          <p>Identify distinct pieces of information in raw transcripts. Assign an <strong>open code</strong> to each. Use <strong>in-vivo coding</strong>: use the participant's own words as the code label. Size/scope of pieces is determined by the coder's interpretive process.</p>
+          <p style="margin-top:.5rem"><strong>Example codes from a vis evaluation:</strong> "too cluttered [001]", "bright colours [002]", "busy-ness [004]", "lively [005]".</p>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Stage 2: Axial Coding <span>▼</span></div>
+        <div class="acc-body">
+          <p>Organise open codes into sets of concepts and categories. Think about <strong>relationships between codes</strong>. Categories don't all need to be at the same specificity level. Be driven by what's in the data, not by pre-existing theory or notions of symmetry.</p>
+          <p style="margin-top:.5rem">E.g., codes 004 (busy) + 005 (lively) → category 006 (lively positive): users who find density engaging.</p>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Stage 3: Selective Coding <span>▼</span></div>
+        <div class="acc-body">
+          <p>Combine concepts and categories into a <strong>larger concept framework</strong>. Re-code original transcripts using the new framework. This becomes the basis of your qualitative findings.</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3>Reporting Qualitative Results</h3>
+      <ol style="padding-left:1.5rem;margin:.5rem 0">
+        <li>Set out the coding framework</li>
+        <li>One report section per major theme</li>
+        <li>Use participant quotes as evidence</li>
+        <li>Note frequency/context of each theme</li>
+        <li>Discuss overall/higher-level findings</li>
+        <li>Contextualise with related work</li>
+        <li>Discuss design implications</li>
+      </ol>
+      <div class="highlight-box" style="margin-top:.8rem">
+        <strong>Quant ≠ Better than Qual:</strong> Quantitative analysis is NOT inherently more rigorous than qualitative. It's common in qual to have multiple independent coders compare results (inter-rater reliability). This level of rigour is rarely applied to quant. Each can be done well or badly. Ideal: use quant to learn <em>what</em> users do, qual to learn <em>why</em>.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📝 Exam Questions — Week 7b [15-mark format]</h2>
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 12c — Experimental Design</h3>
+    <p>A researcher wants to determine which of three chart types (A: line chart, B: bar chart, C: scatter plot) is most accurate for reading quantitative values from a running club dataset. (i) Define the independent, dependent, control, and random variables for this experiment. (ii) Describe a confounding factor that could invalidate the results, and explain why it is a problem. (iii) How many participants should be recruited, and what data collection method would best capture performance data? (iv) Should a qualitative or quantitative analysis be used, and why?</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>(i) Variables:</strong></p>
+      <p><strong>Independent variable:</strong> Chart type. Conditions: A=line chart, B=bar chart, C=scatter plot. This is what we deliberately change.</p>
+      <p><strong>Dependent variable:</strong> Accuracy in reading quantitative values (% of answers correct, or mean absolute error between read value and true value). This is what we measure.</p>
+      <p><strong>Control variables:</strong> The dataset presented (same running club data for all participants); the specific tasks/questions asked; the colours used in each chart; the screen used; the ordering of questions within each chart. These must be kept constant so they cannot affect accuracy.</p>
+      <p><strong>Random variables:</strong> Participant age, gender, prior experience with charts, running knowledge, screen brightness. We allow these to vary randomly (counterbalanced across conditions); they should average out across participants.</p>
+      <p style="margin-top:.8rem"><strong>(ii) Confounding factor example:</strong> If all participants do chart A first, then B, then C, fatigue or learning effects are confounded with chart type. Participants become more experienced with the dataset by chart C, which may improve accuracy independently of the chart type. This means we cannot tell if higher accuracy on chart C is due to chart C being better, or due to learning — the experiment is invalid for comparing charts. Fix: counterbalance the order of chart conditions across participants (randomise which chart each participant sees first).</p>
+      <p style="margin-top:.8rem"><strong>(iii) Participants:</strong> For a summative experiment with statistical comparison, recruit ≥30 participants (commonly cited minimum for statistical validity). More precisely, run a power analysis: with a medium effect size (d=0.5), α=0.05, and 80% power, you need approximately 34 participants per condition (or ~34 total for a within-subjects design). Data collection: automatic collection (the system records the participant's answer and the time taken for each task) — objective, quantitative, and continuous.</p>
+      <p style="margin-top:.8rem"><strong>(iv) Analysis type:</strong> Quantitative analysis is most appropriate here because the dependent variable (accuracy) is a numeric measurement and the research question is comparative ("which chart is most accurate?"). Use ANOVA or t-tests to compare mean accuracy across conditions, with statistical significance testing (p &lt; 0.05). However, supplementing with qualitative data (brief exit interview) helps explain <em>why</em> one chart was more accurate — e.g., participants may report that bar charts are clearer because of the zero-baseline anchor.</p>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- WEEK 8: RULES OF THUMB                                        -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="w8">
+<div class="card">
+  <h2>📏 Week 8: Rules of Thumb</h2>
+  <p>Based on Tamara Munzner's Visualization Analysis & Design. Guidelines (not absolute rules) for good IV design.</p>
+</div>
+
+<div class="card">
+  <h2>🚫 Rule 1: No Unjustified 3D</h2>
+  <div class="grid-2">
+    <div>
+      <h3>Why 3D is problematic for abstract data</h3>
+      <p>We "see" in <strong>2.05D</strong>, not 3D. Thousands of points are acquired on the image plane via rapid eye movements; depth information requires slow head/body motion (one point per ray).</p>
+      <p style="margin-top:.5rem"><strong>Problems with 3D:</strong></p>
+      <ul style="padding-left:1.2rem">
+        <li><strong>Occlusion:</strong> objects block each other; interaction needed to resolve (costly)</li>
+        <li><strong>Perspective distortion:</strong> object size and angle varies with depth; interferes with ALL size encodings; "power of the plane" is lost</li>
+        <li><strong>Tilted text:</strong> legibility far worse when tilted from image plane</li>
+        <li><strong>Depth position is a LOW-ranked channel</strong> (n=0.67 in Stevens' law)</li>
+      </ul>
+    </div>
+    <div>
+      <h3>When 3D IS justified</h3>
+      <ul style="padding-left:1.2rem">
+        <li>True 3D spatial data (e.g., medical imaging, molecular structure, fluid simulation)</li>
+        <li>Task is shape perception of 3D spatial objects</li>
+        <li>Constrained navigation with carefully designed viewpoints (e.g., NYT economic growth curve)</li>
+      </ul>
+      <h3>No unjustified 2D?</h3>
+      <p>Even 2D spatial layout isn't always justified! If reading text is central to the task, a network layout (2D) has lower information density and harder label lookup than a simple list. Use 2D spatial layout only when topology/structure is important.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📋 All Rules of Thumb Summary</h2>
+  <div class="grid-2">
+    <div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">No Unjustified 2D <span>▼</span></div>
+        <div class="acc-body">
+          <p>Even 2D spatial layout (network node-link, map) is not always justified. If the primary task is reading text labels or looking up individual items, a <strong>simple sorted list</strong> has higher information density and faster lookup than a 2D network layout.</p>
+          <p style="margin-top:.5rem"><strong>When 2D IS justified:</strong> When spatial structure or topology is meaningful — network diagrams (topology), maps (geography), scatterplots (correlation). When spatial position encodes data (e.g., SPLOM), 2D is always justified.</p>
+          <p style="margin-top:.5rem;color:var(--accent2)"><strong>Exam point:</strong> A node-link diagram of 10 friends where the task is "find Alice's phone number" — a list is faster. A node-link diagram where the task is "find who connects Alice to Bob in 2 hops" — 2D is justified.</p>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Eyes Beat Memory <span>▼</span></div>
+        <div class="acc-body">
+          <p>It is easy to compare side-by-side views (move eyes). Harder to compare a new item against memory of what you saw before.</p>
+          <p><strong>Implications for animation:</strong> Animation = good for choreographed storytelling, transitions between 2 states. Poor for many states with changes everywhere → use <strong>small multiples</strong> instead (show time with space, not time with time).</p>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Resolution Beats Immersion <span>▼</span></div>
+        <div class="acc-body">
+          <p>Pixels are the scarcest resource. Immersion (VR, AR) not helpful for abstract data — no need for sense of presence or stereoscopic 3D. Desktop is better for integration with other work. Both first-wave VR (1980-90s) and second-wave AR/MR appear to be poor for abstract data visualisation.</p>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Overview First, Zoom & Filter, Details on Demand <span>▼</span></div>
+        <div class="acc-body">
+          <p>Shneiderman's influential slogan (1996). Pattern of tasks to design for:</p>
+          <p>• <strong>Overview ≅ identify:</strong> show most/all data; find interesting large-scale aggregates</p>
+          <p>• <strong>Zoom & Filter ≅ compare:</strong> closer views, selection, filtering</p>
+          <p>• <strong>Details ≅ summarise:</strong> individual data items within features</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Responsiveness is Required <span>▼</span></div>
+        <div class="acc-body">
+          <p>Three response-time categories: 0.1s (perceptual), 1s (immediate), 10s (brief task). For large datasets: frontbuffer for selection highlight; progress bars; background threads; guaranteed frame rate.</p>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Function First, Form Next <span>▼</span></div>
+        <div class="acc-body">
+          <p>Dangerous to start with aesthetics — usually impossible to add function retroactively. Start with functionality. Improve aesthetics as refinement. Aesthetics matter as "another level of function" — culture, Gestalt principles, visual hierarchy.</p>
+          <p>Basic design principles (Robin Williams, Non-Designer's Design Book):</p>
+          <ul style="padding-left:1.2rem;margin:.3rem 0">
+            <li><strong>Proximity:</strong> group related items; avoid equal whitespace for unrelated</li>
+            <li><strong>Alignment:</strong> find strong line, stick to it; avoid auto-centering</li>
+            <li><strong>Repetition:</strong> unify by pushing existing consistencies</li>
+            <li><strong>Contrast:</strong> if not identical, make very different; avoid "not quite the same"</li>
+          </ul>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Labelling Best Practices <span>▼</span></div>
+        <div class="acc-body">
+          <p>Make visualisations self-documenting: meaningful titles, axis labels, legends. Axes need min/max tick marks. Everything plotted needs a legend. Use reasonable numerical format (avoid scientific notation). Don't label axes with arbitrary identifiers.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📝 Exam Questions — Week 8 [15-mark format]</h2>
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 13</h3>
+    <p>A data journalist has created a 3D interactive bar chart of global CO₂ emissions by country and year (last 30 years), claiming the 3D makes it more "impressive and engaging." Another journalist proposes using small multiples instead of animation to show change over time. Evaluate both approaches using the rules of thumb from information visualisation design. Which approach would you recommend, and why?</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Critique of 3D interactive bar chart:</strong></p>
+      <p>This violates "No Unjustified 3D". CO₂ emission data is abstract (not 3D spatial), so 3D adds no representational value while creating significant problems: (1) <strong>Occlusion</strong> — bars in the back are hidden by bars in front; the user must interact (rotate) to see occluded countries, adding time and cognitive load; (2) <strong>Perspective distortion</strong> — bars further from the viewer appear shorter than they actually are, making accurate comparison between near and far bars impossible; (3) <strong>Depth is a poorly-ranked channel</strong> (n=0.67), meaning the third spatial dimension conveys quantitative information less accurately than a 2D position would; (4) Violates "power of the plane" — the high-ranked 2D planar position channel is wasted in favour of a low-quality depth channel. The "impressive" aesthetic argument is a "form before function" error — it prioritises aesthetics over communicative accuracy.</p>
+      <p style="margin-top:.8rem"><strong>Evaluation of small multiples:</strong></p>
+      <p>Small multiples correctly apply the "eyes beat memory" rule. Showing 30 years side-by-side (30 small bar charts, each for one year) lets the viewer compare 2000 vs 2010 vs 2020 by moving eyes between panels — much easier than remembering the animated state of the previous year. Animation of 30 years with "changes everywhere" is precisely the case where small multiples are superior to animation (as per the literal→abstract axis in the lecture). Small multiples also allow non-sequential comparison (e.g., jump from 1995 to 2015 directly).</p>
+      <p style="margin-top:.8rem"><strong>Recommendation:</strong> Small multiples of 2D bar charts. Use a 2D grid with year on one axis and country sorted by total emissions (or alphabetically with interactive resorting). Colour can encode region (categorical hue). Function first: the journalist's task is comparison and trend detection — small multiples serve this. Aesthetics can be refined by a graphic designer after functionality is confirmed.</p>
+    </div>
+  </div>
+
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 14 — Stevens' Power Law + Rules of Thumb (Combined)</h3>
+    <p>Outline the basic concept of Stevens' psychophysical power law, and why it is important in the design of information visualisation systems. In your answer, outline three different common styles of chart or graphical encoding, and critique each of them in terms of this power law. [This is the exact style of question from the example paper — practise this until fluent]</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><em>See Week 3 Question 4 for the full model answer — this is the same question. Ensure you can write 400-500 words covering: (1) formula S=kIⁿ; (2) why n=1 is ideal; (3) three charts with their n-values and implications. Aim for bar charts (n≈1, accurate), bubble/pie charts (area, n=0.7, underestimate), brightness/colour value (n=0.5, strongly underestimate). Practice timing: this should take 20-22 minutes in the exam.</em></p>
+    </div>
+  </div>
+</div>
+
+<!-- 8b DESIGN EXAMPLES CONTENT -->
+<div class="card">
+  <h2>📐 Week 8b: Design Examples — Tufte &amp; Classic IV Critiques</h2>
+  <p>Based on Edward Tufte's foundational IV books and landmark historical examples. These concepts are directly examinable.</p>
+</div>
+
+<div class="card">
+  <h2>🧮 Tufte's Lie Factor</h2>
+  <div class="math-box">
+    \[ \text{Lie Factor} = \frac{\text{size of effect shown in visualisation}}{\text{size of effect in the data}} \]
+    <p style="margin-top:.5rem">A lie factor of 1.0 = perfectly honest. &gt;1 = effect exaggerated. &lt;1 = effect understated. Tufte (1983) considers anything outside [0.95, 1.05] problematic.</p>
+  </div>
+  <div class="grid-2">
+    <div>
+      <h3>Classic Example (Tufte 1983, p.57)</h3>
+      <p>A chart showing fuel economy standards from 1978–1985. The data showed an increase from 18 mpg to 27.5 mpg = <strong>53% increase</strong>.</p>
+      <p style="margin-top:.5rem">The line drawn on the chart grew from 0.6 inches to 5.3 inches = <strong>783% increase</strong> in line length.</p>
+      <div class="math-box">
+        \[ \text{Lie Factor} = \frac{783\%}{53\%} = 14.8 \]
+      </div>
+      <p>The visualisation made the fuel economy improvement look nearly 15× more dramatic than it actually was.</p>
+    </div>
+    <div>
+      <h3>Common Lie Factor Sources</h3>
+      <ul style="padding-left:1.2rem;margin:.5rem 0">
+        <li><strong>Truncated y-axis</strong>: bar chart not starting at zero; a 5% difference looks like 50%</li>
+        <li><strong>Non-linear scale misread</strong>: logarithmic axes not clearly labelled</li>
+        <li><strong>3D perspective distortion</strong>: far objects appear smaller → bars look different sizes when they're the same</li>
+        <li><strong>Rubber-band scale</strong>: uneven spacing on the x-axis (e.g., intervals of 8,3,4,8,2,2 years displayed as equally spaced)</li>
+        <li><strong>Inconsistent time windows</strong>: comparing tuition over 35 years vs. ranking over 11 years on the same chart</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🗑️ Chart Junk (Tufte, 1983)</h2>
+  <div class="grid-2">
+    <div>
+      <h3>Definition</h3>
+      <p>"Stuff that obscures the real information in the interests of prettiness." The unnecessary use of data-ink — ink that does not represent data variation.</p>
+      <div class="highlight-box">
+        <strong>Data-ink ratio</strong> (Tufte): the proportion of a chart's ink devoted to actual data. Maximise data-ink ratio. Remove anything that doesn't carry information: excessive gridlines, decorative backgrounds, 3D effects on 2D data, drop shadows, unnecessary borders.
+      </div>
+      <h3>Moiré Effect</h3>
+      <p>Dense repeated patterns (e.g., cross-hatching in bar charts) interact with the physiological tremor of the eye to produce an apparent vibration effect. Distracting, reduces readability. Use solid fills or white space instead.</p>
+    </div>
+    <div>
+      <h3>Useful Junk? (Bateman et al., 2010)</h3>
+      <p>Bateman et al. CHI 2010 challenged Tufte — found that "chartoons" (embellished charts) were <em>better remembered</em> over a longer period than clean charts, though not more accurately read immediately. Key point: chart junk may have value for <strong>long-term memorability</strong> in journalism/storytelling, but not for analytical precision.</p>
+      <div class="highlight-box">
+        <strong>Design principle:</strong> For analytical IV tools (where precision matters), minimise chart junk. For public communication/storytelling (where engagement and recall matter), some embellishment can be justified.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🔢 Anscombe's Quartet — Why Visualisation is Essential</h2>
+  <p>Anscombe (1973) constructed four datasets with near-identical summary statistics but completely different distributions. A powerful argument for always visualising data before drawing conclusions.</p>
+  <div class="grid-2">
+    <div>
+      <h3>The Four Datasets (I, II, III, IV)</h3>
+      <p>All four have (to 2-3 decimal places):</p>
+      <table>
+        <tr><th>Statistic</th><th>Value (all 4 datasets)</th></tr>
+        <tr><td>Mean of x</td><td>9.0 (exact)</td></tr>
+        <tr><td>Variance of x</td><td>11.0 (exact)</td></tr>
+        <tr><td>Mean of y</td><td>7.50 (to 2 d.p.)</td></tr>
+        <tr><td>Variance of y</td><td>4.125 (±0.003)</td></tr>
+        <tr><td>Correlation (x,y)</td><td>0.816 (to 3 d.p.)</td></tr>
+        <tr><td>Linear regression</td><td>y = 3.00 + 0.500x</td></tr>
+        <tr><td>R²</td><td>0.67</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>But the Scatterplots Look Completely Different</h3>
+      <ul style="padding-left:1.2rem;margin:.5rem 0">
+        <li><strong>Dataset I:</strong> Normal linear relationship with random scatter</li>
+        <li><strong>Dataset II:</strong> Perfect parabola — non-linear relationship, not captured by linear regression</li>
+        <li><strong>Dataset III:</strong> Near-perfect linear relationship with one extreme outlier distorting the regression line</li>
+        <li><strong>Dataset IV:</strong> Vertical cluster at x=8, plus one outlier at x=19 — the outlier entirely determines the regression</li>
+      </ul>
+      <div class="highlight-box">
+        <strong>Key lesson:</strong> Summary statistics alone can be completely misleading. Visualising the data reveals the true structure. "Same stats, different graphs" (Matejka &amp; Fitzmaurice, CHI 2017) extended this: you can construct datasets that are statistically identical yet produce any shape (dinosaur, star, etc.) in a scatterplot.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📜 Historical IV Examples</h2>
+  <div class="grid-2">
+    <div>
+      <h3>Florence Nightingale's Coxcomb (1858)</h3>
+      <p>Polar area diagram showing causes of soldier deaths in the Crimean War. The large blue wedges (preventable disease) vastly dwarfed the red wedges (battle wounds), making the case visually compelling to Parliament that sanitation reform was needed.</p>
+      <p style="margin-top:.5rem"><strong>Why it matters:</strong> First major example of data visualisation used to drive policy change. The coxcomb made the comparative cause-of-death data impossible to ignore — where tables of numbers had failed to motivate action, the visualisation succeeded.</p>
+    </div>
+    <div>
+      <h3>John Snow's Cholera Map (1855)</h3>
+      <p>Dot map of cholera deaths in London, with pump locations marked. The spatial cluster of deaths around the Broad Street water pump provided visual evidence of waterborne transmission — at a time when miasma theory (bad air) was the accepted explanation.</p>
+      <p style="margin-top:.5rem"><strong>Why it matters:</strong> Demonstrates how spatial visualisation (geographic clustering) can reveal a causal mechanism invisible in tabular data. The map is one of the first instances of visualisation used for epidemiological investigation. Adding Voronoi polygons around each pump (retrospective overlay) shows that most deaths fall within the Broad Street pump's area.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📝 Exam Questions — Week 8b [15-mark format]</h2>
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 14b — Lie Factor &amp; Anscombe</h3>
+    <p>(i) Define Tufte's Lie Factor and explain its significance in information visualisation design. Calculate the lie factor for a chart that shows a data increase of 25% using a visual element that grows by 200%. (ii) Describe Anscombe's Quartet and explain what it demonstrates about the relationship between statistical summaries and data visualisation. (iii) Identify two specific design choices that introduce lie factor distortion in practice, and propose corrected alternatives for each.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>(i) Lie Factor:</strong></p>
+      <p>Tufte (1983): Lie Factor = (size of effect shown in visualisation) / (size of effect in data). A value of 1.0 is perfectly honest; values significantly above 1 exaggerate the effect; values below 1 understate it. Significance: viewers interpret visual magnitudes as proportional to data magnitudes — a chart with a large lie factor misleads viewers into drawing incorrect conclusions about the scale of a change or difference, even when the numbers are printed correctly.</p>
+      <p>Calculation: Data effect = 25%. Visual effect = 200%. Lie Factor = 200/25 = <strong>8.0</strong>. The chart makes the change look 8× more dramatic than the data supports.</p>
+      <p style="margin-top:.8rem"><strong>(ii) Anscombe's Quartet:</strong></p>
+      <p>Four datasets constructed with near-identical summary statistics (mean, variance, correlation, and linear regression line all match to 2-3 decimal places) but completely different scatter plot appearances: one linear, one parabolic, one linear with an outlier, one vertical cluster. Demonstrates that summary statistics (mean, correlation, R²) are insufficient to characterise the true structure of a dataset — two analysts relying only on statistics could draw identical conclusions from completely different underlying data. Visualisation of the raw data is essential before analysis; statistical summaries can mask non-linearity, outliers, and degenerate distributions entirely. Extended by Matejka &amp; Fitzmaurice (CHI 2017) who showed you can produce a dataset whose statistics match Anscombe's while the scatterplot looks like a dinosaur.</p>
+      <p style="margin-top:.8rem"><strong>(iii) Two design choices and corrections:</strong></p>
+      <p><strong>1. Truncated y-axis in bar charts:</strong> Starting a bar chart y-axis at 95 instead of 0 makes a 2% difference (95→97) look like a 100% difference visually (bar doubles in height). Lie factor = visual doubling / 2% ≈ very large. Correction: always start bar chart y-axes at zero; use line charts if showing trends where small differences matter and zero is not meaningful.</p>
+      <p><strong>2. 3D perspective on 2D charts:</strong> A 3D bar chart creates perspective distortion — bars at the back appear shorter than bars of the same height at the front. A bar representing 50 at the back looks like it's ~40 due to foreshortening. Lie factor varies by bar position. Correction: use 2D bar charts; there is no justification for 3D when the data is abstract (no unjustified 3D rule).</p>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- WEEK 9: COGNITIVE AMPLIFICATION & KNOWLEDGE CRYSTALLIZATION  -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="w9">
+<div class="card">
+  <h2>🧠 Week 9: Cognitive Amplification & Knowledge Crystallization</h2>
+</div>
+
+<div class="card">
+  <h2>⚡ Cognitive Amplification</h2>
+  <div class="grid-2">
+    <div>
+      <h3>Core Concept</h3>
+      <p>Information visualisation as a <strong>cognitive tool</strong> — extends human cognitive ability beyond what unaided memory and reasoning can achieve. The visualisation acts as external memory and a reasoning aid.</p>
+      <h3>External Cognition</h3>
+      <p>Using the world as external memory (Kirsh & Maglio, 1994). Instead of computing internally, offload computation to the visual representation:</p>
+      <ul style="padding-left:1.2rem;margin:.3rem 0">
+        <li>Rotate Tetris blocks externally rather than mentally</li>
+        <li>Use a scatterplot to "see" correlations rather than compute them</li>
+        <li>Group items visually rather than remembering groupings</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Analytic Discourse</h3>
+      <p>Complex analytical reasoning supported by visualisation. Users build hypotheses, test them visually, accumulate insights, and communicate findings — all mediated through interactive visual displays.</p>
+      <h3>Sensemaking</h3>
+      <p>The iterative process of collecting data, encoding it into visual form, extracting insights, and refining the visualisation in light of those insights. Pirolli & Card's sensemaking loop: forage for information → schematise → build mental model → tell a story.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>💎 Knowledge Crystallization</h2>
+  <p>The process by which insights from data analysis become structured, communicable knowledge. Key stages:</p>
+  <div class="grid-2">
+    <div>
+      <ol style="padding-left:1.5rem">
+        <li><strong>Data collection and filtering</strong> — identify relevant data sources</li>
+        <li><strong>Schema building</strong> — organise data into meaningful categories</li>
+        <li><strong>Hypothesis generation</strong> — form initial explanations</li>
+        <li><strong>Evidence gathering</strong> — test hypotheses with data</li>
+        <li><strong>Presentation</strong> — communicate findings to others</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Design Implications</h3>
+      <p>IV systems should support the full sensemaking/knowledge crystallization loop — not just the "display" stage. This means supporting:</p>
+      <ul style="padding-left:1.2rem;margin:.3rem 0">
+        <li>Annotations and note-taking within the visualisation</li>
+        <li>Bookmarking/recording significant views</li>
+        <li>Sharing and presenting findings</li>
+        <li>Iterative refinement of views</li>
+        <li>Integration with external tools</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📝 Exam Questions — Week 9 [15-mark format]</h2>
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 15</h3>
+    <p>The concept of "external cognition" suggests that information visualisation tools act as cognitive amplifiers, extending human reasoning beyond what unaided memory allows. Using two specific examples from data analysis tasks, demonstrate how a well-designed interactive visualisation supports external cognition. For each example, describe (i) what cognitive task the user faces without visualisation; (ii) how the visualisation externalises that task; and (iii) what perceptual or interaction mechanism makes this effective. Conclude with a discussion of the design implications for IV systems.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Example 1 — Correlation detection in multidimensional data:</strong></p>
+      <p>(i) Without visualisation: an analyst with a 100-column spreadsheet must compute correlations between all pairs of variables mathematically, holding each result in working memory while comparing to others. This exceeds working memory capacity (Miller's 7±2 chunks) for even moderate dimensionality.</p>
+      <p>(ii) A scatterplot matrix (SPLOM) externalises this: each cell shows the bivariate scatter of two dimensions. Correlation is visible as a diagonal cluster of dots — a pre-attentive Level 1 feature — no calculation needed. With 10 dimensions (45 plots), the analyst can visually scan for correlations in seconds rather than computing 45 Pearson coefficients.</p>
+      <p>(iii) The mechanism is Stevens' Law (position on common scale, n≈1) and pre-attentive processing: correlated data produces diagonal patterns that pop out from random scatter. Brushing and linking further externalises the task: select an outlier in one plot → all other plots highlight it, showing which other dimensions this outlier is anomalous in. The external representation does the multi-dimensional tracking that internal memory cannot.</p>
+      <p style="margin-top:.8rem"><strong>Example 2 — Temporal pattern recognition in time series:</strong></p>
+      <p>(i) Without visualisation: a researcher checking whether electricity consumption follows weekly patterns across a year must mentally compare 52 weeks of hourly data — impossible to hold in memory.</p>
+      <p>(ii) A calendar heatmap (van Wijk & van Selow, 1999) externalises weekly patterns: each day is a cell coloured by consumption. The visual pattern (dark Mondays, light Saturdays) is immediately apparent. The human visual system's pattern recognition (Level 2, Gestalt: similarity and continuity) detects the recurring structure without any calculation.</p>
+      <p>(iii) Linking the heatmap to a superimposed time-series line chart (showing average day profiles for selected clusters) allows the analyst to both identify which weeks are anomalous (heatmap) and understand what makes them anomalous (line chart profile). External memory via the linked view replaces the need to remember the Monday profile while inspecting the Saturday profile.</p>
+      <p style="margin-top:.8rem"><strong>Design implications:</strong> IV systems should maximise the use of pre-attentive and Gestalt features to externalise pattern detection (Level 1 and 2 processing). Interaction should support the sensemaking loop by allowing annotation, bookmarking, and linking between views. "Eyes beat memory" principle: design for side-by-side comparison, not sequential viewing. Responsiveness (&lt;0.1s) ensures the visual system and the external representation are synchronised — any lag breaks the externalisation effect.</p>
+    </div>
+  </div>
+
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 15b — Pirolli & Card Sensemaking Loop</h3>
+    <p>Pirolli and Card's sensemaking model describes how analysts move between "foraging" for information and "making sense" of it. (i) Describe the two main loops in the model and explain what happens at each stage. (ii) Identify three specific features of an interactive visualisation that would support the foraging loop and explain how each reduces cognitive cost. (iii) Explain how the "representational bottleneck" described by the model relates to the design of IV systems — and describe one concrete design choice that specifically addresses this bottleneck.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>(i) The two main loops:</strong></p>
+      <p><strong>Foraging Loop (bottom/left):</strong> The analyst searches for and filters relevant information. Stages: search for sources → read/filter content → extract relevant snippets to a "schema" (organised collection). The cognitive cost is managing the query process — knowing what to search for, finding it, and deciding what's relevant. This loop is about information acquisition.</p>
+      <p><strong>Sensemaking Loop (top/right):</strong> The analyst organises extracted information into a frame (mental model, hypothesis, explanation). Stages: place items into a schema → build a hypothesis → verify hypothesis against data → create a product (report, decision, insight). The cognitive cost is holding the current state of the hypothesis in working memory while examining new evidence. Failures here mean the analyst must "restart" their mental model.</p>
+      <p>The two loops interact: foraging provides raw material to sensemaking; sensemaking generates new queries for the foraging loop. A good IV system accelerates both.</p>
+      <p style="margin-top:.8rem"><strong>(ii) Three features supporting the foraging loop:</strong></p>
+      <p><strong>1. Dynamic Queries (interactive filters):</strong> Allows the analyst to narrow the information space instantly (&lt;0.1s response). Instead of formulating a SQL query (requires expertise, breaks the foraging flow), the analyst moves a slider to filter by year or magnitude. Reduces the cognitive cost of "knowing what to search for" — the analyst can explore incrementally. Supports discovery of unexpected patterns.</p>
+      <p><strong>2. Details on Demand (hover tooltips):</strong> Instead of clicking through to each item individually, hovering reveals key attributes. Reduces the cost of "reading/filtering content" — the analyst can scan many items rapidly without committing to navigation. Keeps the overview visible while accessing item-level detail.</p>
+      <p><strong>3. Search-and-highlight:</strong> Typing a query term highlights matching items in all linked views simultaneously. Reduces the cost of locating relevant items in a large space — the analyst does not need to remember or re-identify items across views. The visual system handles tracking (pre-attentive colour pop-out).</p>
+      <p style="margin-top:.8rem"><strong>(iii) Representational Bottleneck:</strong></p>
+      <p>The representational bottleneck is the limit on how much of their current "working schema" an analyst can hold in their head simultaneously. As the analyst forages more information, their mental schema grows beyond working memory capacity — they forget early findings, lose context, make contradictory hypotheses.</p>
+      <p>IV as an external cognitive store directly addresses this bottleneck: the visualisation itself becomes the externalised schema. The analyst does not need to remember which clusters exist in the data — they are persistently displayed. Concrete design choice: <strong>persistent annotation/bookmarking</strong> — the analyst can pin notes ("this cluster appears in 2008 only") directly to the visualisation. These notes persist across sessions, offloading the schema maintenance from working memory to the display. The bottleneck is widened because the representational capacity is now limited by the screen, not by the 7±2 working memory chunks.</p>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- FULL EXAM PRACTICE                                            -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="exam">
+<div class="card">
+  <h2>🎯 Full Exam Practice — New Format (2025-26)</h2>
+  <div style="background:var(--surface);border-radius:10px;padding:1.2rem;margin-bottom:1rem">
+    <h3>Exam Structure</h3>
+    <p>• <strong>4 questions × 15 marks = 60 marks</strong></p>
+    <p>• <strong>No MCQs</strong> — all traditional written responses</p>
+    <p>• <strong>90 minutes</strong> total → approximately 22 minutes per question</p>
+    <p>• Written by Prof. Matthew Chalmers (COMPSCI5099)</p>
+    <p style="margin-top:.5rem;color:var(--accent2)">Strategy: spend ~5 min planning each answer, ~15 min writing, ~2 min checking. Quality &gt; quantity — one well-structured point beats three vague ones.</p>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📋 Mock Exam Paper A</h2>
+  <p style="color:var(--muted)">Complete all 4 questions. Allow yourself 90 minutes.</p>
+
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Mock Q1</h3>
+    <p>A music streaming service has a dataset containing: for each user — listening history (songs, artists, timestamps); for each song — genre, BPM, duration, release year, artist; and for each artist — country of origin, number of albums. Describe the full data classification of this dataset using Munzner's framework (data types, dataset types, attribute types, ordering direction). Then describe the visualisation pipeline for a system that shows a user their "listening profile" — how their listening has changed across genres over the past year — including what transformations occur at each stage and one interaction technique that would enhance the system.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Data Classification:</strong></p>
+      <p><strong>Items:</strong> users, songs, artists. <strong>Links:</strong> "user listened to song" (relationship with timestamp attribute); "song by artist" (link). <strong>Attributes:</strong> genre=categorical; BPM=quantitative/sequential; duration=quantitative/sequential; release year=quantitative/sequential; country=categorical; album count=quantitative/sequential. <strong>Dataset types:</strong> Table (songs with attributes); Network (user-song listening relationships); Geometry (if country→ map). <strong>Availability:</strong> Static (release year, genre) + Dynamic (listening history accumulates).</p>
+      <p style="margin-top:.8rem"><strong>Visualisation Pipeline for Listening Profile:</strong></p>
+      <p><strong>Raw data → Transform:</strong> Filter listening history to past 12 months. Aggregate: for each month × genre combination, count play count. Derive: calculate percentage of total plays per month per genre → normalised data for comparison. Output: data table with (month, genre, play_count, percent_of_month).</p>
+      <p><strong>Transform → Encode:</strong> Choose a stacked area chart. Month on x-axis (quantitative, temporal). Percent of plays on y-axis (quantitative, sequential, 0-100%). Genre encoded as colour hue (categorical, nominal → hue is expressively correct). Stacking shows composition at each time point. Apply effectiveness: position encodes the most important attribute (time), hue encodes the less critical (genre identity).</p>
+      <p><strong>Encode → Display:</strong> Render to screen. Ensure axes are labelled (months on x, percentage on y, genre legend). Title: "My Listening Profile — Genre over Time".</p>
+      <p><strong>Interaction:</strong> Brushing — user clicks on a genre band → linked view (separate panel) shows the top 5 songs of that genre in the selected time period. This adds details-on-demand without cluttering the main view. Response time: &lt;1 second for highlighting, &lt;10 seconds for loading track details.</p>
+    </div>
+  </div>
+
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Mock Q2</h3>
+    <p>Outline the basic concept of Stevens' psychophysical power law and why it is important in information visualisation. Then describe and critique three encoding choices for a visualisation of a dataset showing unemployment rates across 200 countries, for each of the last 20 years, and across 5 industry sectors. Your answer should address: what visual channel is used for what attribute, whether the channel's exponent makes it appropriate, and any alternatives you would recommend.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Stevens' Power Law:</strong> S = k·Iⁿ. When n=1, perception is accurate. n&lt;1 = underestimation; n&gt;1 = overestimation. IV designers should choose channels where n≈1 for quantitative data, or use channels whose n-value is well-understood so corrections can be applied. The most important implication: position (n≈1) is the most reliable channel for quantitative encoding; area (n=0.7) and brightness (n=0.5) cause systematic perceptual error.</p>
+      <p style="margin-top:.8rem"><strong>Dataset structure:</strong> 200 countries × 20 years × 5 sectors → unemployment rate (quantitative, sequential). This is a 3-key, 1-value multidimensional table. Too many dimensions for any single view without reduction.</p>
+      <p><strong>Encoding 1 — Heat map (country × year, colour=unemployment rate):</strong> Colour value (lightness) encodes unemployment rate. n≈0.5 for brightness — substantial underestimation of high unemployment rates. Countries with 30% unemployment may look only marginally different from 20% countries. Alternative: use position on a common scale instead (a small multiples approach). Strength: scalable to 200 countries × 20 years in a single compact view. Weakness: sector dimension not encoded — need separate heat maps per sector or interaction.</p>
+      <p><strong>Encoding 2 — Bubble chart (country × year matrix, bubble size=unemployment):</strong> Size/area encodes unemployment. n=0.7 — systematic underestimation. A bubble for 25% unemployment looks like ~18% (25^0.7 relative to 1^0.7). Recommendation: use bar length instead (n≈1.0). However, fitting 200 bars per year is impractical — aggregation needed.</p>
+      <p><strong>Encoding 3 — Line chart (year on x, unemployment on y, one line per country, colour=sector):</strong> Position on common scale (y-axis) encodes unemployment — n≈1.0, accurate. This is the best channel for quantitative comparison. Problem: 200 overlapping lines create spaghetti plot. Solution: allow interactive filtering (dynamic queries: select countries by region or unemployment range) so only selected lines are visible. Colour hue for sector (5 sectors — within the 8-hue limit). This is the most perceptually reliable design if interaction is used to manage overplotting.</p>
+    </div>
+  </div>
+
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Mock Q3</h3>
+    <p>Explain the key differences between t-SNE, UMAP, and spring model approaches to dimensional reduction in information visualisation. In your answer, include: the core algorithmic concept for each; their relative strengths and weaknesses for preserving local vs. global structure; their computational complexity; and a scenario where you would choose each approach over the others.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Spring Models (force-directed):</strong></p>
+      <p>Core concept: simulate springs between all pairs of objects. Ideal spring length ∝ high-D distance (similarity metric). System iterates until forces reach equilibrium. Local structure: good (similar objects pulled together). Global structure: good — both neighbours and non-neighbours are accounted for, unlike t-SNE. Complexity: O(N³) naïve; O(N log N) with Barnes-Hut; O(N) with Chalmers' sampling. Scales to millions with fast variants.</p>
+      <p><strong>Scenario for spring models:</strong> A dataset of N=500,000 genomic sequences with both local similarity (subspecies clustering) and global taxonomy relationships important. Need to show both fine-grained clusters AND the relative distances between clusters. Spring model (with Chalmers-style sampling) scales to this size and preserves both local and global structure.</p>
+      <p style="margin-top:.8rem"><strong>t-SNE (Stochastic Neighbour Embedding):</strong></p>
+      <p>Core concept: use KL-divergence to match the probability distribution of neighbours in 2D to the distribution in high-D space. High penalty for neighbours that are far in layout; low penalty for non-neighbours that are close. Excels at local structure; poor global structure. Risk: creates clearly separated clusters even where none exist in the data — scientists may be misled into interpreting artificial clusters as real. Complexity: O(N²) or O(N log N) with approximations; typically limited to N &lt; 50,000.</p>
+      <p><strong>Scenario for t-SNE:</strong> Exploring a dataset of N=5,000 cell images in a biology lab where the primary goal is identifying distinct cell types (clusters). Global relationships between cell types are not important for this task. t-SNE's clear cluster separation aids cell-type identification. N is small enough for t-SNE to run efficiently.</p>
+      <p style="margin-top:.8rem"><strong>UMAP (Uniform Manifold Approximation and Projection):</strong></p>
+      <p>Core concept: build a topological representation (manifold) of the high-D data, then find a 2D embedding that preserves the manifold structure. Uses random projection trees and nearest-neighbour descent for fast neighbour finding, then stochastic gradient descent. Balances local and global structure better than t-SNE. Scales better: estimated O(d·N^1.14). Scales to millions.</p>
+      <p><strong>Scenario for UMAP:</strong> A dataset of N=1,000,000 customer purchase records where both cluster identification (which customer segments exist?) and inter-cluster relationships (how similar are luxury buyers to budget buyers?) matter. UMAP scales to 1M objects and preserves both local clusters and their relative global positions — the right balance for this use case.</p>
+    </div>
+  </div>
+
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Mock Q4</h3>
+    <p>A paint company plans to display international sales figures using a colour map based on its 10 most popular paint colours. Each country's area on a world map will be coloured using this scheme. Provide a thorough critique of this design from a perceptual and information visualisation perspective. Then propose an improved design that addresses the identified problems, with full justification for each design choice.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Critique of the paint colour choropleth:</strong></p>
+      <p>1. <strong>Wrong channel for ordered data:</strong> Sales figures are quantitative/ordered. The 10 paint colours use colour hue — an unordered, associative, non-quantitative channel (Bertin). Hue cannot represent order (green is not "more" than red). Viewers cannot determine from the hue encoding whether Country A sells more than Country B without reading a legend and remembering the ordering of 10 paint hues.</p>
+      <p>2. <strong>Too many hue categories:</strong> Cross-cultural colour naming studies (Berlin & Kay, 1969; Ware) identify ~8 reliably named colours. 10 paint colours will include similar-hue paints that are perceptually indistinguishable, especially under different monitor calibrations or for colour-blind users.</p>
+      <p>3. <strong>Colour-blindness:</strong> Paint colour sets are not designed for accessibility. Standard paints include reds and greens — completely indistinguishable for ~8% of males (red-green colour deficiency). This makes the encoding fail for a significant user population.</p>
+      <p>4. <strong>Area channel (choropleth) bias:</strong> Large-area countries (Russia, Canada, Australia) visually dominate regardless of their actual sales figures. Small high-sales countries (e.g., Singapore, Belgium) are barely visible. Area of the country is an irrelevant variable that strongly influences the viewer's impression.</p>
+      <p>5. <strong>No zero encoding:</strong> With 10 categories, countries with zero sales in some colours have no obvious visual representation.</p>
+      <p style="margin-top:.8rem"><strong>Improved design:</strong></p>
+      <p>1. Replace hue with <strong>colour value (sequential)</strong> for each map: use one map per paint colour (10 small multiples), where each country's darkness encodes the sales of THAT paint colour. This makes the ordered/quantitative attribute match an ordered channel.</p>
+      <p>2. Use a <strong>perceptually safe colour scheme</strong> (ColorBrewer2.org single-hue sequential scales). Ensure colour-blind safe palettes are used.</p>
+      <p>3. Add a <strong>proportional symbol layer</strong>: overlay circles on each country, where circle size (area) encodes total sales across all colours. This separates the "which colour" encoding (colour value of the choropleth) from the "how much total" encoding (circle size), avoiding the large-country area bias.</p>
+      <p>4. Add <strong>interactive dynamic queries</strong>: slider to filter countries by sales range; checkbox to show/hide specific paint colours. Tooltip on hover shows exact values (details on demand).</p>
+      <p>5. Optional: a <strong>bar chart panel</strong> linked to the map showing exact sales figures per colour for the currently selected/hovered country, using position on common scale (n≈1) for precise comparison.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📋 Mock Exam Paper B</h2>
+
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Paper B — Q1</h3>
+    <p>Describe and compare Shneiderman's "Overview first, zoom and filter, details on demand" mantra with the "Focus and Context" approach to visualisation. Illustrate each with a concrete example from a domain of your choice. What are the main design considerations for implementing each approach, and in what scenarios might one be preferable to the other?</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Overview first, zoom and filter, details on demand (Shneiderman, 1996):</strong></p>
+      <p>A sequential task pattern: (1) Overview — show all/most of the data to identify patterns and interesting aggregates (Query → Identify); (2) Zoom and filter — use interaction to focus on these aggregates (Query → Compare); (3) Details — inspect individual items within them (Query → Summarise). The three stages are distinct and sequential. The overview is lost when zooming in — the user moves from global to local.</p>
+      <p><strong>Example — Medical records:</strong> Overview: a timeline showing all 1,000 patients' hospital visits as dots (overview of the full dataset). Filter: use a slider to filter to patients aged 60-70 with hypertension. Zoom: enlarge the filtered subset to see individual visit patterns. Details: click one patient → popup shows full medical record.</p>
+      <p style="margin-top:.8rem"><strong>Focus and Context:</strong></p>
+      <p>Shows detail AND overview simultaneously in the same view. The focused area is magnified; the surrounding context is compressed but remains visible. The user never loses sight of where the focused area sits within the whole. Techniques: fisheye distortion, perspective wall, hyperbolic trees.</p>
+      <p><strong>Example — Map navigation:</strong> A fisheye distortion of a city map magnifies the area around the user's current location (focus) while showing surrounding city regions at compressed scale (context). The user can plan a route from their location to a distant area without losing spatial context.</p>
+      <p style="margin-top:.8rem"><strong>Design considerations:</strong></p>
+      <p>Overview+zoom: requires clear interaction controls for filtering; transitions between overview and detail must be smooth; breadcrumb navigation helps users understand where they are in the hierarchy. Works best when the overview and detail are qualitatively different (e.g., aggregate vs. individual level).</p>
+      <p>Focus+context: requires careful distortion design to prevent perceptual confusion at the distortion boundary; the compression function must preserve enough context to be useful; labels in context area must remain legible despite compression. Works best for continuous spatial data (maps, large documents) where context is spatially meaningful.</p>
+      <p style="margin-top:.8rem"><strong>When to prefer each:</strong> Overview+zoom for hierarchical data with clear abstraction levels; when the overview and detail views are categorically different. Focus+context for spatially continuous data where location within the whole is constantly relevant; when users need to navigate large homogeneous datasets while retaining positional awareness.</p>
+    </div>
+  </div>
+
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Paper B — Q2</h3>
+    <p>Describe the Gestalt laws of visual perception and explain how each one can be used as a design principle in information visualisation. For at least four Gestalt laws, give a specific visualisation example showing both correct application and a common violation of each law.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Proximity:</strong></p>
+      <p>Law: elements that are physically close are perceptually grouped. Design principle: place related chart elements (e.g., a chart and its legend) close together; avoid equal whitespace between unrelated elements.</p>
+      <p>Correct: legend placed directly adjacent to its chart, no whitespace between them. Violation: legend placed on the opposite side of the screen from its chart with equal whitespace — viewer groups the legend with nearby text rather than its chart.</p>
+      <p><strong>Similarity:</strong></p>
+      <p>Law: similar elements tend to be grouped. Design principle: use the same colour to encode the same category across all views in a multi-view system.</p>
+      <p>Correct: in a SPLOM, all dots representing "category A" are consistently blue in every scatterplot. Violation: same categories coloured differently in different views — the user cannot trace the same item across views perceptually, defeating brushing and linking.</p>
+      <p><strong>Connectedness:</strong></p>
+      <p>Law: elements connected by lines are grouped. Design principle: draw edges/links to show relationships in network diagrams; use line charts to imply continuity in time series.</p>
+      <p>Correct: a network diagram with visible edges clearly shows which nodes are related. Violation: placing related data items close to each other without a connecting line (relying on proximity alone) — viewers may group them with other nearby unrelated items instead.</p>
+      <p><strong>Common Fate:</strong></p>
+      <p>Law: elements that move together are grouped. Design principle: animate only related elements simultaneously; use coordinated motion to show group membership.</p>
+      <p>Correct: when a user selects a cluster in a spring model, all selected dots gently pulse together → the viewer perceives them as a group. Violation: animating ALL elements simultaneously (e.g., 30-year animated bar chart where every bar moves at every frame) — no selective grouping possible from motion, just visual noise.</p>
+      <p><strong>Closure:</strong></p>
+      <p>Law: contours with gaps are perceptually closed. Design principle: enclose related data within a region (box, colour background) to signal grouping without explicit borders.</p>
+      <p>Correct: a dashed rectangle around a group of bars in a bar chart signals they represent the same time period. Violation: using equally-spaced columns in a dashboard with no enclosing regions — viewer sees an undifferentiated grid rather than logical groupings of related charts.</p>
+    </div>
+  </div>
+
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Paper B — Q3</h3>
+    <p>A social media company wants to visualise the network of 50 million users, where links represent "follows" relationships (directed, weighted by interaction frequency). They also want to identify topic communities (clusters of users who discuss similar subjects). Describe a complete visualisation strategy for this dataset. Your answer must address: data classification; why standard node-link diagrams fail at this scale; which dimensional reduction or network visualisation technique you would recommend and why; how you would support interactive analysis; and what the limitations of your recommended approach are.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Data classification:</strong> Items = users (50M). Links = directed, weighted "follows" relationships. Attributes on nodes: topics discussed (categorical multi-value), activity level (quantitative), join date (quantitative/temporal). Attributes on links: interaction frequency (quantitative, sequential). Dataset type: network (directed, weighted graph). Availability: dynamic (follows change continuously).</p>
+      <p style="margin-top:.8rem"><strong>Why standard node-link diagrams fail at 50M nodes:</strong></p>
+      <p>Node-link diagrams require positions for every node and rendering of every edge. At 50M nodes with typical follows (avg ~200 follows each = 10 billion edges), the edge rendering alone would produce a completely black screen (hairball problem). Force-directed layout (naïve spring model) at O(N³) would take years to compute. Even O(N log N) Barnes-Hut at 50M nodes would require massive computation and the resulting layout would be unreadable at any zoom level. Pixel density: even at 4K resolution (~8M pixels), we cannot display 50M distinct node positions.</p>
+      <p style="margin-top:.8rem"><strong>Recommended approach: UMAP + Aggregated Node-Link with Multi-level Interaction</strong></p>
+      <p>1. <strong>Topic-based aggregation:</strong> First, cluster 50M users into ~10,000 topic communities (using existing ML community detection on the graph). Each community becomes a super-node. Compute inter-community link weights (total follows across community pairs).</p>
+      <p>2. <strong>UMAP dimensional reduction of community profiles:</strong> Each community has a high-dimensional profile (topic distribution, activity patterns). Apply UMAP to project 10,000 communities into 2D. UMAP scales to this N and preserves both local (similar communities close) and global structure.</p>
+      <p>3. <strong>Overview: super-node layout</strong> — display 10,000 super-nodes as dots, sized by community membership, coloured by dominant topic (categorical hue, ≤8 main topics + "other"). Edges between communities shown as lines, with opacity encoding interaction frequency.</p>
+      <p>4. <strong>Interaction: drill-down</strong> — click a community → zoom into that community's internal structure, now showing individual users as dots (up to ~10,000 in a community), using a local node-link or adjacency matrix layout. This multi-level approach makes any level manageable.</p>
+      <p style="margin-top:.8rem"><strong>Limitations:</strong> Aggregation loses individual user detail in the overview. Community detection algorithms may be biased or create artificial communities (t-SNE problem). Dynamic data (50M active users, follows changing in real-time) requires incremental layout updates — full recomputation is too costly. Privacy implications of visualising individual user data. Scale of data (50M) still requires distributed computing infrastructure even for UMAP.</p>
+    </div>
+  </div>
+
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Paper B — Q4</h3>
+    <p>Critically evaluate the following design decisions in the context of the information visualisation rules of thumb and the principles of effective encoding: (i) a 3D pie chart used to show the market share of five competing products; (ii) an animated bar chart racing through 30 years of GDP data for 20 countries; (iii) a VR environment where scientists explore a molecular simulation dataset; (iv) a visualisation that starts with artistic aesthetics (colour theme, typography) before any data encoding decisions are made. For each, state whether you would recommend this design decision, with full justification.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>(i) 3D pie chart — NOT recommended:</strong></p>
+      <p>Violates two rules simultaneously. "No unjustified 3D": pie chart data is abstract (market share percentages), not 3D spatial. 3D adds occlusion (front slices hide back slices), perspective distortion (back slices appear smaller than they actually are, creating systematic misreading of market share), and tilted text in the labels. "Expressiveness": pie charts encode quantity as angle/area — both poor channels (n=0.7 for area; angle also poor). A bar chart using position on common scale (n≈1) would be more accurate and equally compact. Even a standard 2D pie chart would be poor; 3D makes it worse in every dimension. [4 marks]</p>
+      <p style="margin-top:.8rem"><strong>(ii) Animated bar chart racing — PARTIALLY recommended (with caveats):</strong></p>
+      <p>Animation is suitable for the "literal" end of the literal→abstract axis (showing time with time). For storytelling about how GDP evolved, the animation can be effective — each frame shows one year's ranking, and the motion draws attention to fast-rising/falling countries. However, "eyes beat memory" warns against using animation for complex multi-object comparison: viewers cannot compare, say, 1985 to 2015 without remembering the 1985 state. If the task is comparison across many years, small multiples would be superior. Recommendation: use animation for storytelling/presentation (one audience viewing, no need for precise comparison); add a scrubber slider so users can pause and compare any two years directly. [4 marks]</p>
+      <p style="margin-top:.8rem"><strong>(iii) VR for molecular simulation — RECOMMENDED:</strong></p>
+      <p>This is one of the justified uses of 3D. The data IS 3D spatial (atomic positions in 3D Euclidean space). The task IS shape perception of 3D spatial objects (how does the protein fold?). Interactive 3D navigation (rotation, zoom) allows synthesis across multiple viewpoints — standard 2D projections lose depth information critical to understanding molecular geometry. "Resolution beats immersion" warns against VR for abstract data, but molecular simulation is genuinely 3D spatial — the exception, not the rule. Caveats: ensure high resolution (pixel density in the VR headset), support navigation interaction with clear viewpoint cues, and consider stereoscopic rendering quality. [4 marks]</p>
+      <p style="margin-top:.8rem"><strong>(iv) Aesthetics before encoding — NOT recommended:</strong></p>
+      <p>Violates "function first, form next". Starting with colour themes and typography before deciding what data to encode creates a design prison: the chosen aesthetic will constrain what encodings are possible. For example, if a corporate blue colour theme is chosen first, it may be impossible to later use blue for a meaningful categorical distinction in the data. "Usually impossible to add function retroactively" — the aesthetic decisions will have created commitments (layout, typefaces, colour palette) that limit the expressive range of the encoding. Correct approach: encode data first using optimal channels (position, then size, then colour), verify the design is expressive and effective, THEN bring in a graphic designer to refine the aesthetics within the constraints of the encoding. [3 marks]</p>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK REFERENCE CHEAT SHEET -->
+<div class="card">
+  <h2>📌 Quick Reference: Exam Cheat Sheet</h2>
+  <div class="grid-2">
+    <div>
+      <h3>Key Formulas</h3>
+      <div class="math-box">
+        Stevens' Law: \( S = k \cdot I^n \)<br>
+        SPLOM plots: \( \frac{d(d-1)}{2} \)<br>
+        Spring naive: \( O(N^2) \) per iter, \( O(N^3) \) total<br>
+        Barnes-Hut: \( O(N \log N) \) per iter<br>
+        Chalmers sampling: \( O(N) \) per iter
+      </div>
+      <h3>Stevens' n Values</h3>
+      <table>
+        <tr><th>Channel</th><th>n</th></tr>
+        <tr><td>Position (common scale)</td><td>~1.0 (accurate)</td></tr>
+        <tr><td>Length / Line</td><td>~1.0</td></tr>
+        <tr><td>Area (2D size)</td><td>0.7 (underestimate)</td></tr>
+        <tr><td>Depth / 3D position</td><td>0.67</td></tr>
+        <tr><td>Brightness</td><td>0.5 (strongly underestimate)</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Rules of Thumb (all 7)</h3>
+      <ol style="padding-left:1.5rem">
+        <li>No unjustified 3D</li>
+        <li>No unjustified 2D</li>
+        <li>Eyes beat memory</li>
+        <li>Resolution beats immersion</li>
+        <li>Overview → Zoom+filter → Details</li>
+        <li>Responsiveness required</li>
+        <li>Function first, form next</li>
+      </ol>
+      <h3>Channel Rankings (top → bottom)</h3>
+      <ol style="padding-left:1.5rem">
+        <li>Position on common scale</li>
+        <li>Position on unaligned scale</li>
+        <li>Length (1D)</li>
+        <li>Tilt/angle</li>
+        <li>Area (2D)</li>
+        <li>Depth (3D)</li>
+        <li>Colour value</li>
+        <li>Colour hue (for categorical only)</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+</section>
+
+</main>
+
+<script>
+function show(id) {
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  event.target.classList.add('active');
+  window.scrollTo(0, 0);
+}
+function toggleAcc(header) {
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+  header.querySelector('span').textContent = body.classList.contains('open') ? '▲' : '▼';
+}
+function toggleAnswer(btn) {
+  const ans = btn.nextElementSibling;
+  if (ans.style.display === 'block') { ans.style.display = 'none'; btn.textContent = 'Show Model Answer'; }
+  else { ans.style.display = 'block'; btn.textContent = 'Hide Model Answer'; }
+}
+function checkAnswer(btn, result, qid) {
+  const quiz = document.getElementById(qid);
+  quiz.querySelectorAll('.option').forEach(o => { o.classList.remove('correct','wrong'); o.disabled = true; });
+  btn.classList.add(result);
+}
+function switchTab(tab, contentId) {
+  const container = tab.closest('.card');
+  container.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  container.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById(contentId).classList.add('active');
+}
+</script>
+</body>
+</html>

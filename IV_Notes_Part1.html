@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Information Visualisation — Complete Revision Notes</title>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d2e; --card: #252840;
+    --accent: #6c63ff; --accent2: #ff6584; --accent3: #43e97b;
+    --accent4: #f7971e; --text: #e8eaf6; --muted: #9fa8da;
+    --border: #3a3f6e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.7; }
+
+  /* NAV */
+  nav { background: var(--surface); border-bottom: 2px solid var(--accent); padding: 0; position: sticky; top: 0; z-index: 100; }
+  nav ul { display: flex; list-style: none; overflow-x: auto; padding: 0 1rem; gap: 2px; }
+  nav a { display: block; padding: .6rem 1rem; color: var(--muted); text-decoration: none; font-size: .85rem; font-weight: 600; white-space: nowrap; border-bottom: 3px solid transparent; transition: .2s; }
+  nav a:hover, nav a.active { color: var(--accent); border-color: var(--accent); }
+
+  /* HERO */
+  .hero { background: linear-gradient(135deg, #1a1d2e 0%, #252840 50%, #1a1d2e 100%); padding: 3rem 2rem; text-align: center; border-bottom: 1px solid var(--border); }
+  .hero h1 { font-size: 2.4rem; background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero p { color: var(--muted); margin-top: .5rem; }
+  .exam-banner { background: linear-gradient(90deg, #ff6584, #f7971e); color: white; padding: .8rem 2rem; font-weight: 700; font-size: 1rem; text-align: center; }
+
+  /* LAYOUT */
+  main { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
+  section { display: none; }
+  section.active { display: block; }
+
+  /* CARDS */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin: 1.2rem 0; transition: transform .2s, box-shadow .2s; }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,99,255,.15); }
+  .card h2 { color: var(--accent); font-size: 1.3rem; margin-bottom: .8rem; display: flex; align-items: center; gap: .5rem; }
+  .card h3 { color: var(--accent3); font-size: 1.05rem; margin: 1rem 0 .5rem; }
+  .card h4 { color: var(--accent4); font-size: .95rem; margin: .8rem 0 .3rem; }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; }
+  @media(max-width:768px) { .grid-2,.grid-3 { grid-template-columns:1fr; } }
+
+  /* BADGES & TAGS */
+  .badge { display: inline-block; padding: .2rem .6rem; border-radius: 20px; font-size: .75rem; font-weight: 700; margin: .2rem; }
+  .badge-blue { background: rgba(108,99,255,.2); color: var(--accent); border: 1px solid var(--accent); }
+  .badge-red { background: rgba(255,101,132,.2); color: var(--accent2); border: 1px solid var(--accent2); }
+  .badge-green { background: rgba(67,233,123,.2); color: var(--accent3); border: 1px solid var(--accent3); }
+  .badge-yellow { background: rgba(247,151,30,.2); color: var(--accent4); border: 1px solid var(--accent4); }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .9rem; }
+  th { background: var(--accent); color: white; padding: .6rem .8rem; text-align: left; }
+  td { padding: .5rem .8rem; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: rgba(255,255,255,.03); }
+
+  /* CODE */
+  pre { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; overflow-x: auto; font-size: .85rem; margin: .8rem 0; }
+  code { font-family: 'Fira Code', 'Consolas', monospace; color: #e8eaf6; }
+  .code-label { background: var(--accent); color: white; font-size: .75rem; padding: .2rem .6rem; border-radius: 4px 4px 0 0; display: inline-block; font-weight: 700; }
+
+  /* MATH BOX */
+  .math-box { background: rgba(108,99,255,.08); border-left: 4px solid var(--accent); border-radius: 0 8px 8px 0; padding: 1rem 1.2rem; margin: .8rem 0; }
+
+  /* QUIZ */
+  .quiz { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem; margin: 1rem 0; }
+  .quiz-q { font-weight: 600; color: var(--text); margin-bottom: .8rem; }
+  .option { display: block; background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: .6rem 1rem; margin: .4rem 0; cursor: pointer; transition: .2s; }
+  .option:hover { border-color: var(--accent); }
+  .option.correct { background: rgba(67,233,123,.15); border-color: var(--accent3); color: var(--accent3); }
+  .option.wrong { background: rgba(255,101,132,.15); border-color: var(--accent2); color: var(--accent2); }
+  .feedback { margin-top: .5rem; font-size: .9rem; display: none; padding: .5rem; border-radius: 4px; }
+
+  /* EXAM QUESTIONS */
+  .exam-q { background: linear-gradient(135deg, rgba(108,99,255,.1), rgba(255,101,132,.05)); border: 1px solid var(--accent); border-radius: 12px; padding: 1.5rem; margin: 1.2rem 0; }
+  .exam-q .marks { float: right; background: var(--accent2); color: white; padding: .2rem .7rem; border-radius: 20px; font-weight: 700; font-size: .85rem; }
+  .exam-q h3 { color: var(--accent2); font-size: 1rem; margin-bottom: .8rem; }
+  .model-answer { background: var(--surface); border-radius: 8px; padding: 1rem; margin-top: .8rem; display: none; }
+  .show-btn { background: var(--accent); color: white; border: none; padding: .4rem .9rem; border-radius: 6px; cursor: pointer; font-size: .85rem; margin-top: .5rem; }
+  .show-btn:hover { background: #7c74ff; }
+
+  /* ANIMATIONS */
+  @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+  .card { animation: fadeIn .3s ease; }
+
+  /* PIPELINE */
+  .pipeline { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin: 1rem 0; }
+  .pipe-step { background: var(--card); border: 2px solid var(--accent); border-radius: 8px; padding: .5rem 1rem; font-weight: 600; font-size: .85rem; text-align: center; }
+  .pipe-arrow { color: var(--accent); font-size: 1.2rem; }
+
+  /* VISUAL CHANNEL TABLE */
+  .channel-row { display: flex; align-items: center; gap: 1rem; padding: .4rem; border-radius: 6px; margin: .3rem 0; }
+  .channel-bar { height: 12px; border-radius: 6px; background: var(--accent); }
+  .channel-label { min-width: 160px; font-size: .85rem; color: var(--muted); }
+  .channel-rank { font-weight: 700; color: var(--accent3); min-width: 24px; text-align: center; }
+
+  /* ACCORDION */
+  .accordion { margin: .5rem 0; }
+  .acc-header { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: .7rem 1rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
+  .acc-header:hover { border-color: var(--accent); }
+  .acc-body { display: none; background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 1rem; }
+  .acc-body.open { display: block; }
+
+  /* SPRING ANIMATION */
+  .spring-demo { position: relative; height: 200px; background: var(--surface); border-radius: 10px; border: 1px solid var(--border); margin: 1rem 0; overflow: hidden; }
+  .node { position: absolute; width: 20px; height: 20px; border-radius: 50%; transform: translate(-50%,-50%); transition: all 1s ease; font-size: .6rem; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+
+  /* PROGRESS BAR */
+  .progress { height: 6px; background: var(--border); border-radius: 3px; margin: .3rem 0; }
+  .progress-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--accent), var(--accent3)); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; margin-bottom: .5rem; flex-wrap: wrap; }
+  .tab { padding: .4rem .9rem; border-radius: 6px; cursor: pointer; font-size: .85rem; font-weight: 600; border: 1px solid var(--border); color: var(--muted); }
+  .tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* HIGHLIGHT */
+  .highlight { background: rgba(247,151,30,.15); border-left: 3px solid var(--accent4); padding: .3rem .6rem; border-radius: 0 4px 4px 0; display: inline; }
+  .key-term { color: var(--accent3); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="exam-banner">
+  NEW EXAM FORMAT 2025-26: 4 questions × 15 marks = 60 marks | No MCQs | Traditional written answers | 90 minutes
+</div>
+
+<div class="hero">
+  <h1>Information Visualisation</h1>
+  <p>Complete Interactive Revision Notes — Prof. Matthew Chalmers | University of Glasgow</p>
+</div>
+
+<nav>
+  <ul>
+    <li><a href="#" onclick="show('w1')" class="active">Week 1: Data Types & Tasks</a></li>
+    <li><a href="#" onclick="show('w1b')">Week 1b: Quant. Depiction</a></li>
+    <li><a href="#" onclick="show('w3')">Week 3: Bertin & Encoding</a></li>
+    <li><a href="#" onclick="show('w3c')">Week 3c: Perception</a></li>
+    <li><a href="#" onclick="show('w4')">Week 4: Pipeline & Selection</a></li>
+    <li><a href="#" onclick="show('w4b')">Week 4b: Multidim. Vis</a></li>
+    <li><a href="#" onclick="show('w5')">Week 5: Networks & Trees</a></li>
+    <li><a href="#" onclick="show('w6')">Week 6: Multiple Views</a></li>
+    <li><a href="#" onclick="show('w7')">Week 7: Design, Eval & Experiments</a></li>
+    <li><a href="#" onclick="show('w8')">Week 8: Rules of Thumb</a></li>
+    <li><a href="#" onclick="show('w9')">Week 9: Cognition</a></li>
+    <li><a href="#" onclick="show('exam')">Exam Practice</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  WEEK 1: DATA TYPES & TASKS                                   -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="w1" class="active">
+
+<div class="card">
+  <h2>📦 Week 1a: Data Types (Munzner Ch.2)</h2>
+  <p>Munzner defines <span class="key-term">5 data types</span> and <span class="key-term">4 dataset types</span> to classify any information visualisation scenario.</p>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <h2>🔷 Five Data Types</h2>
+    <table>
+      <tr><th>Type</th><th>Definition</th><th>Example (Hill Racing)</th></tr>
+      <tr><td><span class="badge badge-blue">item</span></td><td>A discrete object</td><td>A runner</td></tr>
+      <tr><td><span class="badge badge-red">link</span></td><td>Relationship between items</td><td>Two runners who train together</td></tr>
+      <tr><td><span class="badge badge-green">attribute</span></td><td>Property of an item</td><td>A runner's club</td></tr>
+      <tr><td><span class="badge badge-yellow">position</span></td><td>Location in 2D/3D space</td><td>Race start point on a map</td></tr>
+      <tr><td><span class="badge badge-blue">grid</span></td><td>Regular sampling of continuous data</td><td>Heartbeat every 30s</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h2>🗄️ Four Dataset Types</h2>
+    <table>
+      <tr><th>Type</th><th>Description</th><th>Example</th></tr>
+      <tr><td><span class="badge badge-blue">table</span></td><td>Rows and columns (2D or multidim)</td><td>Runner results spreadsheet</td></tr>
+      <tr><td><span class="badge badge-red">networks/trees</span></td><td>Relationships between items</td><td>Run-buddy network</td></tr>
+      <tr><td><span class="badge badge-green">fields</span></td><td>Continuous data (infinite measurements conceptually)</td><td>Heart rate over time</td></tr>
+      <tr><td><span class="badge badge-yellow">geometry</span></td><td>Spatial data</td><td>Race start locations on map</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🏷️ Attribute Types</h2>
+  <div class="grid-3">
+    <div style="background:var(--surface);border-radius:8px;padding:1rem;border:1px solid var(--border)">
+      <h3>Categorical (Nominal)</h3>
+      <p>No implicit order</p>
+      <p style="color:var(--muted);font-size:.85rem">e.g. club name, fruit type, colour</p>
+      <span class="badge badge-red">unordered</span>
+    </div>
+    <div style="background:var(--surface);border-radius:8px;padding:1rem;border:1px solid var(--border)">
+      <h3>Ordinal</h3>
+      <p>Implicit order, non-numerical</p>
+      <p style="color:var(--muted);font-size:.85rem">e.g. race difficulty (easy/medium/hard)</p>
+      <span class="badge badge-yellow">ordered</span>
+    </div>
+    <div style="background:var(--surface);border-radius:8px;padding:1rem;border:1px solid var(--border)">
+      <h3>Quantitative</h3>
+      <p>Implicit order, numerical</p>
+      <p style="color:var(--muted);font-size:.85rem">e.g. finishing time, member count</p>
+      <span class="badge badge-green">ordered + numeric</span>
+    </div>
+  </div>
+  <br>
+  <h3>Ordering Direction</h3>
+  <div class="grid-3">
+    <div style="text-align:center;padding:.8rem;background:var(--surface);border-radius:8px;">
+      <div style="font-size:1.5rem">→</div>
+      <strong>Sequential</strong>
+      <p style="font-size:.8rem;color:var(--muted)">Only one direction: 0 → max<br>e.g. finishing time</p>
+    </div>
+    <div style="text-align:center;padding:.8rem;background:var(--surface);border-radius:8px;">
+      <div style="font-size:1.5rem">←→</div>
+      <strong>Diverging</strong>
+      <p style="font-size:.8rem;color:var(--muted)">Two directions from a midpoint<br>e.g. elevation above/below sea level</p>
+    </div>
+    <div style="text-align:center;padding:.8rem;background:var(--surface);border-radius:8px;">
+      <div style="font-size:1.5rem">↻</div>
+      <strong>Cyclic</strong>
+      <p style="font-size:.8rem;color:var(--muted)">Wraps around<br>e.g. time of day, compass bearing</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🎯 Week 1b: Visualisation Tasks (Munzner Ch.3)</h2>
+  <p>Tasks are described using <span class="key-term">actions</span> (verbs) and <span class="key-term">targets</span> (nouns).</p>
+  <div class="grid-2">
+    <div>
+      <h3>Actions</h3>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Analyse <span>▼</span></div>
+        <div class="acc-body">
+          <p><strong>Consume:</strong> discover, present, enjoy</p>
+          <p><strong>Produce:</strong> annotate, record, derive</p>
+          <p style="color:var(--muted);font-size:.85rem">Example: <em>Derive the % of women per club per year</em></p>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Search <span>▼</span></div>
+        <div class="acc-body">
+          <table>
+            <tr><th></th><th>Target Known</th><th>Target Unknown</th></tr>
+            <tr><td><strong>Location Known</strong></td><td>Lookup</td><td>Browse</td></tr>
+            <tr><td><strong>Location Unknown</strong></td><td>Locate</td><td>Explore</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Query <span>▼</span></div>
+        <div class="acc-body">
+          <p><strong>Identify:</strong> get all info about one item</p>
+          <p><strong>Compare:</strong> assess differences between items</p>
+          <p><strong>Summarise:</strong> produce an overview of multiple items</p>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3>Targets</h3>
+      <div style="background:var(--surface);border-radius:8px;padding:1rem;">
+        <p><strong style="color:var(--accent3)">All data:</strong> trends, outliers, features</p>
+        <hr style="border-color:var(--border);margin:.5rem 0">
+        <p><strong style="color:var(--accent3)">Attributes:</strong> distribution, dependency, correlation, similarity</p>
+        <hr style="border-color:var(--border);margin:.5rem 0">
+        <p><strong style="color:var(--accent3)">Network data:</strong> topology, paths</p>
+        <hr style="border-color:var(--border);margin:.5rem 0">
+        <p><strong style="color:var(--accent3)">Spatial data:</strong> shape</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🧪 Practice Questions — Data Types</h2>
+  <div class="quiz" id="q1w1">
+    <div class="quiz-q">Q1. A dataset records (10000, Manhattan, 23.3, 1) for each test: sample size, metric, run time, unique ID. How best to describe this?</div>
+    <button class="option" onclick="checkAnswer(this,'wrong','q1w1')">a) Table of 4-tuples: three sequential quantitative + one categorical</button>
+    <button class="option" onclick="checkAnswer(this,'correct','q1w1')">b) Table of 4-tuples: two sequential quantitative (size, runtime) + two categorical (metric, ID)</button>
+    <button class="option" onclick="checkAnswer(this,'wrong','q1w1')">c) Table of 3-tuples: two quantitative + one categorical</button>
+    <div class="feedback" id="q1w1-fb">Sample size=quantitative, runtime=quantitative, metric=categorical (nominal), unique ID=categorical (identifier, not meaningful numeric). So 2 quantitative + 2 categorical.</div>
+  </div>
+
+  <div class="quiz" id="q2w1">
+    <div class="quiz-q">Q2. A supermarket dataset A has names of 10 products most often bought by EACH customer. Dataset B has counts of how often each customer bought each of the top 10 products across ALL customers. What are these using Munzner's classification?</div>
+    <button class="option" onclick="checkAnswer(this,'wrong','q2w1')">a) Two tables</button>
+    <button class="option" onclick="checkAnswer(this,'correct','q2w1')">b) A table, and a multidimensional table</button>
+    <button class="option" onclick="checkAnswer(this,'wrong','q2w1')">c) Two multidimensional tables</button>
+    <div class="feedback" id="q2w1-fb">A is a simple table (customer × products list). B has two categorical keys (customer, product) and a quantitative value (count) — this is a multidimensional table.</div>
+  </div>
+
+  <div class="quiz" id="q3w1">
+    <div class="quiz-q">Q3. Which of these is an example of a "link" data type?</div>
+    <button class="option" onclick="checkAnswer(this,'wrong','q3w1')">a) A runner's finishing time</button>
+    <button class="option" onclick="checkAnswer(this,'correct','q3w1')">b) The fact that two runners train together</button>
+    <button class="option" onclick="checkAnswer(this,'wrong','q3w1')">c) The start position of a race on a map</button>
+    <div class="feedback" id="q3w1-fb">A link is a relationship between two items. "Two runners train together" is a relationship (link). Finishing time is an attribute. A start position is a position data type.</div>
+  </div>
+</div>
+
+<!-- EXAM QUESTIONS FOR WEEK 1 -->
+<div class="card">
+  <h2>📝 Exam-Style Questions — Week 1 [15-mark format]</h2>
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 1</h3>
+    <p>A city council wishes to build a visualisation system to help urban planners analyse transport data. The data includes: (i) the names and locations of 500 bus stops across the city; (ii) the number of passengers boarding at each stop per hour, recorded every day for one year; (iii) which bus routes connect which stops; and (iv) average journey time between connected stops.</p>
+    <p style="margin-top:.8rem">Using Munzner's framework, classify each of the four components of this dataset in terms of data types (items, links, attributes, positions, grids), dataset types (table, network/tree, field, geometry), and attribute types (categorical, ordinal, quantitative). Justify each classification. Then describe two distinct visualisation tasks — one search task and one query task — that a planner might perform using this dataset, identifying the action and target for each.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Data Classifications:</strong></p>
+      <p>(i) Bus stop names = categorical attributes (nominal, no order). Locations = position data type (2D spatial coordinates). Dataset type: geometry (spatial data).</p>
+      <p>(ii) Passenger counts per hour = quantitative attribute, sequential direction. Recorded every hour = regular sampling → grid data type. Combined with stops and time, this forms a multidimensional table.</p>
+      <p>(iii) Bus routes connecting stops = links (relationships between items/stops). The whole structure = network dataset type.</p>
+      <p>(iv) Journey times = quantitative attribute (sequential, ratio scale) — attributes on the links of the network.</p>
+      <p style="margin-top:.8rem"><strong>Visualisation Tasks:</strong></p>
+      <p><strong>Search task (Locate):</strong> "Does route 42 serve stop X?" — the target (whether route 42 serves the stop) is known; the location of this information in the dataset is unknown. Action = Search/Locate; Target = topology of the network.</p>
+      <p><strong>Query task (Compare):</strong> "Which of the five busiest stops has the highest average journey time to the city centre?" Action = Query/Compare; Target = attribute correlation (passenger volume vs. journey time).</p>
+      <p style="margin-top:.8rem"><em>Mark scheme: 2 marks per correct classification with justification (8 marks), 3 marks per task with correct action/target identification (6 marks), 1 mark for clarity. Total 15.</em></p>
+    </div>
+  </div>
+
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 2</h3>
+    <p>Explain why it is useful to describe data and visualisation tasks in an abstract way, independent of any specific domain or application. Use two contrasting domains as examples to illustrate your answer, describing how the same abstract task type applies in both. Your answer should reference Munzner's action/target framework.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Why abstraction is useful:</strong></p>
+      <p>Abstract task descriptions allow visualisation designers to reuse solutions across domains. When a task is described abstractly, a solution developed for one domain can be directly applied to another with the same task structure. It also allows systematic evaluation — comparing which encoding or interaction technique best supports a particular task type, rather than re-solving each domain from scratch.</p>
+      <p style="margin-top:.8rem"><strong>Example 1 — Hill Running vs. Financial Data:</strong></p>
+      <p>In hill running, a task might be: <em>"Identify the distribution of age categories across clubs"</em> (Query → Identify, target = attribute distribution). In financial data, a task might be: <em>"Identify the distribution of trade sizes across different brokers"</em> (Query → Identify, target = attribute distribution). Both tasks share the same abstract form: examine the frequency of a categorical attribute across groups. A histogram or bar chart with faceting solves both.</p>
+      <p style="margin-top:.8rem"><strong>Example 2 — Healthcare vs. Social Media:</strong></p>
+      <p>In healthcare: <em>"Are there clusters of patients with similar symptom profiles?"</em> (Analyse → Discover, target = features/clusters). In social media: <em>"Are there communities of users with similar interests?"</em> Same abstract task. Both are served by dimensional reduction + clustering visualisation. A spring model layout solves both after computing appropriate similarity metrics.</p>
+      <p style="margin-top:.8rem"><em>5 marks for clear explanation of why abstraction is valuable; 5 marks each for two well-chosen domain examples with correct abstract task labelling.</em></p>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  WEEK 1b: DEPICTING QUANTITATIVE DATA                         -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="w1b">
+<div class="card">
+  <h2>📊 Week 1c: Depicting Quantitative Data</h2>
+</div>
+
+<div class="card">
+  <h2>📐 Dimensionality of Data</h2>
+  <div class="grid-2">
+    <div>
+      <table>
+        <tr><th>Dimensionality</th><th>Meaning</th><th>Good charts</th></tr>
+        <tr><td>Univariate</td><td>One variable</td><td>Histogram, bar chart, box plot</td></tr>
+        <tr><td>Bivariate</td><td>Two variables</td><td>Scatterplot, clustered bar, stacked bar</td></tr>
+        <tr><td>Trivariate</td><td>Three variables</td><td>Scatterplot + colour/size, heat map, bubble plot</td></tr>
+        <tr><td>Multivariate</td><td>4+ variables</td><td>SPLOM, parallel coords, dimensional reduction</td></tr>
+      </table>
+    </div>
+    <div style="background:var(--surface);padding:1rem;border-radius:8px;">
+      <h3>Chart Selection Guide</h3>
+      <p><strong>One categorical + one quantitative:</strong> Bar chart ✓</p>
+      <p><strong>Two quantitative:</strong> Scatterplot ✓</p>
+      <p><strong>Proportions of a whole:</strong> Pie chart only if ≤5 categories — but bar chart is almost always better!</p>
+      <p><strong>Time series:</strong> Line chart (connected, ordered) ✓</p>
+      <p style="margin-top:.5rem;color:var(--accent2)">⚠ Never use pie charts for comparison. Never use 3D for abstract data.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📈 Key Chart Types with Altair Code</h2>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'tab-bar')">Bar Chart</div>
+    <div class="tab" onclick="switchTab(this,'tab-scatter')">Scatterplot</div>
+    <div class="tab" onclick="switchTab(this,'tab-heatmap')">Heat Map</div>
+    <div class="tab" onclick="switchTab(this,'tab-splom')">SPLOM</div>
+    <div class="tab" onclick="switchTab(this,'tab-parallel')">Parallel Coords</div>
+  </div>
+
+  <div id="tab-bar" class="tab-content active">
+    <h3>Bar Chart — Univariate Categorical</h3>
+    <p>Best for comparing quantities across discrete categories. Bars should start at zero.</p>
+    <span class="code-label">Python / Altair</span>
+    <pre><code>import altair as alt
+import pandas as pd
+
+data = pd.DataFrame({
+    'club': ['Carnegie', 'Carnethy', 'Deeside', 'Lochaber', 'Keswick'],
+    'members': [113, 191, 183, 173, 137]
+})
+
+chart = alt.Chart(data).mark_bar(color='#6c63ff').encode(
+    x=alt.X('club:N', sort='-y', title='Club Name'),
+    y=alt.Y('members:Q', title='Number of Members'),
+    tooltip=['club:N', 'members:Q']
+).properties(
+    title='Hill Running Club Membership',
+    width=500, height=300
+).configure_axis(
+    labelColor='#e8eaf6', titleColor='#9fa8da'
+)
+
+chart.show()</code></pre>
+    <div class="math-box">
+      <strong>Bar chart zero-baseline rule:</strong> The y-axis MUST start at zero for bar charts. Truncated axes create misleading visual comparisons because bar length encodes quantity.
+    </div>
+  </div>
+
+  <div id="tab-scatter" class="tab-content">
+    <h3>Scatterplot — Bivariate Quantitative</h3>
+    <p>Best for showing correlation/relationship between two quantitative variables. Add a third variable via colour or size.</p>
+    <span class="code-label">Python / Altair</span>
+    <pre><code>import altair as alt
+from vega_datasets import data as vd
+
+cars = vd.cars()
+
+scatter = alt.Chart(cars).mark_point(filled=True, opacity=0.7).encode(
+    x=alt.X('Horsepower:Q', title='Horsepower'),
+    y=alt.Y('Miles_per_Gallon:Q', title='Miles per Gallon'),
+    color=alt.Color('Origin:N',
+                    scale=alt.Scale(scheme='category10'),
+                    legend=alt.Legend(title='Origin')),
+    size=alt.Size('Weight_in_lbs:Q', title='Weight'),
+    tooltip=['Name:N', 'Horsepower:Q', 'Miles_per_Gallon:Q', 'Origin:N']
+).properties(
+    title='Car Performance: Horsepower vs. MPG',
+    width=500, height=350
+).interactive()  # Enables zoom/pan
+
+scatter.show()</code></pre>
+    <p style="color:var(--muted);margin-top:.5rem">Key: <code>:N</code>=Nominal, <code>:Q</code>=Quantitative, <code>:O</code>=Ordinal, <code>:T</code>=Temporal</p>
+  </div>
+
+  <div id="tab-heatmap" class="tab-content">
+    <h3>Heat Map — Trivariate (2 categorical + 1 quantitative)</h3>
+    <p>Encodes a quantitative value through colour for every combination of two categorical variables. Order of axes matters for pattern detection.</p>
+    <span class="code-label">Python / Altair</span>
+    <pre><code>import altair as alt
+import pandas as pd
+import numpy as np
+
+# Generate example data: months × product categories → sales
+months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+categories = ['Outdoor', 'Indoor', 'Equipment', 'Apparel']
+rows = []
+for m in months:
+    for c in categories:
+        rows.append({'month': m, 'category': c,
+                     'sales': np.random.randint(50, 500)})
+df = pd.DataFrame(rows)
+
+heatmap = alt.Chart(df).mark_rect().encode(
+    x=alt.X('month:O', sort=months, title='Month'),
+    y=alt.Y('category:N', title='Category'),
+    color=alt.Color('sales:Q',
+                    scale=alt.Scale(scheme='blues'),
+                    title='Sales'),
+    tooltip=['month:O', 'category:N', 'sales:Q']
+).properties(
+    title='Monthly Sales by Category',
+    width=500, height=200
+)
+
+heatmap.show()</code></pre>
+    <div class="math-box">
+      <strong>⚠ Colour encoding warning:</strong> Use sequential colour scales (light→dark) for ordered data. Never use rainbow colour maps for ordered data — hue is not ordered, so the viewer cannot reliably interpret the ordering.
+    </div>
+  </div>
+
+  <div id="tab-splom" class="tab-content">
+    <h3>SPLOM — Scatterplot Matrix</h3>
+    <p>Shows all pairwise scatterplots. For d dimensions: <strong>d(d-1)/2</strong> unique plots (the upper or lower triangle, excluding the diagonal). The code below shows the full d×d matrix (both triangles) — common in practice; in the exam always use d(d-1)/2 for the count of unique pairs.</p>
+    <div class="math-box">
+      \[ \text{Number of plots in SPLOM} = \frac{d(d-1)}{2} \]
+      <p style="margin-top:.5rem;font-size:.85rem">Example: for 9 dimensions → 9×8/2 = 36 unique plots (not 81 = 9²; not 72 = 9×8)</p>
+    </div>
+    <span class="code-label">Python / Altair</span>
+    <pre><code>import altair as alt
+from vega_datasets import data as vd
+
+iris = vd.iris()
+
+# SPLOM with Altair
+splom = alt.Chart(iris).mark_point(size=30, opacity=0.6).encode(
+    alt.X(alt.repeat('column'), type='quantitative'),
+    alt.Y(alt.repeat('row'), type='quantitative'),
+    color=alt.Color('species:N', scale=alt.Scale(scheme='dark2'))
+).properties(
+    width=150, height=150
+).repeat(
+    row=['petalLength', 'petalWidth', 'sepalLength', 'sepalWidth'],
+    column=['sepalWidth', 'sepalLength', 'petalWidth', 'petalLength']
+).interactive()
+
+splom.show()</code></pre>
+    <div style="background:var(--surface);padding:1rem;border-radius:8px;margin-top:.8rem;">
+      <h4>SPLOM Key Facts for Exam</h4>
+      <p>• Screen space grows <strong>quadratically</strong> with dimensions</p>
+      <p>• Brushing & linking makes SPLOM far more powerful</p>
+      <p>• Good for correlation detection between pairs of dimensions</p>
+      <p>• Unlike parallel coordinates, pairs are not position-dependent</p>
+    </div>
+  </div>
+
+  <div id="tab-parallel" class="tab-content">
+    <h3>Parallel Coordinates — Multivariate</h3>
+    <p>Each object = one line. Each vertical axis = one dimension. Shows correlations between adjacent axes.</p>
+    <span class="code-label">Python / Altair</span>
+    <pre><code>import altair as alt
+import pandas as pd
+from vega_datasets import data as vd
+
+cars = vd.cars()
+
+# Parallel coordinates in Altair
+dims = ['Horsepower', 'Miles_per_Gallon', 'Displacement', 'Weight_in_lbs']
+
+# Normalise each column to [0,1] for display
+cars_norm = cars[dims + ['Origin']].dropna().copy()
+for d in dims:
+    cars_norm[d] = (cars_norm[d] - cars_norm[d].min()) / \
+                   (cars_norm[d].max() - cars_norm[d].min())
+cars_norm['id'] = range(len(cars_norm))
+
+# Melt to long format
+melted = cars_norm.melt(id_vars=['id', 'Origin'],
+                         value_vars=dims,
+                         var_name='dimension',
+                         value_name='value')
+# Encode dimension order
+melted['dim_order'] = melted['dimension'].map(
+    {d: i for i, d in enumerate(dims)})
+
+pc = alt.Chart(melted).mark_line(opacity=0.4).encode(
+    x=alt.X('dimension:N', sort=dims, title=''),
+    y=alt.Y('value:Q', title='Normalised Value'),
+    color=alt.Color('Origin:N'),
+    detail='id:N'
+).properties(width=500, height=300, title='Parallel Coordinates: Car Data')
+
+pc.show()</code></pre>
+    <div style="background:var(--surface);padding:1rem;border-radius:8px;margin-top:.8rem;">
+      <h4>Reading Parallel Coordinates</h4>
+      <p>• Lines crossing between two axes = <strong>inverse correlation</strong></p>
+      <p>• Lines parallel between two axes = <strong>direct correlation</strong></p>
+      <p>• Order of dimensions on x-axis is crucial — reorder to find relationships</p>
+      <p>• Hard to follow individual lines with large N → use interaction (mouseover)</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🧪 Practice — Depicting Data</h2>
+  <div class="quiz" id="q1w1b">
+    <div class="quiz-q">Q1. You have 100 tests of a program with run time and dataset size. A scatterplot is planned with dataset size on x, runtime on y. What's the best design choice for the identifier of each test?</div>
+    <button class="option" onclick="checkAnswer(this,'wrong','q1w1b')">a) Encode identifier as colour hue of each dot</button>
+    <button class="option" onclick="checkAnswer(this,'correct','q1w1b')">b) Do not encode the identifier as a visual variable</button>
+    <button class="option" onclick="checkAnswer(this,'wrong','q1w1b')">c) Encode identifier as colour value (brightness)</button>
+    <div class="feedback" id="q1w1b-fb">With 100 unique identifiers, colour hue cannot distinguish 100 categories (max ~8-12 distinguishable hues). Colour value also fails. The identifier is an arbitrary label with no useful visual encoding — it should not be encoded. The scatterplot already encodes the meaningful variables (size vs. runtime).</div>
+  </div>
+
+  <div class="quiz" id="q2w1b">
+    <div class="quiz-q">Q2. For bivariate data where one variable is quantitative and one is categorical, which chart is most appropriate?</div>
+    <button class="option" onclick="checkAnswer(this,'wrong','q2w1b')">a) Scatterplot with no trend lines</button>
+    <button class="option" onclick="checkAnswer(this,'correct','q2w1b')">b) Bar chart (with bars starting at zero)</button>
+    <button class="option" onclick="checkAnswer(this,'wrong','q2w1b')">c) Line chart (categories treated as ordered)</button>
+    <div class="feedback" id="q2w1b-fb">A bar chart is ideal when one axis is categorical (unordered) and the other is quantitative. A scatterplot needs two quantitative variables. A line chart implies an ordering/continuity between categories which doesn't exist for nominal data.</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📝 Exam Questions — Week 1b [15-mark format]</h2>
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 3</h3>
+    <p>A hospital maintains a dataset of patient records with the following attributes: patient ID, age, diagnosis (e.g., diabetes, hypertension), number of hospital visits, average blood pressure reading, and ward location. Describe, with justification, the most appropriate chart type for each of the following analysis goals: (i) comparing number of visits across diagnoses; (ii) finding the relationship between age and average blood pressure; (iii) showing the distribution of patient ages; (iv) understanding how all four quantitative attributes (age, visits, blood pressure, ward number) relate to each other. For each, state whether the data is univariate, bivariate, trivariate, or multivariate.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>(i) Visits across diagnoses — Bivariate (1 categorical + 1 quantitative):</strong> Bar chart. Diagnosis on x-axis (categorical), number of visits on y-axis (quantitative, starting at zero). Bar height directly encodes the count, making comparison easy. A pie chart would be inappropriate as it encodes area/angle, which is less accurate for comparison. [3 marks]</p>
+      <p><strong>(ii) Age vs. blood pressure — Bivariate (2 quantitative):</strong> Scatterplot. Each patient = one dot, age on x-axis, blood pressure on y-axis. Allows detection of correlation, outliers, trends. A trend line may be added. [3 marks]</p>
+      <p><strong>(iii) Distribution of patient ages — Univariate (1 quantitative):</strong> Histogram (groups ages into bins, shows frequency) or box plot (shows median, quartiles, outliers). A bar chart would be inappropriate unless ages are discretised into categories. [3 marks]</p>
+      <p><strong>(iv) All four quantitative attributes — Multivariate:</strong> Scatterplot Matrix (SPLOM) with d=4 dimensions → 4×3/2 = 6 unique scatterplots. Each pair of dimensions gets one plot, showing correlations between all pairs. Parallel coordinates could also be used. Interaction (brushing and linking) would significantly enhance the SPLOM. [6 marks]</p>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  WEEK 3: BERTIN & DATA ENCODING                               -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="w3">
+<div class="card">
+  <h2>🎨 Week 3a: Jacques Bertin — Semiology of Graphics (1967)</h2>
+  <p>Bertin was a French cartographer who formalised the visual language of maps and charts. His framework remains foundational in information visualisation.</p>
+</div>
+
+<div class="card">
+  <h2>🔷 Bertin's Visual Variables</h2>
+  <p>Two categories: <span class="key-term">Location variables</span> (position on the plane) and <span class="key-term">Retinal variables</span> (perceptual properties of marks).</p>
+  <div class="grid-2">
+    <div>
+      <h3>The 6 Retinal Variables</h3>
+      <table>
+        <tr><th>Variable</th><th>Description</th><th>Example</th></tr>
+        <tr><td><span class="badge badge-blue">Shape</span></td><td>Form of the mark</td><td>Circle, square, star</td></tr>
+        <tr><td><span class="badge badge-green">Size</span></td><td>Area or length of mark</td><td>Small dot vs. large dot</td></tr>
+        <tr><td><span class="badge badge-yellow">Orientation</span></td><td>Angle of mark's prominent axis</td><td>Vertical bar vs. 45° bar</td></tr>
+        <tr><td><span class="badge badge-red">Texture</span></td><td>Spacing of repeated elements</td><td>Fine grain vs. coarse grain</td></tr>
+        <tr><td><span class="badge badge-blue">Hue</span></td><td>Colour wavelength</td><td>Red, blue, green</td></tr>
+        <tr><td><span class="badge badge-green">Value</span></td><td>Darkness/lightness (greyscale)</td><td>Light pink vs. dark red</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Bertin's 4 Perceptual Properties</h3>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Associative/Dissociative <span>▼</span></div>
+        <div class="acc-body">
+          <p><strong>Associative:</strong> All variations are perceived equally prominent. No value dominates. (e.g., hue, shape, orientation, texture)</p>
+          <p><strong>Dissociative:</strong> One variable dominates and overshadows others (e.g., size, colour value — darker/larger draws the eye).</p>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Selective <span>▼</span></div>
+        <div class="acc-body">
+          <p>You can focus on all marks sharing one value of the variable, ignoring others. <em>Only shape is NOT selective</em> — hard to group all hexagons by ignoring other shapes.</p>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Ordered <span>▼</span></div>
+        <div class="acc-body">
+          <p>Variations perceived as ranked. Colour value (light→dark) is ordered; colour hue is NOT (green is not "more" than red).</p>
+        </div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)">Quantitative <span>▼</span></div>
+        <div class="acc-body">
+          <p>Extension of ordered: can estimate the ratio/magnitude of the difference. Position and size are quantitative (you can roughly tell that one bar is "twice as long"). Colour value is ordered but not reliably quantitative.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📐 Week 3b: Data Encoding — Munzner's Framework</h2>
+  <p>Munzner calls Bertin's visual variables <span class="key-term">channels</span>. Channels are ranked by effectiveness.</p>
+
+  <div class="grid-2">
+    <div>
+      <h3>Expressiveness Principle</h3>
+      <div class="math-box">Choose a channel that matches the data attribute type:<br>
+        • <strong>Nominal</strong> → hue, shape, orientation (unordered channels)<br>
+        • <strong>Ordinal</strong> → colour value (ordered, non-quantitative)<br>
+        • <strong>Quantitative</strong> → position, size (ordered + quantitative channels)
+      </div>
+      <h3>Effectiveness Principle</h3>
+      <div class="math-box">Encode the most important attributes with the highest-ranked channels. Use position first, then size/length, then colour.</div>
+    </div>
+    <div>
+      <h3>Channel Rankings (Magnitude — Ordered Attributes)</h3>
+      <div class="channel-row"><span class="channel-rank">1</span><span class="channel-label">Position on common scale</span><div class="channel-bar" style="width:100%"></div></div>
+      <div class="channel-row"><span class="channel-rank">2</span><span class="channel-label">Position on unaligned scale</span><div class="channel-bar" style="width:88%"></div></div>
+      <div class="channel-row"><span class="channel-rank">3</span><span class="channel-label">Length (1D size)</span><div class="channel-bar" style="width:75%"></div></div>
+      <div class="channel-row"><span class="channel-rank">4</span><span class="channel-label">Tilt/angle</span><div class="channel-bar" style="width:60%"></div></div>
+      <div class="channel-row"><span class="channel-rank">5</span><span class="channel-label">Area (2D size)</span><div class="channel-bar" style="width:48%"></div></div>
+      <div class="channel-row"><span class="channel-rank">6</span><span class="channel-label">Depth (3D position)</span><div class="channel-bar" style="width:35%"></div></div>
+      <div class="channel-row"><span class="channel-rank">7</span><span class="channel-label">Colour value</span><div class="channel-bar" style="width:25%"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>⚡ Stevens' Psychophysical Power Law (1957)</h2>
+  <div class="math-box">
+    <p><strong>The Law:</strong></p>
+    \[ S = k \cdot I^n \]
+    <p>Where: <strong>S</strong> = perceived sensation, <strong>I</strong> = physical intensity of stimulus, <strong>n</strong> = exponent (power), <strong>k</strong> = constant</p>
+    <br>
+    <p><strong>Key exponents (n values):</strong></p>
+    <table style="margin-top:.5rem">
+      <tr><th>Channel</th><th>Exponent (n)</th><th>Interpretation</th></tr>
+      <tr><td>Electric shock</td><td>3.5</td><td>Overestimated (feels much worse than it is)</td></tr>
+      <tr><td>Saturation (colour)</td><td>1.7</td><td>Slight overestimation</td></tr>
+      <tr><td>Length / Position</td><td>~1.0</td><td>Accurate perception (linear)</td></tr>
+      <tr><td>Area (2D size)</td><td>0.7</td><td>Underestimated (circles look smaller than they are)</td></tr>
+      <tr><td>Depth (3D)</td><td>0.67</td><td>Underestimated</td></tr>
+      <tr><td>Brightness (luminance)</td><td>0.5</td><td>Strongly underestimated</td></tr>
+    </table>
+  </div>
+  <div class="grid-2" style="margin-top:1rem">
+    <div style="background:var(--surface);padding:1rem;border-radius:8px;">
+      <h3>Why n=1 is ideal for IV</h3>
+      <p>When n=1, perceived sensation = physical intensity. The viewer accurately perceives the encoded value. <strong>Position and length</strong> achieve this — which is why bar charts (length) and scatterplots (position) are highly effective.</p>
+    </div>
+    <div style="background:var(--surface);padding:1rem;border-radius:8px;">
+      <h3>Why area (n=0.7) is problematic</h3>
+      <p>In bubble charts, circles appear smaller than their true data value. A bubble representing 100 looks like it represents ~63 (100^0.7 ≈ 25, relatively). This causes systematic underestimation — viewers underread large values.</p>
+    </div>
+  </div>
+  <div style="margin-top:1rem">
+    <h3>Stevens' Law — Altair Code Example</h3>
+    <span class="code-label">Python / Altair — Visualising Stevens' Power Law</span>
+    <pre><code>import altair as alt
+import pandas as pd
+import numpy as np
+
+# Show how different channels distort perception
+intensities = np.linspace(0.1, 5, 50)
+channels = {
+    'Length (n=1.0)': 1.0,
+    'Area (n=0.7)': 0.7,
+    'Brightness (n=0.5)': 0.5,
+    'Saturation/Chroma (n=1.7)': 1.7
+}
+
+rows = []
+for name, n in channels.items():
+    for I in intensities:
+        perceived = I ** n  # k=1 for simplicity
+        rows.append({'channel': name, 'intensity': I, 'perceived': perceived})
+
+df = pd.DataFrame(rows)
+
+chart = alt.Chart(df).mark_line(strokeWidth=2.5).encode(
+    x=alt.X('intensity:Q', title='Physical Intensity'),
+    y=alt.Y('perceived:Q', title='Perceived Sensation'),
+    color=alt.Color('channel:N',
+                    legend=alt.Legend(title='Encoding Channel')),
+    strokeDash=alt.condition(
+        alt.datum.channel == 'Length (n=1.0)',
+        alt.value([1,0]),  # solid for ideal
+        alt.value([4,2])   # dashed for others
+    )
+).properties(
+    title="Stevens' Psychophysical Power Law — Channel Comparison",
+    width=500, height=350
+)
+
+# Add reference line for ideal (n=1)
+rule = alt.Chart(pd.DataFrame({'y': [0]})).mark_rule(
+    color='white', strokeDash=[8,4], opacity=0.3
+)
+
+chart.show()</code></pre>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🧪 Practice — Bertin & Encoding</h2>
+  <div class="quiz" id="q1w3">
+    <div class="quiz-q">Q1. Which of Bertin's retinal variables is NOT selective (i.e., cannot be easily isolated from other variables in a display)?</div>
+    <button class="option" onclick="checkAnswer(this,'wrong','q1w3')">a) Colour hue</button>
+    <button class="option" onclick="checkAnswer(this,'wrong','q1w3')">b) Colour value (darkness)</button>
+    <button class="option" onclick="checkAnswer(this,'correct','q1w3')">c) Shape</button>
+    <div class="feedback" id="q1w3-fb">Bertin states that shape is the only retinal variable that is NOT selective. You cannot easily focus on "all hexagons" while ignoring circles — shapes require serial search. Colour hue and value are selective (you can quickly group all red objects).</div>
+  </div>
+
+  <div class="quiz" id="q2w3">
+    <div class="quiz-q">Q2. According to Stevens' Power Law, which encoding channel leads to the most accurate quantitative perception?</div>
+    <button class="option" onclick="checkAnswer(this,'correct','q2w3')">a) Position on a common scale (n ≈ 1.0)</button>
+    <button class="option" onclick="checkAnswer(this,'wrong','q2w3')">b) Area (n ≈ 0.7)</button>
+    <button class="option" onclick="checkAnswer(this,'wrong','q2w3')">c) Brightness/luminance (n ≈ 0.5)</button>
+    <div class="feedback" id="q2w3-fb">When n=1, perceived sensation equals physical intensity — perfectly accurate. Position on a common scale achieves n≈1. Area (n=0.7) is systematically underestimated. Brightness (n=0.5) is strongly underestimated — large differences in brightness feel much smaller than they are.</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📝 Exam Questions — Week 3 [15-mark format]</h2>
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 4 — Stevens' Power Law (from example paper)</h3>
+    <p>Outline the basic concept of Stevens' psychophysical power law, and why it is important in the design of information visualisation systems. In your answer, outline three different common styles of chart or graphical encoding, and critique each of them in terms of this power law.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Stevens' Psychophysical Power Law:</strong></p>
+      <p>Stevens (1957) proposed that the perceived magnitude of a sensation is related to the actual physical intensity by a power function: S = k·Iⁿ, where S is perceived sensation, I is physical intensity, k is a constant, and n is an exponent that varies by modality/channel.</p>
+      <p>When n=1, perception is perfectly accurate (linear). When n&lt;1, large values are underestimated (compression). When n&gt;1, large values are overestimated (expansion).</p>
+      <p style="margin-top:.8rem"><strong>Importance for IV design:</strong> If we encode data values using a channel with n≠1, viewers will systematically misread the data. A good IV designer should choose channels where n≈1, or compensate for the perceptual distortion (e.g., by using area² instead of area to represent a value, correcting for n=0.7).</p>
+      <p style="margin-top:.8rem"><strong>Chart 1 — Bar chart (length, n≈1.0):</strong> Bar length is perceived very accurately. A bar twice as tall is seen as representing twice the value. This makes bar charts one of the most reliable quantitative encodings. No compensation needed.</p>
+      <p><strong>Chart 2 — Scatterplot (position, n≈1.0):</strong> Position on a common axis (like x or y in a scatterplot) also achieves n≈1. Viewers can accurately rank and estimate differences between points. The most highly-ranked channel in Munzner's hierarchy precisely because of this accuracy.</p>
+      <p><strong>Chart 3 — Bubble chart (area, n≈0.7):</strong> Area in bubble charts is strongly underestimated. A circle with 4× the area looks only about 2.6× larger (4^0.7 ≈ 2.6). This means viewers consistently underestimate large values and overestimate the similarity between differently-sized bubbles. To compensate, designers must scale circle radius² (not radius) to the data value, since area = π·r². Despite this, bubble charts remain problematic and should be used cautiously.</p>
+      <p style="margin-top:.8rem"><em>4 marks for explaining law and its IV significance; 3-4 marks per chart critique (9-11 marks). Partial marks awarded.</em></p>
+    </div>
+  </div>
+
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 5</h3>
+    <p>A data analyst is designing a visualisation showing running club data with five attributes: club name (categorical), number of members (quantitative), percentage male (quantitative), membership fee (quantitative), and founding year (quantitative). Using Munzner's expressiveness and effectiveness principles, and drawing on Bertin's visual variables, design an encoding for a scatterplot-based visualisation that shows all five attributes simultaneously. Justify every encoding choice, including which channels are used for which attributes and why. Identify any weaknesses in your design.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Proposed encoding:</strong></p>
+      <p>1. <strong>Membership fee (quantitative) → x-axis position (position on common scale, n≈1)</strong>: Highest-ranked channel; most important attribute for the analyst to read accurately. Expressiveness: position is quantitative ✓.</p>
+      <p>2. <strong>Number of members (quantitative) → y-axis position</strong>: Second most important quantitative attribute gets second spatial axis. Scatterplot x/y.</p>
+      <p>3. <strong>% male (quantitative, diverging around 50%) → colour value</strong>: Ordered channel. Use diverging colour scale (e.g., blue=more female, red=more male, white=50/50). Expressiveness: colour value is ordered ✓. Weakness: not highly quantitative (n&lt;1).</p>
+      <p>4. <strong>Founding year (quantitative, sequential) → size/area of mark</strong>: Ordered channel; larger = newer. Weakness: area has n=0.7, so underestimated. However, it is a less critical attribute for this task.</p>
+      <p>5. <strong>Club name (categorical) → colour hue AND tooltip on hover</strong>: Hue is unordered (associative) — matches nominal attribute. However, with many clubs (100+), hue becomes unreliable beyond ~8-12 colours. Tooltip is the reliable fallback for exact identification.</p>
+      <p style="margin-top:.8rem"><strong>Weaknesses:</strong> With 100 clubs, colour hue for name fails (too many categories). Size (area) is perceptually imprecise for founding year. Channel interference: combining colour value AND colour hue may confuse viewers — these channels interact (dissociative variables compete).</p>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!--  WEEK 3c: VISUAL PERCEPTION                                   -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="w3c">
+<div class="card">
+  <h2>👁️ Week 3c: Visual Perception</h2>
+  <p>Based on Ware (2021). Three levels of visual processing — crucial for understanding WHY certain vis designs work and others fail.</p>
+</div>
+
+<div class="card">
+  <h2>🧠 Three-Level Perceptual Model</h2>
+  <div style="display:flex;flex-direction:column;gap:1rem;margin:1rem 0">
+    <div style="background:rgba(108,99,255,.15);border:1px solid var(--accent);border-radius:10px;padding:1rem">
+      <h3>Level 1: Pre-attentive (Parallel, ~200ms)</h3>
+      <p>Rapid extraction of low-level features. Bottom-up, data-driven. Examples: colour, size, orientation, motion. Pop-out effect.</p>
+      <p style="color:var(--accent3);margin-top:.3rem">Design implication: Use pre-attentive features to highlight important data points. A single red dot among blue dots is found instantly regardless of how many blue dots exist.</p>
+    </div>
+    <div style="background:rgba(255,101,132,.1);border:1px solid var(--accent2);border-radius:10px;padding:1rem">
+      <h3>Level 2: Pattern Recognition (Sequential, attention needed)</h3>
+      <p>Contour detection, region grouping. Uses BOTH bottom-up and top-down processing. Gestalt laws operate here.</p>
+      <p style="color:var(--accent3);margin-top:.3rem">Design implication: Use Gestalt principles to help viewers perceive meaningful groups without conscious effort.</p>
+    </div>
+    <div style="background:rgba(67,233,123,.1);border:1px solid var(--accent3);border-radius:10px;padding:1rem">
+      <h3>Level 3: Object Identification (Sequential, slow)</h3>
+      <p>Top-down. Uses memory and context to identify objects. Interference can occur between levels (Stroop effect).</p>
+      <p style="color:var(--accent3);margin-top:.3rem">Design implication: Reduce cognitive load by making object identification immediate through good encoding and clear labelling.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🔷 Gestalt Laws (Level 2)</h2>
+  <p>Rules describing how we perceive groups and patterns in visual displays.</p>
+  <div class="grid-2">
+    <div>
+      <table>
+        <tr><th>Law</th><th>Principle</th><th>IV Application</th></tr>
+        <tr><td><strong>Proximity</strong></td><td>Close items are grouped</td><td>Place related chart elements close together</td></tr>
+        <tr><td><strong>Similarity</strong></td><td>Similar items are grouped</td><td>Use same colour for same category across views</td></tr>
+        <tr><td><strong>Connectedness</strong></td><td>Connected items are grouped</td><td>Draw edges/lines to show relationships in networks</td></tr>
+        <tr><td><strong>Continuity</strong></td><td>Smooth paths are perceived as whole</td><td>Consider line chart continuity with overlapping data</td></tr>
+        <tr><td><strong>Symmetry</strong></td><td>Symmetric items are grouped</td><td>Symmetric layouts aid comparison of similar structures</td></tr>
+        <tr><td><strong>Closure</strong></td><td>Gaps in contours are mentally closed</td><td>Use enclosing regions to group related data</td></tr>
+        <tr><td><strong>Figure & Ground</strong></td><td>Small areas seen as figure</td><td>Use background/foreground contrast for hierarchy</td></tr>
+        <tr><td><strong>Common Fate</strong></td><td>Moving-together items are grouped</td><td>Don't animate unrelated objects simultaneously</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Colour Rules for IV</h3>
+      <div style="background:var(--surface);border-radius:8px;padding:1rem">
+        <p>✓ Use <strong>hue</strong> for categorical (nominal) data — max ~8 distinguishable hues</p>
+        <p>✓ Use <strong>colour value</strong> (lightness) for ordered data</p>
+        <p>✓ Use <strong>saturation</strong> for emphasis; neutral for background</p>
+        <p>✗ Don't use <strong>rainbow colour maps</strong> for ordered data — hue is not ordered</p>
+        <p>✗ Don't use <strong>blue for thin lines</strong> (poor acuity at edges)</p>
+        <p>✗ Don't use <strong>adjacent colours varying in blue</strong> (chromatic aberration)</p>
+        <p>✓ Use <strong>neutral tone for zero</strong> in diverging scales</p>
+        <p style="margin-top:.5rem">Reference: ColorBrewer2.org for perceptually safe colour maps</p>
+      </div>
+      <h3 style="margin-top:1rem">Pre-attentive Features</h3>
+      <p style="color:var(--muted);font-size:.85rem">Found instantly regardless of distractor count:</p>
+      <div style="display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.3rem">
+        <span class="badge badge-blue">Colour</span>
+        <span class="badge badge-green">Size</span>
+        <span class="badge badge-red">Orientation</span>
+        <span class="badge badge-yellow">Motion</span>
+        <span class="badge badge-blue">Curvature</span>
+        <span class="badge badge-green">Luminance</span>
+      </div>
+      <p style="color:var(--muted);font-size:.85rem;margin-top:.5rem">NOT pre-attentive when combined — conjunctions require serial search</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📝 Exam Questions — Week 3c [15-mark format]</h2>
+  <div class="exam-q">
+    <span class="marks">[15 marks]</span>
+    <h3>Question 6</h3>
+    <p>A designer is creating a visualisation of a city's public transport network, showing 50 bus routes on a map. They plan to colour each route with a distinct hue, use thick lines to show high-frequency routes, and animate all routes simultaneously to show passenger flow. Critically evaluate this design using the three-level perceptual model (Ware), Gestalt principles, and colour theory. Propose specific improvements with justifications.</p>
+    <button class="show-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+    <div class="model-answer">
+      <p><strong>Critique using three-level model:</strong></p>
+      <p><strong>Level 1 (Pre-attentive):</strong> 50 distinct hues far exceeds the ~8 distinguishable colours in cross-cultural studies (Berlin & Kay; Ware, 2021). Beyond 8-12 hues, viewers cannot reliably identify or distinguish routes by colour alone — the colour encoding fails at Level 1. The thick lines for frequency is a better use of Level 1 (size is pre-attentive) but may be dominated by the colour clutter. Animation of all routes simultaneously creates "common fate" confusion — viewers cannot determine which animated motion belongs to which route, overwhelming Level 1 processing.</p>
+      <p><strong>Level 2 (Pattern recognition / Gestalt):</strong> Animating unrelated routes simultaneously violates the "common fate" Gestalt principle — motion groups objects. If all 50 routes animate at once, no useful grouping is perceived; patterns become noise. Proximity grouping may help identify clusters of routes, but only if routes are spatially separated, which they may not be in a dense city centre.</p>
+      <p><strong>Level 3 (Object identification):</strong> Identifying a specific route from memory (e.g., "which one is route 42?") becomes a slow, serial, top-down search across 50 coloured lines with no reliable colour anchor. Cognitive load is very high.</p>
+      <p style="margin-top:.8rem"><strong>Improvements:</strong></p>
+      <p>1. Reduce hues to 8 max, encoding route type (bus/tram/metro) rather than individual route ID. Use tooltips/labels for exact identification on hover.</p>
+      <p>2. Use colour value (lightness) instead of hue for frequency — ordered, perceptually appropriate for ordered data.</p>
+      <p>3. Animate routes individually or on demand (user selects route → animation plays for that route only). This exploits "common fate" beneficially: the animated route pops out from the static background.</p>
+      <p>4. Apply overview-first principle (Shneiderman): show all routes as light grey by default; let user filter/select specific routes, which then become highlighted.</p>
+    </div>
+  </div>
+</div>
+
+</section>
+
+<!-- Weeks 4-9 and Exam Practice are in Part 2 -->
+<section id="w4"><div class="card" style="text-align:center;padding:3rem">
+  <h2 style="font-size:1.6rem">📂 Open IV_Notes_Part2.html</h2>
+  <p style="margin:.8rem 0;color:var(--muted)">Weeks 4–9 and Full Exam Practice are in the companion file.</p>
+  <p style="color:var(--accent3);font-weight:700">IV_Notes_Part2.html covers: Pipeline · Data Selection · Dimensional Reduction · Networks · Multiple Views · Design &amp; Evaluation · Rules of Thumb · Cognition · Mock Exam Papers A &amp; B</p>
+</div></section>
+<section id="w4b"><div class="card" style="text-align:center;padding:3rem"><h2>📂 Open IV_Notes_Part2.html</h2><p style="color:var(--muted)">Week 4b (Multidimensional Vis, Spring Models, t-SNE, UMAP) is in Part 2.</p></div></section>
+<section id="w5"><div class="card" style="text-align:center;padding:3rem"><h2>📂 Open IV_Notes_Part2.html</h2><p style="color:var(--muted)">Week 5 (Networks &amp; Trees) is in Part 2.</p></div></section>
+<section id="w6"><div class="card" style="text-align:center;padding:3rem"><h2>📂 Open IV_Notes_Part2.html</h2><p style="color:var(--muted)">Week 6 (Multiple Views) is in Part 2.</p></div></section>
+<section id="w7"><div class="card" style="text-align:center;padding:3rem"><h2>📂 Open IV_Notes_Part2.html</h2><p style="color:var(--muted)">Week 7 (Design &amp; Evaluation) is in Part 2.</p></div></section>
+<section id="w8"><div class="card" style="text-align:center;padding:3rem"><h2>📂 Open IV_Notes_Part2.html</h2><p style="color:var(--muted)">Week 8 (Rules of Thumb) is in Part 2.</p></div></section>
+<section id="w9"><div class="card" style="text-align:center;padding:3rem"><h2>📂 Open IV_Notes_Part2.html</h2><p style="color:var(--muted)">Week 9 (Cognitive Amplification &amp; Knowledge Crystallization) is in Part 2.</p></div></section>
+<section id="exam"><div class="card" style="text-align:center;padding:3rem"><h2>📂 Open IV_Notes_Part2.html</h2><p style="color:var(--muted)">Full Exam Practice (Mock Papers A &amp; B, 8 complete 15-mark questions) is in Part 2.</p></div></section>
+
+</main>
+
+<script>
+function show(id) {
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  event.target.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function toggleAcc(header) {
+  const body = header.nextElementSibling;
+  body.classList.toggle('open');
+  header.querySelector('span').textContent = body.classList.contains('open') ? '▲' : '▼';
+}
+
+function checkAnswer(btn, result, qid) {
+  const quiz = document.getElementById(qid);
+  quiz.querySelectorAll('.option').forEach(o => { o.classList.remove('correct','wrong'); o.disabled = true; });
+  btn.classList.add(result);
+  const fb = document.getElementById(qid + '-fb');
+  if (fb) { fb.style.display = 'block'; fb.style.background = result === 'correct' ? 'rgba(67,233,123,.1)' : 'rgba(255,101,132,.1)'; }
+}
+
+function toggleAnswer(btn) {
+  const ans = btn.nextElementSibling;
+  if (ans.style.display === 'block') { ans.style.display = 'none'; btn.textContent = 'Show Model Answer'; }
+  else { ans.style.display = 'block'; btn.textContent = 'Hide Model Answer'; }
+}
+
+function switchTab(tab, contentId) {
+  const container = tab.closest('.card');
+  container.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  container.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById(contentId).classList.add('active');
+}
+</script>
+</body>
+</html>
