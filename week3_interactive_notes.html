@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 3 – Hadoop Execution, Issues & Apache Spark | Big Data COMPSCI5088</title>
+<script>
+MathJax = {
+  tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$']] },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+:root {
+  --navy:#0a0e1a; --panel:#111827; --card:#1a2235;
+  --accent:#00d4ff; --accent2:#7c3aed; --accent3:#f59e0b;
+  --green:#10b981; --red:#ef4444; --pink:#ec4899;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#1e3a5f;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--navy);color:var(--text);font-family:'Segoe UI',sans-serif;display:flex;min-height:100vh;}
+#prog{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;z-index:999;transition:width .1s;}
+#sidebar{width:240px;min-width:240px;background:var(--panel);padding:20px 0;position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid var(--border);}
+#sidebar h2{color:var(--accent);font-size:.8rem;text-transform:uppercase;letter-spacing:2px;padding:0 16px 12px;border-bottom:1px solid var(--border);}
+#sidebar a{display:block;padding:7px 16px;color:var(--muted);text-decoration:none;font-size:.82rem;border-left:3px solid transparent;transition:all .2s;}
+#sidebar a:hover,#sidebar a.active{color:var(--accent);border-left-color:var(--accent);background:rgba(0,212,255,.06);}
+#sidebar .sec-label{padding:10px 16px 4px;color:var(--accent2);font-size:.7rem;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;}
+main{flex:1;padding:40px 48px;max-width:1000px;}
+h1{font-size:2.2rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;}
+.subtitle{color:var(--muted);margin-bottom:36px;font-size:1rem;}
+h2.section-title{font-size:1.5rem;color:var(--accent);margin:48px 0 20px;padding-bottom:8px;border-bottom:2px solid var(--border);}
+h3{font-size:1.1rem;color:var(--accent2);margin:28px 0 12px;}
+p,li{line-height:1.75;color:var(--text);font-size:.95rem;}
+ul,ol{padding-left:22px;margin:10px 0;}
+li{margin:5px 0;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;margin:18px 0;}
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700;margin:3px;}
+.tag-blue{background:rgba(0,212,255,.15);color:var(--accent);}
+.tag-purple{background:rgba(124,58,237,.2);color:#a78bfa;}
+.tag-green{background:rgba(16,185,129,.15);color:var(--green);}
+.tag-red{background:rgba(239,68,68,.15);color:var(--red);}
+.tag-amber{background:rgba(245,158,11,.15);color:var(--accent3);}
+
+/* Animated timeline */
+.timeline{position:relative;margin:24px 0;}
+.timeline::before{content:'';position:absolute;left:20px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--accent),var(--accent2));}
+.tl-item{display:flex;gap:18px;margin:12px 0;padding-left:8px;}
+.tl-num{width:28px;height:28px;border-radius:50%;background:var(--accent2);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;flex-shrink:0;z-index:1;}
+.tl-content{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 16px;flex:1;}
+.tl-content strong{color:var(--accent);}
+
+/* Two-col */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:18px 0;}
+@media(max-width:700px){.two-col{grid-template-columns:1fr;}}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:18px 0;}
+@media(max-width:700px){.three-col{grid-template-columns:1fr;}}
+
+/* Issue cards */
+.issue-card{border-radius:12px;padding:18px;margin:14px 0;border-left:4px solid;}
+.issue-red{background:rgba(239,68,68,.08);border-color:var(--red);}
+.issue-amber{background:rgba(245,158,11,.08);border-color:var(--accent3);}
+.issue-card h4{margin-bottom:8px;font-size:1rem;}
+.issue-red h4{color:var(--red);}
+.issue-amber h4{color:var(--accent3);}
+
+/* Spark vs Hadoop comparison */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:12px;overflow:hidden;margin:18px 0;border:1px solid var(--border);}
+.compare-header{padding:12px 20px;font-weight:700;text-align:center;font-size:.9rem;}
+.hadoop-col .compare-header{background:rgba(239,68,68,.15);color:var(--red);}
+.spark-col .compare-header{background:rgba(16,185,129,.15);color:var(--green);}
+.compare-row{display:contents;}
+.compare-row > div{padding:10px 20px;border-top:1px solid var(--border);font-size:.87rem;}
+.hadoop-col > div{background:rgba(239,68,68,.04);}
+.spark-col > div{background:rgba(16,185,129,.04);}
+
+/* RDD visual */
+.rdd-box{background:rgba(0,212,255,.08);border:2px solid var(--accent);border-radius:10px;padding:16px;text-align:center;margin:8px;}
+.rdd-box h4{color:var(--accent);margin-bottom:8px;}
+.partition{background:rgba(124,58,237,.2);border:1px solid var(--accent2);border-radius:4px;padding:4px 8px;margin:3px;font-size:.78rem;color:var(--accent2);display:inline-block;}
+
+/* DAG visual */
+.dag-visual{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;margin:18px 0;}
+.dag-node{background:var(--card);border:2px solid var(--accent2);border-radius:8px;padding:8px 16px;font-size:.82rem;font-weight:700;color:var(--accent);min-width:90px;text-align:center;position:relative;}
+.dag-arrow{color:var(--accent);font-size:1.2rem;padding:0 4px;display:flex;align-items:center;}
+.dag-stage{border:2px dashed rgba(0,212,255,.3);border-radius:10px;padding:8px 16px;margin:4px;}
+.stage-label{font-size:.7rem;color:var(--muted);text-align:center;margin-top:4px;}
+
+/* Code */
+pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:18px;overflow-x:auto;margin:14px 0;font-size:.85rem;line-height:1.6;}
+.kw{color:#ff7b72;} .fn{color:#79c0ff;} .cm{color:#8b949e;font-style:italic;}
+.str{color:#a5d6ff;} .num{color:#f2cc60;} .type{color:#ffa657;}
+
+/* Exam box */
+.exam-box{background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(0,212,255,.06));border:2px solid var(--accent2);border-radius:14px;margin:24px 0;overflow:hidden;}
+.exam-header{padding:14px 20px;background:rgba(124,58,237,.15);cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.exam-header h4{color:var(--accent2);font-size:1rem;}
+.exam-marks{color:var(--accent3);font-size:.85rem;font-weight:700;}
+.exam-body{padding:20px;display:none;}
+.exam-q{color:var(--text);font-style:italic;margin-bottom:12px;padding:10px 14px;background:rgba(0,0,0,.2);border-radius:6px;border-left:3px solid var(--accent2);}
+.exam-a{color:var(--green);font-size:.9rem;line-height:1.7;}
+
+/* Practice */
+.practice-box{background:rgba(16,185,129,.06);border:1px solid var(--green);border-radius:10px;padding:18px;margin:14px 0;}
+.reveal-btn{background:transparent;border:1px solid var(--green);color:var(--green);padding:6px 16px;border-radius:6px;cursor:pointer;font-size:.82rem;transition:all .2s;}
+.reveal-btn:hover{background:rgba(16,185,129,.1);}
+.practice-ans{display:none;margin-top:12px;padding:12px;background:rgba(0,0,0,.2);border-radius:6px;color:var(--muted);font-size:.88rem;line-height:1.7;}
+
+/* Highlight boxes */
+.highlight-box{background:rgba(0,212,255,.07);border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;margin:14px 0;}
+.warn-box{background:rgba(245,158,11,.07);border-left:4px solid var(--accent3);border-radius:0 8px 8px 0;padding:14px 18px;margin:14px 0;}
+.danger-box{background:rgba(239,68,68,.07);border-left:4px solid var(--red);border-radius:0 8px 8px 0;padding:14px 18px;margin:14px 0;}
+.success-box{background:rgba(16,185,129,.07);border-left:4px solid var(--green);border-radius:0 8px 8px 0;padding:14px 18px;margin:14px 0;}
+
+/* Quiz */
+.quiz-section{background:var(--card);border:2px solid var(--accent2);border-radius:14px;padding:28px;margin:28px 0;}
+.q-item{margin:18px 0;padding:16px;background:rgba(0,0,0,.2);border-radius:8px;}
+.q-item p{font-weight:600;margin-bottom:10px;color:var(--text);}
+.q-item label{display:block;padding:6px 10px;margin:4px 0;border-radius:6px;cursor:pointer;font-size:.88rem;transition:background .15s;}
+.q-item label:hover{background:rgba(255,255,255,.05);}
+.q-item input{margin-right:8px;accent-color:var(--accent);}
+.q-feedback{font-size:.82rem;margin-top:8px;padding:6px 10px;border-radius:6px;display:none;}
+.q-correct{background:rgba(16,185,129,.15);color:var(--green);}
+.q-wrong{background:rgba(239,68,68,.15);color:var(--red);}
+.quiz-btn{background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;color:#fff;padding:12px 32px;border-radius:8px;font-size:1rem;cursor:pointer;font-weight:700;margin-top:18px;transition:opacity .2s;}
+.quiz-btn:hover{opacity:.85;}
+#quiz-result{margin-top:18px;padding:16px;border-radius:10px;font-size:1.1rem;font-weight:700;display:none;text-align:center;}
+table{width:100%;border-collapse:collapse;margin:16px 0;}
+th{background:rgba(0,212,255,.1);color:var(--accent);padding:10px 14px;text-align:left;font-size:.85rem;}
+td{padding:9px 14px;border-bottom:1px solid var(--border);font-size:.85rem;}
+tr:hover td{background:rgba(255,255,255,.03);}
+.badge-red{background:rgba(239,68,68,.2);color:var(--red);padding:2px 8px;border-radius:4px;font-size:.75rem;}
+.badge-green{background:rgba(16,185,129,.2);color:var(--green);padding:2px 8px;border-radius:4px;font-size:.75rem;}
+.badge-amber{background:rgba(245,158,11,.2);color:var(--accent3);padding:2px 8px;border-radius:4px;font-size:.75rem;}
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s,transform .5s;}
+.reveal.visible{opacity:1;transform:none;}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+
+<nav id="sidebar">
+  <h2>Week 3</h2>
+  <div class="sec-label">Hadoop Execution</div>
+  <a href="#job-anatomy">Job Anatomy (23 Steps)</a>
+  <a href="#input-splitting">Input Splitting</a>
+  <a href="#task-assignment">Task Assignment</a>
+  <a href="#formats">InputFormat / OutputFormat</a>
+  <a href="#shuffling">Shuffling</a>
+  <div class="sec-label">Hadoop Extras</div>
+  <a href="#dist-cache">Distributed Cache</a>
+  <a href="#counters">Counters</a>
+  <a href="#compression">Compression</a>
+  <a href="#failures">Failure Types</a>
+  <div class="sec-label">Issues with Hadoop</div>
+  <a href="#small-files">Small Files Problem</a>
+  <a href="#speed">Speed &amp; Latency</a>
+  <a href="#chaining">Chaining Costs</a>
+  <a href="#use-cases">Missing Use Cases</a>
+  <div class="sec-label">Apache Spark</div>
+  <a href="#spark-origin">Spark Origins</a>
+  <a href="#rdds">RDDs</a>
+  <a href="#spark-flow">Execution Flow</a>
+  <a href="#trans-actions">Transformations &amp; Actions</a>
+  <a href="#dags">DAGs &amp; Lazy Execution</a>
+  <a href="#spark-vs-hadoop">Spark vs Hadoop</a>
+  <div class="sec-label">Exam &amp; Practice</div>
+  <a href="#exam-qs">Exam Questions</a>
+  <a href="#practice">Practice Qs</a>
+  <a href="#quiz">10-Q Quiz</a>
+</nav>
+
+<main>
+<h1>Week 3: Hadoop Deep Dive &amp; Apache Spark</h1>
+<p class="subtitle">COMPSCI5088 (M) — University of Glasgow · Dr. Richard McCreadie</p>
+
+<!-- ===== HADOOP EXECUTION ===== -->
+<section id="job-anatomy">
+<h2 class="section-title reveal">Hadoop Job Execution Anatomy (23 Steps)</h2>
+<p class="reveal">Understanding exactly what happens between "submit job" and "job complete" is critical for exam questions on Hadoop overheads and architecture.</p>
+
+<div class="timeline reveal">
+  <div class="tl-item">
+    <div class="tl-num">1</div>
+    <div class="tl-content"><strong>Run Job</strong> — Client executes the MapReduce program on the Client Machine (JVM)</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">2</div>
+    <div class="tl-content"><strong>Get Job ID</strong> — Client contacts JobTracker to obtain a unique Job ID</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">3</div>
+    <div class="tl-content"><strong>Copy Job Resources</strong> — Client uploads Job.jar (compiled code) to HDFS so all machines can access it</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">4</div>
+    <div class="tl-content"><strong>Submit Job</strong> — Client formally submits Job 1 to the JobTracker queue</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">5</div>
+    <div class="tl-content"><strong>Initialise Job</strong> — JobTracker sets up internal job metadata and state</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">6</div>
+    <div class="tl-content"><strong>Retrieve Input Splits</strong> — JobTracker queries NameNode to find where each input data block lives; determines data locality</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">7</div>
+    <div class="tl-content"><strong>Register Task + Heartbeat</strong> — JobTracker registers the Map task with a TaskTracker that has the data locally; receives heartbeat confirmation</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">8</div>
+    <div class="tl-content"><strong>Get Job Resources</strong> — TaskTracker downloads Job.jar from HDFS</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">9</div>
+    <div class="tl-content"><strong>Launch JVM</strong> — TaskTracker spawns a new JVM process for the Map task</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">10</div>
+    <div class="tl-content"><strong>Run Map Task</strong> — JVM loads Job.jar and runs the user's Mapper class</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">11</div>
+    <div class="tl-content"><strong>Read Data + Execute</strong> — Mapper reads its assigned split from the local DataNode; processes records</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">12</div>
+    <div class="tl-content"><strong>Intermediate Sort</strong> — Map output is sorted by key in main memory</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">13</div>
+    <div class="tl-content"><strong>Write Map Output</strong> — Sorted output written to HDFS as intermediate result</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">14</div>
+    <div class="tl-content"><strong>Report Map Done</strong> — TaskTracker notifies JobTracker that Map task is complete</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">15</div>
+    <div class="tl-content"><strong>Retrieve Map Partitions</strong> — JobTracker queries NameNode for locations of intermediate (Map) output files</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">16</div>
+    <div class="tl-content"><strong>Register Reduce Task</strong> — JobTracker assigns Reduce task to available TaskTracker</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">17</div>
+    <div class="tl-content"><strong>Get Reduce Resources</strong> — TaskTracker downloads Job.jar from HDFS (cached if same machine)</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">18</div>
+    <div class="tl-content"><strong>Launch JVM</strong> — New JVM spawned for Reduce task</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">19</div>
+    <div class="tl-content"><strong>Run Reduce Task</strong> — JVM loads reducer class</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">20</div>
+    <div class="tl-content"><strong>Copy + Execute</strong> — Reducer copies (shuffles) relevant key partitions from all Map output files via <span style="color:var(--accent3)">network transfer</span>, then runs reduce function</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">21</div>
+    <div class="tl-content"><strong>Write Reduce Data</strong> — Final output written to HDFS</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num">22</div>
+    <div class="tl-content"><strong>Report Reduce Done</strong> — TaskTracker notifies JobTracker</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-num" style="background:var(--green)">23</div>
+    <div class="tl-content"><strong>Report Job Complete</strong> — JobTracker notifies Client that the job is finished</div>
+  </div>
+</div>
+
+<div class="warn-box reveal">
+  <strong>Exam insight:</strong> Steps 3 (copy resources to HDFS), 6 (retrieve input splits), 13 (write intermediate), 20 (network shuffle), 21 (write final) are the major overhead sources. The exam may ask you to identify and explain them.
+</div>
+</section>
+
+<section id="input-splitting">
+<h2 class="section-title reveal">Input Splitting</h2>
+
+<div class="two-col reveal">
+  <div class="card">
+    <h3>How Splits Work</h3>
+    <ul>
+      <li>Data is split when written to HDFS (pre-computed)</li>
+      <li>Default: split each file into equal-sized parts</li>
+      <li>Splits ≤ one HDFS block by default (128MB in V2)</li>
+      <li><strong>Splits are data-agnostic</strong> — they don't understand file format</li>
+      <li>More splits = more parallelism but more scheduling overhead</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Memory Optimisation</h3>
+    <ul>
+      <li><strong>Buffer in Main Memory:</strong> Map output is buffered in RAM before sort</li>
+      <li><strong>Partitions in Main Memory:</strong> Sort + partition performed in RAM — faster than disk</li>
+      <li>OutputFormat used to write sorted partitions to HDFS</li>
+      <li>Reducer loads data via <em>recursive merge of partitions</em> (mix of in-memory and on-disk)</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<section id="task-assignment">
+<h2 class="section-title reveal">Task Assignment &amp; Speculative Execution</h2>
+
+<div class="card reveal">
+  <h3 style="margin-top:0">Scheduler Variants</h3>
+  <div class="three-col">
+    <div style="text-align:center;padding:14px;background:rgba(0,212,255,.08);border-radius:8px;border:1px solid var(--accent);">
+      <div style="font-size:1.5rem;">📋</div>
+      <h4 style="color:var(--accent);margin:8px 0;">FIFO</h4>
+      <p style="font-size:.82rem;color:var(--muted);">First In First Out — simple queue. Default scheduler.</p>
+    </div>
+    <div style="text-align:center;padding:14px;background:rgba(124,58,237,.08);border-radius:8px;border:1px solid var(--accent2);">
+      <div style="font-size:1.5rem;">⚖️</div>
+      <h4 style="color:var(--accent2);margin:8px 0;">Fair</h4>
+      <p style="font-size:.82rem;color:var(--muted);">Equal resource share across all running jobs.</p>
+    </div>
+    <div style="text-align:center;padding:14px;background:rgba(245,158,11,.08);border-radius:8px;border:1px solid var(--accent3);">
+      <div style="font-size:1.5rem;">📊</div>
+      <h4 style="color:var(--accent3);margin:8px 0;">Capacity</h4>
+      <p style="font-size:.82rem;color:var(--muted);">Pools with guaranteed capacity. Enterprise multi-tenant.</p>
+    </div>
+  </div>
+</div>
+
+<div class="two-col reveal">
+  <div class="card">
+    <h3>Data Locality Priority</h3>
+    <ol>
+      <li><strong style="color:var(--green)">Data-local:</strong> TaskTracker on the same machine as the data block (fastest)</li>
+      <li><strong style="color:var(--accent3)">Rack-local:</strong> Same network rack, different machine (one switch hop)</li>
+      <li><strong style="color:var(--red)">Remote:</strong> Different rack (cross-switch, highest latency)</li>
+    </ol>
+  </div>
+  <div class="card">
+    <h3>Speculative Execution</h3>
+    <p>Also called <strong>backup task execution</strong>. If a Map task is running much slower than others (straggler), JobTracker can launch a duplicate task on another machine. Whichever finishes first wins — the other is killed.</p>
+    <div class="highlight-box" style="margin-top:10px;">Handles slow nodes without waiting for timeout. Trade-off: wastes resources on duplicate work.</div>
+  </div>
+</div>
+
+<div class="highlight-box reveal">
+  <strong>How JobTracker knows slot availability:</strong> TaskTrackers send periodic <strong>heartbeat messages</strong> to the JobTracker. These heartbeats report free slots, task progress, and health status. A missing heartbeat = assumed failure.
+</div>
+</section>
+
+<section id="formats">
+<h2 class="section-title reveal">InputFormat &amp; OutputFormat</h2>
+<p class="reveal"><strong>InputFormat</strong> converts raw HDFS blocks into key-value records that Mappers can consume. <strong>OutputFormat</strong> serialises Reducer output back to persistent storage.</p>
+
+<div class="two-col reveal">
+  <div class="card">
+    <h3>Key InputFormats</h3>
+    <table style="margin:0;">
+      <tr><th>Class</th><th>Purpose</th></tr>
+      <tr><td><code>TextInputFormat</code></td><td>Text files, line-by-line (default)</td></tr>
+      <tr><td><code>KeyValueTextInputFormat</code></td><td>Tab-separated key-value text files</td></tr>
+      <tr><td><code>SequenceFileInputFormat</code></td><td>Binary key-value pairs (efficient)</td></tr>
+      <tr><td><code>CombineFileInputFormat</code></td><td>Merge many small files into one split</td></tr>
+      <tr><td><code>NLineInputFormat</code></td><td>Create a split every N lines</td></tr>
+      <tr><td><code>DBInputFormat</code></td><td>Read from SQL database via JDBC</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <h3>Key OutputFormats</h3>
+    <table style="margin:0;">
+      <tr><th>Class</th><th>Purpose</th></tr>
+      <tr><td><code>TextOutputFormat</code></td><td>Plain text output (default)</td></tr>
+      <tr><td><code>SequenceFileOutputFormat</code></td><td>Binary key-value files</td></tr>
+      <tr><td><code>MapFileOutputFormat</code></td><td>Indexed key-value files (fast lookup)</td></tr>
+      <tr><td><code>NullOutputFormat</code></td><td>Discard output (/dev/null)</td></tr>
+      <tr><td><code>MultipleOutputs</code></td><td>Write to multiple files with different formats</td></tr>
+    </table>
+  </div>
+</div>
+</section>
+
+<section id="shuffling">
+<h2 class="section-title reveal">Intermediate Output &amp; Shuffling</h2>
+
+<div class="card reveal" style="background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(124,58,237,.04));">
+  <h3 style="color:var(--accent);margin-bottom:12px;">Full Shuffle Pipeline</h3>
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:.85rem;">
+    <div style="background:rgba(0,212,255,.15);padding:8px 14px;border-radius:6px;color:var(--accent);font-weight:700;">Map Output (RAM buffer)</div>
+    <span style="color:var(--muted)">→</span>
+    <div style="background:rgba(245,158,11,.15);padding:8px 14px;border-radius:6px;color:var(--accent3);font-weight:700;">Sort by key (RAM)</div>
+    <span style="color:var(--muted)">→</span>
+    <div style="background:rgba(124,58,237,.15);padding:8px 14px;border-radius:6px;color:var(--accent2);font-weight:700;">Partition by key (RAM)</div>
+    <span style="color:var(--muted)">→</span>
+    <div style="background:rgba(239,68,68,.15);padding:8px 14px;border-radius:6px;color:var(--red);font-weight:700;">Write to HDFS</div>
+    <span style="color:var(--muted)">→</span>
+    <div style="background:rgba(239,68,68,.15);padding:8px 14px;border-radius:6px;color:var(--red);font-weight:700;">Network Copy to Reducer</div>
+    <span style="color:var(--muted)">→</span>
+    <div style="background:rgba(16,185,129,.15);padding:8px 14px;border-radius:6px;color:var(--green);font-weight:700;">Recursive Merge</div>
+    <span style="color:var(--muted)">→</span>
+    <div style="background:rgba(16,185,129,.15);padding:8px 14px;border-radius:6px;color:var(--green);font-weight:700;">Reduce</div>
+  </div>
+</div>
+
+<div class="highlight-box reveal">
+  <strong>Key optimisation:</strong> Sorting and partitioning happen in <em>main memory</em> (not disk) to save time. Data is only written to HDFS for persistent fault-tolerance at the Map→Reduce boundary. Reducer loading uses a <strong>recursive merge</strong> — a mix of in-memory and on-disk data.
+</div>
+</section>
+
+<!-- ===== HADOOP EXTRAS ===== -->
+<section id="dist-cache">
+<h2 class="section-title reveal">Distributed Cache</h2>
+
+<div class="two-col reveal">
+  <div class="card">
+    <h3>Problem it Solves</h3>
+    <p>HDFS blocks are minimum 128MB. <strong>Small files</strong> (like lookup tables, config files, model weights) waste space and overwhelm the NameNode index.</p>
+    <div class="danger-box" style="margin-top:10px;">
+      If 1 million files &lt; 128MB each, the NameNode must track 1 million block entries → memory exhaustion.
+    </div>
+  </div>
+  <div class="card">
+    <h3>Distributed Cache Properties</h3>
+    <ul>
+      <li><strong>Read-only</strong> — cannot be modified by tasks</li>
+      <li>Supports: JARs, text, archives, config files</li>
+      <li>Copied <em>once per job</em> to each TaskTracker (not per task)</li>
+      <li>Can be private (one job) or public (all jobs)</li>
+      <li>JARs automatically added to task classpaths</li>
+      <li>Can share state across tasks (workaround)</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<section id="counters">
+<h2 class="section-title reveal">Counters &amp; Monitoring</h2>
+
+<div class="card reveal">
+  <p>Hadoop tasks can create and update numerical counters at runtime that are periodically aggregated by the JobTracker. Essential for profiling and debugging.</p>
+  <div class="three-col" style="margin-top:14px;">
+    <div style="background:rgba(0,212,255,.08);padding:14px;border-radius:8px;border:1px solid var(--accent);">
+      <h4 style="color:var(--accent);margin-bottom:6px;">Built-in: HDFS</h4>
+      <p style="font-size:.82rem;color:var(--muted);">HDFS bytes read, bytes written, block reads, FileInputFormat/OutputFormat stats</p>
+    </div>
+    <div style="background:rgba(124,58,237,.08);padding:14px;border-radius:8px;border:1px solid var(--accent2);">
+      <h4 style="color:var(--accent2);margin-bottom:6px;">Built-in: Tasks</h4>
+      <p style="font-size:.82rem;color:var(--muted);">Map/Reduce task progress, records processed, skipped bad records</p>
+    </div>
+    <div style="background:rgba(16,185,129,.08);padding:14px;border-radius:8px;border:1px solid var(--green);">
+      <h4 style="color:var(--green);margin-bottom:6px;">User-defined</h4>
+      <p style="font-size:.82rem;color:var(--muted);">Custom metrics: error rates, matched records, business KPIs</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<section id="compression">
+<h2 class="section-title reveal">Compression in Hadoop</h2>
+
+<div class="highlight-box reveal">
+  <strong>Why compress?</strong> More data per HDFS block → lower storage cost and fewer I/O operations. Lower network shuffle volume. Trade-off: CPU cost for compression/decompression (usually worth it).
+</div>
+
+<table class="reveal">
+  <tr><th>Codec</th><th>Splittable</th><th>Speed</th><th>Compression Ratio</th><th>Best For</th></tr>
+  <tr><td>Snappy</td><td><span class="badge-green">Yes</span></td><td><span class="badge-green">Fastest</span></td><td>Low</td><td>Intermediate data</td></tr>
+  <tr><td>LZO</td><td><span class="badge-green">Yes (with index)</span></td><td><span class="badge-green">Fast</span></td><td>Medium</td><td>Map output</td></tr>
+  <tr><td>LZ4</td><td><span class="badge-green">Yes</span></td><td><span class="badge-green">Fast</span></td><td>Medium</td><td>General purpose</td></tr>
+  <tr><td>BZip2</td><td><span class="badge-green">Yes</span></td><td><span class="badge-red">Slow</span></td><td>High</td><td>Cold archival storage</td></tr>
+  <tr><td>GZip</td><td><span class="badge-red">No</span></td><td>Medium</td><td>High</td><td>Single-split files only</td></tr>
+</table>
+
+<div class="warn-box reveal">
+  <strong>Splittability matters:</strong> Non-splittable codecs (GZip) mean the entire file must be one input split → only ONE mapper for that file → no parallelism. Always use splittable codecs (Snappy, LZO, BZip2) for HDFS data.
+</div>
+</section>
+
+<section id="failures">
+<h2 class="section-title reveal">Failure Handling in Hadoop</h2>
+
+<div class="two-col reveal">
+  <div class="card" style="border-color:var(--accent3);">
+    <div class="tag tag-amber">Task Failure</div>
+    <h3 style="margin-top:10px;">Detected by TaskTracker</h3>
+    <ul>
+      <li><strong>Runtime exception:</strong> child JVM reports error to TaskTracker</li>
+      <li><strong>JVM crash:</strong> OS notifies TaskTracker of dead process</li>
+      <li><strong>Hung task:</strong> Missing progress reports → timeout</li>
+    </ul>
+    <p style="margin-top:10px;font-size:.88rem;">TaskTracker informs JobTracker → task rescheduled to a different TaskTracker. Multiple attempts allowed. Jobs with too many failures are terminated, or bad records are skipped.</p>
+  </div>
+  <div class="card" style="border-color:var(--red);">
+    <div class="tag tag-red">TaskTracker Failure</div>
+    <h3 style="margin-top:10px;">Detected by JobTracker</h3>
+    <ul>
+      <li><strong>Crashed/slow:</strong> Missing heartbeats</li>
+      <li><strong>Misconfigured:</strong> Multiple task failures on same machine</li>
+    </ul>
+    <p style="margin-top:10px;font-size:.88rem;">TaskTracker removed from "live" pool. All tasks assigned to it are rescheduled to other workers. Blacklisted trackers reconsidered after a time period.</p>
+  </div>
+</div>
+</section>
+
+<!-- ===== ISSUES WITH HADOOP ===== -->
+<section id="small-files">
+<h2 class="section-title reveal">Issues with Hadoop: Small Files</h2>
+
+<div class="issue-card issue-red reveal">
+  <h4>The HDFS Small Files Problem</h4>
+  <p>HDFS default block size = 128MB. Each small file (even 1KB) requires its own block entry in the NameNode's in-memory index.</p>
+  <ul style="margin-top:8px;">
+    <li>1 million small files → 1 million NameNode index entries → NameNode RAM exhausted</li>
+    <li>Each small file = one Map task → massive scheduling overhead with minimal compute per task</li>
+  </ul>
+  <div class="two-col" style="margin-top:12px;">
+    <div style="background:rgba(0,0,0,.2);padding:12px;border-radius:6px;">
+      <strong style="color:var(--accent)">Workarounds:</strong>
+      <ul>
+        <li>Merge small files before storing</li>
+        <li>HAR files (Hadoop Archives) — layered filesystem</li>
+        <li>Use HBase to store binary data in table cells instead of files</li>
+        <li><code>CombineFileInputFormat</code> to merge small splits at job time</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</section>
+
+<section id="speed">
+<h2 class="section-title reveal">Issues with Hadoop: Speed &amp; Latency</h2>
+
+<div class="issue-card issue-red reveal">
+  <h4>Designed for 2006-era Hardware</h4>
+  <p>When Hadoop was designed, RAM cost ~$0.10/MB. Today RAM costs ~$0.000003/MB — a 33,000× reduction.</p>
+  <ul style="margin-top:8px;">
+    <li><strong>No in-memory caching:</strong> Every stage boundary requires HDFS write</li>
+    <li><strong>Always writes to disk:</strong> Even trivial chained Map→Map→Map operations hit disk between each stage</li>
+    <li><strong>JVM startup per task:</strong> Launching a JVM for each task adds hundreds of milliseconds</li>
+  </ul>
+  <div class="warn-box" style="margin-top:12px;">
+    Modern commodity servers have 256GB–1TB RAM. Hadoop wastes this by routing data through HDFS between every task.
+  </div>
+</div>
+</section>
+
+<section id="chaining">
+<h2 class="section-title reveal">Issues with Hadoop: Chaining Maps &amp; Reduces</h2>
+
+<div class="issue-card issue-amber reveal">
+  <h4>Multi-Step Jobs Are Expensive</h4>
+  <p>Most real applications require <em>multiple</em> Map-Reduce pairs chained together.</p>
+  <div style="margin:12px 0;padding:14px;background:rgba(0,0,0,.2);border-radius:8px;font-size:.88rem;">
+    <strong>Example — Top-10 cited sources per topic:</strong><br>
+    Job 1: Map (extract citations) → Reduce (count per source)<br>
+    Job 2: Map (reformat) → Reduce (sort, take top-10)<br><br>
+    Each job boundary = <span style="color:var(--red)">HDFS Write</span> + <span style="color:var(--red)">HDFS Read</span> + <span style="color:var(--accent3)">New JVM setup</span> + <span style="color:var(--accent3)">Network shuffle</span>
+  </div>
+  <p>Hadoop was not designed for easy or fast chaining — it compounds all overhead costs with each link.</p>
+</div>
+</section>
+
+<section id="use-cases">
+<h2 class="section-title reveal">Issues with Hadoop: Missing Use Cases &amp; Ease of Use</h2>
+
+<div class="two-col reveal">
+  <div class="issue-card issue-red" style="margin:0;">
+    <h4>Unsupported Workloads</h4>
+    <ul>
+      <li><strong>Stateful tasks:</strong> MapReduce tasks cannot share mutable state across instances</li>
+      <li><strong>Streaming:</strong> No native streaming support — data must be batched first</li>
+      <li><strong>Side effects:</strong> Applications that write to databases, send alerts, etc. don't fit the Map→Reduce model cleanly</li>
+      <li><strong>Iterative algorithms:</strong> ML training with 100 iterations = 100× HDFS read/write cycles</li>
+    </ul>
+  </div>
+  <div class="issue-card issue-amber" style="margin:0;">
+    <h4>Ease of Use</h4>
+    <ul>
+      <li><strong>Verbosity:</strong> Everything is hand-written Java code</li>
+      <li>Simple word count = ~50 lines of Java boilerplate</li>
+      <li>No lambda expressions or high-level API (until later)</li>
+      <li>Compare: Pandas/Python can do the same in 1-2 lines</li>
+    </ul>
+    <div class="warn-box" style="margin-top:10px;">Modern solutions use optimised abstractions — developers shouldn't need to write Map/Reduce boilerplate for common operations.</div>
+  </div>
+</div>
+</section>
+
+<!-- ===== APACHE SPARK ===== -->
+<section id="spark-origin">
+<h2 class="section-title reveal">Apache Spark: Origins &amp; Motivation</h2>
+
+<div class="card reveal" style="background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(0,212,255,.04));border-color:var(--green);">
+  <h3 style="color:var(--green);margin-bottom:12px;">Birth of Spark</h3>
+  <ul>
+    <li>Founded as a class project at <strong>University of California, Berkeley in 2009</strong></li>
+    <li>Open-sourced in 2010, just 3 years after Hadoop</li>
+    <li>Core motivation: <strong>"MapReduce+ in Memory"</strong></li>
+    <li>Overtook Hadoop in popularity around <strong>2017</strong></li>
+    <li>Popularity plateau due to Databricks (managed Spark) absorbing demand</li>
+    <li>By 2009, RAM costs had fallen 20× from Hadoop design era — enough to fit large datasets in memory on commodity hardware</li>
+  </ul>
+</div>
+
+<h3 class="reveal">What Spark Changed</h3>
+<div class="compare-grid reveal">
+  <div class="hadoop-col">
+    <div class="compare-header">Hadoop MapReduce</div>
+    <div>Write to HDFS after every Map</div>
+    <div>Read from HDFS before every Reduce</div>
+    <div>Forced Map → Reduce → Map → Reduce structure</div>
+    <div>HDFS-dependent storage</div>
+    <div>No caching between stages</div>
+    <div>Java verbosity, all code hand-written</div>
+    <div>JVM startup per task</div>
+  </div>
+  <div class="spark-col">
+    <div class="compare-header">Apache Spark</div>
+    <div>Keep data in memory between stages</div>
+    <div>Read from memory (network transfer only if needed)</div>
+    <div>Arbitrary chain of transformations</div>
+    <div>Reads from any source (HDFS, S3, local files)</div>
+    <div>Explicit caching with <code>.persist()</code></div>
+    <div>Concise APIs (Python, Scala, SQL)</div>
+    <div>Persistent executor JVMs (no per-task startup)</div>
+  </div>
+</div>
+</section>
+
+<section id="rdds">
+<h2 class="section-title reveal">Resilient Distributed Datasets (RDDs)</h2>
+
+<div class="card reveal" style="background:rgba(0,212,255,.04);">
+  <h3 style="color:var(--accent);margin-bottom:12px;">What is an RDD?</h3>
+  <p>An RDD is a <strong>fault-tolerant, partitioned collection of records</strong> stored in memory. It is the fundamental data structure of Spark.</p>
+
+  <div class="two-col" style="margin-top:14px;">
+    <div>
+      <h4 style="color:var(--accent2);margin-bottom:8px;">Properties</h4>
+      <ul>
+        <li><strong>Distributed:</strong> Partitions spread across cluster</li>
+        <li><strong>Resilient:</strong> Can be rebuilt from lineage on failure</li>
+        <li><strong>Immutable:</strong> Cannot be modified, only transformed into new RDDs</li>
+        <li><strong>Lazily evaluated:</strong> Not computed until an Action is called</li>
+        <li><strong>Optionally cached:</strong> Can be persisted in memory for reuse</li>
+      </ul>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div class="rdd-box">
+        <h4>RDD: Students</h4>
+        <div class="partition">Partition 1: [Joe Blogs, John Doe]</div>
+        <div class="partition">Partition 2: [Kate Brown, Sara Williams]</div>
+      </div>
+      <div class="rdd-box" style="opacity:.7;">
+        <h4>RDD: CS Students (after filter)</h4>
+        <div class="partition">Partition 1: [Joe Blogs]</div>
+        <div class="partition">Partition 2: []</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="highlight-box reveal">
+  <strong>Fault tolerance without HDFS writes:</strong> Instead of checkpointing to disk, Spark tracks the <em>lineage</em> of each RDD — the sequence of transformations used to create it. On failure, it replays just that partition's lineage to regenerate the lost data.
+</div>
+</section>
+
+<section id="spark-flow">
+<h2 class="section-title reveal">Basic Spark Execution Flow</h2>
+
+<p class="reveal">The MapReduce equivalent in Spark — notice what's <em>missing</em> compared to Hadoop:</p>
+
+<div class="card reveal" style="background:rgba(16,185,129,.04);">
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:.85rem;">
+    <div style="background:rgba(0,212,255,.15);padding:8px 14px;border-radius:6px;color:var(--accent);font-weight:700;">Data File</div>
+    <span style="color:var(--muted)">→</span>
+    <div style="background:rgba(0,212,255,.15);padding:8px 14px;border-radius:6px;color:var(--accent);font-weight:700;">RDD Loader</div>
+    <span style="color:var(--muted)">→ RDD in memory →</span>
+    <div style="background:rgba(124,58,237,.15);padding:8px 14px;border-radius:6px;color:var(--accent2);font-weight:700;">flatMap (P1)</div>
+    <div style="background:rgba(124,58,237,.15);padding:8px 14px;border-radius:6px;color:var(--accent2);font-weight:700;">flatMap (P2)</div>
+    <span style="color:var(--muted)">→ RDD in memory →</span>
+    <div style="background:rgba(16,185,129,.15);padding:8px 14px;border-radius:6px;color:var(--green);font-weight:700;">reduce() → result</div>
+  </div>
+  <div class="three-col" style="margin-top:16px;">
+    <div style="text-align:center;padding:10px;background:rgba(0,0,0,.2);border-radius:6px;">
+      <strong style="color:var(--accent)">Load Data Into Memory</strong>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:4px;">No HDFS splits. Data partitioned directly.</p>
+    </div>
+    <div style="text-align:center;padding:10px;background:rgba(0,0,0,.2);border-radius:6px;">
+      <strong style="color:var(--accent2)">Transformation</strong>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:4px;">RDD → RDD in memory. No disk writes.</p>
+    </div>
+    <div style="text-align:center;padding:10px;background:rgba(0,0,0,.2);border-radius:6px;">
+      <strong style="color:var(--green)">Action</strong>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:4px;">Triggers execution. Returns result to driver.</p>
+    </div>
+  </div>
+</div>
+
+<pre class="reveal"><span class="cm">// Spark word count in Python (PySpark) — compare to 50+ lines of Hadoop Java!</span>
+<span class="kw">from</span> pyspark <span class="kw">import</span> SparkContext
+
+sc = SparkContext(<span class="str">"local"</span>, <span class="str">"WordCount"</span>)
+text_rdd = sc.textFile(<span class="str">"news_articles.txt"</span>)          <span class="cm"># Load → RDD</span>
+words = text_rdd.flatMap(<span class="kw">lambda</span> line: line.split(<span class="str">" "</span>))  <span class="cm"># Transformation</span>
+pairs = words.map(<span class="kw">lambda</span> w: (w, <span class="num">1</span>))                      <span class="cm"># Transformation</span>
+counts = pairs.reduceByKey(<span class="kw">lambda</span> a, b: a + b)            <span class="cm"># Transformation</span>
+result = counts.collect()                                  <span class="cm"># Action → triggers execution</span></pre>
+</section>
+
+<section id="trans-actions">
+<h2 class="section-title reveal">Transformations &amp; Actions</h2>
+
+<div class="two-col reveal">
+  <div class="card" style="border-color:var(--accent2);">
+    <div class="tag tag-purple">TRANSFORMATIONS</div>
+    <h3 style="margin-top:12px;">RDD → RDD</h3>
+    <p style="font-size:.88rem;margin-bottom:12px;">Lazy — defines computation but doesn't execute until an action is called.</p>
+    <table style="margin:0;">
+      <tr><th>Operation</th><th>Effect</th></tr>
+      <tr><td><code>map(f)</code></td><td>Apply f to each record</td></tr>
+      <tr><td><code>flatMap(f)</code></td><td>Apply f, flatten results (like MR Map)</td></tr>
+      <tr><td><code>filter(f)</code></td><td>Keep records where f is true</td></tr>
+      <tr><td><code>reduceByKey(f)</code></td><td>Group by key, reduce each group</td></tr>
+      <tr><td><code>groupByKey()</code></td><td>Group values by key into list</td></tr>
+      <tr><td><code>join(rdd2)</code></td><td>Inner join on key</td></tr>
+      <tr><td><code>union(rdd2)</code></td><td>Combine two RDDs</td></tr>
+    </table>
+  </div>
+  <div class="card" style="border-color:var(--green);">
+    <div class="tag tag-green">ACTIONS</div>
+    <h3 style="margin-top:12px;">RDD → Result / Storage</h3>
+    <p style="font-size:.88rem;margin-bottom:12px;">Trigger actual computation. Results returned to driver or written to storage.</p>
+    <table style="margin:0;">
+      <tr><th>Operation</th><th>Effect</th></tr>
+      <tr><td><code>collect()</code></td><td>Return all records to driver</td></tr>
+      <tr><td><code>reduce(f)</code></td><td>Pair-wise reduction to single value</td></tr>
+      <tr><td><code>count()</code></td><td>Return number of records</td></tr>
+      <tr><td><code>take(n)</code></td><td>Return first n records</td></tr>
+      <tr><td><code>first()</code></td><td>Return first record</td></tr>
+      <tr><td><code>saveAsTextFile(path)</code></td><td>Write to persistent storage</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="highlight-box reveal">
+  <strong>Key difference from Hadoop:</strong> In Spark you can chain Map→Map→Map→Map→Reduce with <em>no disk writes between them</em>. Spark won't even start computing until <code>collect()</code> is called — it builds the full computation plan (DAG) first, then executes optimally.
+</div>
+</section>
+
+<section id="dags">
+<h2 class="section-title reveal">DAGs &amp; Lazy Execution</h2>
+
+<div class="card reveal" style="background:rgba(0,212,255,.04);">
+  <h3 style="color:var(--accent);margin-bottom:12px;">Directed Acyclic Graph (DAG)</h3>
+  <p>When a Spark job is submitted, all transformations are compiled into a <strong>DAG</strong> — a directed graph of tasks with dependencies, with no cycles.</p>
+  <div class="dag-visual" style="justify-content:flex-start;margin-top:16px;">
+    <div class="dag-stage" style="display:flex;align-items:center;gap:8px;">
+      <div class="dag-node">Read Data</div>
+      <div class="stage-label">Stage 1</div>
+    </div>
+    <div class="dag-arrow">→</div>
+    <div class="dag-stage" style="display:flex;flex-direction:column;gap:4px;">
+      <div style="display:flex;gap:8px;">
+        <div class="dag-node">flatMap P1</div>
+        <div class="dag-node">flatMap P2</div>
+      </div>
+      <div class="stage-label">Stage 2 (parallel)</div>
+    </div>
+    <div class="dag-arrow">→</div>
+    <div class="dag-stage" style="display:flex;align-items:center;gap:8px;">
+      <div class="dag-node" style="border-color:var(--green);color:var(--green)">reduce()</div>
+      <div class="stage-label">Stage 3</div>
+    </div>
+  </div>
+</div>
+
+<div class="two-col reveal">
+  <div class="card">
+    <h3>Stages</h3>
+    <p>The Spark scheduler divides the DAG into <strong>Stages</strong>:</p>
+    <ul>
+      <li>Stage = group of tasks that can run in parallel</li>
+      <li>Stage boundary = when data needs to be <em>shuffled</em> across partitions (e.g. reduceByKey)</li>
+      <li>One stage must complete before the next begins (barrier)</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Lazy Execution</h3>
+    <p>Spark does <em>not execute</em> transformations when they are defined. It only executes when an <strong>Action</strong> is called.</p>
+    <ul>
+      <li>Allows the scheduler to optimise the full plan before running</li>
+      <li>Eliminates unnecessary computations (only executes what's needed)</li>
+      <li>If no action on an RDD branch — that branch is never computed</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<section id="spark-vs-hadoop">
+<h2 class="section-title reveal">Spark vs Hadoop: Performance</h2>
+
+<div class="card reveal">
+  <h3 style="color:var(--accent)">Word Count: Spark vs Hadoop YARN</h3>
+  <table>
+    <tr><th>Data Size</th><th>Spark (seconds)</th><th>Hadoop (seconds)</th><th>Speed-up</th></tr>
+    <tr><td>1 GB</td><td style="color:var(--green)">16</td><td style="color:var(--red)">27</td><td><span class="badge-green">1.7×</span></td></tr>
+    <tr><td>5 GB</td><td style="color:var(--green)">25</td><td style="color:var(--red)">52</td><td><span class="badge-green">2.1×</span></td></tr>
+    <tr><td>10 GB</td><td style="color:var(--green)">34</td><td style="color:var(--red)">93</td><td><span class="badge-green">2.7×</span></td></tr>
+  </table>
+  <p style="font-size:.83rem;color:var(--muted);margin-top:8px;">For iterative ML (logistic regression, 30 iterations): Hadoop = 127s/iter, Spark = 6s/iter from iteration 2 onwards — <strong>21× faster</strong> due to RDD caching.</p>
+</div>
+</section>
+
+<!-- ===== EXAM QUESTIONS ===== -->
+<section id="exam-qs">
+<h2 class="section-title reveal">Past Exam Questions</h2>
+
+<div class="exam-box reveal">
+  <div class="exam-header" onclick="toggleExam(this)">
+    <h4>📋 2023 Exam — Q2b: Hadoop Overhead Profiling (8 marks)</h4>
+    <div><span class="exam-marks">8 marks</span> <span style="color:var(--muted)">▼</span></div>
+  </div>
+  <div class="exam-body">
+    <div class="exam-q">A news aggregator uses Hadoop to process 10 million articles daily. Their MapReduce job takes 45 minutes. The engineering team wants to profile the overheads and reduce total runtime. Describe the main overhead sources in Hadoop MapReduce and how each can be measured and reduced.</div>
+    <div class="exam-a">
+      <strong>5 overhead sources with measurement and mitigation:</strong><br><br>
+      <strong>1. Job Setup (JVM launch, task scheduling):</strong><br>
+      Measure: Time between job submission and first mapper start (in JobTracker UI or job history)<br>
+      Reduce: Use YARN Uber mode for small jobs; pre-warm JVM pools; increase reuse between tasks<br><br>
+      <strong>2. HDFS Read (Map input):</strong><br>
+      Measure: Hadoop counter "HDFS_BYTES_READ" / ratio of data-local vs remote reads (JobTracker task logs)<br>
+      Reduce: Ensure data locality — check % local reads. Compress input data (use splittable Snappy/BZip2 to maintain parallelism)<br><br>
+      <strong>3. Map Output Sort (intermediate sort):</strong><br>
+      Measure: Compare "MAP_OUTPUT_BYTES" to "MAP_OUTPUT_MATERIALIZED_BYTES"; sort time in task logs<br>
+      Reduce: Use Combiner to reduce map output size before sort; increase io.sort.mb config; reduce number of output partitions<br><br>
+      <strong>4. Network Shuffle (Copy phase):</strong><br>
+      Measure: "REDUCE_SHUFFLE_BYTES" counter; network utilisation metrics<br>
+      Reduce: Compress map output (mapreduce.map.output.compress=true); use Combiner to reduce shuffle volume; collocate reducers near map output where possible<br><br>
+      <strong>5. HDFS Write (final output + intermediate):</strong><br>
+      Measure: "HDFS_BYTES_WRITTEN" counter; DataNode write throughput<br>
+      Reduce: Compress output; consider whether intermediate HDFS writes can be eliminated by switching to Spark
+    </div>
+  </div>
+</div>
+
+<div class="exam-box reveal">
+  <div class="exam-header" onclick="toggleExam(this)">
+    <h4>📋 2023 Exam — Q2c: Spark Advantages over Hadoop (8 marks)</h4>
+    <div><span class="exam-marks">8 marks</span> <span style="color:var(--muted)">▼</span></div>
+  </div>
+  <div class="exam-body">
+    <div class="exam-q">The news aggregator team is considering migrating from Hadoop to Apache Spark. Discuss the advantages Spark would offer for their use case, including how Spark addresses Hadoop's limitations for iterative batch processing and ad-hoc analytics.</div>
+    <div class="exam-a">
+      <strong>Key advantages (award 2 marks per well-explained point):</strong><br><br>
+      <strong>1. In-Memory Processing (eliminates intermediate disk I/O):</strong><br>
+      Spark stores intermediate RDDs in RAM. For the news aggregator's multi-step pipeline (count citations → rank top-10), Spark avoids 2× HDFS write + 2× HDFS read between Job 1 and Job 2. With 10M articles, this could eliminate tens of GB of disk I/O per run.<br><br>
+      <strong>2. RDD Caching for Iterative Workloads:</strong><br>
+      If the same source RDD (e.g., all 10M articles) is needed by multiple analytics queries, <code>.persist()</code> keeps it in memory. Subsequent queries skip data loading entirely — critical for ad-hoc analytics and A/B query development.<br><br>
+      <strong>3. Flexible Execution via DAGs:</strong><br>
+      Spark's DAG scheduler allows arbitrary transformation chains (Map→Map→Filter→GroupBy→Sort→Take) without the Hadoop enforced Map→Reduce→Map→Reduce structure. Eliminates unnecessary Reduce phases for filtering-only workloads.<br><br>
+      <strong>4. Lazy Execution Optimisation:</strong><br>
+      Spark defers computation until an Action is called, allowing the scheduler to optimise the full pipeline (e.g. push-down filters, eliminate dead code paths). Hadoop always executes the full specified pipeline.<br><br>
+      <strong>5. Richer API:</strong><br>
+      PySpark / Spark SQL allows analysts to query 10M articles with SQL or Python, reducing development time. Hadoop requires full Java MapReduce code for every operation.
+    </div>
+  </div>
+</div>
+
+<div class="exam-box reveal">
+  <div class="exam-header" onclick="toggleExam(this)">
+    <h4>📋 2025 Exam — Q2: Hadoop Job Execution Steps (part of Q2)</h4>
+    <div><span class="exam-marks">~4 marks</span> <span style="color:var(--muted)">▼</span></div>
+  </div>
+  <div class="exam-body">
+    <div class="exam-q">Describe what happens between the point at which a client submits a Hadoop MapReduce job and the point at which a Map task begins executing on a worker node.</div>
+    <div class="exam-a">
+      <strong>Key steps in order (2 marks for correct order, 2 marks for detail):</strong><br><br>
+      1. Client contacts JobTracker to get a Job ID<br>
+      2. Client uploads Job.jar (compiled MapReduce code) to HDFS<br>
+      3. Client submits the job to the JobTracker<br>
+      4. JobTracker initialises the job and queries the NameNode for input split locations<br>
+      5. JobTracker uses data locality information to assign the Map task to a TaskTracker that has the data locally<br>
+      6. TaskTracker receives the task assignment via heartbeat<br>
+      7. TaskTracker downloads Job.jar from HDFS<br>
+      8. TaskTracker spawns a new JVM process<br>
+      9. JVM loads Job.jar and begins executing the Map task by reading its assigned data split from the local DataNode
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ===== PRACTICE QUESTIONS ===== -->
+<section id="practice">
+<h2 class="section-title reveal">Practice Questions</h2>
+
+<div class="practice-box reveal">
+  <p class="practice-q"><strong>1.</strong> A company has 500 million small log files (average 2KB each) stored in HDFS. Explain what problem arises and describe two concrete solutions.</p>
+  <button class="reveal-btn" onclick="togglePractice(this)">Reveal Answer</button>
+  <div class="practice-ans">
+    <strong>Problem:</strong> HDFS block size = 128MB (default). Each 2KB file gets its own block entry in the NameNode's in-memory index. 500 million files = 500 million NameNode index entries. The NameNode JVM heap (typically 256MB-1GB) runs out of memory. Additionally, each file = one Map task → 500 million Map task launches = unsustainable scheduling overhead.<br><br>
+    <strong>Solutions:</strong><br>
+    1. <strong>Merge files:</strong> Pre-process to combine many small log files into large files (e.g., daily archives). Use CombineFileInputFormat to merge small splits at job time.<br>
+    2. <strong>Hadoop Archives (HAR):</strong> Pack many small files into a HAR file — provides a single HDFS block entry for multiple files. Cost: slower random access (must read HAR index first).<br>
+    3. (Bonus) Store log data in HBase tables instead of files — HBase uses LSM trees which handle small random writes efficiently.
+  </div>
+</div>
+
+<div class="practice-box reveal">
+  <p class="practice-q"><strong>2.</strong> Explain the difference between Spark <em>Transformations</em> and <em>Actions</em>. Give one example of each and explain why this distinction matters for performance.</p>
+  <button class="reveal-btn" onclick="togglePractice(this)">Reveal Answer</button>
+  <div class="practice-ans">
+    <strong>Transformation:</strong> Converts one RDD into another RDD. Lazy — defined but not executed until an Action is called. Example: <code>filter(lambda x: x.contains("crypto"))</code> on a text RDD returns a new filtered RDD, but no computation happens.<br><br>
+    <strong>Action:</strong> Triggers actual execution and returns a result or writes to storage. Example: <code>count()</code> counts records in an RDD and returns an integer to the driver.<br><br>
+    <strong>Why it matters:</strong> Lazy evaluation allows Spark to build a complete execution plan (DAG) before running anything. This enables:<br>
+    - Whole-pipeline optimisation (e.g., push filters earlier to reduce data volume)<br>
+    - Elimination of unnecessary computation branches (only executes what's needed for the action)<br>
+    - Combining multiple transformations into a single stage without intermediate materialisation
+  </div>
+</div>
+
+<div class="practice-box reveal">
+  <p class="practice-q"><strong>3.</strong> What is a DAG in the context of Apache Spark, and how does it differ from Hadoop's job structure? What are "stages" within a DAG?</p>
+  <button class="reveal-btn" onclick="togglePractice(this)">Reveal Answer</button>
+  <div class="practice-ans">
+    <strong>DAG (Directed Acyclic Graph):</strong> When a Spark job is submitted, all transformations are compiled into a directed graph of tasks with dependencies. Directed = tasks have a direction (A produces B). Acyclic = no circular dependencies. Represents the order in which tasks must execute.<br><br>
+    <strong>Difference from Hadoop:</strong> Hadoop jobs have a <em>fixed, static structure</em> (always Map → Sort → Write → Copy → Reduce → Write). Spark's DAG is dynamic — determined by the transformations the developer chains together. A Spark job could be Map→Map→Filter→GroupBy→Sort→Collect with no enforced structure.<br><br>
+    <strong>Stages:</strong> The Spark scheduler partitions the DAG into stages. Tasks within a stage can run in parallel on different partitions. A stage boundary occurs when data needs to be shuffled (e.g., at a reduceByKey or join). Stage N cannot begin until Stage N-1 is complete. Example: Stage 1 = read + filter (narrow transformations), Stage 2 = reduceByKey (shuffle boundary), Stage 3 = collect (action).
+  </div>
+</div>
+
+<div class="practice-box reveal">
+  <p class="practice-q"><strong>4.</strong> A team is choosing between Hadoop and Spark for two different workloads: (A) a one-time 10TB historical data ETL job, (B) a daily ML training pipeline with 50 iterations on a 100GB dataset. Which would you recommend for each, and why?</p>
+  <button class="reveal-btn" onclick="togglePractice(this)">Reveal Answer</button>
+  <div class="practice-ans">
+    <strong>Workload A (one-time 10TB ETL): Hadoop or Spark both acceptable, slight edge to Spark</strong><br>
+    For a one-time sequential scan, Hadoop's disk-based approach works fine. However, Spark is still faster (2-3×) even for single-pass ETL due to lower task setup overhead and in-memory intermediate writes. If the cluster has sufficient RAM for the output, Spark is preferred. If RAM is limited, Hadoop's disk-based approach is more memory-efficient.<br><br>
+    <strong>Workload B (50-iteration ML training on 100GB): Strongly recommend Spark</strong><br>
+    Iterative algorithms are where Spark's advantage is most dramatic. With Hadoop, each iteration reads the full 100GB from HDFS, processes it, writes intermediates back to HDFS, then starts again. 50 iterations = 50 full dataset reads + 50 writes = 5TB of I/O.<br><br>
+    With Spark: Load the 100GB once into memory with <code>.persist()</code>. Iterations 2-50 read from in-memory RDD, not disk. Benchmark: Hadoop = 127s/iteration, Spark iteration 2+ = 6s/iteration (21× faster). Total: Hadoop ~6350s vs Spark ~380s.
+  </div>
+</div>
+</section>
+
+<!-- ===== QUIZ ===== -->
+<section id="quiz">
+<h2 class="section-title reveal">10-Question Revision Quiz</h2>
+<div class="quiz-section reveal">
+  <h3>Test Your Knowledge — Week 3</h3>
+
+  <div class="q-item" id="q1">
+    <p>1. In Hadoop job execution, what does the JobTracker do in step 6 ("Retrieve Input Splits")?</p>
+    <label><input type="radio" name="q1" value="a"> Downloads Job.jar from HDFS</label>
+    <label><input type="radio" name="q1" value="b"> Queries the NameNode to find where input data blocks are located for data locality</label>
+    <label><input type="radio" name="q1" value="c"> Splits the input data into equal chunks</label>
+    <label><input type="radio" name="q1" value="d"> Launches JVMs on all TaskTrackers</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <div class="q-item" id="q2">
+    <p>2. What does "speculative execution" mean in Hadoop?</p>
+    <label><input type="radio" name="q2" value="a"> Running the job twice to check results</label>
+    <label><input type="radio" name="q2" value="b"> Launching duplicate tasks for slow "straggler" workers to prevent blocking progress</label>
+    <label><input type="radio" name="q2" value="c"> Predicting which tasks will fail before they run</label>
+    <label><input type="radio" name="q2" value="d"> Pre-loading data before jobs are submitted</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <div class="q-item" id="q3">
+    <p>3. Why are non-splittable compression codecs (like GZip) problematic in Hadoop?</p>
+    <label><input type="radio" name="q3" value="a"> They use too much CPU</label>
+    <label><input type="radio" name="q3" value="b"> They prevent the file from being split into multiple input splits, limiting parallelism to one Mapper</label>
+    <label><input type="radio" name="q3" value="c"> HDFS cannot store compressed files</label>
+    <label><input type="radio" name="q3" value="d"> The NameNode cannot track compressed blocks</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <div class="q-item" id="q4">
+    <p>4. What is the small files problem in HDFS?</p>
+    <label><input type="radio" name="q4" value="a"> Small files process faster than large files</label>
+    <label><input type="radio" name="q4" value="b"> Millions of small files each require a separate NameNode index entry, exhausting NameNode RAM</label>
+    <label><input type="radio" name="q4" value="c"> Small files are automatically deleted by HDFS</label>
+    <label><input type="radio" name="q4" value="d"> Files smaller than 128MB cannot be stored</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <div class="q-item" id="q5">
+    <p>5. Spark was born as "MapReduce+ in Memory" from which university in what year?</p>
+    <label><input type="radio" name="q5" value="a"> MIT, 2011</label>
+    <label><input type="radio" name="q5" value="b"> Stanford, 2008</label>
+    <label><input type="radio" name="q5" value="c"> UC Berkeley, 2009</label>
+    <label><input type="radio" name="q5" value="d"> Carnegie Mellon, 2010</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <div class="q-item" id="q6">
+    <p>6. In Spark, what is an RDD?</p>
+    <label><input type="radio" name="q6" value="a"> A type of HDFS block</label>
+    <label><input type="radio" name="q6" value="b"> A fault-tolerant, partitioned, immutable collection of records stored in memory</label>
+    <label><input type="radio" name="q6" value="c"> A SQL table in Spark SQL</label>
+    <label><input type="radio" name="q6" value="d"> The Spark equivalent of a Hadoop JobTracker</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <div class="q-item" id="q7">
+    <p>7. What is "Lazy Execution" in Spark?</p>
+    <label><input type="radio" name="q7" value="a"> Spark runs jobs slower than Hadoop</label>
+    <label><input type="radio" name="q7" value="b"> Transformations are not executed until an Action is called, allowing full-pipeline optimisation</label>
+    <label><input type="radio" name="q7" value="c"> Tasks are delayed until the cluster is idle</label>
+    <label><input type="radio" name="q7" value="d"> Data is loaded from disk lazily on first access</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <div class="q-item" id="q8">
+    <p>8. What defines a Stage boundary in Spark DAG execution?</p>
+    <label><input type="radio" name="q8" value="a"> When a new RDD is created</label>
+    <label><input type="radio" name="q8" value="b"> When data must be shuffled across partitions (e.g. reduceByKey)</label>
+    <label><input type="radio" name="q8" value="c"> After every transformation</label>
+    <label><input type="radio" name="q8" value="d"> After every 10 seconds</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <div class="q-item" id="q9">
+    <p>9. Why is Spark dramatically faster than Hadoop for iterative ML algorithms?</p>
+    <label><input type="radio" name="q9" value="a"> Spark uses faster hardware</label>
+    <label><input type="radio" name="q9" value="b"> Spark can cache the training dataset in RAM — subsequent iterations read from memory, not disk</label>
+    <label><input type="radio" name="q9" value="c"> Spark uses GPU acceleration by default</label>
+    <label><input type="radio" name="q9" value="d"> ML algorithms don't work in Hadoop</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <div class="q-item" id="q10">
+    <p>10. What is the difference between <code>flatMap</code> and <code>reduce</code> in Spark?</p>
+    <label><input type="radio" name="q10" value="a"> They are identical operations</label>
+    <label><input type="radio" name="q10" value="b"> flatMap is a Transformation (RDD→RDD, applies function per record, returns list); reduce is an Action (pair-wise aggregation to a single value)</label>
+    <label><input type="radio" name="q10" value="c"> flatMap aggregates, reduce transforms</label>
+    <label><input type="radio" name="q10" value="d"> reduce creates a new RDD, flatMap returns to driver</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <button class="quiz-btn" onclick="submitQuiz()">Submit Quiz</button>
+  <div id="quiz-result"></div>
+</div>
+</section>
+
+</main>
+
+<script>
+window.addEventListener('scroll', () => {
+  const d = document.documentElement;
+  const pct = (d.scrollTop / (d.scrollHeight - d.clientHeight)) * 100;
+  document.getElementById('prog').style.width = pct + '%';
+});
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+const sections = document.querySelectorAll('section[id]');
+const links = document.querySelectorAll('#sidebar a');
+const sectionObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const a = document.querySelector(`#sidebar a[href="#${e.target.id}"]`);
+      if (a) a.classList.add('active');
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(s => sectionObserver.observe(s));
+function toggleExam(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('span:last-child');
+  if (body.style.display === 'block') { body.style.display = 'none'; arrow.textContent = '▼'; }
+  else { body.style.display = 'block'; arrow.textContent = '▲'; }
+}
+function togglePractice(btn) {
+  const ans = btn.nextElementSibling;
+  if (ans.style.display === 'block') { ans.style.display = 'none'; btn.textContent = 'Reveal Answer'; }
+  else { ans.style.display = 'block'; btn.textContent = 'Hide Answer'; }
+}
+const answers = { q1:'b', q2:'b', q3:'b', q4:'b', q5:'c', q6:'b', q7:'b', q8:'b', q9:'b', q10:'b' };
+const explanations = {
+  q1: "Step 6: JobTracker queries NameNode to find which DataNodes hold the input splits, enabling data locality decisions.",
+  q2: "Speculative execution launches backup tasks for slow stragglers. The faster copy wins; the other is killed.",
+  q3: "Non-splittable codecs (GZip) cannot be split mid-file, forcing one Mapper per file regardless of file size.",
+  q4: "Each small file needs a separate NameNode index entry. Millions of files exhaust NameNode RAM.",
+  q5: "Apache Spark was born at UC Berkeley as a class project in 2009, founded by Matei Zaharia.",
+  q6: "RDD = Resilient (fault-tolerant via lineage), Distributed (partitioned), Dataset (collection of records) — core Spark abstraction.",
+  q7: "Lazy evaluation defers computation until an Action is called, allowing the scheduler to optimise the full execution plan.",
+  q8: "Stage boundaries occur at shuffle operations (groupByKey, reduceByKey, join). Within a stage, data doesn't cross partition boundaries.",
+  q9: "Spark's .persist() caches RDDs in RAM. First iteration reads from disk, all subsequent iterations read from memory (6s vs 127s/iter).",
+  q10: "flatMap: Transformation (lazy), maps each record to a list of records, returns new RDD. reduce: Action (eager), pair-wise aggregation until one value remains."
+};
+function submitQuiz() {
+  let score = 0;
+  Object.keys(answers).forEach(qid => {
+    const sel = document.querySelector(`input[name="${qid}"]:checked`);
+    const fb = document.querySelector(`#${qid} .q-feedback`);
+    fb.style.display = 'block';
+    if (sel && sel.value === answers[qid]) {
+      score++;
+      fb.className = 'q-feedback q-correct';
+      fb.textContent = '✓ Correct! ' + explanations[qid];
+    } else {
+      fb.className = 'q-feedback q-wrong';
+      const correctLabel = document.querySelector(`#${qid} input[value="${answers[qid]}"]`).parentElement.textContent.trim();
+      fb.textContent = `✗ Incorrect. Correct: "${correctLabel}" — ${explanations[qid]}`;
+    }
+  });
+  const result = document.getElementById('quiz-result');
+  result.style.display = 'block';
+  const pct = Math.round(score / 10 * 100);
+  if (pct >= 80) { result.style.background='rgba(16,185,129,.15)'; result.style.color='#10b981'; result.textContent = `🎉 ${score}/10 (${pct}%) — Excellent! Week 3 mastered.`; }
+  else if (pct >= 60) { result.style.background='rgba(245,158,11,.15)'; result.style.color='#f59e0b'; result.textContent = `📚 ${score}/10 (${pct}%) — Good effort! Review the Spark DAG and Hadoop execution sections.`; }
+  else { result.style.background='rgba(239,68,68,.15)'; result.style.color='#ef4444'; result.textContent = `🔄 ${score}/10 (${pct}%) — Keep studying! Revisit RDDs, Lazy Execution and Hadoop execution anatomy.`; }
+}
+</script>
+</body>
+</html>

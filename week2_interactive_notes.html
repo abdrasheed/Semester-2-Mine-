@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week 2 – Work Distribution, MapReduce & Hadoop | Big Data COMPSCI5088</title>
+<script>
+MathJax = {
+  tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$']] },
+  options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+:root {
+  --navy:#0a0e1a; --panel:#111827; --card:#1a2235;
+  --accent:#00d4ff; --accent2:#7c3aed; --accent3:#f59e0b;
+  --green:#10b981; --red:#ef4444; --pink:#ec4899;
+  --text:#e2e8f0; --muted:#94a3b8; --border:#1e3a5f;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--navy);color:var(--text);font-family:'Segoe UI',sans-serif;display:flex;min-height:100vh;}
+
+/* Progress bar */
+#prog{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;z-index:999;transition:width .1s;}
+
+/* Sidebar */
+#sidebar{width:240px;min-width:240px;background:var(--panel);padding:20px 0;position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid var(--border);}
+#sidebar h2{color:var(--accent);font-size:.8rem;text-transform:uppercase;letter-spacing:2px;padding:0 16px 12px;border-bottom:1px solid var(--border);}
+#sidebar a{display:block;padding:7px 16px;color:var(--muted);text-decoration:none;font-size:.82rem;border-left:3px solid transparent;transition:all .2s;}
+#sidebar a:hover,#sidebar a.active{color:var(--accent);border-left-color:var(--accent);background:rgba(0,212,255,.06);}
+#sidebar .sec-label{padding:10px 16px 4px;color:var(--accent2);font-size:.7rem;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;}
+
+/* Main */
+main{flex:1;padding:40px 48px;max-width:1000px;}
+h1{font-size:2.2rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;}
+.subtitle{color:var(--muted);margin-bottom:36px;font-size:1rem;}
+
+h2.section-title{font-size:1.5rem;color:var(--accent);margin:48px 0 20px;padding-bottom:8px;border-bottom:2px solid var(--border);}
+h3{font-size:1.1rem;color:var(--accent2);margin:28px 0 12px;}
+
+p,li{line-height:1.75;color:var(--text);font-size:.95rem;}
+ul,ol{padding-left:22px;margin:10px 0;}
+li{margin:5px 0;}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;margin:18px 0;}
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700;margin:3px;}
+.tag-blue{background:rgba(0,212,255,.15);color:var(--accent);}
+.tag-purple{background:rgba(124,58,237,.2);color:#a78bfa;}
+.tag-green{background:rgba(16,185,129,.15);color:var(--green);}
+.tag-red{background:rgba(239,68,68,.15);color:var(--red);}
+.tag-amber{background:rgba(245,158,11,.15);color:var(--accent3);}
+
+/* Pipeline diagram */
+.pipeline{display:flex;align-items:center;flex-wrap:wrap;gap:0;margin:18px 0;}
+.pipe-box{background:var(--card);border:2px solid var(--accent2);border-radius:8px;padding:10px 16px;font-size:.85rem;font-weight:700;color:var(--accent);text-align:center;min-width:90px;}
+.pipe-arrow{color:var(--accent);font-size:1.4rem;padding:0 6px;}
+.pipe-label{font-size:.72rem;color:var(--muted);text-align:center;margin-top:4px;}
+
+/* Two-col */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:18px 0;}
+@media(max-width:700px){.two-col{grid-template-columns:1fr;}}
+
+/* Challenge grid */
+.challenge-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0;}
+.challenge-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;transition:transform .2s,border-color .2s;}
+.challenge-item:hover{transform:translateY(-3px);border-color:var(--accent);}
+.challenge-icon{font-size:1.8rem;margin-bottom:8px;}
+.challenge-item h4{color:var(--accent2);font-size:.9rem;margin-bottom:6px;}
+.challenge-item p{font-size:.82rem;color:var(--muted);}
+
+/* Animated stages */
+.stages-container{display:flex;flex-direction:column;gap:10px;margin:18px 0;}
+.stage-row{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:8px;border:1px solid var(--border);background:var(--card);transition:all .3s;}
+.stage-num{width:28px;height:28px;border-radius:50%;background:var(--accent2);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;flex-shrink:0;}
+.stage-desc{flex:1;}
+.stage-desc strong{color:var(--accent);}
+
+/* MapReduce boxes */
+.mr-flow{display:flex;align-items:stretch;gap:0;margin:24px 0;overflow-x:auto;}
+.mr-phase{border-radius:12px;padding:18px;flex:1;min-width:130px;}
+.mr-map{background:linear-gradient(135deg,rgba(0,212,255,.15),rgba(0,212,255,.05));border:2px solid var(--accent);}
+.mr-mid{background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(245,158,11,.05));border:2px solid var(--accent3);}
+.mr-reduce{background:linear-gradient(135deg,rgba(124,58,237,.15),rgba(124,58,237,.05));border:2px solid var(--accent2);}
+.mr-phase h4{font-size:.85rem;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;}
+.mr-map h4{color:var(--accent);}
+.mr-mid h4{color:var(--accent3);}
+.mr-reduce h4{color:var(--accent2);}
+.mr-phase ul{list-style:none;padding:0;}
+.mr-phase li{font-size:.8rem;color:var(--muted);padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.mr-arrow{display:flex;align-items:center;color:var(--muted);font-size:1.5rem;padding:0 4px;}
+
+/* Code blocks */
+pre{background:#0d1117;border:1px solid var(--border);border-radius:8px;padding:18px;overflow-x:auto;margin:14px 0;font-size:.85rem;line-height:1.6;}
+.kw{color:#ff7b72;} .fn{color:#79c0ff;} .cm{color:#8b949e;font-style:italic;}
+.str{color:#a5d6ff;} .num{color:#f2cc60;}
+
+/* Hadoop arch diagram */
+.hadoop-arch{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:18px 0;}
+.node-box{border-radius:10px;padding:14px;text-align:center;}
+.node-client{background:rgba(16,185,129,.15);border:2px solid var(--green);}
+.node-master{background:rgba(239,68,68,.15);border:2px solid var(--red);}
+.node-worker{background:rgba(0,212,255,.1);border:2px solid var(--accent);}
+.node-name{background:rgba(245,158,11,.15);border:2px solid var(--accent3);}
+.node-data{background:rgba(124,58,237,.1);border:2px solid var(--accent2);}
+.node-box h4{font-size:.85rem;font-weight:700;margin-bottom:6px;}
+.node-box p{font-size:.77rem;color:var(--muted);}
+
+/* Overhead table */
+table{width:100%;border-collapse:collapse;margin:16px 0;}
+th{background:rgba(0,212,255,.1);color:var(--accent);padding:10px 14px;text-align:left;font-size:.85rem;}
+td{padding:9px 14px;border-bottom:1px solid var(--border);font-size:.85rem;}
+tr:hover td{background:rgba(255,255,255,.03);}
+.badge-red{background:rgba(239,68,68,.2);color:var(--red);padding:2px 8px;border-radius:4px;font-size:.75rem;}
+.badge-green{background:rgba(16,185,129,.2);color:var(--green);padding:2px 8px;border-radius:4px;font-size:.75rem;}
+.badge-amber{background:rgba(245,158,11,.2);color:var(--accent3);padding:2px 8px;border-radius:4px;font-size:.75rem;}
+
+/* Exam box */
+.exam-box{background:linear-gradient(135deg,rgba(124,58,237,.12),rgba(0,212,255,.06));border:2px solid var(--accent2);border-radius:14px;margin:24px 0;overflow:hidden;}
+.exam-header{padding:14px 20px;background:rgba(124,58,237,.15);cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.exam-header h4{color:var(--accent2);font-size:1rem;}
+.exam-marks{color:var(--accent3);font-size:.85rem;font-weight:700;}
+.exam-body{padding:20px;display:none;}
+.exam-q{color:var(--text);font-style:italic;margin-bottom:12px;padding:10px 14px;background:rgba(0,0,0,.2);border-radius:6px;border-left:3px solid var(--accent2);}
+.exam-a{color:var(--green);font-size:.9rem;line-height:1.7;}
+.exam-a strong{color:var(--accent);}
+
+/* Practice box */
+.practice-box{background:rgba(16,185,129,.06);border:1px solid var(--green);border-radius:10px;padding:18px;margin:14px 0;}
+.practice-q{color:var(--text);margin-bottom:10px;}
+.reveal-btn{background:transparent;border:1px solid var(--green);color:var(--green);padding:6px 16px;border-radius:6px;cursor:pointer;font-size:.82rem;transition:all .2s;}
+.reveal-btn:hover{background:rgba(16,185,129,.1);}
+.practice-ans{display:none;margin-top:12px;padding:12px;background:rgba(0,0,0,.2);border-radius:6px;color:var(--muted);font-size:.88rem;line-height:1.7;}
+
+/* Quiz */
+.quiz-section{background:var(--card);border:2px solid var(--accent2);border-radius:14px;padding:28px;margin:28px 0;}
+.quiz-section h3{color:var(--accent2);margin-bottom:20px;}
+.q-item{margin:18px 0;padding:16px;background:rgba(0,0,0,.2);border-radius:8px;}
+.q-item p{font-weight:600;margin-bottom:10px;color:var(--text);}
+.q-item label{display:block;padding:6px 10px;margin:4px 0;border-radius:6px;cursor:pointer;font-size:.88rem;transition:background .15s;}
+.q-item label:hover{background:rgba(255,255,255,.05);}
+.q-item input{margin-right:8px;accent-color:var(--accent);}
+.q-feedback{font-size:.82rem;margin-top:8px;padding:6px 10px;border-radius:6px;display:none;}
+.q-correct{background:rgba(16,185,129,.15);color:var(--green);}
+.q-wrong{background:rgba(239,68,68,.15);color:var(--red);}
+.quiz-btn{background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;color:#fff;padding:12px 32px;border-radius:8px;font-size:1rem;cursor:pointer;font-weight:700;margin-top:18px;transition:opacity .2s;}
+.quiz-btn:hover{opacity:.85;}
+#quiz-result{margin-top:18px;padding:16px;border-radius:10px;font-size:1.1rem;font-weight:700;display:none;text-align:center;}
+
+/* Version cards */
+.version-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0;}
+.v-card{border-radius:10px;padding:16px;}
+.v1{background:rgba(0,212,255,.08);border:2px solid var(--accent);}
+.v2{background:rgba(245,158,11,.08);border:2px solid var(--accent3);}
+.v3{background:rgba(16,185,129,.08);border:2px solid var(--green);}
+.v-card h4{font-size:1.1rem;font-weight:800;margin-bottom:8px;}
+.v1 h4{color:var(--accent);}
+.v2 h4{color:var(--accent3);}
+.v3 h4{color:var(--green);}
+.v-card li{font-size:.82rem;color:var(--muted);}
+
+.highlight-box{background:rgba(0,212,255,.07);border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:14px 18px;margin:14px 0;}
+.warn-box{background:rgba(245,158,11,.07);border-left:4px solid var(--accent3);border-radius:0 8px 8px 0;padding:14px 18px;margin:14px 0;}
+.danger-box{background:rgba(239,68,68,.07);border-left:4px solid var(--red);border-radius:0 8px 8px 0;padding:14px 18px;margin:14px 0;}
+
+/* Scroll reveal */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s,transform .5s;}
+.reveal.visible{opacity:1;transform:none;}
+
+/* Hadoop challenges table */
+.challenge-table td:first-child{color:var(--accent2);font-weight:600;}
+</style>
+</head>
+<body>
+<div id="prog"></div>
+
+<!-- Sidebar -->
+<nav id="sidebar">
+  <h2>Week 2</h2>
+  <div class="sec-label">Distribution Challenges</div>
+  <a href="#challenges">Work Distribution</a>
+  <a href="#serial-parallel">Serial vs Parallel</a>
+  <a href="#stages">Additional Stages</a>
+  <a href="#load-bal">Load Balancing</a>
+  <a href="#orch">Orchestration</a>
+  <a href="#fault">Fault Tolerance</a>
+  <div class="sec-label">MapReduce</div>
+  <a href="#mr-origin">Origin Story</a>
+  <a href="#mr-ops">Map &amp; Reduce Ops</a>
+  <a href="#mr-wordcount">Word Count Example</a>
+  <a href="#mr-pipeline">Full Pipeline</a>
+  <a href="#mr-usecases">Use Cases</a>
+  <div class="sec-label">Hadoop</div>
+  <a href="#hadoop-history">History</a>
+  <a href="#hadoop-arch">Architecture</a>
+  <a href="#hadoop-exec">Execution</a>
+  <a href="#hadoop-overheads">Overheads</a>
+  <a href="#data-locality">Data Locality</a>
+  <a href="#hadoop-versions">Versions</a>
+  <a href="#hadoop-challenges">Challenges Solved</a>
+  <div class="sec-label">Exam &amp; Practice</div>
+  <a href="#exam-qs">Exam Questions</a>
+  <a href="#practice">Practice Qs</a>
+  <a href="#quiz">10-Q Quiz</a>
+</nav>
+
+<!-- Main Content -->
+<main>
+<h1>Week 2: Work Distribution, MapReduce &amp; Hadoop</h1>
+<p class="subtitle">COMPSCI5088 (M) — University of Glasgow · Dr. Richard McCreadie</p>
+
+<!-- ===== WORK DISTRIBUTION CHALLENGES ===== -->
+<section id="challenges">
+<h2 class="section-title reveal">Work Distribution Challenges</h2>
+<p class="reveal">Parallelism sounds great in theory — but in practice, distributing work across multiple machines introduces a cascade of new problems that must be solved before we can benefit from the speed-up.</p>
+
+<div class="challenge-grid reveal">
+  <div class="challenge-item">
+    <div class="challenge-icon">⚖️</div>
+    <h4>Load Balancing</h4>
+    <p>Making sure all machines have work to do — no idle cores, no bottlenecks.</p>
+  </div>
+  <div class="challenge-item">
+    <div class="challenge-icon">📦</div>
+    <h4>Overheads</h4>
+    <p>Extra stages, intermediate writes, and aggregation add latency on top of compute.</p>
+  </div>
+  <div class="challenge-item">
+    <div class="challenge-icon">🎛️</div>
+    <h4>Orchestration</h4>
+    <p>A master service must assign tasks to machines and respond to failures.</p>
+  </div>
+  <div class="challenge-item">
+    <div class="challenge-icon">🌐</div>
+    <h4>Transfer Latency</h4>
+    <p>Data crossing network links is orders of magnitude slower than local storage.</p>
+  </div>
+  <div class="challenge-item">
+    <div class="challenge-icon">💥</div>
+    <h4>Machine Failures</h4>
+    <p>Any node can fail mid-job. Work must be re-allocated automatically.</p>
+  </div>
+  <div class="challenge-item">
+    <div class="challenge-icon">👑</div>
+    <h4>Master Failures</h4>
+    <p>If the orchestrator itself dies, recovery is hard — unless multiple masters exist.</p>
+  </div>
+</div>
+</section>
+
+<!-- Serial vs Parallel -->
+<section id="serial-parallel">
+<h2 class="section-title reveal">Serial vs Parallel: The Core Tension</h2>
+<p class="reveal">Consider counting how many times "crypto" appears across 2 news documents.</p>
+
+<div class="two-col reveal">
+  <div class="card">
+    <h3 style="color:var(--muted)">Serial Solution</h3>
+    <p>One counter. Process both documents one after the other.</p>
+    <div class="pipeline" style="margin-top:14px;">
+      <div>
+        <div class="pipe-box" style="border-color:var(--muted);color:var(--muted)">Doc 1</div>
+        <div class="pipe-label">input</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div>
+        <div class="pipe-box" style="border-color:var(--muted);color:var(--muted)">Count</div>
+        <div class="pipe-label">scan all words</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div>
+        <div class="pipe-box" style="border-color:var(--muted);color:var(--muted)">Doc 2</div>
+        <div class="pipe-label">same counter</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div>
+        <div class="pipe-box" style="border-color:var(--muted);color:var(--muted)">Result: 2</div>
+      </div>
+    </div>
+    <div class="warn-box" style="margin-top:12px;">
+      <strong>Problem:</strong> Takes T<sub>1</sub> + T<sub>2</sub> time. Cannot use multiple cores.
+    </div>
+  </div>
+  <div class="card">
+    <h3>Parallel Solution</h3>
+    <p>Two pipelines simultaneously, then sum the local counts.</p>
+    <div class="pipeline" style="margin-top:14px;">
+      <div>
+        <div class="pipe-box">Doc 1</div>
+        <div class="pipe-label">Pipeline 1</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div>
+        <div class="pipe-box">Count=1</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div>
+        <div class="pipe-box" style="border-color:var(--green);color:var(--green)">Sum=2</div>
+      </div>
+    </div>
+    <div class="pipeline">
+      <div>
+        <div class="pipe-box">Doc 2</div>
+        <div class="pipe-label">Pipeline 2</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div>
+        <div class="pipe-box">Count=1</div>
+      </div>
+    </div>
+    <div class="highlight-box" style="margin-top:12px;">
+      <strong>Speed-up:</strong> Takes max(T<sub>1</sub>, T<sub>2</sub>) + T<sub>sum</sub>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- Additional Stages -->
+<section id="stages">
+<h2 class="section-title reveal">Additional Stages &amp; Their Costs</h2>
+<p class="reveal">Parallel computation requires an aggregation stage that <strong>adds overhead and creates a dependency barrier</strong> — Stage 3 cannot start until all Stage 2 workers finish.</p>
+
+<div class="stages-container reveal">
+  <div class="stage-row">
+    <div class="stage-num">1</div>
+    <div class="stage-desc"><strong>Data Split + Read</strong> — Each pipeline reads its chunk of data from storage</div>
+  </div>
+  <div class="stage-row">
+    <div class="stage-num">2</div>
+    <div class="stage-desc"><strong>Parallel Computation</strong> — Each pipeline computes its local result (e.g. Count=1)</div>
+  </div>
+  <div class="stage-row" style="border-color:var(--red);">
+    <div class="stage-num" style="background:var(--red)">3</div>
+    <div class="stage-desc"><strong>Aggregation (Barrier)</strong> — <span style="color:var(--red)">Cannot start until Stage 2 is complete on ALL nodes.</span> Sum all local counts.</div>
+  </div>
+</div>
+
+<div class="warn-box reveal">
+  <strong>Key insight:</strong> The slowest pipeline dictates the total time. If Pipeline 2 processes a shorter document, it finishes early and sits <em>idle</em> until Pipeline 1 catches up. This is the <strong>load balancing problem</strong>.
+</div>
+</section>
+
+<!-- Load Balancing -->
+<section id="load-bal">
+<h2 class="section-title reveal">Data Splitting &amp; Load Balancing</h2>
+<p class="reveal">To enable parallelism, split data into <strong>n chunks</strong> (where n ≥ number of pipelines). For perfect efficiency, each chunk should contain <strong>equal amounts of work</strong>.</p>
+
+<div class="two-col reveal">
+  <div class="card">
+    <h3>Good Splitting ✅</h3>
+    <ul>
+      <li>Equal-sized chunks → equal compute time</li>
+      <li>Pipeline 1 and Pipeline 2 finish together</li>
+      <li>No idle time wasted waiting for stragglers</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Bad Splitting ❌</h3>
+    <ul>
+      <li>Unequal chunks → one finishes early</li>
+      <li>Fast pipeline waits idle for slow one</li>
+      <li>Effective speed-up reduced significantly</li>
+    </ul>
+  </div>
+</div>
+
+<div class="highlight-box reveal">
+  <strong>Pro tip:</strong> In Hadoop, you control load balancing indirectly by adjusting how HDFS block size maps to input splits. Smaller splits = better load balancing but more task overhead.
+</div>
+</section>
+
+<!-- Communication Overheads -->
+<section id="orch">
+<h2 class="section-title reveal">Orchestration &amp; Communication Overheads</h2>
+
+<h3 class="reveal">Communication Costs</h3>
+<p class="reveal">Every communication link between tasks adds latency. Two scenarios:</p>
+<div class="two-col reveal">
+  <div class="card">
+    <div class="tag tag-green">Same Machine</div>
+    <p style="margin-top:10px;">Data transfer goes via local disk or memory — fast but still not free. Cost depends on storage hierarchy (RAM &gt; SSD &gt; HDD).</p>
+  </div>
+  <div class="card">
+    <div class="tag tag-red">Different Machines</div>
+    <p style="margin-top:10px;">Data must cross the network. ~100μs latency minimum. For TB-scale shuffles, this becomes the dominant bottleneck.</p>
+  </div>
+</div>
+
+<h3 class="reveal">Master Services (Orchestrators)</h3>
+<p class="reveal">Complex architectures need a <strong>master service</strong> that:</p>
+<ul class="reveal">
+  <li>Tracks which machines have available <strong>slots</strong></li>
+  <li>Assigns tasks to available slots on appropriate machines</li>
+  <li>Monitors task progress via heartbeats</li>
+  <li>Re-allocates work when a task fails</li>
+</ul>
+
+<div class="card reveal" style="background:rgba(0,212,255,.04);">
+  <h4 style="color:var(--accent);margin-bottom:10px;">Orchestration Example</h4>
+  <p style="font-size:.88rem;">Machine 1 has 2 slots, Machine 2 has 2 slots, Machine 3 has 2 slots. Master assigns <code>GetWords+Count</code> tasks to Machines 2 &amp; 3 (Stage 1+2), then assigns <code>Sum</code> to Machine 2 (Stage 3), pulling intermediate results via network transfer.</p>
+</div>
+</section>
+
+<!-- Fault Tolerance -->
+<section id="fault">
+<h2 class="section-title reveal">Fault Tolerance</h2>
+
+<div class="two-col reveal">
+  <div class="card">
+    <div class="tag tag-amber">Machine Failure</div>
+    <h4 style="margin-top:10px;">Worker Dies Mid-Task</h4>
+    <ol style="margin-top:8px;">
+      <li>Master detects missing heartbeat</li>
+      <li>Gets fresh copy of data from storage</li>
+      <li>Restarts tasks on a surviving machine</li>
+    </ol>
+    <div class="highlight-box" style="margin-top:12px;">Handled by the master service automatically.</div>
+  </div>
+  <div class="card">
+    <div class="tag tag-red">Master Failure</div>
+    <h4 style="margin-top:10px;">The Orchestrator Dies</h4>
+    <ul style="margin-top:8px;">
+      <li>No recovery possible (single master)</li>
+      <li>Multiple masters = conflict resolution needed</li>
+      <li>Multiple masters waste resources on management</li>
+    </ul>
+    <div class="danger-box" style="margin-top:12px;">Single point of failure — a key Hadoop V1 limitation!</div>
+  </div>
+</div>
+
+<div class="card reveal">
+  <div class="tag tag-amber">Network Failure / Partition</div>
+  <p style="margin-top:10px;">Master can't communicate with a machine — is it dead, or just temporarily unreachable?</p>
+  <ul style="margin-top:8px;">
+    <li>If actually dead: re-allocate work → correct</li>
+    <li>If temporary glitch + work re-allocated: same work done <strong>twice</strong> (duplicate output!)</li>
+  </ul>
+  <p style="margin-top:10px;color:var(--muted);font-size:.88rem;">This is the classic <strong>network partition problem</strong> — handled differently by Hadoop (treat as machine failure) vs modern systems.</p>
+</div>
+</section>
+
+<!-- ===== MAPREDUCE ===== -->
+<section id="mr-origin">
+<h2 class="section-title reveal">MapReduce: Origin Story</h2>
+<div class="card reveal" style="background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(124,58,237,.06));border-color:var(--accent);">
+  <h3 style="color:var(--accent);margin-bottom:12px;">Setting the Scene — Early 2000s, Google</h3>
+  <p>A relatively small search company is trying to scale up. Between 2000 and 2004, the <strong>Google Index grew over 20×</strong>. Buying ever-bigger mainframes is impractical — so Google invents a horizontal scaling framework.</p>
+  <ul style="margin-top:12px;">
+    <li>2004: Google files a patent and publishes: <em>"MapReduce: Simplified data processing on large clusters"</em> — Dean &amp; Ghemawat</li>
+    <li>Cited 22,910+ times — one of the most influential CS papers</li>
+    <li>Insight: If we constrain workloads to two operations, orchestration becomes trivially solvable</li>
+  </ul>
+</div>
+</section>
+
+<section id="mr-ops">
+<h2 class="section-title reveal">The Two Operations</h2>
+
+<div class="warn-box reveal">
+  <strong>Core insight:</strong> The <em>majority</em> of distributed compute workloads can be expressed as just two operations. By limiting to these two, the framework can automatically handle all the hard orchestration problems.
+</div>
+
+<div class="two-col reveal">
+  <div class="card" style="border-color:var(--accent);">
+    <div class="tag tag-blue">MAP</div>
+    <h3 style="margin-top:12px;">Map Function</h3>
+    <div style="margin:10px 0;padding:12px;background:rgba(0,0,0,.3);border-radius:6px;font-family:monospace;font-size:.9rem;">
+      Map(Key₁, Value₁) → List[&lt;Key₂, Value₂&gt;]
+    </div>
+    <ul>
+      <li>Takes one <strong>input key-value pair</strong></li>
+      <li>Emits zero or more <strong>output key-value pairs</strong></li>
+      <li>Applied independently to each input record</li>
+      <li>Perfectly parallelisable — no coordination needed</li>
+    </ul>
+    <div class="highlight-box" style="margin-top:10px;">
+      <strong>Use for:</strong> Extraction, Filtering, Transformation (per-record operations)
+    </div>
+  </div>
+  <div class="card" style="border-color:var(--accent2);">
+    <div class="tag tag-purple">REDUCE</div>
+    <h3 style="margin-top:12px;">Reduce Function</h3>
+    <div style="margin:10px 0;padding:12px;background:rgba(0,0,0,.3);border-radius:6px;font-family:monospace;font-size:.9rem;">
+      Reduce(Key₂, List[Value₂]) → List&lt;Value₂&gt;
+    </div>
+    <ul>
+      <li>Takes a key and <strong>all values</strong> associated with that key</li>
+      <li>Emits aggregated result(s)</li>
+      <li>One reducer instance per unique key</li>
+      <li>Can run parallel (one per key) but needs Map to complete first</li>
+    </ul>
+    <div class="highlight-box" style="margin-top:10px;">
+      <strong>Use for:</strong> Aggregation, Counting, Grouping (cross-record operations)
+    </div>
+  </div>
+</div>
+
+<h3 class="reveal">When to Use Each</h3>
+<table class="reveal">
+  <tr>
+    <th>Task Type</th><th>Operation</th><th>Example</th>
+  </tr>
+  <tr>
+    <td>Extraction/Filtering</td>
+    <td><span class="badge-green">MAP</span></td>
+    <td>Extract tweets containing "crypto" from a 1TB dataset</td>
+  </tr>
+  <tr>
+    <td>Transformation</td>
+    <td><span class="badge-green">MAP</span></td>
+    <td>Apply sentiment analysis to each news article</td>
+  </tr>
+  <tr>
+    <td>Aggregation</td>
+    <td><span class="badge-amber">REDUCE</span></td>
+    <td>Sum all word counts per word across all documents</td>
+  </tr>
+  <tr>
+    <td>Grouping</td>
+    <td><span class="badge-amber">REDUCE</span></td>
+    <td>Collect all URLs per domain for link analysis</td>
+  </tr>
+</table>
+</section>
+
+<section id="mr-wordcount">
+<h2 class="section-title reveal">Word Count Example (Canonical)</h2>
+<p class="reveal">Count how many times each word appears across a corpus of documents.</p>
+
+<h3 class="reveal">Map Phase Code</h3>
+<pre class="reveal"><span class="cm">// Input: (docID, document_text)</span>
+<span class="cm">// Output: list of (word, 1) pairs</span>
+
+<span class="kw">class</span> <span class="fn">WordCountMapper</span> {
+  <span class="fn">map</span>(String docID, String document):
+    <span class="kw">for</span> word <span class="kw">in</span> document.split(<span class="str">" "</span>):
+      emit(word, <span class="num">1</span>)   <span class="cm">// emit one (word, 1) per word</span>
+}
+
+<span class="cm">// E.g. "Coinbase has reached crypto" →
+//   (coinbase, 1), (has, 1), (reached, 1), (crypto, 1)</span></pre>
+
+<h3 class="reveal">Reduce Phase Code</h3>
+<pre class="reveal"><span class="cm">// Input: (word, [1, 1, 1, ...])  ← all 1s for that word</span>
+<span class="cm">// Output: (word, total_count)</span>
+
+<span class="kw">class</span> <span class="fn">WordCountReducer</span> {
+  <span class="fn">reduce</span>(String word, List&lt;Integer&gt; counts):
+    total = <span class="fn">sum</span>(counts)
+    emit(word, total)  <span class="cm">// (crypto, 2)</span>
+}</pre>
+
+<div class="highlight-box reveal">
+  <strong>Framework magic:</strong> Between Map and Reduce, the framework automatically groups all values by key — all <code>(crypto, 1)</code> pairs from all mappers are collected and sent to one reducer as <code>(crypto, [1,1])</code>.
+</div>
+</section>
+
+<section id="mr-pipeline">
+<h2 class="section-title reveal">Full MapReduce Pipeline</h2>
+<p class="reveal">MapReduce is fault-tolerant by design — intermediate results are <strong>persistently written to storage</strong> between phases. This enables task re-execution on failure.</p>
+
+<div class="mr-flow reveal">
+  <div class="mr-phase mr-map">
+    <h4>Map Phase</h4>
+    <ul>
+      <li>Read split from HDFS</li>
+      <li>Run user Map function</li>
+      <li>Sort output by key</li>
+      <li>Write to HDFS</li>
+    </ul>
+  </div>
+  <div class="mr-arrow">→</div>
+  <div class="mr-phase mr-mid">
+    <h4>Shuffle</h4>
+    <ul>
+      <li>HDFS stores Map output</li>
+      <li>Copy by key to reducers</li>
+      <li>Network transfer</li>
+      <li>Group by key</li>
+    </ul>
+  </div>
+  <div class="mr-arrow">→</div>
+  <div class="mr-phase mr-reduce">
+    <h4>Reduce Phase</h4>
+    <ul>
+      <li>Read from HDFS</li>
+      <li>Run user Reduce function</li>
+      <li>Write final output to HDFS</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card reveal">
+  <h4 style="color:var(--accent3);margin-bottom:14px;">Why Intermediate Storage Matters for Fault Tolerance</h4>
+  <p style="font-size:.9rem;">If a Reduce task fails halfway through, the system can <strong>re-read the Map outputs from HDFS</strong> and re-run just that reducer. Without persistent intermediate storage, a failure mid-pipeline would require restarting everything from the beginning.</p>
+  <div class="danger-box" style="margin-top:10px;">
+    <strong>The cost:</strong> Every MapReduce job incurs 2× HDFS read + 2× HDFS write + network shuffle, even for simple computations. This is Hadoop's biggest weakness.
+  </div>
+</div>
+</section>
+
+<section id="mr-usecases">
+<h2 class="section-title reveal">MapReduce Use Cases &amp; Examples</h2>
+<div class="two-col reveal">
+  <div class="card">
+    <h4 style="color:var(--accent)">Web Index Building (Google)</h4>
+    <p style="font-size:.85rem;margin-top:8px;"><strong>Map:</strong> (URL, page_html) → emit(word, docID) for each word<br><strong>Reduce:</strong> (word, [docIDs]) → inverted index entry</p>
+  </div>
+  <div class="card">
+    <h4 style="color:var(--accent)">Log Analysis</h4>
+    <p style="font-size:.85rem;margin-top:8px;"><strong>Map:</strong> (lineNum, logline) → if ERROR: emit(error_type, 1)<br><strong>Reduce:</strong> (error_type, [1,1,...]) → count per error type</p>
+  </div>
+  <div class="card">
+    <h4 style="color:var(--accent)">Market Data Aggregation</h4>
+    <p style="font-size:.85rem;margin-top:8px;"><strong>Map:</strong> (txID, transaction) → emit(stock, price)<br><strong>Reduce:</strong> (stock, [prices]) → min, max, avg, VWAP</p>
+  </div>
+  <div class="card">
+    <h4 style="color:var(--accent)">Social Network Graph</h4>
+    <p style="font-size:.85rem;margin-top:8px;"><strong>Map:</strong> (userID, friends_list) → emit(friend, userID)<br><strong>Reduce:</strong> (user, [friends]) → mutual friends calculation</p>
+  </div>
+</div>
+</section>
+
+<!-- ===== HADOOP ===== -->
+<section id="hadoop-history">
+<h2 class="section-title reveal">Hadoop: History &amp; Context</h2>
+
+<div class="card reveal" style="border-color:var(--accent3);">
+  <h3 style="color:var(--accent3);margin-bottom:12px;">Why Google Didn't Release the Code</h3>
+  <p>Google published the MapReduce <em>design</em> in 2004 — but kept their implementation closed-source. This was deliberate: MapReduce was a competitive advantage.</p>
+  <ul style="margin-top:10px;">
+    <li>Other companies saw the utility and built their own internal versions</li>
+    <li>Including Google's main competitor at the time: <strong>Yahoo!</strong></li>
+    <li>Yahoo! released their Java implementation as open source in <strong>April 2006</strong></li>
+    <li>Named it <strong>Hadoop</strong> (after a toy yellow elephant belonging to one of the developer's children)</li>
+  </ul>
+</div>
+
+<div class="highlight-box reveal">
+  <strong>Hadoop V1 = MapReduce (Java) + HDFS.</strong> The same distributed file system (HDFS) stores input data, intermediate Map outputs, and final Reduce outputs.
+</div>
+
+<div class="card reveal">
+  <h4 style="color:var(--muted)">Popularity Trajectory</h4>
+  <p style="font-size:.88rem;margin-top:8px;">Hadoop peaked around 2014-2015, then declined as developers moved to Apache Spark (10-100× faster for iterative workloads). Still in production at many enterprises today — particularly for batch ETL on HDFS.</p>
+</div>
+</section>
+
+<section id="hadoop-arch">
+<h2 class="section-title reveal">Hadoop Architecture</h2>
+<p class="reveal">Hadoop separates concerns into <strong>Compute</strong> and <strong>Storage</strong> layers, each with their own master and worker nodes.</p>
+
+<div class="two-col reveal">
+  <div class="card" style="border-color:var(--accent);">
+    <h3>Compute Layer</h3>
+    <div style="margin:10px 0;">
+      <div class="node-box node-client" style="margin-bottom:10px;">
+        <h4 style="color:var(--green)">Client</h4>
+        <p>User-facing software. Submits jobs to the JobTracker. Communicates job requirements.</p>
+      </div>
+      <div class="node-box node-master" style="margin-bottom:10px;">
+        <h4 style="color:var(--red)">Job Tracker (Master)</h4>
+        <p>Receives jobs from Client. Queries NameNode for data locations. Assigns tasks to TaskTrackers. Handles failures.</p>
+      </div>
+      <div class="node-box node-worker">
+        <h4 style="color:var(--accent)">Task Tracker (Workers ×N)</h4>
+        <p>Executes Map and Reduce tasks in available slots. Reports status back to JobTracker.</p>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="border-color:var(--accent2);">
+    <h3>Storage Layer (HDFS)</h3>
+    <div style="margin:10px 0;">
+      <div class="node-box node-name" style="margin-bottom:10px;">
+        <h4 style="color:var(--accent3)">Name Node (Master)</h4>
+        <p>Tracks location of ALL data blocks across all DataNodes. Handles replication. Single point of failure in V1.</p>
+      </div>
+      <div class="node-box node-data">
+        <h4 style="color:var(--accent2)">Data Nodes (Workers ×N)</h4>
+        <p>Store actual data blocks locally. Serve read/write requests. Report block status to NameNode.</p>
+      </div>
+    </div>
+    <div class="warn-box" style="margin-top:10px;">
+      <strong>Typically co-located:</strong> Each physical machine runs one TaskTracker + one DataNode. This enables Data Locality.
+    </div>
+  </div>
+</div>
+</section>
+
+<section id="hadoop-exec">
+<h2 class="section-title reveal">MapReduce Execution in Hadoop</h2>
+<p class="reveal">Hadoop strictly implements the MapReduce design with HDFS as persistent intermediate storage at every stage boundary.</p>
+
+<div class="stages-container reveal">
+  <div class="stage-row">
+    <div class="stage-num">1</div>
+    <div class="stage-desc"><strong>HDFS Read</strong> — JobTracker queries NameNode → assigns Map tasks to TaskTrackers with local data splits</div>
+  </div>
+  <div class="stage-row">
+    <div class="stage-num">2</div>
+    <div class="stage-desc"><strong>Map + Sort</strong> — Each TaskTracker runs Map function on its split, sorts output key-value pairs by key</div>
+  </div>
+  <div class="stage-row">
+    <div class="stage-num">3</div>
+    <div class="stage-desc"><strong>Write to HDFS</strong> — Sorted Map output written persistently to HDFS (fault tolerance checkpoint)</div>
+  </div>
+  <div class="stage-row" style="border-color:var(--accent3);">
+    <div class="stage-num" style="background:var(--accent3)">4</div>
+    <div class="stage-desc"><strong>Copy (Shuffle)</strong> — Each Reducer copies its assigned keys from all Mappers' HDFS outputs via <span style="color:var(--accent3)">network transfer</span></div>
+  </div>
+  <div class="stage-row">
+    <div class="stage-num">5</div>
+    <div class="stage-desc"><strong>Reduce</strong> — User Reduce function aggregates values grouped by key</div>
+  </div>
+  <div class="stage-row">
+    <div class="stage-num">6</div>
+    <div class="stage-desc"><strong>Write Final Output</strong> — Results written to HDFS for consumption</div>
+  </div>
+</div>
+</section>
+
+<section id="hadoop-overheads">
+<h2 class="section-title reveal">Overheads in Hadoop MapReduce</h2>
+
+<table class="reveal">
+  <tr>
+    <th>Overhead</th><th>Stage</th><th>Impact</th><th>Notes</th>
+  </tr>
+  <tr>
+    <td>Job Setup</td>
+    <td>Before Map</td>
+    <td><span class="badge-amber">Medium</span></td>
+    <td>JVM startup, configuration distribution, slot allocation</td>
+  </tr>
+  <tr>
+    <td>HDFS Read</td>
+    <td>Map input</td>
+    <td><span class="badge-amber">Medium</span></td>
+    <td>Mitigated by data locality; large sequential reads are fast</td>
+  </tr>
+  <tr>
+    <td>Map Output Sort</td>
+    <td>Post-Map</td>
+    <td><span class="badge-red">High</span></td>
+    <td>Every Map output must be sorted by key before write — always required</td>
+  </tr>
+  <tr>
+    <td>HDFS Write (intermediate)</td>
+    <td>Post-Map</td>
+    <td><span class="badge-red">High</span></td>
+    <td>Full Map output written to disk — necessary for fault tolerance but expensive</td>
+  </tr>
+  <tr>
+    <td>Network Shuffle</td>
+    <td>Copy phase</td>
+    <td><span class="badge-red">Very High</span></td>
+    <td>Data crosses machine boundaries sorted by key — can dominate job time</td>
+  </tr>
+  <tr>
+    <td>HDFS Write (final)</td>
+    <td>Post-Reduce</td>
+    <td><span class="badge-amber">Medium</span></td>
+    <td>Final output persisted to HDFS — unavoidable</td>
+  </tr>
+</table>
+
+<div class="danger-box reveal">
+  <strong>Always-reduce problem:</strong> Hadoop <em>always</em> requires a Reduce phase, even for pure Map-only workloads (like simple filtering). This forces an unnecessary Sort+Write+Shuffle+Read cycle.
+</div>
+
+<div class="warn-box reveal">
+  <strong>HDFS latency profile:</strong> Optimised for <em>large sequential block reads</em> (manageable latency). Terrible for small random reads. Minimum file size ~64MB (default block size).
+</div>
+</section>
+
+<section id="data-locality">
+<h2 class="section-title reveal">Data Locality</h2>
+<p class="reveal"><strong>Core Hadoop philosophy: move the compute to the data, not the data to the compute.</strong></p>
+
+<div class="card reveal" style="background:linear-gradient(135deg,rgba(0,212,255,.07),rgba(16,185,129,.04));">
+  <h4 style="color:var(--accent);margin-bottom:14px;">Why Data Locality Matters</h4>
+  <div class="two-col">
+    <div>
+      <div class="tag tag-red">Without Locality</div>
+      <p style="margin-top:8px;font-size:.88rem;">Transfer 64MB HDFS block over 1Gbps LAN: ~512ms. For 1TB input: ~8,192 seconds of network time just to deliver data to compute.</p>
+    </div>
+    <div>
+      <div class="tag tag-green">With Locality</div>
+      <p style="margin-top:8px;font-size:.88rem;">Read the same 64MB block from local HDD: ~50ms. Same 1TB: ~800 seconds. <strong>10× faster</strong> just from co-location.</p>
+    </div>
+  </div>
+</div>
+
+<h3 class="reveal">How Hadoop Achieves Data Locality</h3>
+<ul class="reveal">
+  <li><strong>JobTracker + NameNode coordination:</strong> Before assigning a Map task, JobTracker queries NameNode to find which machines hold replicas of the input split</li>
+  <li><strong>Preferential assignment:</strong> Map tasks are preferentially assigned to TaskTrackers that have the data locally — the slot on the same machine as the data is chosen first</li>
+  <li><strong>Rack awareness:</strong> If no local slot is available, JobTracker chooses a machine on the same network rack (one network hop vs. cross-rack)</li>
+  <li><strong>Reduce locality:</strong> Reducers copy by key from HDFS — network transfer unavoidable here, but HDFS replication helps parallelise reads</li>
+</ul>
+</section>
+
+<section id="hadoop-versions">
+<h2 class="section-title reveal">Hadoop Versions</h2>
+
+<div class="version-cards reveal">
+  <div class="v-card v1">
+    <h4>V1</h4>
+    <ul>
+      <li>Basic MapReduce + HDFS</li>
+      <li>Single JobTracker (SPOF)</li>
+      <li>Fixed Map/Reduce task slots</li>
+      <li>Only supports MapReduce jobs</li>
+    </ul>
+  </div>
+  <div class="v-card v2">
+    <h4>V2 (YARN)</h4>
+    <ul>
+      <li>Introduces YARN resource manager</li>
+      <li>Better resource allocation</li>
+      <li>Supports multiple frameworks (Spark, Flink on same cluster)</li>
+      <li>Flexible container sizing</li>
+    </ul>
+  </div>
+  <div class="v-card v3">
+    <h4>V3</h4>
+    <ul>
+      <li>Multiple NameNode support (fixes SPOF)</li>
+      <li>Erasure coding (reduces storage overhead vs. 3× replication)</li>
+      <li>Container support</li>
+      <li>GPU support for ML workloads</li>
+    </ul>
+  </div>
+</div>
+</section>
+
+<section id="hadoop-challenges">
+<h2 class="section-title reveal">How Hadoop Addresses the Challenges</h2>
+
+<table class="challenge-table reveal">
+  <tr><th>Challenge</th><th>Hadoop's Approach</th><th>Rating</th></tr>
+  <tr>
+    <td>Load Balancing</td>
+    <td>Not native — developer controls via data split size. Smaller splits = better balance but more overhead.</td>
+    <td><span class="badge-amber">Partial</span></td>
+  </tr>
+  <tr>
+    <td>New Stages (Overhead)</td>
+    <td>Always forces Sort + HDFS Write + Shuffle. Performs poorly for simple jobs. Cannot skip Reduce.</td>
+    <td><span class="badge-red">Weak</span></td>
+  </tr>
+  <tr>
+    <td>Transfer Latency</td>
+    <td>HDFS optimised for large sequential reads. Data locality minimises network transfer. Still slow for small reads.</td>
+    <td><span class="badge-amber">Partial</span></td>
+  </tr>
+  <tr>
+    <td>Task Assignment</td>
+    <td>JobTracker automatically assigns tasks to TaskTrackers with available slots.</td>
+    <td><span class="badge-green">Handled</span></td>
+  </tr>
+  <tr>
+    <td>Machine Failures</td>
+    <td>JobTracker detects via heartbeat, re-starts failed tasks on available TaskTrackers.</td>
+    <td><span class="badge-green">Handled</span></td>
+  </tr>
+  <tr>
+    <td>Master (JobTracker) Failure</td>
+    <td>V1: No recovery. V2+: YARN ResourceManager has HA mode with standby.</td>
+    <td><span class="badge-red">V1: None</span></td>
+  </tr>
+  <tr>
+    <td>Network Failures</td>
+    <td>Treated as machine failures — conservative but can cause duplicate work.</td>
+    <td><span class="badge-amber">Conservative</span></td>
+  </tr>
+</table>
+</section>
+
+<!-- ===== EXAM QUESTIONS ===== -->
+<section id="exam-qs">
+<h2 class="section-title reveal">Past Exam Questions</h2>
+
+<!-- 2025 Q2a -->
+<div class="exam-box reveal">
+  <div class="exam-header" onclick="toggleExam(this)">
+    <h4>📋 2025 Exam — Q2a: UpBank Hadoop Deployment (6 marks)</h4>
+    <div><span class="exam-marks">6 marks</span> <span style="color:var(--muted)">▼</span></div>
+  </div>
+  <div class="exam-body">
+    <div class="exam-q">UpBank is a modern challenger bank processing millions of transactions per day. Their engineering team wants to deploy Hadoop to analyse daily transaction logs. Discuss the key decisions they need to make when deploying Hadoop for this task, including cluster sizing, data partitioning, and configuration choices.</div>
+    <div class="exam-a">
+      <strong>Model Answer:</strong><br><br>
+      <strong>1. Cluster Sizing:</strong><br>
+      • Estimate data volume: daily log size × retention period determines total HDFS capacity<br>
+      • Factor in HDFS replication (default 3×) — actual storage needed = raw data × 3<br>
+      • Worker nodes: enough TaskTrackers to process a day's worth of logs within SLA window<br>
+      • Master node: dedicated machine for JobTracker + NameNode (avoid co-location in production)<br><br>
+      <strong>2. Data Partitioning:</strong><br>
+      • HDFS block size (default 128MB in V2) determines number of Map tasks per file<br>
+      • Smaller blocks = more parallelism + better load balancing, but higher scheduling overhead<br>
+      • Partition by date/hour for efficient time-range queries and data pruning<br><br>
+      <strong>3. Configuration:</strong><br>
+      • Number of Map/Reduce slots per TaskTracker (balance CPU cores vs. memory per task)<br>
+      • Replication factor: 3 for fault tolerance on commodity hardware<br>
+      • Enable data locality: ensure data is distributed across cluster before running jobs<br>
+      • In V2+: configure YARN container memory/CPU allocation per task
+    </div>
+  </div>
+</div>
+
+<!-- 2025 Q2b -->
+<div class="exam-box reveal">
+  <div class="exam-header" onclick="toggleExam(this)">
+    <h4>📋 2025 Exam — Q2b: Custom MapReduce Classes (6 marks)</h4>
+    <div><span class="exam-marks">6 marks</span> <span style="color:var(--muted)">▼</span></div>
+  </div>
+  <div class="exam-body">
+    <div class="exam-q">UpBank wants to compute the total transaction value grouped by merchant category (e.g., "Groceries", "Transport", "Entertainment"). Describe the Mapper and Reducer classes you would implement, including their input/output types and logic.</div>
+    <div class="exam-a">
+      <strong>Model Answer:</strong><br><br>
+      <strong>Mapper Class:</strong><br>
+      • <em>Input:</em> (transactionID: String, transactionRecord: String)<br>
+      • Parse record to extract: merchant_category, transaction_amount<br>
+      • <em>Output:</em> emit(merchant_category: String, amount: Double)<br>
+      • Example: "txn001, Tesco, Groceries, £45.20" → emit("Groceries", 45.20)<br><br>
+      <strong>Reducer Class:</strong><br>
+      • <em>Input:</em> (merchant_category: String, List[amount: Double])<br>
+      • Framework automatically groups all amounts for same category<br>
+      • Logic: sum all amounts in the list<br>
+      • <em>Output:</em> emit(merchant_category, total_spend)<br>
+      • Example: ("Groceries", [45.20, 12.50, 88.00]) → ("Groceries", 145.70)<br><br>
+      <strong>Key Hadoop API points:</strong> extends Mapper&lt;LongWritable, Text, Text, DoubleWritable&gt;, extends Reducer&lt;Text, DoubleWritable, Text, DoubleWritable&gt;
+    </div>
+  </div>
+</div>
+
+<!-- 2025 Q2c -->
+<div class="exam-box reveal">
+  <div class="exam-header" onclick="toggleExam(this)">
+    <h4>📋 2025 Exam — Q2c: Hadoop Limitations for Market Statistics (4 marks)</h4>
+    <div><span class="exam-marks">4 marks</span> <span style="color:var(--muted)">▼</span></div>
+  </div>
+  <div class="exam-body">
+    <div class="exam-q">UpBank's data science team wants to compute real-time market statistics (e.g., running averages, live alerts) from transaction streams. Explain why Hadoop MapReduce is unsuitable for this use case and what alternative would be better.</div>
+    <div class="exam-a">
+      <strong>Model Answer:</strong><br><br>
+      <strong>Why Hadoop is unsuitable:</strong><br>
+      1. <strong>Batch-only:</strong> Hadoop processes data in fixed batches — a job must be explicitly triggered and processes all input before producing output. Cannot process transactions as they arrive.<br>
+      2. <strong>High latency:</strong> HDFS read + Map output sort + HDFS write + shuffle + reduce typically takes minutes to hours. Real-time alerts require sub-second latency.<br>
+      3. <strong>No streaming support:</strong> Hadoop V1 has no streaming mechanism. Data must be collected, stored, then processed in bulk.<br>
+      4. <strong>Stateless reducers:</strong> Each job starts fresh — maintaining running aggregates (like rolling averages) requires complex workarounds.<br><br>
+      <strong>Better alternative:</strong> Apache Kafka (for ingestion) + Apache Flink or Spark Streaming (for stateful stream processing) — designed for low-latency, continuous, stateful computation over event streams.
+    </div>
+  </div>
+</div>
+
+<!-- 2023 Q2a -->
+<div class="exam-box reveal">
+  <div class="exam-header" onclick="toggleExam(this)">
+    <h4>📋 2023 Exam — Q2a: News Aggregator MapReduce Design (9 marks)</h4>
+    <div><span class="exam-marks">9 marks</span> <span style="color:var(--muted)">▼</span></div>
+  </div>
+  <div class="exam-body">
+    <div class="exam-q">A news aggregator collects 10 million articles per day from 50,000 sources. They want to identify the top-10 most cited news sources for each topic category (e.g., "Politics", "Technology"). Design a MapReduce solution. Your answer should describe the Mapper and Reducer logic, including input/output types, and discuss how chaining multiple MapReduce jobs can produce the final result.</div>
+    <div class="exam-a">
+      <strong>Model Answer:</strong><br><br>
+      <strong>Job 1 — Count citations per (topic, source):</strong><br>
+      • Mapper Input: (articleID, article_json)<br>
+      • Parse to extract: topic_category, cited_source<br>
+      • Mapper Output: emit( (topic, source): String, 1: Integer )<br>
+      • Reducer Input: ( (topic,source), [1,1,1,...] )<br>
+      • Reducer Output: emit( (topic, source), citation_count )<br><br>
+      <strong>Job 2 — Find top-10 per topic:</strong><br>
+      • Mapper Input: ( (topic,source), citation_count ) from Job 1 output<br>
+      • Mapper Output: emit( topic: String, (source, count): String ) — key is just topic<br>
+      • Reducer Input: ( topic, List[(source,count)] )<br>
+      • Reducer Logic: sort all (source,count) pairs by count descending, take top 10<br>
+      • Reducer Output: emit( topic, top_10_sources_list )<br><br>
+      <strong>Design considerations [mark-winning points]:</strong><br>
+      • Job chaining: output HDFS path of Job 1 = input HDFS path of Job 2<br>
+      • Combiner in Job 1: local partial sum reduces shuffle volume (important at 10M articles/day scale)<br>
+      • Partitioner: ensure all records for the same topic go to the same reducer in Job 2
+    </div>
+  </div>
+</div>
+
+<!-- 2023 Q2b -->
+<div class="exam-box reveal">
+  <div class="exam-header" onclick="toggleExam(this)">
+    <h4>📋 2023 Exam — Q2b: Hadoop Overhead Profiling (8 marks)</h4>
+    <div><span class="exam-marks">8 marks</span> <span style="color:var(--muted)">▼</span></div>
+  </div>
+  <div class="exam-body">
+    <div class="exam-q">A Hadoop job processing the news aggregator data takes 45 minutes. The engineering team wants to profile and reduce this time. Describe the main sources of overhead in a Hadoop MapReduce job and suggest how each could be measured and reduced.</div>
+    <div class="exam-a">
+      <strong>Model Answer — 5 overhead sources:</strong><br><br>
+      <strong>1. Job Setup (JVM launch, task scheduling):</strong><br>
+      • Measure: time before first mapper starts vs job submission time<br>
+      • Reduce: use YARN containers to pre-warm JVMs; use Uber mode for small jobs<br><br>
+      <strong>2. HDFS Read (Map input):</strong><br>
+      • Measure: Hadoop counters "HDFS bytes read" and map input bytes<br>
+      • Reduce: maximise data locality (check job logs for % local reads). Ensure HDFS block size matches typical query size.<br><br>
+      <strong>3. Map Output Sort:</strong><br>
+      • Measure: compare "map output bytes" to "map output materialized bytes"<br>
+      • Reduce: use Combiner to reduce output volume before sort; increase io.sort.mb<br><br>
+      <strong>4. Network Shuffle (Copy phase):</strong><br>
+      • Measure: reduce input bytes vs map output bytes; check counters for shuffle time<br>
+      • Reduce: compress map output (mapreduce.map.output.compress=true); use Combiner<br><br>
+      <strong>5. HDFS Write (intermediate + final):</strong><br>
+      • Measure: Hadoop counters "HDFS bytes written"<br>
+      • Reduce: consider switching to Spark which avoids intermediate HDFS writes
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ===== PRACTICE QUESTIONS ===== -->
+<section id="practice">
+<h2 class="section-title reveal">Practice Questions</h2>
+
+<div class="practice-box reveal">
+  <p class="practice-q"><strong>1.</strong> A satellite company processes telemetry data from 500 satellites. Each satellite sends 1GB/hour. They need to compute the average temperature reading across all satellites for each 10-minute window. Design a MapReduce job — what are the input/output types of the Mapper and Reducer?</p>
+  <button class="reveal-btn" onclick="togglePractice(this)">Reveal Answer</button>
+  <div class="practice-ans">
+    <strong>Mapper:</strong> Input: (satelliteID_timestamp, reading_record) → Parse: extract 10min window key + temperature value → Output: emit(window_key: String, temperature: Float)<br><br>
+    <strong>Reducer:</strong> Input: (window_key, [temp1, temp2, ..., tempN]) → Compute mean = sum/count → Output: emit(window_key, average_temperature)<br><br>
+    <strong>Note:</strong> Reducer needs to track both sum AND count (not just sum) to compute average. A Combiner can compute local partial sums but must also emit the count for the global average to be correct.
+  </div>
+</div>
+
+<div class="practice-box reveal">
+  <p class="practice-q"><strong>2.</strong> Explain why Hadoop's intermediate HDFS writes are both necessary and costly. Could we remove them? What would break?</p>
+  <button class="reveal-btn" onclick="togglePractice(this)">Reveal Answer</button>
+  <div class="practice-ans">
+    <strong>Why necessary:</strong> Intermediate writes provide fault tolerance checkpoints. If a Reduce task fails, the system re-reads Map outputs from HDFS without re-running all Mappers. Without them, any failure in the Reduce phase = restart entire job from scratch.<br><br>
+    <strong>Why costly:</strong> Full Map output (potentially 100s of GB) written to HDFS twice (Map write + Reduce read). HDFS writes are replicated 3× by default. Dominates job time for small-output transformations.<br><br>
+    <strong>What breaks if removed:</strong> Fault tolerance — a reducer failure requires re-running all mappers. For a job with 1000 mappers, this could be catastrophically expensive. This is exactly what Apache Spark does differently — it keeps intermediate data in memory (losing fault tolerance on node failure, which it handles differently via lineage).
+  </div>
+</div>
+
+<div class="practice-box reveal">
+  <p class="practice-q"><strong>3.</strong> A Hadoop cluster has 10 worker nodes, each with 2 task slots. A job has 30 Map tasks and 5 Reduce tasks. Describe the execution timeline: which tasks run in parallel and what determines the total job time?</p>
+  <button class="reveal-btn" onclick="togglePractice(this)">Reveal Answer</button>
+  <div class="practice-ans">
+    <strong>Map phase:</strong> 20 Map tasks run in parallel (20 slots across 10 nodes). The 30 map tasks run in 2 waves: first 20 start together, then the remaining 10 start as slots free up. Total map time ≈ 2 × T_map_per_task (assuming equal load).<br><br>
+    <strong>Barrier:</strong> Reduce phase cannot start until ALL 30 Map tasks complete (or at least begin copying in some configurations).<br><br>
+    <strong>Reduce phase:</strong> 5 reducers use 5 slots. Since 20 slots available and only 5 reducers, they all run simultaneously. But reducers first copy Map outputs (shuffle), then sort, then reduce.<br><br>
+    <strong>Total job time ≈</strong> T_setup + T_map_phase + T_shuffle + T_reduce + T_write.<br>
+    The <strong>slowest mapper</strong> determines when Map phase ends (straggler problem = a key bottleneck in Hadoop).
+  </div>
+</div>
+
+<div class="practice-box reveal">
+  <p class="practice-q"><strong>4.</strong> Compare Hadoop's approach to handling "Master Failure" in V1 vs V3. Why is this an important improvement?</p>
+  <button class="reveal-btn" onclick="togglePractice(this)">Reveal Answer</button>
+  <div class="practice-ans">
+    <strong>V1:</strong> Single JobTracker. If it dies, the entire cluster stops — no recovery. All running jobs are lost. Must restart the master manually and re-submit jobs. Single point of failure.<br><br>
+    <strong>V3 (via YARN):</strong> ResourceManager (V2 equivalent of JobTracker) supports High Availability (HA) mode: active + standby ResourceManager. On failure, standby takes over automatically. Additionally, V3 adds multiple NameNode support — fixing the HDFS master SPOF too.<br><br>
+    <strong>Importance:</strong> For production clusters running 24/7 batch jobs, master failure in V1 means all queued work is lost. At enterprise scale (hundreds of nodes, thousands of jobs/day), this is unacceptable. V3's HA support is essential for SLA compliance.
+  </div>
+</div>
+</section>
+
+<!-- ===== QUIZ ===== -->
+<section id="quiz">
+<h2 class="section-title reveal">10-Question Revision Quiz</h2>
+<div class="quiz-section reveal">
+  <h3>Test Your Knowledge — Week 2</h3>
+
+  <!-- Q1 -->
+  <div class="q-item" id="q1">
+    <p>1. What are the two operations in MapReduce?</p>
+    <label><input type="radio" name="q1" value="a"> Filter and Aggregate</label>
+    <label><input type="radio" name="q1" value="b"> Map and Reduce</label>
+    <label><input type="radio" name="q1" value="c"> Split and Merge</label>
+    <label><input type="radio" name="q1" value="d"> Read and Write</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="q-item" id="q2">
+    <p>2. What company invented MapReduce and in what year was the paper published?</p>
+    <label><input type="radio" name="q2" value="a"> Yahoo!, 2006</label>
+    <label><input type="radio" name="q2" value="b"> Microsoft, 2003</label>
+    <label><input type="radio" name="q2" value="c"> Google, 2004</label>
+    <label><input type="radio" name="q2" value="d"> Amazon, 2005</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="q-item" id="q3">
+    <p>3. In Hadoop, what component tracks the location of all data blocks across the cluster?</p>
+    <label><input type="radio" name="q3" value="a"> Job Tracker</label>
+    <label><input type="radio" name="q3" value="b"> Task Tracker</label>
+    <label><input type="radio" name="q3" value="c"> Name Node</label>
+    <label><input type="radio" name="q3" value="d"> Data Node</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="q-item" id="q4">
+    <p>4. What is the signature of the Reduce operation in MapReduce?</p>
+    <label><input type="radio" name="q4" value="a"> Reduce(Key1, Value1) → List[&lt;Key2, Value2&gt;]</label>
+    <label><input type="radio" name="q4" value="b"> Reduce(Key2, List[Value2]) → List&lt;Value2&gt;</label>
+    <label><input type="radio" name="q4" value="c"> Reduce(List[Key2], Value2) → Key1</label>
+    <label><input type="radio" name="q4" value="d"> Reduce(Key, Value) → Value</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="q-item" id="q5">
+    <p>5. What does "Data Locality" mean in Hadoop?</p>
+    <label><input type="radio" name="q5" value="a"> Store data close to the user geographically</label>
+    <label><input type="radio" name="q5" value="b"> Move the compute to where the data is stored, not vice versa</label>
+    <label><input type="radio" name="q5" value="c"> Keep all data in RAM for faster access</label>
+    <label><input type="radio" name="q5" value="d"> Replicate data to all nodes</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <!-- Q6 -->
+  <div class="q-item" id="q6">
+    <p>6. Which Hadoop version introduced YARN (Yet Another Resource Negotiator)?</p>
+    <label><input type="radio" name="q6" value="a"> V1</label>
+    <label><input type="radio" name="q6" value="b"> V2</label>
+    <label><input type="radio" name="q6" value="c"> V3</label>
+    <label><input type="radio" name="q6" value="d"> V4</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <!-- Q7 -->
+  <div class="q-item" id="q7">
+    <p>7. In the MapReduce word count example, which operation emits (word, 1) for each word?</p>
+    <label><input type="radio" name="q7" value="a"> Reduce</label>
+    <label><input type="radio" name="q7" value="b"> Sort</label>
+    <label><input type="radio" name="q7" value="c"> Map</label>
+    <label><input type="radio" name="q7" value="d"> Shuffle</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <!-- Q8 -->
+  <div class="q-item" id="q8">
+    <p>8. What is the main reason Hadoop is unsuitable for real-time stream processing?</p>
+    <label><input type="radio" name="q8" value="a"> It only runs on Windows servers</label>
+    <label><input type="radio" name="q8" value="b"> It is batch-only with high latency due to HDFS read/write and always-reduce overhead</label>
+    <label><input type="radio" name="q8" value="c"> It cannot process text data</label>
+    <label><input type="radio" name="q8" value="d"> It requires too much RAM</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <!-- Q9 -->
+  <div class="q-item" id="q9">
+    <p>9. Why are intermediate HDFS writes in Hadoop's MapReduce pipeline necessary?</p>
+    <label><input type="radio" name="q9" value="a"> They improve query performance by caching</label>
+    <label><input type="radio" name="q9" value="b"> They provide fault tolerance checkpoints — failed Reduce tasks can re-read Map output without re-running Mappers</label>
+    <label><input type="radio" name="q9" value="c"> They are required for data compression</label>
+    <label><input type="radio" name="q9" value="d"> They enable multiple users to share the same cluster</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <!-- Q10 -->
+  <div class="q-item" id="q10">
+    <p>10. In the parallel "count crypto" example, why does load balancing matter even if both workers finish correctly?</p>
+    <label><input type="radio" name="q10" value="a"> Unbalanced pipelines produce incorrect counts</label>
+    <label><input type="radio" name="q10" value="b"> The fastest worker must wait for the slowest — idle time reduces total efficiency and speed-up</label>
+    <label><input type="radio" name="q10" value="c"> Unbalanced workers increase network overhead</label>
+    <label><input type="radio" name="q10" value="d"> The master cannot communicate with different-speed workers</label>
+    <div class="q-feedback"></div>
+  </div>
+
+  <button class="quiz-btn" onclick="submitQuiz()">Submit Quiz</button>
+  <div id="quiz-result"></div>
+</div>
+</section>
+
+</main>
+
+<script>
+// Progress bar
+window.addEventListener('scroll', () => {
+  const d = document.documentElement;
+  const pct = (d.scrollTop / (d.scrollHeight - d.clientHeight)) * 100;
+  document.getElementById('prog').style.width = pct + '%';
+});
+
+// Scroll reveal
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Active sidebar
+const sections = document.querySelectorAll('section[id]');
+const links = document.querySelectorAll('#sidebar a');
+const sectionObserver = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const a = document.querySelector(`#sidebar a[href="#${e.target.id}"]`);
+      if (a) a.classList.add('active');
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(s => sectionObserver.observe(s));
+
+// Exam toggle
+function toggleExam(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('span:last-child');
+  if (body.style.display === 'block') {
+    body.style.display = 'none';
+    arrow.textContent = '▼';
+  } else {
+    body.style.display = 'block';
+    arrow.textContent = '▲';
+  }
+}
+
+// Practice reveal
+function togglePractice(btn) {
+  const ans = btn.nextElementSibling;
+  if (ans.style.display === 'block') {
+    ans.style.display = 'none';
+    btn.textContent = 'Reveal Answer';
+  } else {
+    ans.style.display = 'block';
+    btn.textContent = 'Hide Answer';
+  }
+}
+
+// Quiz
+const answers = { q1:'b', q2:'c', q3:'c', q4:'b', q5:'b', q6:'b', q7:'c', q8:'b', q9:'b', q10:'b' };
+const explanations = {
+  q1: "MapReduce defines exactly two operations: Map (transformation) and Reduce (aggregation).",
+  q2: "Google published the MapReduce paper (Dean & Ghemawat) in 2004 at OSDI.",
+  q3: "The NameNode is the HDFS master that tracks block locations across all DataNodes.",
+  q4: "Reduce(Key2, List[Value2]) → List<Value2>. All values sharing a key are passed to one reducer.",
+  q5: "Data locality = move compute to data, not data to compute. Saves network bandwidth.",
+  q6: "Hadoop V2 introduced YARN (Yet Another Resource Negotiator) for flexible resource management.",
+  q7: "The Mapper emits (word, 1) for each word. The Reducer then sums all 1s per word.",
+  q8: "Hadoop processes fixed batches with high-latency HDFS I/O — incompatible with real-time requirements.",
+  q9: "Intermediate HDFS writes enable fault tolerance: failed reducers re-read from HDFS without restarting mappers.",
+  q10: "The aggregation stage (Stage 3) cannot start until all parallel workers finish. The slowest determines total time."
+};
+
+function submitQuiz() {
+  let score = 0;
+  Object.keys(answers).forEach(qid => {
+    const sel = document.querySelector(`input[name="${qid}"]:checked`);
+    const fb = document.querySelector(`#${qid} .q-feedback`);
+    fb.style.display = 'block';
+    if (sel && sel.value === answers[qid]) {
+      score++;
+      fb.className = 'q-feedback q-correct';
+      fb.textContent = '✓ Correct! ' + explanations[qid];
+    } else {
+      fb.className = 'q-feedback q-wrong';
+      const correctLabel = document.querySelector(`#${qid} input[value="${answers[qid]}"]`).parentElement.textContent.trim();
+      fb.textContent = `✗ Incorrect. Correct: "${correctLabel}" — ${explanations[qid]}`;
+    }
+  });
+  const result = document.getElementById('quiz-result');
+  result.style.display = 'block';
+  const pct = Math.round(score / 10 * 100);
+  if (pct >= 80) { result.style.background='rgba(16,185,129,.15)'; result.style.color='#10b981'; result.textContent = `🎉 ${score}/10 (${pct}%) — Excellent! You've mastered Week 2.`; }
+  else if (pct >= 60) { result.style.background='rgba(245,158,11,.15)'; result.style.color='#f59e0b'; result.textContent = `📚 ${score}/10 (${pct}%) — Good effort! Review the weaker areas.`; }
+  else { result.style.background='rgba(239,68,68,.15)'; result.style.color='#ef4444'; result.textContent = `🔄 ${score}/10 (${pct}%) — Keep studying! Revisit MapReduce and Hadoop fundamentals.`; }
+}
+</script>
+</body>
+</html>
