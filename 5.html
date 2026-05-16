@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 5: Contextual Word Embeddings — BERT & Beyond</title>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  :root {
+    --bg: #0f1117; --panel: #1a1d27; --border: #2e3145;
+    --accent: #7c6af7; --accent2: #4fc3f7; --accent3: #f06292;
+    --green: #66bb6a; --yellow: #ffd54f; --orange: #ff8a65;
+    --text: #e0e6f0; --muted: #8892a4;
+    --grad1: linear-gradient(135deg,#7c6af7,#4fc3f7);
+    --grad2: linear-gradient(135deg,#f06292,#ff8a65);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7}
+  /* NAV */
+  nav{position:fixed;top:0;left:0;right:0;z-index:999;background:rgba(15,17,23,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;padding:10px 20px;overflow-x:auto;white-space:nowrap}
+  nav a{color:var(--muted);text-decoration:none;font-size:.8rem;padding:5px 10px;border-radius:6px;transition:.2s}
+  nav a:hover,nav a.active{background:var(--accent);color:#fff}
+  /* LAYOUT */
+  main{max-width:1100px;margin:80px auto 60px;padding:0 20px}
+  /* HERO */
+  .hero{text-align:center;padding:60px 20px 40px;background:linear-gradient(135deg,rgba(124,106,247,.15),rgba(79,195,247,.1));border:1px solid var(--border);border-radius:20px;margin-bottom:40px}
+  .hero h1{font-size:2.4rem;background:var(--grad1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:12px}
+  .hero p{color:var(--muted);font-size:1rem}
+  .badge{display:inline-block;background:var(--accent);color:#fff;padding:3px 10px;border-radius:20px;font-size:.75rem;margin:4px}
+  /* SECTIONS */
+  section{margin-bottom:60px;scroll-margin-top:70px}
+  h2{font-size:1.6rem;margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:10px}
+  h2 .num{background:var(--grad1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-size:1.8rem}
+  h3{font-size:1.15rem;margin:24px 0 12px;color:var(--accent2)}
+  /* CARDS */
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin:16px 0}
+  .card.green{border-left:4px solid var(--green)}
+  .card.red{border-left:4px solid var(--accent3)}
+  .card.yellow{border-left:4px solid var(--yellow)}
+  .card.blue{border-left:4px solid var(--accent2)}
+  .card.purple{border-left:4px solid var(--accent)}
+  /* GRID */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:700px){.grid2,.grid3{grid-template-columns:1fr}}
+  /* MATH BOX */
+  .mathbox{background:#12141f;border:1px solid #2e3145;border-radius:10px;padding:16px 20px;margin:14px 0;overflow-x:auto;font-size:1.05rem;text-align:center}
+  /* DIAGRAM */
+  .diagram{background:#12141f;border:1px solid var(--border);border-radius:14px;padding:24px;margin:20px 0;overflow-x:auto}
+  /* ATTENTION ANIMATION */
+  .attn-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px}
+  .token-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .token{padding:8px 14px;border-radius:8px;font-weight:600;cursor:pointer;transition:.3s;font-size:.9rem;user-select:none}
+  .token.word{background:#1e2035;border:2px solid var(--border)}
+  .token.highlight{background:var(--accent);color:#fff;transform:scale(1.08)}
+  .attn-bars{display:flex;gap:6px;align-items:flex-end;height:80px;margin-top:10px}
+  .bar-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .bar{width:44px;border-radius:4px 4px 0 0;transition:.6s;background:var(--accent)}
+  .bar-label{font-size:.72rem;color:var(--muted)}
+  /* STEP FLOW */
+  .steps{display:flex;gap:0;overflow-x:auto;margin:20px 0}
+  .step{flex:1;min-width:140px;background:var(--panel);border:1px solid var(--border);padding:14px;text-align:center;position:relative;font-size:.85rem}
+  .step:not(:last-child)::after{content:'→';position:absolute;right:-14px;top:50%;transform:translateY(-50%);color:var(--accent);font-size:1.2rem;z-index:1}
+  .step-num{display:block;font-size:1.4rem;font-weight:700;color:var(--accent);margin-bottom:4px}
+  .step-title{font-weight:600;margin-bottom:4px}
+  /* BPE ANIMATION */
+  .bpe-corpus{font-family:monospace;font-size:.9rem;line-height:2;padding:10px}
+  .bpe-corpus span.merged{background:rgba(124,106,247,.25);border:1px solid var(--accent);border-radius:4px;padding:0 2px}
+  /* TIMELINE */
+  .timeline{position:relative;padding-left:30px}
+  .timeline::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:2px;background:var(--border)}
+  .tl-item{position:relative;margin-bottom:20px}
+  .tl-dot{position:absolute;left:-24px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--accent)}
+  /* QUIZ */
+  .quiz-box{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px;margin:16px 0}
+  .quiz-box h4{color:var(--yellow);margin-bottom:16px;font-size:1rem}
+  .q-item{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid var(--border)}
+  .q-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+  .q-text{font-weight:600;margin-bottom:10px}
+  .q-options label{display:block;padding:8px 12px;margin:5px 0;border-radius:8px;cursor:pointer;border:1px solid var(--border);transition:.2s}
+  .q-options label:hover{border-color:var(--accent);background:rgba(124,106,247,.1)}
+  .q-options input[type=radio]{margin-right:8px}
+  .q-options input[type=radio]:checked + span{color:var(--accent)}
+  .btn{padding:10px 22px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;transition:.2s}
+  .btn:hover{opacity:.85}
+  .btn.secondary{background:transparent;border:1px solid var(--accent);color:var(--accent)}
+  .feedback{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:.9rem;display:none}
+  .feedback.correct{background:rgba(102,187,106,.15);border:1px solid var(--green);color:var(--green);display:block}
+  .feedback.wrong{background:rgba(240,98,146,.15);border:1px solid var(--accent3);color:var(--accent3);display:block}
+  /* COMPARISON TABLE */
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.9rem}
+  th{background:rgba(124,106,247,.2);color:var(--accent);padding:12px;text-align:left;border-bottom:2px solid var(--border)}
+  td{padding:11px 12px;border-bottom:1px solid var(--border)}
+  tr:hover td{background:rgba(255,255,255,.02)}
+  /* HIGHLIGHTS */
+  .hl{color:var(--accent);font-weight:600}
+  .hl2{color:var(--accent2);font-weight:600}
+  .hl3{color:var(--accent3);font-weight:600}
+  .hl4{color:var(--yellow);font-weight:600}
+  code{background:#1e2230;padding:2px 6px;border-radius:4px;font-family:monospace;font-size:.88em;color:var(--accent2)}
+  /* TABS */
+  .tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px;flex-wrap:wrap}
+  .tab-btn{padding:10px 20px;background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;transition:.2s;border-bottom:2px solid transparent;margin-bottom:-2px}
+  .tab-btn.active,.tab-btn:hover{color:var(--accent);border-bottom-color:var(--accent)}
+  .tab-pane{display:none}
+  .tab-pane.active{display:block}
+  /* ACCORDION */
+  details{background:var(--panel);border:1px solid var(--border);border-radius:10px;margin:10px 0}
+  details>summary{padding:14px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center}
+  details>summary::after{content:'▼';font-size:.75rem;color:var(--muted);transition:.2s}
+  details[open]>summary::after{transform:rotate(180deg)}
+  details>div{padding:0 18px 16px}
+  /* TRANSFORMER DIAGRAM */
+  .arch-box{border:2px solid var(--accent);border-radius:10px;padding:10px 16px;text-align:center;font-size:.85rem;font-weight:600;background:rgba(124,106,247,.1)}
+  .arch-arrow{text-align:center;color:var(--muted);font-size:1.2rem;margin:2px 0}
+  /* EXAM SECTIONS */
+  .exam-type{background:linear-gradient(135deg,rgba(124,106,247,.1),rgba(79,195,247,.05));border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin:20px 0}
+  .exam-type h4{font-size:1rem;margin-bottom:14px;padding:6px 12px;border-radius:6px;display:inline-block}
+  .exam-type h4.mcq{background:rgba(102,187,106,.2);color:var(--green)}
+  .exam-type h4.short{background:rgba(79,195,247,.2);color:var(--accent2)}
+  .exam-type h4.long{background:rgba(240,98,146,.2);color:var(--accent3)}
+  .exam-type h4.calc{background:rgba(255,213,79,.2);color:var(--yellow)}
+  .exam-type h4.truefalse{background:rgba(255,138,101,.2);color:var(--orange)}
+  ol.exam-q{margin-left:20px}
+  ol.exam-q li{margin-bottom:10px;line-height:1.6}
+  .answer-box{background:#0d0f1a;border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-top:8px;font-size:.88rem;color:var(--muted);display:none}
+  .toggle-ans{font-size:.78rem;padding:4px 10px;margin-top:6px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:6px;cursor:pointer;transition:.2s}
+  .toggle-ans:hover{border-color:var(--accent);color:var(--accent)}
+  /* TOOLTIP */
+  .tip{position:relative;cursor:help;border-bottom:1px dashed var(--muted)}
+  .tip::after{content:attr(data-tip);position:absolute;bottom:120%;left:50%;transform:translateX(-50%);background:#1e2230;color:var(--text);padding:6px 10px;border-radius:6px;font-size:.78rem;white-space:nowrap;pointer-events:none;opacity:0;transition:.2s;z-index:10;border:1px solid var(--border)}
+  .tip:hover::after{opacity:1}
+  /* PROGRESS */
+  progress{width:100%;height:8px;border-radius:4px;margin-top:4px}
+  progress::-webkit-progress-bar{background:var(--border);border-radius:4px}
+  progress::-webkit-progress-value{background:var(--grad1);border-radius:4px}
+  /* VECTOR VIS */
+  .vec-bar{display:flex;align-items:center;gap:10px;margin:4px 0;font-size:.82rem}
+  .vec-fill{height:18px;border-radius:3px;background:var(--grad1);transition:.8s}
+  .vec-lbl{width:80px;color:var(--muted);flex-shrink:0}
+  /* SCROLL ANIMATION */
+  .fadein{opacity:1;transform:none;transition:.6s}
+  .fadein.anim-ready{opacity:0;transform:translateY(20px)}
+  .fadein.visible{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<nav id="topnav">
+  <a href="#sec1" class="active">Word Vectors</a>
+  <a href="#sec2">Distributional</a>
+  <a href="#sec3">Static Embeddings</a>
+  <a href="#sec4">Polysemy Problem</a>
+  <a href="#sec5">Self-Attention</a>
+  <a href="#sec6">Subword BPE</a>
+  <a href="#sec7">Transformers</a>
+  <a href="#sec8">Enc vs Dec</a>
+  <a href="#sec9">Pre-train &amp; Fine-tune</a>
+  <a href="#sec10">Exam Questions</a>
+  <a href="#sec11">Past Exams</a>
+</nav>
+
+<main>
+<div class="hero fadein">
+  <h1>Contextual Word Embeddings: BERT &amp; Beyond</h1>
+  <p>Text as Data · Lecture 5 · Sean MacAvaney &amp; Jake Lever</p>
+  <br>
+  <span class="badge">Self-Attention</span>
+  <span class="badge">BPE Tokenization</span>
+  <span class="badge">Transformers</span>
+  <span class="badge">BERT</span>
+  <span class="badge">GPT</span>
+  <span class="badge">Pre-training</span>
+  <span class="badge">Fine-tuning</span>
+</div>
+
+<!-- ============================================================ SECTION 1 -->
+<section id="sec1" class="fadein">
+<h2><span class="num">1</span> Why Word Vectors?</h2>
+
+<div class="card blue">
+  <strong>Core Problem:</strong> Document similarity using TF vectors works at the document level — but what if individual words mean similar things? <br>
+  <code>sim(watch, clock) &gt; sim(watch, elephant)</code> — but TF vectors can't tell us this.
+</div>
+
+<h3>The Distributional Hypothesis</h3>
+<div class="card purple">
+  <em>"You shall know a word by the company it keeps."</em> — J.R. Firth, 1957<br><br>
+  Words that appear in <span class="hl">similar contexts</span> tend to have <span class="hl">similar meanings</span>. This is called the <span class="hl">distributional hypothesis</span>.
+</div>
+
+<h3>Interactive: Context of Words</h3>
+<div class="diagram">
+  <p style="color:var(--muted);font-size:.85rem;margin-bottom:14px">Click a word to see its typical context frequencies:</p>
+  <div class="token-row" id="wordSelect">
+    <div class="token word" onclick="showContext('watch')">watch</div>
+    <div class="token word" onclick="showContext('clock')">clock</div>
+    <div class="token word" onclick="showContext('elephant')">elephant</div>
+  </div>
+  <div id="contextDisplay" style="margin-top:20px;min-height:120px">
+    <p style="color:var(--muted);text-align:center;margin-top:30px">Click a word above</p>
+  </div>
+</div>
+
+<h3>Why TF Vectors Fail for Word Similarity</h3>
+<div class="grid2">
+  <div class="card green">
+    <strong>Works:</strong> <code>sim(A,B) &gt; sim(A,C)</code><br>
+    A: "I checked the time on my <u>watch</u>"<br>
+    B: "I checked the time on my <u>clock</u>"<br>
+    C: "I saw an elephant at the zoo"
+  </div>
+  <div class="card red">
+    <strong>Fails:</strong> <code>sim(A,B) = sim(A,C)</code><br>
+    A: "I checked the time on my <u>watch</u>"<br>
+    B: "I checked the time on my <u>clock</u>"<br>
+    C: "I checked the time on my <u>elephant</u>"
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ SECTION 2 -->
+<section id="sec2" class="fadein">
+<h2><span class="num">2</span> Distributional Word Vectors</h2>
+
+<h3>Strategy: Represent Words by Context</h3>
+<div class="card">
+  Slide a <span class="hl">context window</span> around each occurrence of a word in a large corpus. Count how often each other word appears nearby.
+</div>
+
+<div class="diagram">
+  <div style="font-family:monospace;font-size:.88rem;color:var(--muted)">
+    …replace your smartphone and if the apple <span class="hl">watch</span> follows the pattern…<br>
+    …each gallons of fill water with a <span class="hl">watch</span> time the amount of time it takes…<br>
+    …you update on one device <span class="hl">watch</span> video anything you watch on one device…
+  </div>
+  <div style="margin-top:16px">
+    <span class="hl2">watch</span> = {video: 3168, apple: 1702, time: 868, …}
+  </div>
+  <div style="margin-top:10px">
+    <span class="hl2">clock</span> = {time: 2614, hour: 806, alarm: 438, …}
+  </div>
+  <div style="margin-top:10px">
+    <span class="hl2">elephant</span> = {baby: 108, species: 100, ears: 97, …}
+  </div>
+</div>
+
+<h3>Problem: Sparse Vectors are Huge</h3>
+<div class="card red">
+  <strong>Vector sizes:</strong><br>
+  |watch| = 21,916 non-zero values<br>
+  |clock| = 9,093 non-zero values<br>
+  |elephant| = 5,477 non-zero values<br><br>
+  These are <span class="hl3">memory and compute intensive</span>. A vocabulary of 50,000 words means 50,000-dimensional vectors!
+</div>
+
+<h3>Solution: Truncated SVD — Dense Vectors</h3>
+<div class="card blue">
+  Apply <span class="hl">Singular Value Decomposition (SVD)</span> to compress the sparse word-context matrix into dense low-dimensional vectors.
+</div>
+
+<div class="mathbox">
+  \[ \underbrace{M}_{V \times V} = \underbrace{U}_{V \times n} \cdot \underbrace{\Sigma}_{n \times n} \cdot \underbrace{V^T}_{n \times V} \]
+  <div style="color:var(--muted);font-size:.85rem;margin-top:10px">
+    M = original sparse co-occurrence matrix &nbsp;|&nbsp; U = dense word vectors (keep only n columns) &nbsp;|&nbsp; n ≈ 100–1000 dimensions
+  </div>
+</div>
+
+<div class="diagram">
+  <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px">From sparse to dense:</p>
+  <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+    <div>
+      <div style="color:var(--muted);font-size:.8rem;margin-bottom:6px">Sparse (50k-dim)</div>
+      <div style="font-family:monospace;font-size:.8rem;color:var(--text)">{video:3168, apple:1702, time:868, …}</div>
+    </div>
+    <div style="font-size:1.5rem;color:var(--accent)">→</div>
+    <div>
+      <div style="color:var(--muted);font-size:.8rem;margin-bottom:6px">Dense (5-dim example)</div>
+      <div class="vec-bar"><span class="vec-lbl">dim 1</span><div class="vec-fill" style="width:60%"></div></div>
+      <div class="vec-bar"><span class="vec-lbl">dim 2</span><div class="vec-fill" style="width:30%"></div></div>
+      <div class="vec-bar"><span class="vec-lbl">dim 3</span><div class="vec-fill" style="width:10%"></div></div>
+      <div class="vec-bar"><span class="vec-lbl">dim 4</span><div class="vec-fill" style="width:90%"></div></div>
+      <div class="vec-bar"><span class="vec-lbl">dim 5</span><div class="vec-fill" style="width:20%"></div></div>
+    </div>
+  </div>
+</div>
+
+<h3>Other Static Embedding Methods</h3>
+<div class="grid3">
+  <div class="card purple"><strong>Word2Vec</strong><br>Skip-gram/CBOW neural model. Predicts context from word or word from context.</div>
+  <div class="card blue"><strong>GloVe</strong><br>Global Vectors — matrix factorization on co-occurrence counts with a log-bilinear model.</div>
+  <div class="card green"><strong>SVD / LSA</strong><br>Classic dimensionality reduction on the term-document or term-context matrix.</div>
+</div>
+
+<h3>Cosine Similarity</h3>
+<div class="mathbox">
+  \[ \text{sim}(\vec{u}, \vec{v}) = \frac{\vec{u} \cdot \vec{v}}{|\vec{u}||\vec{v}|} = \frac{\sum_i u_i v_i}{\sqrt{\sum_i u_i^2}\,\sqrt{\sum_i v_i^2}} \]
+</div>
+<div class="card yellow">
+  <strong>Why cosine and not Euclidean?</strong> Cosine ignores vector magnitude — only cares about direction. Two words appearing in the same contexts (same proportions) get similarity = 1 regardless of how frequent they are.
+</div>
+
+<h3>Practice Questions — Cosine Similarity</h3>
+<div class="exam-type">
+  <h4 class="calc">Worked Calculation Practice</h4>
+  <ol class="exam-q">
+    <li>
+      <strong>[Exam-style]</strong> Compute cosine similarity between <em>run</em> = [4, 2, 0] and <em>sprint</em> = [3, 3, 1].<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        Dot product = 4×3 + 2×3 + 0×1 = 12 + 6 + 0 = <strong>18</strong><br>
+        |run| = √(16 + 4 + 0) = √20 ≈ 4.472<br>
+        |sprint| = √(9 + 9 + 1) = √19 ≈ 4.359<br>
+        cosine = 18 / (4.472 × 4.359) = 18 / 19.489 ≈ <strong>0.924</strong><br>
+        High similarity — as expected for near-synonyms.
+      </div>
+    </li>
+    <li>
+      <strong>[Exam-style]</strong> Given <em>king</em> = [1, 0, 3] and <em>banana</em> = [0, 2, 1], compute cosine similarity. What does the result tell you?<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        Dot product = 0 + 0 + 3 = 3<br>
+        |king| = √(1+0+9) = √10 ≈ 3.162<br>
+        |banana| = √(0+4+1) = √5 ≈ 2.236<br>
+        cosine = 3 / (3.162 × 2.236) = 3 / 7.071 ≈ <strong>0.424</strong><br>
+        Low-to-medium similarity — these words are mostly unrelated, as expected.
+      </div>
+    </li>
+    <li>
+      <strong>[Generated — harder]</strong> Why would two words with very different raw frequency counts still have cosine similarity ≈ 1.0?<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        Cosine similarity measures the <em>angle</em> between two vectors, not their magnitudes. If two words appear in the same types of contexts in the same proportions, their context vectors point in the same direction — even if one word is much more frequent (longer vector). Dividing by the product of magnitudes removes this length bias. Example: "happy" and "joyful" may have very different raw frequencies but similar directional vectors.
+      </div>
+    </li>
+    <li>
+      <strong>[Exam-style — 2025 resit-inspired]</strong> Documents X and Y are represented as TF-IDF vectors. Doc X has non-zero entries for terms {A, C, G, H} and Doc Y for {A, B, D, E, G, H, I, J}. Calculate: (a) the overlap coefficient, (b) the Jaccard similarity.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        Intersection = {A, G, H} → |X ∩ Y| = 3<br>
+        |X| = 4, |Y| = 8, |X ∪ Y| = 9<br>
+        <strong>(a) Overlap</strong> = |X ∩ Y| / min(|X|, |Y|) = 3 / 4 = <strong>0.75</strong><br>
+        <strong>(b) Jaccard</strong> = |X ∩ Y| / |X ∪ Y| = 3 / 9 = <strong>0.333</strong>
+      </div>
+    </li>
+  </ol>
+</div>
+</section>
+
+<!-- ============================================================ SECTION 3 -->
+<section id="sec3" class="fadein">
+<h2><span class="num">3</span> Static Word Embeddings: Pros &amp; Cons</h2>
+
+<div class="grid2">
+  <div class="card green">
+    <strong>Advantage: Handles Synonymy</strong><br><br>
+    Words with similar/identical meanings will appear in similar contexts across the corpus, so they get <span class="hl">similar embeddings</span>.<br><br>
+    <code>sim(watch, clock) &gt; sim(watch, elephant)</code> ✓
+  </div>
+  <div class="card red">
+    <strong>Disadvantage: Fails on Polysemy</strong><br><br>
+    One word → one fixed vector. "bank" (river bank vs. financial bank) gets the same embedding regardless of which meaning is used.<br><br>
+    <code>vector("bank") =</code> <em>average of all meanings</em> ✗
+  </div>
+</div>
+
+<div class="card yellow">
+  <strong>Key insight:</strong> The embedding for a polysemous word is a <span class="hl">weighted average</span> of all its meanings across the corpus. Less frequent meanings are underrepresented.
+</div>
+
+<div class="diagram">
+  <p style="color:var(--muted);font-size:.85rem;margin-bottom:12px">vector("match") as a static embedding:</p>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:.9rem">
+    <div class="arch-box" style="border-color:var(--accent3)">⚽ sports<br><small>match</small></div>
+    <div style="color:var(--muted)">+</div>
+    <div class="arch-box" style="border-color:var(--yellow)">🔥 fire<br><small>match</small></div>
+    <div style="color:var(--muted)">+</div>
+    <div class="arch-box" style="border-color:var(--green)">💘 pair<br><small>match</small></div>
+    <div style="color:var(--muted)">+</div>
+    <div style="color:var(--muted)">…</div>
+    <div style="color:var(--accent)">→</div>
+    <div class="arch-box">blurred<br>average</div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ SECTION 4 -->
+<section id="sec4" class="fadein">
+<h2><span class="num">4</span> Contextual Word Vectors</h2>
+
+<div class="card purple">
+  Instead of <code>vector(word)</code>, we want <code>vector(word | context)</code> — a different vector for each use of the word depending on its surrounding sentence.
+</div>
+
+<div class="diagram">
+  <p style="color:var(--muted);font-size:.85rem;margin-bottom:16px">Same word, different vectors based on context:</p>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <code style="min-width:280px">vector("match" | "I lit the _____")</code>
+      <div class="vec-bar" style="flex:1;min-width:200px">
+        <div class="vec-fill" style="width:85%;background:linear-gradient(90deg,#ff8a65,#f06292)"></div>
+      </div>
+      <span style="color:var(--orange);font-size:.8rem">fire meaning</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <code style="min-width:280px">vector("match" | "The _____ burned")</code>
+      <div class="vec-bar" style="flex:1;min-width:200px">
+        <div class="vec-fill" style="width:82%;background:linear-gradient(90deg,#ff8a65,#f06292)"></div>
+      </div>
+      <span style="color:var(--green);font-size:.8rem">similar to above ✓</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <code style="min-width:280px">vector("match" | "They won the _____")</code>
+      <div class="vec-bar" style="flex:1;min-width:200px">
+        <div class="vec-fill" style="width:40%;background:linear-gradient(90deg,#4fc3f7,#7c6af7)"></div>
+      </div>
+      <span style="color:var(--accent3);font-size:.8rem">sports meaning — NOT similar ✗</span>
+    </div>
+  </div>
+</div>
+
+<h3>ELMo: Early Contextual Vectors</h3>
+<div class="card blue">
+  <strong>ELMo</strong> (Embeddings from Language Models, 2018) used bidirectional LSTMs as a neural language model. The internal hidden states served as contextual embeddings, reusable for downstream tasks.
+</div>
+
+<div class="card">
+  <strong>The key insight:</strong> A neural network trained to model language must internally learn something like meaning. Its <em>internal representations</em> are rich context vectors.
+</div>
+</section>
+
+<!-- ============================================================ SECTION 5 -->
+<section id="sec5" class="fadein">
+<h2><span class="num">5</span> Self-Attention</h2>
+
+<div class="card purple">
+  <strong>Core idea:</strong> To build a context vector for word <em>w</em>, look at every other word in the sentence and ask: "How <em>relevant</em> is that word for understanding <em>w</em>?"
+</div>
+
+<h3>Interactive Attention Demo</h3>
+<div class="diagram">
+  <p style="color:var(--muted);font-size:.85rem;margin-bottom:10px">Click a word to see which other words it attends to when computing its context vector:</p>
+  <div id="attn-demo">
+    <div class="token-row" id="attn-tokens"></div>
+    <div style="margin-top:16px;text-align:center;color:var(--muted);font-size:.85rem" id="attn-note"></div>
+    <div class="attn-bars" id="attn-bars" style="justify-content:center;margin-top:16px"></div>
+  </div>
+</div>
+
+<h3>Step-by-step: How Self-Attention Works</h3>
+<div class="steps">
+  <div class="step"><span class="step-num">1</span><div class="step-title">Input Vectors</div>Word embeddings for each token</div>
+  <div class="step"><span class="step-num">2</span><div class="step-title">Q, K, V</div>Multiply by W<sup>Q</sup>, W<sup>K</sup>, W<sup>V</sup></div>
+  <div class="step"><span class="step-num">3</span><div class="step-title">Scores</div>QK<sup>T</sup> / √d<sub>k</sub></div>
+  <div class="step"><span class="step-num">4</span><div class="step-title">Softmax</div>Normalize to sum = 1</div>
+  <div class="step"><span class="step-num">5</span><div class="step-title">Output</div>Weighted sum of V</div>
+</div>
+
+<h3>The Self-Attention Equation</h3>
+<div class="mathbox">
+  \[ \text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^T}{\sqrt{d_k}}\right) V \]
+  <div style="color:var(--muted);font-size:.82rem;margin-top:12px;text-align:left">
+    where:<br>
+    &nbsp;&nbsp; \(Q = X W^Q\) &nbsp; (queries — what am I looking for?)<br>
+    &nbsp;&nbsp; \(K = X W^K\) &nbsp; (keys — what information do I provide?)<br>
+    &nbsp;&nbsp; \(V = X W^V\) &nbsp; (values — what content do I pass forward?)<br>
+    &nbsp;&nbsp; \(d_k\) = dimension of queries/keys &nbsp; (scaling prevents vanishing gradients)
+  </div>
+</div>
+
+<h3>Worked Example</h3>
+<div class="card">
+  Sentence: <strong>"The match burns brightly"</strong> — computing context vector for <em>match</em>:
+</div>
+<div style="overflow-x:auto">
+<table>
+  <tr><th>Word</th><th>Raw relevance score</th><th>Softmax weight</th><th>Role</th></tr>
+  <tr><td>The</td><td>12.1</td><td>0.00</td><td>Filler — minimal weight</td></tr>
+  <tr><td>match</td><td>91.1</td><td>0.86</td><td>Self-relevance — highest</td></tr>
+  <tr><td>burns</td><td>89.3</td><td>0.14</td><td>Key context clue!</td></tr>
+  <tr><td>brightly</td><td>44.7</td><td>0.00</td><td>Less useful</td></tr>
+</table>
+</div>
+
+<div class="mathbox">
+  \[ \text{softmax}([12.1,\; 91.1,\; 89.3,\; 44.7]) = [0.00,\; 0.86,\; 0.14,\; 0.00] \]
+  \[ \text{context}(\textit{match}) = 0.00 \cdot v_\text{The} + 0.86 \cdot v_\text{match} + 0.14 \cdot v_\text{burns} + 0.00 \cdot v_\text{brightly} \]
+</div>
+
+<h3>Relevance Calculation Detail</h3>
+<div class="mathbox">
+  \[ \text{relevance}(\text{"burns"} \mid \text{"match"}) = (x_\text{match} \, W^Q) \cdot (x_\text{burns} \, W^K)^T \]
+</div>
+<div class="card yellow">
+  <strong>Why not just cosine similarity?</strong> "match" and "burns" are not similar words — but "burns" is <em>relevant to understanding</em> "match". The learned W<sup>Q</sup> and W<sup>K</sup> matrices transform the vectors into a space where <em>relevance</em> (not similarity) is captured.
+</div>
+
+<h3>Softmax Function</h3>
+<div class="mathbox">
+  \[ \text{softmax}(z_i) = \frac{e^{z_i}}{\sum_j e^{z_j}} \]
+  <div style="color:var(--muted);font-size:.82rem;margin-top:8px">Converts any set of scores into a probability distribution summing to 1.</div>
+</div>
+
+<h3>Why "Self"-Attention?</h3>
+<div class="card blue">
+  Called <em>self</em>-attention because the queries, keys, and values all come from the <strong>same sequence</strong>. It attends to itself. (Contrast with <em>cross</em>-attention where Q comes from one sequence and K,V from another — used in encoder-decoder translation.)
+</div>
+
+<details>
+  <summary>Where do W<sup>Q</sup>, W<sup>K</sup>, W<sup>V</sup> and the word vectors come from?</summary>
+  <div>
+    <p style="margin-top:10px">All of them are <strong>learned during training</strong>. The neural network adjusts these matrices through backpropagation to minimize the loss on the language modeling task (masked prediction or next-token prediction). There is no hand-crafting involved.</p>
+  </div>
+</details>
+
+<details>
+  <summary>Why divide by √d<sub>k</sub>?</summary>
+  <div>
+    <p style="margin-top:10px">When d<sub>k</sub> is large, the dot products grow in magnitude, pushing softmax into regions with very small gradients (vanishing gradients problem). Dividing by √d<sub>k</sub> keeps the variance of the dot products at 1, making training more stable.</p>
+  </div>
+</details>
+
+<h3>Practice Questions — Self-Attention</h3>
+<div class="exam-type">
+  <h4 class="calc">Softmax Calculation Drills</h4>
+  <ol class="exam-q">
+    <li>
+      <strong>[Exam-style]</strong> Raw attention scores for the sentence "The cat sat" when processing "cat" are [3, 7, 2]. Compute the softmax weights.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        \(e^3 = 20.09,\; e^7 = 1096.63,\; e^2 = 7.39\)<br>
+        Sum = 20.09 + 1096.63 + 7.39 = <strong>1124.11</strong><br>
+        Softmax = [20.09/1124.11, 1096.63/1124.11, 7.39/1124.11]<br>
+        = [<strong>0.018, 0.976, 0.007</strong>]<br>
+        Interpretation: "cat" attends almost entirely to itself (self-relevance score is dominant). "The" and "sat" contribute minimally.
+      </div>
+    </li>
+    <li>
+      <strong>[Exam-style]</strong> Raw scores are [5, 5, 5] for three tokens. Compute the softmax. What does a uniform softmax mean?<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        \(e^5 = 148.41\) for all three. Sum = 3 × 148.41 = 445.23<br>
+        Softmax = [148.41/445.23, 148.41/445.23, 148.41/445.23] = [<strong>0.333, 0.333, 0.333</strong>]<br>
+        A uniform distribution means the token attends <em>equally</em> to all positions — no token is considered more relevant than any other. This is the "no information" state.
+      </div>
+    </li>
+    <li>
+      <strong>[Exam-style]</strong> For the sentence "bank collapsed yesterday" (3 tokens), the query vector for "bank" produces dot products with key vectors: The·K_bank = 9.5, q_bank·K_collapsed = 8.0, q_bank·K_yesterday = 3.0. With d_k = 64, compute the scaled scores and describe the result.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        √d_k = √64 = 8<br>
+        Scaled scores = [9.5/8, 8.0/8, 3.0/8] = [<strong>1.1875, 1.0, 0.375</strong>]<br>
+        Apply softmax: \(e^{1.1875}≈3.28,\; e^1≈2.72,\; e^{0.375}≈1.46\)<br>
+        Sum ≈ 7.46<br>
+        Weights ≈ [<strong>0.44, 0.36, 0.20</strong>]<br>
+        "bank" attends most to itself (likely financial meaning), then "collapsed" (strong contextual clue), then "yesterday".
+      </div>
+    </li>
+    <li>
+      <strong>[Generated — conceptual]</strong> Why does the self-attention mechanism produce <em>different</em> context vectors for the word "bank" in "the river bank" vs "the bank collapsed"?<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        The Q·K dot products produce <em>different attention weights</em> depending on the other tokens present. In "river bank", the word "river" has a high key-query match with "bank" → bank's context vector is heavily influenced by "river". In "bank collapsed", "collapsed" exerts high attention → the context vector shifts toward the financial meaning. The final context vector is a <em>weighted sum of value vectors</em>, so the surrounding words literally change what gets mixed in.
+      </div>
+    </li>
+  </ol>
+</div>
+<div class="exam-type">
+  <h4 class="short">Conceptual Questions</h4>
+  <ol class="exam-q">
+    <li>
+      What is the difference between <em>self</em>-attention and <em>cross</em>-attention? Give one use case for each.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Self-attention:</strong> Q, K, V all come from the <em>same</em> sequence. Each token attends to every other token in the same input. Used in BERT encoder layers to build contextual representations of a single sentence.<br>
+        <strong>Cross-attention:</strong> Q comes from one sequence (e.g. decoder state), K and V come from a <em>different</em> sequence (e.g. encoder output). Used in translation — the decoder queries the encoded source to decide which source words to focus on when generating each target word.
+      </div>
+    </li>
+    <li>
+      How many learnable parameters are in a multi-head attention layer with h=8 heads, d_model=512? (Assume d_k = d_v = d_model/h = 64.)<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        Each head has W_i^Q (512×64), W_i^K (512×64), W_i^V (512×64) = 3 × 32,768 = 98,304 params per head.<br>
+        8 heads × 98,304 = 786,432<br>
+        Plus output projection W^O (512×512) = 262,144<br>
+        <strong>Total ≈ 1,048,576 params (≈ 1M)</strong> just in the attention sublayer.
+      </div>
+    </li>
+  </ol>
+</div>
+</section>
+
+<!-- ============================================================ SECTION 6 -->
+<section id="sec6" class="fadein">
+<h2><span class="num">6</span> Subword Tokenization (BPE)</h2>
+
+<div class="card red">
+  <strong>Problem — Out-Of-Vocabulary (OOV) words:</strong> New words (neologisms, misspellings, domain-specific terms) not seen during training have no learned embeddings and zero probability.
+  <br><br>Examples: <em>staycation, deepfake, cryptocurrency, truthiness, microfinance</em>
+</div>
+
+<div class="card green">
+  <strong>Solution — Subword tokenization:</strong> Split uncommon words into smaller pieces. Subwords appear more frequently, carry meaning clues, and reduce vocabulary size.
+  <br><br><code>staycation → stay + ##cation</code>
+</div>
+
+<h3>Byte-Pair Encoding (BPE) Algorithm</h3>
+
+<div class="steps">
+  <div class="step"><span class="step-num">1</span><div class="step-title">Pre-tokenize</div>Split corpus into words, removing whitespace</div>
+  <div class="step"><span class="step-num">2</span><div class="step-title">Init Vocab</div>All unique characters become initial symbols</div>
+  <div class="step"><span class="step-num">3</span><div class="step-title">Find Pair</div>Find most frequent adjacent symbol pair</div>
+  <div class="step"><span class="step-num">4</span><div class="step-title">Merge</div>Replace all instances of that pair with a new symbol</div>
+  <div class="step"><span class="step-num">5</span><div class="step-title">Repeat</div>Until desired vocabulary size reached</div>
+</div>
+
+<h3>Interactive BPE Demo</h3>
+<div class="diagram">
+  <p style="color:var(--muted);font-size:.85rem">Corpus: <em>"peter piper picked a peck of pickled peppers"</em></p>
+  <div style="margin:16px 0">
+    <button class="btn" onclick="bpeStepFwd()">Next Merge Step</button>
+    <button class="btn secondary" style="margin-left:10px" onclick="bpeReset()">Reset</button>
+    <span id="bpe-step-label" style="margin-left:14px;color:var(--muted);font-size:.85rem"></span>
+  </div>
+  <div id="bpe-corpus" class="bpe-corpus"></div>
+  <div style="margin-top:12px;font-size:.85rem">
+    <span style="color:var(--muted)">Vocab: </span><span id="bpe-vocab" style="color:var(--accent2);font-family:monospace"></span>
+  </div>
+  <div style="margin-top:8px;font-size:.85rem">
+    <span style="color:var(--muted)">Merged: </span><span id="bpe-merged" style="color:var(--yellow);font-family:monospace"></span>
+  </div>
+</div>
+
+<h3>BPE Key Properties</h3>
+<div class="grid2">
+  <div class="card green">
+    <strong>Common words</strong> remain as single tokens<br>
+    e.g. <code>the, is, a</code>
+  </div>
+  <div class="card blue">
+    <strong>Rare words</strong> split into frequent subwords<br>
+    e.g. <code>running → run + ##ning</code>
+  </div>
+  <div class="card yellow">
+    <strong>Domain matters</strong>: a tokenizer trained on English newspapers performs poorly on German or scientific text.
+  </div>
+  <div class="card purple">
+    <strong>Vocabulary size</strong> is a hyperparameter — typically 30,000–50,000 for large models.
+  </div>
+</div>
+
+<details>
+  <summary>Other subword tokenization methods</summary>
+  <div style="margin-top:10px">
+    <ul style="margin-left:20px;line-height:2">
+      <li><strong>WordPiece</strong> — Used by BERT; similar to BPE but merges based on likelihood rather than frequency.</li>
+      <li><strong>Unigram LM</strong> — Used by SentencePiece; starts with a large vocabulary and prunes it.</li>
+      <li><strong>SentencePiece</strong> — Language-independent; treats text as a raw character stream (no pre-tokenization needed).</li>
+    </ul>
+  </div>
+</details>
+
+<h3>Practice Questions — BPE Tokenization</h3>
+<div class="exam-type">
+  <h4 class="calc">BPE Worked Examples (Exam-Style)</h4>
+  <ol class="exam-q">
+    <li>
+      <strong>[2023 Exam Q1c — 8 marks]</strong> Apply BPE to the corpus <em>"mississippi is pie"</em>. Start with individual characters as the initial vocabulary. Show the first 3 merge steps, tracking the corpus state and vocabulary size after each step.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Initial:</strong> Corpus = [m,i,s,s,i,s,s,i,p,p,i] [i,s] [p,i,e]<br>
+        Vocab = {m, i, s, p, e} → size: <strong>5</strong><br><br>
+        <strong>Step 1:</strong> Most frequent pair = (i, s) → count 3. Merge to "is".<br>
+        Corpus = [m,is,s,is,s,i,p,p,i] [is] [p,i,e]<br>
+        Vocab = {m, i, s, p, e, is} → size: <strong>6</strong><br><br>
+        <strong>Step 2:</strong> Most frequent pair = (is, s) → count 2. Merge to "iss".<br>
+        Corpus = [m,iss,iss,i,p,p,i] [is] [p,i,e]<br>
+        Vocab = {m, i, s, p, e, is, iss} → size: <strong>7</strong><br><br>
+        <strong>Step 3:</strong> Most frequent pair = (p, i) → count 2. Merge to "pi".<br>
+        Corpus = [m,iss,iss,pi,p,i] [is] [pi,e]<br>
+        Vocab = {m, i, s, p, e, is, iss, pi} → size: <strong>8</strong>
+      </div>
+    </li>
+    <li>
+      <strong>[2024 Exam Q1c — 6 marks]</strong> A BPE tokenizer has learned the following merge rules (in order): (i,s)→is, (p,i)→pi, (p,pi)→ppi. Tokenize the words <em>"mississippi"</em> and <em>"pie"</em> using these rules.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>mississippi:</strong><br>
+        Start: m i s s i s s i p p i<br>
+        Apply (i,s→is): m <u>is</u> s <u>is</u> s i p p i<br>
+        Apply (p,i→pi): m is s is s i p p i &nbsp;[no (p,i) pair — 'p' is followed by 'p' not 'i' here]<br>
+        Actually: …s i p p i — apply (p,i): position of p,i = last two relevant → m is s is s i p <u>pi</u><br>
+        Apply (p,pi→ppi): m is s is s i <u>ppi</u><br>
+        <strong>Result: [m, is, s, is, s, i, ppi]</strong><br><br>
+        <strong>pie:</strong><br>
+        Start: p i e<br>
+        Apply (p,i→pi): <u>pi</u> e<br>
+        Apply (p,pi→ppi): only one p before pi here → no match.<br>
+        <strong>Result: [pi, e]</strong>
+      </div>
+    </li>
+    <li>
+      <strong>[Generated — exam-style]</strong> A colleague claims: "BPE tokenization produces the same result regardless of what language the corpus is written in." Is this correct? Explain why or why not with an example.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Incorrect.</strong> BPE learns merges from frequency statistics in the training corpus. A tokenizer trained on English text will have merge rules optimised for English character patterns. When applied to German, Chinese, or other languages: German compound nouns (e.g. "Donaudampfschifffahrtsgesellschaft") would be split into many small, meaningless pieces. Chinese has no spaces between words and characters have different frequency patterns entirely. The resulting tokens would be suboptimal — frequent character n-grams in the target language would not have been merged. You should train a new tokenizer on each target language's corpus.
+      </div>
+    </li>
+    <li>
+      <strong>[2024 Exam Q1d — 6 marks]</strong> Discuss the effects of setting the BPE vocabulary size to: (a) 100 tokens, (b) 100,000,000 tokens.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>(a) Vocabulary = 100:</strong> Very few merges have occurred. Almost all words are split into individual characters. Tokens carry almost no meaning (a single character "a" conveys little). Sequences become extremely long, making training inefficient. The model struggles to learn useful representations.<br><br>
+        <strong>(b) Vocabulary = 100,000,000:</strong> Every word (and many multi-word phrases) gets its own token — essentially word-level tokenization or worse. The system cannot generalise to new words (OOV problem returns). With so many tokens, each token is seen rarely during training → poor embeddings. Defeats the entire purpose of subword tokenization. Model also becomes enormous (embedding matrix = vocab_size × d_model).
+      </div>
+    </li>
+    <li>
+      <strong>[Generated — vocab counting]</strong> A BPE tokenizer starts with 26 unique characters as its initial vocabulary. After 200 merge steps, what is the vocabulary size? How does this compare to a typical production tokenizer?<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        Each merge step adds exactly 1 new symbol.<br>
+        Final vocab size = 26 + 200 = <strong>226</strong> symbols.<br><br>
+        This is far too small for production use. BERT uses ~30,000 tokens (WordPiece), GPT-2 uses ~50,257 BPE tokens, and LLaMA uses ~32,000 (SentencePiece). A vocabulary of 226 would result in almost every word being split into individual characters, making sequences very long and embeddings poor.
+      </div>
+    </li>
+  </ol>
+</div>
+<div class="exam-type">
+  <h4 class="short">Conceptual BPE Questions</h4>
+  <ol class="exam-q">
+    <li>
+      <strong>[2024 Exam Q1b]</strong> A colleague says: "If we collect enough training data, we can eventually eliminate the need for an [UNK] token entirely." Do you agree? Justify your answer.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Disagree.</strong> Unicode defines over 149,000 characters and new characters are added regularly. A fixed training corpus, no matter how large, cannot cover every possible Unicode character. Additionally, new characters, symbols, and emojis are continuously added to Unicode standards. The tokenizer vocabulary is fixed after training — it cannot dynamically expand. Therefore, [UNK] is always necessary to handle genuinely out-of-vocabulary input that has never been seen, no matter how comprehensive the training data.
+      </div>
+    </li>
+    <li>
+      <strong>[Generated]</strong> The word "BeStep" (a brand name) gets tokenized by BERT as ["best", "##ep"]. This causes a sentiment classifier to incorrectly label negative reviews as positive. Explain why this happens and how you would fix it.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Why it happens:</strong> BPE/WordPiece splits "BeStep" at a morpheme boundary that happens to coincide with the word "best". During pre-training, "best" appeared in strongly positive contexts, so its embedding carries positive sentiment signal. The classifier picks up on this spurious signal and assigns positive sentiment even to negative reviews about the brand.<br><br>
+        <strong>Fix:</strong> Replace the brand name "BeStep" with a neutral placeholder token like "BRAND" or "[BRAND]" in all text before passing to the tokenizer. This prevents the accidental sentiment leakage from the brand name's tokenization.
+      </div>
+    </li>
+  </ol>
+</div>
+</section>
+
+<!-- ============================================================ SECTION 7 -->
+<section id="sec7" class="fadein">
+<h2><span class="num">7</span> Transformers</h2>
+
+<div class="card purple">
+  Transformers combine <span class="hl">self-attention</span>, <span class="hl">subword tokenization</span>, <span class="hl">positional encodings</span>, and other techniques into a deep neural architecture. Proposed in <em>"Attention is All You Need"</em> (Vaswani et al., 2017).
+</div>
+
+<h3>Problem: Attention Has No Positional Awareness</h3>
+<div class="card red">
+  Self-attention treats input as a <em>set</em> — the order of words is irrelevant to the computation. But word order matters!<br><br>
+  "Dog bites man" ≠ "Man bites dog"
+</div>
+
+<h3>Positional Encodings</h3>
+<div class="card blue">
+  Add a <span class="hl">positional embedding vector</span> to each token's word vector before attention. These can be:
+  <ul style="margin-left:20px;margin-top:8px">
+    <li><strong>Learned</strong>: treated as parameters, trained alongside the model</li>
+    <li><strong>Sinusoidal</strong>: fixed using sin/cos functions at different frequencies</li>
+  </ul>
+</div>
+
+<div class="mathbox">
+  \[
+  PE_{(\text{pos}, 2i)} = \sin\!\left(\frac{\text{pos}}{10000^{2i/d_\text{model}}}\right), \quad
+  PE_{(\text{pos}, 2i+1)} = \cos\!\left(\frac{\text{pos}}{10000^{2i/d_\text{model}}}\right)
+  \]
+  <div style="color:var(--muted);font-size:.82rem;margin-top:8px">Each position gets a unique vector; nearby positions have similar encodings.</div>
+</div>
+
+<h3>Multi-Head Attention</h3>
+<div class="card">
+  Run self-attention <em>multiple times in parallel</em>, each with its own W<sup>Q</sup>, W<sup>K</sup>, W<sup>V</sup> matrices. Each "head" can specialize:
+  <ul style="margin-left:20px;margin-top:8px">
+    <li>Head 1: grammatical relationships (subject-verb)</li>
+    <li>Head 2: coreference (which pronoun refers to what)</li>
+    <li>Head 3: semantic topic words</li>
+    <li>…BERT uses 12 heads; GPT-3 uses 96 heads</li>
+  </ul>
+</div>
+<div class="mathbox">
+  \[ \text{MultiHead}(Q,K,V) = \text{Concat}(\text{head}_1, \ldots, \text{head}_h) \, W^O \]
+  \[ \text{head}_i = \text{Attention}(Q W^Q_i,\; K W^K_i,\; V W^V_i) \]
+</div>
+
+<h3>The Transformer Block</h3>
+<div class="diagram">
+  <div style="display:flex;gap:30px;flex-wrap:wrap;justify-content:center">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px;min-width:160px">
+      <div class="arch-box" style="width:100%">Input Embeddings + Positional Encodings</div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-box" style="width:100%;border-color:var(--accent2)">Multi-Head Self-Attention</div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-box" style="width:100%;border-color:var(--green)">Add &amp; Norm (Residual)</div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-box" style="width:100%;border-color:var(--yellow)">Feed-Forward Network</div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-box" style="width:100%;border-color:var(--green)">Add &amp; Norm (Residual)</div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-box" style="width:100%;border-color:var(--accent3)">Output Context Vectors</div>
+    </div>
+    <div style="max-width:340px">
+      <div class="card green" style="margin-top:0"><strong>Add (Residual connection):</strong> Output = LayerInput + LayerOutput. Provides a bypass path — easier gradient flow during training.</div>
+      <div class="card blue"><strong>Norm (Layer Normalization):</strong> Keeps vector magnitudes stable so training doesn't diverge.</div>
+      <div class="card yellow"><strong>Feed-Forward Network:</strong> A standard 2-layer MLP applied to each position independently. Allows encoding non-linear, complex relationships beyond what attention captures.</div>
+    </div>
+  </div>
+</div>
+
+<h3>Stacking Layers</h3>
+<div class="card">
+  Transformers stack N identical blocks. Each layer builds richer representations:
+  <ul style="margin-left:20px;margin-top:8px">
+    <li><strong>Lower layers:</strong> syntax (POS, basic grammar)</li>
+    <li><strong>Middle layers:</strong> entity and co-reference information</li>
+    <li><strong>Higher layers:</strong> semantic reasoning, task-specific features</li>
+  </ul>
+  BERT-base: 12 layers | BERT-large: 24 layers | GPT-3: 96 layers
+</div>
+
+<h3>Why Transformers Took Over</h3>
+<div class="grid3">
+  <div class="card purple"><strong>Parallelizable</strong><br>All tokens processed simultaneously — unlike RNNs which process sequentially</div>
+  <div class="card blue"><strong>Long-range context</strong><br>Every token directly attends to every other token — no information bottleneck</div>
+  <div class="card green"><strong>Scalable</strong><br>More data + more parameters = better performance. GPU-friendly computation</div>
+</div>
+</section>
+
+<!-- ============================================================ SECTION 8 -->
+<section id="sec8" class="fadein">
+<h2><span class="num">8</span> Encoder vs Decoder Architectures</h2>
+
+<div class="diagram">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="openTab(event,'tab-enc')">Encoder (BERT)</button>
+    <button class="tab-btn" onclick="openTab(event,'tab-dec')">Decoder (GPT)</button>
+    <button class="tab-btn" onclick="openTab(event,'tab-encdec')">Encoder-Decoder (T5)</button>
+  </div>
+  <div id="tab-enc" class="tab-pane active">
+    <div class="card green">
+      <strong>Encoder-only (e.g. BERT, RoBERTa)</strong><br><br>
+      Sees <em>all tokens in both directions</em> simultaneously (bidirectional).<br>
+      Trained with <span class="hl">Masked Language Modeling (MLM)</span>: randomly mask 15% of tokens, predict them.<br><br>
+      Best for: Classification, NER, question answering, semantic similarity.
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-family:monospace;font-size:.88rem">
+      <div class="token word">[MASK]</div>
+      <div class="token word">can</div>
+      <div class="token word">fly</div>
+      <div style="font-size:1.5rem;color:var(--accent);margin:0 8px">→</div>
+      <div class="token word">Birds</div>
+      <div class="token word">can</div>
+      <div class="token word">fly</div>
+    </div>
+  </div>
+  <div id="tab-dec" class="tab-pane">
+    <div class="card blue">
+      <strong>Decoder-only (e.g. GPT-2, GPT-3, LLaMA)</strong><br><br>
+      Can only see <em>past tokens</em> (causal masking — future positions are masked out).<br>
+      Trained with <span class="hl">Causal Language Modeling (CLM)</span>: predict the next token.<br><br>
+      Best for: Text generation, summarization, dialogue.
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-family:monospace;font-size:.88rem">
+      <div class="token word">&lt;START&gt;</div>
+      <div class="token word">Irn</div>
+      <div style="font-size:1.5rem;color:var(--accent);margin:0 8px">→</div>
+      <div class="token word">Bru</div>
+      &nbsp;&nbsp;
+      <div class="token word">&lt;START&gt; Irn Bru</div>
+      <div style="font-size:1.5rem;color:var(--accent);margin:0 8px">→</div>
+      <div class="token word">is</div>
+    </div>
+  </div>
+  <div id="tab-encdec" class="tab-pane">
+    <div class="card yellow">
+      <strong>Encoder-Decoder (e.g. T5, BART, original Transformer)</strong><br><br>
+      Encoder processes source, decoder generates target using cross-attention to the encoder's outputs.<br>
+      Originally proposed for <span class="hl">machine translation</span>.<br><br>
+      Best for: Translation, summarization, question generation.
+    </div>
+    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-top:12px">
+      <div style="flex:1;min-width:140px">
+        <div class="arch-box">I like cheese</div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-box" style="border-color:var(--accent2)">Encoder</div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-box" style="border-color:var(--muted)">Context vectors</div>
+      </div>
+      <div style="font-size:1.5rem;color:var(--accent);align-self:center">→</div>
+      <div style="flex:1;min-width:140px">
+        <div class="arch-box" style="border-color:var(--accent3)">Decoder</div>
+        <div class="arch-arrow">↓</div>
+        <div class="arch-box">J'aime le fromage</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>Comparison Table</h3>
+<table>
+  <tr><th>Feature</th><th>Encoder (BERT)</th><th>Decoder (GPT)</th></tr>
+  <tr><td>Attention direction</td><td>Bidirectional (all tokens)</td><td>Left-to-right (past only)</td></tr>
+  <tr><td>Training task</td><td>Masked Language Model (MLM)</td><td>Causal Language Model (CLM)</td></tr>
+  <tr><td>Good for</td><td>Understanding tasks</td><td>Generation tasks</td></tr>
+  <tr><td>Context vectors</td><td>Full-context embeddings</td><td>Left-context embeddings</td></tr>
+  <tr><td>Examples</td><td>BERT, RoBERTa, DistilBERT</td><td>GPT-2, GPT-3, LLaMA, Mistral</td></tr>
+</table>
+
+<h3>Language Modeling Tasks</h3>
+<div class="grid2">
+  <div class="card blue">
+    <strong>Causal (GPT-style):</strong><br>
+    "It showed 9 o'clock on my ___"<br>
+    → predict: <em>watch</em>
+  </div>
+  <div class="card purple">
+    <strong>Masked (BERT-style):</strong><br>
+    "It showed 9 [MASK] on my watch"<br>
+    → predict: <em>o'clock</em>
+  </div>
+  <div class="card green">
+    <strong>Next Sentence Prediction (NSP):</strong><br>
+    "It showed 9 o'clock." → "Ganymede is a moon of Jupiter."<br>
+    → does sentence B follow A? No
+  </div>
+  <div class="card yellow">
+    <strong>Replaced Token Detection (ELECTRA):</strong><br>
+    "It showed 9 o'clock on my <em>stapler</em>"<br>
+    → spot the corrupted word
+  </div>
+</div>
+
+<h3>Training the Decoder (Teacher Forcing)</h3>
+<div class="card">
+  During training, we don't generate one word at a time. Instead, we use <strong>causal masking</strong>: token at position i is only allowed to attend to positions 0…i-1. This lets the entire sequence be processed in one forward pass while still training left-to-right prediction.
+</div>
+
+<h3>Practice Questions — Encoder/Decoder Architectures</h3>
+<div class="exam-type">
+  <h4 class="short">Architecture Classification</h4>
+  <ol class="exam-q">
+    <li>
+      <strong>[Exam-style]</strong> For each task below, state the most appropriate transformer architecture (encoder-only, decoder-only, or encoder-decoder) and justify your choice:<br>
+      (a) Named Entity Recognition on medical reports<br>
+      (b) Automatic translation from English to French<br>
+      (c) Generating creative stories from a prompt<br>
+      (d) Classifying tweets as offensive or not<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>(a) NER on medical reports → Encoder-only (e.g. BERT).</strong> NER is a token classification task — needs full bidirectional context to label each token. No generation required.<br><br>
+        <strong>(b) Translation → Encoder-Decoder (e.g. T5, original Transformer).</strong> Input and output are different sequences in different languages. The encoder processes the source, the decoder generates the target using cross-attention to the encoder output.<br><br>
+        <strong>(c) Story generation → Decoder-only (e.g. GPT-3, LLaMA).</strong> Text generation is the native task of decoder models, which produce tokens autoregressively conditioning on left context.<br><br>
+        <strong>(d) Tweet classification → Encoder-only (e.g. BERT, RoBERTa).</strong> Classification is an understanding task. Bidirectional context helps capture sarcasm and full-sentence meaning. [CLS] token vector fed to a classification head.
+      </div>
+    </li>
+    <li>
+      <strong>[Generated — 2025 exam-style, 2 marks]</strong> Rank the following models by computational cost at inference time, from cheapest to most expensive: BERT-base, LLaMA-70B, Logistic Regression. Justify your ranking.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Cheapest → Most expensive: Logistic Regression &lt; BERT-base &lt; LLaMA-70B</strong><br><br>
+        <strong>Logistic Regression:</strong> A simple linear classifier. Once features are extracted (e.g. TF-IDF), inference is just a dot product + sigmoid — microseconds on CPU.<br>
+        <strong>BERT-base:</strong> 110M parameters, 12 transformer layers. Requires a full forward pass but is manageable on a single GPU. Seconds per batch.<br>
+        <strong>LLaMA-70B:</strong> 70 billion parameters. Requires multiple high-end GPUs just to load the model weights (~140 GB). Each generation step is expensive. Unsuitable for latency-sensitive applications without quantization.
+      </div>
+    </li>
+    <li>
+      <strong>[Generated]</strong> BERT uses [MASK] tokens during pre-training. GPT-style models have no [MASK] token. Why? What implication does this have for using each model for text generation?<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        BERT is trained with Masked Language Modeling (MLM): 15% of tokens are masked, and the model predicts them using <em>both</em> left and right context. The [MASK] token is a training device — it marks positions to predict. BERT does not generate text token-by-token; it fills in blanks. Generating open-ended text requires iterative masking tricks that are awkward and slow.<br><br>
+        GPT models predict the <em>next</em> token left-to-right (causal LM). No masking is needed — every token is a prediction target conditioned on its predecessors. This makes generation natural: just keep predicting the next token until an end token. But GPT cannot see future tokens, so it performs worse on tasks requiring full-sentence context (like NER or classification from a single token).
+      </div>
+    </li>
+  </ol>
+</div>
+</section>
+
+<!-- ============================================================ SECTION 9 -->
+<section id="sec9" class="fadein">
+<h2><span class="num">9</span> Pre-training &amp; Fine-tuning</h2>
+
+<div class="card purple">
+  <strong>Paradigm:</strong> Train a large model on a language task with massive data (pre-training), then adapt it to a specific task with smaller labelled data (fine-tuning).
+</div>
+
+<div class="steps">
+  <div class="step"><span class="step-num">1</span><div class="step-title">Pre-train</div>MLM or CLM on billions of tokens from web/books/code</div>
+  <div class="step"><span class="step-num">2</span><div class="step-title">Download</div>From HuggingFace 🤗 hub — someone else paid for GPU time</div>
+  <div class="step"><span class="step-num">3</span><div class="step-title">Chop Head</div>Remove the final LM prediction layer</div>
+  <div class="step"><span class="step-num">4</span><div class="step-title">Add Head</div>Add task-specific output layer</div>
+  <div class="step"><span class="step-num">5</span><div class="step-title">Fine-tune</div>Train on labelled task data — optionally freeze pretrained layers</div>
+</div>
+
+<h3>Transfer Learning</h3>
+<div class="card blue">
+  <strong>Idea:</strong> A model trained on one task transfers knowledge to another. Successful in computer vision (ImageNet → object detection) and even more powerful in NLP due to language's compositionality.
+</div>
+
+<h3>Types of Heads</h3>
+<div class="grid2">
+  <div class="card green">
+    <strong>Sequence Classification Head</strong><br>
+    Take the <code>[CLS]</code> token's context vector → small neural network → label<br><br>
+    Uses: Sentiment analysis, topic classification, spam detection
+  </div>
+  <div class="card blue">
+    <strong>Token Classification Head</strong><br>
+    Take <em>each</em> token's context vector → small neural network → per-token label<br><br>
+    Uses: Named Entity Recognition (NER), POS tagging
+  </div>
+</div>
+
+<div class="card yellow">
+  <strong>[CLS] Token:</strong> BERT prepends a special <code>[CLS]</code> (classification) token. Its final context vector aggregates information about the whole sequence — ideal input for classification tasks.
+</div>
+
+<h3>Freezing vs Full Fine-tuning</h3>
+<table>
+  <tr><th>Approach</th><th>What updates</th><th>When to use</th></tr>
+  <tr><td>Frozen encoder</td><td>Only the new head</td><td>Very little labelled data, fast training</td></tr>
+  <tr><td>Full fine-tuning</td><td>Everything (encoder + head)</td><td>More data, better performance</td></tr>
+  <tr><td>LoRA / PEFT</td><td>Small adapter matrices added to frozen weights</td><td>Large models, memory-constrained</td></tr>
+</table>
+
+<h3>Model Scale</h3>
+<div class="card">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:4px">
+    <div style="text-align:center">
+      <div style="font-size:1.5rem;font-weight:700;color:var(--accent)">~110M</div>
+      <div style="color:var(--muted);font-size:.85rem">BERT-base parameters</div>
+      <progress value="5" max="100"></progress>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:1.5rem;font-weight:700;color:var(--accent2)">~175B</div>
+      <div style="color:var(--muted);font-size:.85rem">GPT-3 parameters</div>
+      <progress value="50" max="100"></progress>
+    </div>
+    <div style="text-align:center">
+      <div style="font-size:1.5rem;font-weight:700;color:var(--accent3)">~1T</div>
+      <div style="color:var(--muted);font-size:.85rem">Frontier models</div>
+      <progress value="95" max="100"></progress>
+    </div>
+  </div>
+  <div style="color:var(--muted);font-size:.8rem;margin-top:10px">1B parameters ≈ 3.7 GB GPU RAM</div>
+</div>
+
+<h3>Pre-training Corpora</h3>
+<div class="grid3">
+  <div class="card"><strong>Common Crawl</strong><br>Filtered web pages — trillions of tokens</div>
+  <div class="card"><strong>Books</strong><br>BookCorpus, Project Gutenberg — long-form reasoning</div>
+  <div class="card"><strong>Code</strong><br>GitHub — programming languages for coding models</div>
+</div>
+
+<h3>Practice Questions — Pre-training &amp; Fine-tuning</h3>
+<div class="exam-type">
+  <h4 class="short">Exam-Style Questions</h4>
+  <ol class="exam-q">
+    <li>
+      <strong>[2025 Resit-style — 4 marks]</strong> You want to build a sentiment classifier for social media posts with 4 sentiment classes. Describe the process for determining whether Logistic Regression, BERT, or LLaMA is most effective for this task.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        1. <strong>Collect labelled data:</strong> Gather social media posts labelled with the 4 sentiment classes.<br>
+        2. <strong>Split data:</strong> Divide into training, validation (dev), and test sets (e.g. 70/15/15).<br>
+        3. <strong>Train/tune each model:</strong> Train Logistic Regression on TF-IDF features; fine-tune BERT on the training set; prompt-tune or fine-tune LLaMA. Use validation set for hyperparameter selection.<br>
+        4. <strong>Evaluate on test set:</strong> Compare using Precision, Recall, and F1-score (macro-averaged across all 4 classes, since classes may be imbalanced).<br>
+        5. Choose the model with the highest macro-F1 on the held-out test set.
+      </div>
+    </li>
+    <li>
+      <strong>[2024 Exam Q3d — 6 marks]</strong> A researcher fine-tunes BERT on indirect answer classification. They find that intermediate fine-tuning on MNLI (natural language inference) improves performance, but intermediate fine-tuning on BoolQ (boolean question answering) <em>hurts</em> performance. Explain why these intermediate tasks have opposite effects.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Transfer learning motivation:</strong> Intermediate fine-tuning aims to transfer knowledge from a similar task before the final task.<br><br>
+        <strong>MNLI helps:</strong> Natural language inference requires understanding entailment, contradiction, and neutrality between statements. This is structurally similar to indirect answers — both require understanding whether a response supports, contradicts, or is neutral to a question. The relevant reasoning skills transfer positively.<br><br>
+        <strong>BoolQ hurts:</strong> BoolQ involves <em>direct</em> yes/no answers to questions. The model learns to look for explicit "yes/no" signals. Indirect answers deliberately avoid such direct signals — the entire challenge is that they express positions implicitly. Training on BoolQ pushes the model toward expecting directness, which is the opposite of what indirect answer classification requires. This knowledge is <em>detrimental</em>, not neutral.
+      </div>
+    </li>
+    <li>
+      <strong>[Generated — 2025 exam-style, 4 marks]</strong> A BERT model fine-tuned on English sentiment analysis is deployed on Italian social media posts. A Logistic Regression baseline is also tested. Describe the specific failure modes of each approach on Italian text.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Logistic Regression failure:</strong> The feature weights are tied to specific tokens observed in English training data. Italian uses almost entirely different tokens — most would be [UNK] or zero-weight. The classifier essentially sees nothing useful and defaults to majority class or noise predictions.<br><br>
+        <strong>BERT failure:</strong> bert-base-uncased's WordPiece tokenizer was trained on English text. Italian words would be split into character-level or nonsensical subword pieces that were never seen in context. The embeddings for these split tokens carry no meaningful Italian semantic signal. Even if individual subwords happen to exist in BERT's vocabulary, the model has never learned their Italian-language contextual relationships.<br><br>
+        <strong>Solution for both:</strong> Use a multilingual model (e.g. mBERT, XLM-RoBERTa) trained on multiple languages, or collect Italian labelled data and train new models from scratch on it.
+      </div>
+    </li>
+    <li>
+      <strong>[Generated]</strong> Explain what "freezing" a transformer encoder means during fine-tuning. When would you freeze vs when would you update all parameters? What is LoRA and why is it useful?<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Freezing:</strong> Setting encoder parameters as non-trainable. Only the newly added task-specific head learns. The pre-trained weights remain exactly as downloaded.<br><br>
+        <strong>Freeze when:</strong> Very little labelled data (avoids overfitting), limited compute budget, or when the task is very similar to pre-training and existing representations are already good.<br><br>
+        <strong>Full fine-tuning when:</strong> More labelled data available, task differs significantly from pre-training, or maximum performance is needed.<br><br>
+        <strong>LoRA (Low-Rank Adaptation):</strong> Adds small low-rank matrices alongside frozen weight matrices. Instead of updating a full W (e.g. 768×768 = 589,824 params), LoRA adds W + BA where B is 768×r and A is r×768 with r≪768 (e.g. r=8). Only B and A are trained (~12,288 params vs 589,824). Reduces GPU memory by 10–100x while achieving performance close to full fine-tuning. Especially useful for LLMs with billions of parameters.
+      </div>
+    </li>
+  </ol>
+</div>
+</section>
+
+<!-- ============================================================ SECTION 10 -->
+<section id="sec10" class="fadein">
+<h2><span class="num">10</span> Exam Questions — All Types</h2>
+
+<!-- MCQ INTERACTIVE -->
+<div class="exam-type">
+  <h4 class="mcq">Multiple Choice Questions (Interactive)</h4>
+  <div class="quiz-box">
+
+    <div class="q-item">
+      <div class="q-text">Q1. What is the primary disadvantage of static word embeddings (e.g. Word2Vec, GloVe)?</div>
+      <div class="q-options" id="q1">
+        <label><input type="radio" name="q1" value="a"><span>They require very large storage due to sparse vectors</span></label>
+        <label><input type="radio" name="q1" value="b"><span>They cannot handle polysemy — one word always maps to one vector</span></label>
+        <label><input type="radio" name="q1" value="c"><span>They do not use the distributional hypothesis</span></label>
+        <label><input type="radio" name="q1" value="d"><span>They cannot be compared using cosine similarity</span></label>
+      </div>
+      <button class="btn" onclick="checkQ('q1','b')">Check</button>
+      <div id="q1-fb" class="feedback"></div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-text">Q2. In the self-attention equation Attention(Q,K,V) = softmax(QK<sup>T</sup>/√d<sub>k</sub>)V, what is the purpose of dividing by √d<sub>k</sub>?</div>
+      <div class="q-options" id="q2">
+        <label><input type="radio" name="q2" value="a"><span>To ensure the attention weights are always integers</span></label>
+        <label><input type="radio" name="q2" value="b"><span>To reduce vocabulary size</span></label>
+        <label><input type="radio" name="q2" value="c"><span>To prevent vanishing gradients caused by large dot-product magnitudes</span></label>
+        <label><input type="radio" name="q2" value="d"><span>To make Q and K the same dimension</span></label>
+      </div>
+      <button class="btn" onclick="checkQ('q2','c')">Check</button>
+      <div id="q2-fb" class="feedback"></div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-text">Q3. Which training objective does BERT use?</div>
+      <div class="q-options" id="q3">
+        <label><input type="radio" name="q3" value="a"><span>Causal language modeling — predict the next token</span></label>
+        <label><input type="radio" name="q3" value="b"><span>Masked language modeling — predict randomly masked tokens</span></label>
+        <label><input type="radio" name="q3" value="c"><span>Replaced token detection only</span></label>
+        <label><input type="radio" name="q3" value="d"><span>Skip-gram with negative sampling</span></label>
+      </div>
+      <button class="btn" onclick="checkQ('q3','b')">Check</button>
+      <div id="q3-fb" class="feedback"></div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-text">Q4. In Byte-Pair Encoding (BPE), what does each merge step do?</div>
+      <div class="q-options" id="q4">
+        <label><input type="radio" name="q4" value="a"><span>Removes the least frequent word from the vocabulary</span></label>
+        <label><input type="radio" name="q4" value="b"><span>Splits the most frequent word into two subwords</span></label>
+        <label><input type="radio" name="q4" value="c"><span>Merges the most frequent adjacent symbol pair into a new symbol</span></label>
+        <label><input type="radio" name="q4" value="d"><span>Compresses the vocabulary by removing duplicates</span></label>
+      </div>
+      <button class="btn" onclick="checkQ('q4','c')">Check</button>
+      <div id="q4-fb" class="feedback"></div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-text">Q5. What is the role of the [CLS] token in BERT-based text classification?</div>
+      <div class="q-options" id="q5">
+        <label><input type="radio" name="q5" value="a"><span>It marks the beginning of each sentence for the tokenizer</span></label>
+        <label><input type="radio" name="q5" value="b"><span>Its final context vector aggregates whole-sequence information and is fed to the classification head</span></label>
+        <label><input type="radio" name="q5" value="c"><span>It is used to replace masked tokens during pre-training</span></label>
+        <label><input type="radio" name="q5" value="d"><span>It encodes positional information at position 0</span></label>
+      </div>
+      <button class="btn" onclick="checkQ('q5','b')">Check</button>
+      <div id="q5-fb" class="feedback"></div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-text">Q6. Why is a decoder-only model (e.g. GPT) <em>not</em> bidirectional?</div>
+      <div class="q-options" id="q6">
+        <label><input type="radio" name="q6" value="a"><span>It was a design mistake corrected in BERT</span></label>
+        <label><input type="radio" name="q6" value="b"><span>Causal masking prevents each token from attending to future tokens, enabling next-token prediction</span></label>
+        <label><input type="radio" name="q6" value="c"><span>GPT uses a different attention formula that only looks backwards</span></label>
+        <label><input type="radio" name="q6" value="d"><span>Decoder models have no self-attention layers</span></label>
+      </div>
+      <button class="btn" onclick="checkQ('q6','b')">Check</button>
+      <div id="q6-fb" class="feedback"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TRUE / FALSE -->
+<div class="exam-type">
+  <h4 class="truefalse">True / False</h4>
+  <ol class="exam-q">
+    <li>Static word embeddings assign a different vector to each occurrence of "bank" depending on its context. <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>FALSE.</strong> Static embeddings assign one fixed vector per word type regardless of context. This is precisely why contextual embeddings (BERT, ELMo) were developed.</div></li>
+    <li>The distributional hypothesis states that words appearing in similar contexts tend to have similar meanings. <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>TRUE.</strong> Attributed to Firth (1957): "You shall know a word by the company it keeps."</div></li>
+    <li>In multi-head attention, all heads share the same W<sup>Q</sup>, W<sup>K</sup>, W<sup>V</sup> matrices. <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>FALSE.</strong> Each head has its own independent W<sup>Q</sup><sub>i</sub>, W<sup>K</sup><sub>i</sub>, W<sup>V</sup><sub>i</sub> matrices, allowing different heads to capture different types of relationships.</div></li>
+    <li>BPE tokenization requires a fixed hand-crafted vocabulary defined before training. <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>FALSE.</strong> BPE learns its vocabulary (and the merge rules) from a corpus during a training phase. The only hyperparameter set in advance is the desired vocabulary size.</div></li>
+    <li>During fine-tuning, it is always necessary to update all parameters of the pre-trained model. <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>FALSE.</strong> You can freeze the pre-trained encoder and only train the new task-specific head. Full fine-tuning is an option but not a requirement.</div></li>
+    <li>Transformers process tokens sequentially (one at a time), making them slower than RNNs on GPUs. <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>FALSE.</strong> Transformers process all tokens in parallel via matrix operations, making them much faster than RNNs on modern GPU hardware — a key reason for their dominance.</div></li>
+    <li>The softmax function in self-attention ensures that the attention weights across all tokens sum to 1. <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>TRUE.</strong> Softmax converts raw scores into a probability distribution: all weights are non-negative and sum to 1, usable as weighted average coefficients.</div></li>
+  </ol>
+</div>
+
+<!-- SHORT ANSWER -->
+<div class="exam-type">
+  <h4 class="short">Short Answer Questions</h4>
+  <ol class="exam-q">
+    <li>Explain the difference between <em>synonymy</em> and <em>polysemy</em> and state which one static embeddings handle well and which they do not. <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>Synonymy:</strong> two different words with similar meanings (e.g., watch/clock). Static embeddings handle this well because synonyms appear in similar contexts, so they get similar vectors. <strong>Polysemy:</strong> one word with multiple meanings (e.g., "bank" = financial institution or river bank). Static embeddings fail here because they give a single vector — a blurred average of all meanings — meaning less frequent senses are under-represented.</div></li>
+    <li>What are Queries (Q), Keys (K), and Values (V) in self-attention? Give an intuition for each. <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>Q (Query):</strong> what the current token is "looking for" — the question it asks of other tokens. <strong>K (Key):</strong> what each token "advertises" — the label attached to it for matching against queries. <strong>V (Value):</strong> the actual content a token contributes to the output once matched. The Q·K<sup>T</sup> dot product scores how well each key answers each query; the scores weight the values.</div></li>
+    <li>Why do language models treat new words as OOV, and how does subword tokenization solve this? <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box">Word-level models have a fixed vocabulary. Any word not seen during training is unknown (OOV) with no learned embedding. Subword tokenization (e.g. BPE) splits rare words into smaller units that are likely to have been seen: "staycation" → "stay" + "cation". These subwords have embeddings and carry meaning, so the model can partially understand any new word.</div></li>
+    <li>What is the purpose of residual (skip) connections in a Transformer block? <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box">Residual connections add the layer's input directly to its output: output = input + sublayer(input). This creates an alternative path for gradients to flow during backpropagation, avoiding the vanishing gradient problem in deep networks and making training much more stable and faster.</div></li>
+    <li>Describe the pre-training and fine-tuning paradigm for BERT applied to sentiment analysis. <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box">1) <strong>Pre-train BERT:</strong> train on large unlabelled corpus with MLM and NSP objectives. 2) <strong>Remove head:</strong> strip the MLM prediction layer. 3) <strong>Add classification head:</strong> attach a small MLP that takes the [CLS] token's context vector and outputs sentiment labels (positive/negative). 4) <strong>Fine-tune:</strong> train on a labelled sentiment dataset, updating the head and optionally the encoder weights.</div></li>
+  </ol>
+</div>
+
+<!-- LONG ESSAY -->
+<div class="exam-type">
+  <h4 class="long">Long / Essay Questions</h4>
+  <ol class="exam-q">
+    <li>Compare and contrast static word embeddings (e.g. Word2Vec) with contextual word embeddings (e.g. BERT). In your answer: (a) explain the distributional hypothesis, (b) describe how each type of embedding is constructed, (c) give a concrete example of a sentence where static embeddings fail but contextual embeddings succeed, and (d) discuss the computational trade-offs.<br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box">A full answer should cover: (a) Distributional hypothesis — words in similar contexts have similar meanings (Firth 1957). (b) Static: sparse co-occurrence vectors → SVD or Word2Vec neural training → one fixed dense vector per word. Contextual: transformer with MLM/CLM training; each token gets a different vector depending on full sentence context, computed by stacking self-attention layers. (c) "I went to the bank" vs "The river bank flooded" — "bank" gets the same vector with Word2Vec but different context-dependent vectors with BERT. (d) Static embeddings are cheap to store and fast at inference; contextual embeddings require large model weights (hundreds of MB to GB) and forward pass computation at inference time.</div></li>
+    <li>Explain the self-attention mechanism mathematically and intuitively. Why is the scaling factor 1/√d<sub>k</sub> necessary? What is multi-head attention and why is it beneficial?<br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box">Intuition: each word "asks" what other words are relevant to understanding it. Math: Q=XW<sup>Q</sup>, K=XW<sup>K</sup>, V=XW<sup>V</sup>; scores = QK<sup>T</sup>/√d<sub>k</sub>; weights = softmax(scores); output = weights·V. Scaling: large d<sub>k</sub> causes large dot products → softmax saturates → near-zero gradients → training stalls. Dividing by √d<sub>k</sub> keeps variance at 1. Multi-head: run h parallel attention operations each with independent weight matrices; concatenate and project. Benefits: different heads capture different relationships (syntax, coreference, semantics) simultaneously; richer representations.</div></li>
+    <li>Describe the Byte-Pair Encoding algorithm step by step. Starting from the corpus "peter piper picked a peck of pickled peppers", perform the first two merge steps manually.<br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box">Algorithm: (1) Pre-tokenize into words; (2) Initialize vocab = all unique characters; (3) Find most frequent adjacent pair; (4) Merge all instances, add to vocab; (5) Repeat until target vocab size. Manual: Initial words = [[p,e,t,e,r],[p,i,p,e,r],[p,i,c,k,e,d],[a],[p,e,c,k],[o,f],[p,i,c,k,l,e,d],[p,e,p,p,e,r,s]]. Vocab = {a,c,d,e,f,i,k,l,o,p,r,s,t}. Step 1: most frequent pair = ('p','e') count=5 → merge to 'pe'. Step 2: most frequent pair = ('p','i') count=3 → merge to 'pi'. New vocab includes 'pe' and 'pi'.</div></li>
+    <li>What is the encoder-decoder architecture and how does it enable machine translation? Explain the role of cross-attention in the decoder.<br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box">The encoder processes the source sentence using bidirectional self-attention, producing context vectors for each source token. The decoder generates the target sequence token by token, using: (1) causal self-attention over already-generated target tokens; (2) cross-attention where Q comes from the decoder but K and V come from the encoder's outputs — this lets each generated word attend to the most relevant source words. Output sequence can differ in length from input. During training: teacher forcing with causal masking allows parallel computation. During inference: tokens generated autoregressively.</div></li>
+  </ol>
+</div>
+
+<!-- CALCULATION -->
+<div class="exam-type">
+  <h4 class="calc">Calculation / Worked Examples</h4>
+  <ol class="exam-q">
+    <li>
+      <strong>Softmax calculation:</strong> Given raw attention scores [2, 4, 1] for tokens [The, match, burns] when processing "match", compute the softmax weights.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        \(e^2 = 7.39,\; e^4 = 54.60,\; e^1 = 2.72\)<br>
+        Sum = 64.71<br>
+        Softmax = [7.39/64.71, 54.60/64.71, 2.72/64.71] = [<strong>0.114, 0.844, 0.042</strong>]<br>
+        "match" attends mostly to itself (0.844) and slightly to "burns" (0.042).
+      </div>
+    </li>
+    <li>
+      <strong>Cosine similarity:</strong> Compute cos(watch, clock) given:<br>
+      watch = [3, 0, 1], clock = [2, 1, 0]<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        Dot product = 3×2 + 0×1 + 1×0 = 6<br>
+        |watch| = √(9+0+1) = √10 ≈ 3.162<br>
+        |clock| = √(4+1+0) = √5 ≈ 2.236<br>
+        cosine = 6 / (3.162 × 2.236) = 6 / 7.071 ≈ <strong>0.849</strong>
+      </div>
+    </li>
+    <li>
+      <strong>BPE vocabulary count:</strong> Starting vocabulary has 13 characters. After 4 merge steps, how large is the vocabulary?<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">Each merge step adds exactly 1 new symbol to the vocabulary. After 4 merges: 13 + 4 = <strong>17 symbols</strong>.</div>
+    </li>
+    <li>
+      <strong>Parameter counting:</strong> In a single-head attention layer with d<sub>model</sub> = 64, how many parameters are in W<sup>Q</sup>, W<sup>K</sup>, W<sup>V</sup>?<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">Each matrix is d<sub>model</sub> × d<sub>k</sub>. If d<sub>k</sub> = d<sub>model</sub> = 64: each matrix has 64 × 64 = 4,096 parameters. Three matrices → <strong>3 × 4,096 = 12,288 parameters</strong>.</div>
+    </li>
+  </ol>
+</div>
+
+<!-- FILL IN THE BLANK -->
+<div class="exam-type">
+  <h4 class="truefalse">Fill in the Blank</h4>
+  <ol class="exam-q">
+    <li>"The technique of splitting rare words into smaller pieces so they are recognisable to a language model is called ___________." <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>Subword tokenization</strong> (e.g. Byte-Pair Encoding)</div></li>
+    <li>"The matrix W<sup>Q</sup> transforms input vectors into ___________ vectors, while W<sup>K</sup> produces ___________ vectors." <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>query</strong> vectors; <strong>key</strong> vectors</div></li>
+    <li>"BERT is an example of an ___________-only architecture, while GPT is an example of a ___________-only architecture." <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>encoder</strong>-only; <strong>decoder</strong>-only</div></li>
+    <li>"The phenomenon where one word has multiple distinct meanings is called ___________." <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>Polysemy</strong></div></li>
+    <li>"Pre-training a model and then adapting it to a new task with additional training is called ___________." <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>Fine-tuning</strong> (part of the pre-training and fine-tuning paradigm)</div></li>
+  </ol>
+</div>
+
+<!-- DIAGRAM QUESTIONS -->
+<div class="exam-type">
+  <h4 class="short">Diagram / Label Questions</h4>
+  <ol class="exam-q">
+    <li>Draw and label the components of a single Transformer encoder block, including: input embeddings, positional encodings, multi-head attention, residual connections, layer normalization, and feed-forward network.<br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box">Expected diagram (described): Input tokens → Token Embedding + Positional Encoding → [Multi-Head Self-Attention → Add&Norm → Feed-Forward Network → Add&Norm] (this block repeated N times) → Output context vectors. The "Add" in "Add&Norm" is the residual connection adding the sub-layer input to its output before normalization.</div></li>
+    <li>Sketch the attention score computation for the sentence "The dog barked" when computing the context vector for "dog". Show Q, K and the resulting softmax weights (use made-up plausible values).<br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box">For "dog": Q_dog · K_The → score_1; Q_dog · K_dog → score_2 (high — self); Q_dog · K_barked → score_3 (high — semantic relevance). Divide by √d_k. Apply softmax. Typical result: barked gets highest weight (it describes what dog does), dog second (self-relevance), The lowest (filler word).</div></li>
+  </ol>
+</div>
+
+</section>
+
+<!-- ============================================================ SECTION 11 -->
+<section id="sec11" class="fadein">
+<h2><span class="num">11</span> Past Exam Questions — Real Papers</h2>
+
+<div class="card yellow">
+  <strong>Source:</strong> Questions below are taken directly from COMPSCI 5096/5106 past exam papers (2022–2025) or closely modelled on them. Marks are shown where known. Practise these under timed conditions.
+</div>
+
+<!-- 2023 EXAM -->
+<h3>2023 Exam — Questions Relevant to Lec 5</h3>
+<div class="exam-type">
+  <h4 class="calc" style="background:rgba(124,106,247,.2);color:var(--accent)">2023 — Q1: Tokenisation [20 marks]</h4>
+  <ol class="exam-q">
+    <li>
+      <strong>[Q1a — 2 marks]</strong> What is the difference between a <em>word</em> and a <em>token</em>? Why do NLP systems operate on tokens rather than words?<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Word:</strong> A sequence of letters representing an individual language unit (linguistic concept).<br>
+        <strong>Token:</strong> A sequence of characters that conveys meaning — may be a partial word (subword), punctuation, number, or whitespace.<br>
+        Systems operate on tokens because: (1) tokens are more granular units that can carry meaning individually; (2) non-word units like punctuation and numbers also convey meaning; (3) subword tokens handle OOV words and reduce vocabulary size.
+      </div>
+    </li>
+    <li>
+      <strong>[Q1b — 2 marks]</strong> Why do tokenizers differ across languages? Give a concrete example.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        Conventions for what constitutes a meaningful unit differ across languages. A whitespace-based English tokenizer is ineffective on Chinese (no spaces between words) or Japanese (mixed scripts). German compound nouns (e.g. "Donaudampfschifffahrtsgesellschaft") need splitting — a single English word boundary rule would leave them unsplit. Tokenizers must be trained on each language's corpus to learn its specific meaningful unit boundaries.
+      </div>
+    </li>
+    <li>
+      <strong>[Q1c — 8 marks]</strong> Apply BPE to the corpus <em>"mississippi is pie"</em>. Show 4 merge steps with vocabulary size after each.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Initial:</strong> m i s s i s s i p p i | i s | p i e &nbsp; Vocab = {m,i,s,p,e} → size <strong>5</strong><br>
+        <strong>Step 1:</strong> Most freq pair = (i,s) ×3. Merge → "is". Vocab size: <strong>6</strong><br>
+        Corpus: m is s is s i p p i | is | p i e<br>
+        <strong>Step 2:</strong> Most freq pair = (is,s) ×2. Merge → "iss". Vocab size: <strong>7</strong><br>
+        Corpus: m iss iss i p p i | is | p i e<br>
+        <strong>Step 3:</strong> Most freq pair = (p,i) ×2. Merge → "pi". Vocab size: <strong>8</strong><br>
+        Corpus: m iss iss pi p i | is | pi e<br>
+        <strong>Step 4:</strong> Many pairs tied at 1. E.g. (m,iss)→"miss". Vocab size: <strong>9</strong><br>
+        Corpus: miss iss pi p i | is | pi e
+      </div>
+    </li>
+    <li>
+      <strong>[Q1d — 4 marks]</strong> Give two advantages of BPE over rule-based tokenization, and two advantages of rule-based over BPE.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>BPE advantages over rule-based:</strong><br>
+        (1) Data-driven: no fluent speaker required; works on any language with enough text.<br>
+        (2) Discovers useful patterns automatically; generalises to new domains with retraining.<br><br>
+        <strong>Rule-based advantages over BPE:</strong><br>
+        (1) No training corpus required; rules developed with direct linguistic knowledge.<br>
+        (2) Interpretable and predictable; easy to debug specific tokenization decisions.
+      </div>
+    </li>
+    <li>
+      <strong>[Q1e — 4 marks]</strong> A grammar suggestion assistant is being built. Should it use stemming, lemmatization, or stopword removal? Justify your answer.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Should NOT use any of these.</strong><br>
+        <strong>Stemming:</strong> Grammar errors often involve incorrect inflection (wrong word ending). Stemming strips these endings, making errors invisible — "runned" and "ran" become identical stems, so the error cannot be detected.<br>
+        <strong>Lemmatization:</strong> Treats inflectional variants as the same token, again hiding the grammatical error in the inflection.<br>
+        <strong>Stopword removal:</strong> Stopwords (the, is, a, of) are grammatically critical. "He go the store" vs "He goes to the store" — removing "the" and "to" hides the structural error. Grammar depends on exact function words.
+      </div>
+    </li>
+  </ol>
+</div>
+
+<!-- 2024 EXAM -->
+<h3>2024 Exam — Questions Relevant to Lec 5</h3>
+<div class="exam-type">
+  <h4 class="calc" style="background:rgba(79,195,247,.2);color:var(--accent2)">2024 — Q1: Tokenisation [20 marks]</h4>
+  <ol class="exam-q">
+    <li>
+      <strong>[Q1a — 4 marks]</strong> A colleague says stopwords should always be removed before passing text to a language model. Are they correct for (a) bag-of-words models and (b) transformer models? Explain with an example.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>(a) Bag-of-words: Correct to remove.</strong> BOW loses word order — word attachment is already unclear. Stopwords like "the", "on" add little discriminative signal and increase dimensionality. Example: "The cat sat on the mat" and "The mat sat on the cat" produce identical BOW vectors, so stopwords do not help distinguish meaning anyway.<br><br>
+        <strong>(b) Transformers: Incorrect to remove.</strong> Transformers are sequence models that use word order and context. Stopwords carry grammatical information. Example: "The cat sat on the mat" vs "The mat sat on the cat" — removing "on" loses the prepositional relationship; a transformer with the full sequence can distinguish subject/object roles via attention over all tokens including function words.
+      </div>
+    </li>
+    <li>
+      <strong>[Q1b — 4 marks]</strong> A colleague says: "If we collect enough training data, we can eliminate the need for an [UNK] token entirely." Do you agree?<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Disagree.</strong> Unicode contains over 149,000 characters and continues to expand with new emoji, scripts, and symbols. No training corpus can include every future Unicode character. The tokenizer's vocabulary is frozen at training time — it cannot expand dynamically to accommodate new characters added after training. Therefore [UNK] is always necessary to handle genuinely unseen input characters.
+      </div>
+    </li>
+  </ol>
+</div>
+
+<!-- 2025 RESIT EXAM -->
+<h3>2025 Resit Exam — Questions Relevant to Lec 5</h3>
+<div class="exam-type">
+  <h4 class="calc" style="background:rgba(240,98,146,.2);color:var(--accent3)">2025 — Q3: Sentiment Analysis [20 marks]</h4>
+  <ol class="exam-q">
+    <li>
+      <strong>[Q3a — 2 marks]</strong> Rank by computational cost at inference time (cheapest to most expensive): Logistic Regression, BERT, LLaMA. Justify briefly.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Logistic Regression &lt; BERT &lt; LLaMA</strong><br>
+        Logistic Regression: lightweight linear classifier, dot product over feature vector — trivial computation.<br>
+        BERT: 110M parameter transformer, requires GPU forward pass — moderate cost.<br>
+        LLaMA: Multi-billion parameter decoder model — requires multiple GPUs just to hold weights, each generation step is expensive.
+      </div>
+    </li>
+    <li>
+      <strong>[Q3b — 4 marks]</strong> Describe how you would determine which of Logistic Regression, BERT, and LLaMA is the most effective approach for classifying social media posts into 4 sentiment classes.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        1. Collect a labelled dataset of social media posts with 4 sentiment classes.<br>
+        2. Split into training, validation (dev), and test sets.<br>
+        3. Train/tune each method: LR on TF-IDF features; BERT fine-tuned on training set; LLaMA fine-tuned or prompted.<br>
+        4. Use validation set to tune hyperparameters.<br>
+        5. Evaluate all three on the held-out test set using Precision, Recall, and F1-score (macro-averaged).<br>
+        6. The method with highest macro-F1 on the test set is most effective.
+      </div>
+    </li>
+    <li>
+      <strong>[Q3c — 4 marks]</strong> The system must be extended to support Italian. Describe a specific problem that would arise for (a) Logistic Regression and (b) BERT-base, and suggest a solution.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>(a) Logistic Regression:</strong> The feature weights are tied to specific English tokens. Italian tokens are almost entirely unseen → they map to zero-weight features. The classifier has no useful signal and predicts randomly or defaults to the majority class. Solution: re-train on Italian-labelled data with Italian TF-IDF features.<br><br>
+        <strong>(b) BERT-base:</strong> WordPiece vocabulary was trained on English. Italian words get split into meaningless English subword fragments — e.g. "gatto" (cat) might split as "ga + ##tto". These fragments have no meaningful Italian semantic embeddings. Solution: Use a multilingual model (mBERT or XLM-RoBERTa) trained on many languages including Italian, or collect Italian data and fine-tune on it.
+      </div>
+    </li>
+    <li>
+      <strong>[Q3d — 4 marks]</strong> A brand "BeStep" is tokenized as ["best", "##ep"] by BERT's WordPiece tokenizer. This causes the sentiment classifier to misclassify negative reviews of BeStep products as positive. Explain the cause and propose a solution.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Cause:</strong> WordPiece splits "BeStep" into "best" + "##ep". The sub-token "best" appears with positive sentiment in training data (e.g. "best movie", "best choice"). The BERT embedding for "best" therefore has a positive sentiment signal. When the model processes a negative review mentioning "BeStep", the "best" subtoken activates positive sentiment, overriding the negative content elsewhere in the review.<br><br>
+        <strong>Solution:</strong> Pre-process all text to replace the brand name "BeStep" with a neutral placeholder such as "BRAND" or "[PRODUCT]" before tokenization. This prevents the tokenizer from splitting the brand name into semantically misleading pieces, and a neutral token carries no spurious sentiment signal.
+      </div>
+    </li>
+    <li>
+      <strong>[Q3e — 6 marks]</strong> The system needs to be extended to classify sentiment at the individual product level — 18 products, 4 sentiments each. Describe a classification scheme and evaluation strategy for this.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Classification scheme:</strong> Model this as multi-label classification with output space = {product × sentiment} pairs. 18 products × 4 sentiments = 72 product-sentiment pairs, plus a "no product mentioned" class. For each post, the model can output multiple labels (e.g. positive about Product A, negative about Product C).<br><br>
+        <strong>Training data:</strong> Collect and annotate posts with per-product sentiment labels. This requires significantly more data than the original binary task.<br><br>
+        <strong>Evaluation:</strong> Use per-class Precision, Recall, F1 for each of the 72+ labels. Report macro-averaged F1 across all classes. Crucially, the test set must contain examples of all product-sentiment combinations to evaluate performance on rare pairings. Ensure the test set is not contaminated with near-duplicates of training examples.
+      </div>
+    </li>
+  </ol>
+</div>
+
+<!-- GENERATED EXAM-STYLE QUESTIONS BASED ON EXAM PATTERNS -->
+<h3>Generated Exam-Style Questions (Based on Past Patterns)</h3>
+<div class="exam-type">
+  <h4 class="long">Essay / Long Questions</h4>
+  <ol class="exam-q">
+    <li>
+      <strong>[Generated — 10 marks, modelled on 2023/2024 style]</strong> A research team is building a system to detect misinformation in news articles. They are choosing between (a) TF-IDF + Logistic Regression, (b) fine-tuned BERT-base, and (c) GPT-4 (zero-shot). For each approach, describe: how text is represented, what training/adaptation is required, one key advantage, and one key limitation for this specific task.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>(a) TF-IDF + LR:</strong> Text represented as sparse bag-of-words TF-IDF vector. Training: collect labelled news articles, compute TF-IDF, fit logistic regression. Advantage: fast to train and deploy, interpretable (high-weight features show which words signal misinformation). Limitation: no word order or contextual understanding; "fake news about vaccines" vs "news about fake vaccines" look similar; misses nuanced language.<br><br>
+        <strong>(b) Fine-tuned BERT-base:</strong> Text represented as contextual [CLS] embedding. Training: download pre-trained BERT, add classification head, fine-tune on labelled misinformation dataset. Advantage: rich contextual representations; can capture complex linguistic patterns, sarcasm, hedging language. Limitation: requires labelled data; if misinformation tactics evolve after training, model may not generalise; 110M params means significant compute at inference.<br><br>
+        <strong>(c) GPT-4 zero-shot:</strong> Text passed directly as a prompt. No training or fine-tuning. Advantage: no labelled data required; can be deployed immediately; strong general world knowledge for fact-checking. Limitation: zero-shot performance may be inconsistent; data contamination concerns (GPT-4 may have seen the same articles in pre-training); expensive per-query API cost; knowledge cutoff means recent misinformation may not be handled well.
+      </div>
+    </li>
+    <li>
+      <strong>[Generated — 8 marks, 2023-exam-style]</strong> Explain the concept of <em>polysemy</em> and why it is a fundamental limitation of static word embeddings. Describe how transformers address this limitation through contextual representations. Use the word "crane" as a running example (meanings: the bird, the machine, to stretch one's neck).<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        <strong>Polysemy:</strong> A single word form with multiple distinct meanings. "Crane" can be: (1) a tall wading bird, (2) a piece of construction equipment, (3) a verb meaning to stretch one's neck to see something.<br><br>
+        <strong>Static embedding failure:</strong> Word2Vec or GloVe assigns a single fixed vector to "crane". This vector is a <em>weighted average</em> across all meanings as they appear in the training corpus. If "crane" appears mostly in construction contexts, its vector will be biased towards machinery, and ornithology texts will give the wrong similarity scores. The three meanings are collapsed into one blurry representation.<br><br>
+        <strong>Transformer solution:</strong> BERT computes a <em>different</em> context vector for each occurrence of "crane" based on the entire surrounding sentence via self-attention. In "The crane swooped down to the river" — attention to "swooped" and "river" produces a bird-meaning vector. In "The crane lifted the steel beam" — attention to "lifted" and "steel beam" produces a machinery-meaning vector. In "She craned her neck to see" — verb usage produces a third distinct vector. The same token generates three distinct representations depending on context, resolving polysemy naturally.
+      </div>
+    </li>
+    <li>
+      <strong>[Generated — 2024-style, dataset problems]</strong> A student builds a multilingual sentiment dataset for fine-tuning. They collect 100 restaurant reviews per language (English, French, German), auto-label them using an existing English sentiment model, and split 80/20 train/test. Identify 4 methodological problems with this approach.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        1. <strong>Auto-labelling quality:</strong> Using an English sentiment model to label French/German reviews will produce poor labels — the model was not trained on those languages and will misclassify many samples. Garbage in, garbage out.<br>
+        2. <strong>Dataset size (100 per language):</strong> Fine-tuning a transformer like BERT requires substantially more data. 80 training examples per language is insufficient to learn meaningful language-specific patterns.<br>
+        3. <strong>Label quality → evaluation misleading:</strong> If test labels are also auto-generated (equally noisy), good test performance does not indicate the system actually works — both train and test are wrong in the same ways.<br>
+        4. <strong>Class balance not checked:</strong> Auto-labelling might produce heavily skewed class distributions. E.g. if 90% of auto-labels are "positive", the model might learn to always predict positive and appear to have 90% accuracy while being useless. Evaluation should use macro-F1 to penalise class imbalance. Additionally, the same 80/20 split may lead to test set contamination if very similar reviews appear in both sets.
+      </div>
+    </li>
+  </ol>
+</div>
+
+<div class="exam-type">
+  <h4 class="calc">Calculation Sprint — Mixed Topics</h4>
+  <ol class="exam-q">
+    <li>
+      <strong>[BPE vocab counting]</strong> Starting vocab has 15 symbols. You run 500 BPE merge steps. Final vocab size?<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">15 + 500 = <strong>515 symbols</strong>. Each merge step adds exactly one new symbol to the vocabulary.</div>
+    </li>
+    <li>
+      <strong>[Softmax]</strong> Compute softmax of [1, 3, 2].<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        e¹ = 2.718, e³ = 20.086, e² = 7.389<br>
+        Sum = 30.193<br>
+        Softmax = [2.718/30.193, 20.086/30.193, 7.389/30.193] = [<strong>0.090, 0.665, 0.245</strong>]
+      </div>
+    </li>
+    <li>
+      <strong>[Cosine]</strong> u = [1, 2, 2], v = [2, 2, 1]. Compute cosine similarity.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        Dot = 2 + 4 + 2 = 8<br>
+        |u| = √(1+4+4) = √9 = 3<br>
+        |v| = √(4+4+1) = √9 = 3<br>
+        cosine = 8 / (3×3) = 8/9 ≈ <strong>0.889</strong>
+      </div>
+    </li>
+    <li>
+      <strong>[Scaled attention]</strong> q_word·k_1 = 16, q_word·k_2 = 8, q_word·k_3 = 4. d_k = 16. Compute softmax over scaled scores.<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        √16 = 4. Scaled = [16/4, 8/4, 4/4] = [4, 2, 1]<br>
+        e⁴ = 54.60, e² = 7.39, e¹ = 2.72<br>
+        Sum = 64.71<br>
+        Softmax = [54.60/64.71, 7.39/64.71, 2.72/64.71] = [<strong>0.844, 0.114, 0.042</strong>]
+      </div>
+    </li>
+    <li>
+      <strong>[Multi-head attention parameters]</strong> h = 12 heads, d_model = 768, d_k = d_v = 64. How many parameters in W^O (output projection)?<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        W^O projects from (h × d_v) back to d_model = (12 × 64) × 768 = 768 × 768 = <strong>589,824 parameters</strong>. This is the BERT-base configuration.
+      </div>
+    </li>
+    <li>
+      <strong>[Context vector dimensions]</strong> You pass a sentence with 12 tokens through BERT-base. What is the shape of the output tensor from the last hidden state?<br>
+      <button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button>
+      <div class="answer-box">
+        Shape = [batch_size, sequence_length, hidden_size] = [<strong>1, 12, 768</strong>]<br>
+        1 sequence, 12 tokens, each with a 768-dimensional context vector. Note: the actual input to BERT would have 12 + 2 = 14 tokens ([CLS] + 12 + [SEP]), giving shape [1, 14, 768].
+      </div>
+    </li>
+  </ol>
+</div>
+
+<div class="exam-type">
+  <h4 class="truefalse">Rapid-Fire True / False — Past Exam Topics</h4>
+  <ol class="exam-q">
+    <li>In BERT, the [CLS] token is always placed at the <em>end</em> of the input sequence. <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>FALSE.</strong> [CLS] is placed at the <em>beginning</em> of the sequence. [SEP] is placed at the end. Format: [CLS] tokens... [SEP].</div></li>
+    <li>Beam search always produces a higher-probability output sequence than greedy decoding. <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>TRUE.</strong> Beam search with k beams considers k candidates at each step, retaining the top-k partial sequences. Greedy is beam search with k=1. Therefore beam search explores more of the search space and cannot produce a lower-probability final sequence than greedy.</div></li>
+    <li>A fine-tuned BERT model for English sentiment analysis can be directly applied to Chinese sentiment analysis without any modification. <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>FALSE.</strong> BERT-base's WordPiece tokenizer was trained on English. Chinese characters would be tokenized as [UNK] or broken into meaningless fragments, producing useless embeddings. A multilingual model (mBERT, XLM-RoBERTa) or a Chinese-specific BERT is needed.</div></li>
+    <li>Removing stopwords before fine-tuning a BERT sentiment classifier is good practice. <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>FALSE.</strong> BERT is a sequence model that uses word order and context. Removing stopwords disrupts grammatical structure and can remove words that contribute to sentiment meaning. For example, "not bad" → "bad" after stopword removal completely reverses the sentiment. Leave stopwords in for transformer models.</div></li>
+    <li>The vocabulary size of BPE is determined entirely by the frequency statistics in the training corpus, with no hyperparameter from the user. <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>FALSE.</strong> The desired final vocabulary size is a hyperparameter set by the user (typically 30,000–50,000). BPE runs merge steps until this target size is reached. The merge rules themselves are determined by corpus statistics, but the stopping point is user-defined.</div></li>
+    <li>A decoder-only model like GPT can be used for Named Entity Recognition by fine-tuning it on NER data. <br><button class="toggle-ans" onclick="toggleAns(this)">Show Answer</button><div class="answer-box"><strong>TRUE (with caveats).</strong> In principle yes — you can fine-tune a decoder model to output entity tags. In practice, encoder models like BERT perform better for NER because they have bidirectional context and are designed for per-token classification. GPT-style models see only left context at each token, which is suboptimal for NER where right-context clues matter.</div></li>
+  </ol>
+</div>
+
+</section>
+
+</main>
+
+<script>
+// ===== CONTEXT DISPLAY =====
+const ctxData = {
+  watch: [{w:'video',c:3168},{w:'apple',c:1702},{w:'time',c:868},{w:'device',c:741},{w:'band',c:583}],
+  clock: [{w:'time',c:2614},{w:'hour',c:806},{w:'alarm',c:438},{w:'wall',c:312},{w:'tick',c:204}],
+  elephant: [{w:'baby',c:108},{w:'species',c:100},{w:'ears',c:97},{w:'trunk',c:85},{w:'zoo',c:71}]
+};
+function showContext(word){
+  document.querySelectorAll('#wordSelect .token').forEach(t=>t.classList.remove('highlight'));
+  document.querySelectorAll('#wordSelect .token').forEach(t=>{if(t.textContent===word)t.classList.add('highlight');});
+  const data=ctxData[word];
+  const max=data[0].c;
+  let html=`<div style="font-size:.85rem;color:var(--muted);margin-bottom:10px"><em>${word}</em> appears near:</div>`;
+  data.forEach(d=>{
+    const pct=Math.round(d.c/max*100);
+    html+=`<div class="vec-bar"><span class="vec-lbl" style="width:70px">${d.w}</span><div class="vec-fill" style="width:${pct}%"></div><span style="color:var(--muted);font-size:.8rem;margin-left:8px">${d.c}</span></div>`;
+  });
+  document.getElementById('contextDisplay').innerHTML=html;
+}
+
+// ===== ATTENTION DEMO =====
+const attnSentence=[
+  {word:'The',scores:{The:0.05,match:0.00,burns:0.02,brightly:0.01}},
+  {word:'match',scores:{The:0.00,match:0.86,burns:0.14,brightly:0.00}},
+  {word:'burns',scores:{The:0.01,match:0.60,burns:0.20,brightly:0.19}},
+  {word:'brightly',scores:{The:0.03,match:0.12,burns:0.75,brightly:0.10}}
+];
+const words=['The','match','burns','brightly'];
+let selWord=null;
+function initAttn(){
+  const tokEl=document.getElementById('attn-tokens');
+  words.forEach(w=>{
+    const d=document.createElement('div');
+    d.className='token word';d.textContent=w;
+    d.onclick=()=>selectAttnWord(w,d);
+    tokEl.appendChild(d);
+  });
+}
+function selectAttnWord(w,el){
+  selWord=w;
+  document.querySelectorAll('#attn-tokens .token').forEach(t=>t.classList.remove('highlight'));
+  el.classList.add('highlight');
+  const row=attnSentence.find(r=>r.word===w);
+  document.getElementById('attn-note').textContent=`Attention weights for "${w}":`;
+  const barsEl=document.getElementById('attn-bars');
+  barsEl.innerHTML='';
+  words.forEach(tw=>{
+    const score=row.scores[tw]||0;
+    const pct=Math.round(score*80);
+    const wrap=document.createElement('div');wrap.className='bar-wrap';
+    wrap.innerHTML=`<div class="bar" style="height:${Math.max(pct,3)}px;opacity:${0.3+score*0.7}"></div><div class="bar-label">${tw}<br><strong>${score.toFixed(2)}</strong></div>`;
+    barsEl.appendChild(wrap);
+  });
+}
+initAttn();
+
+// ===== BPE DEMO =====
+let bpeState=[
+  ['p','e','t','e','r'],['p','i','p','e','r'],['p','i','c','k','e','d'],
+  ['a'],['p','e','c','k'],['o','f'],['p','i','c','k','l','e','d'],['p','e','p','p','e','r','s']
+];
+let bpeVocab=['a','c','d','e','f','i','k','l','o','p','r','s','t'];
+let bpeMerges=[];
+let bpeStepIdx=0;
+
+const bpeScenarios=[
+  {pair:['p','e'],label:"Merged ('p','e') → 'pe'  [count: 5]"},
+  {pair:['p','i'],label:"Merged ('p','i') → 'pi'  [count: 3]"},
+  {pair:['c','k'],label:"Merged ('c','k') → 'ck'  [count: 3]"},
+  {pair:['pe','r'],label:"Merged ('pe','r') → 'per'  [count: 2]"},
+];
+
+function bpeRender(){
+  const words=bpeState.map(w=>'['+w.join(',')+']').join(', ');
+  document.getElementById('bpe-corpus').innerHTML=words;
+  document.getElementById('bpe-vocab').textContent=bpeVocab.join(', ');
+  document.getElementById('bpe-merged').textContent=bpeMerges.join(' | ') || '(none yet)';
+  document.getElementById('bpe-step-label').textContent=bpeStepIdx===0?'Initial state':`Step ${bpeStepIdx}/${bpeScenarios.length}`;
+}
+
+function bpeStepFwd(){
+  if(bpeStepIdx>=bpeScenarios.length){
+    document.getElementById('bpe-step-label').textContent='All steps complete! Reset to start over.';
+    return;
+  }
+  const s=bpeScenarios[bpeStepIdx];
+  const [a,b]=s.pair;
+  const newSym=a+b;
+  bpeVocab.push(newSym);
+  bpeMerges.push(s.label);
+  bpeState=bpeState.map(word=>{
+    const result=[];
+    let i=0;
+    while(i<word.length){
+      if(i<word.length-1&&word[i]===a&&word[i+1]===b){result.push(newSym);i+=2;}
+      else{result.push(word[i]);i++;}
+    }
+    return result;
+  });
+  bpeStepIdx++;
+  bpeRender();
+}
+function bpeReset(){
+  bpeState=[['p','e','t','e','r'],['p','i','p','e','r'],['p','i','c','k','e','d'],['a'],['p','e','c','k'],['o','f'],['p','i','c','k','l','e','d'],['p','e','p','p','e','r','s']];
+  bpeVocab=['a','c','d','e','f','i','k','l','o','p','r','s','t'];
+  bpeMerges=[];bpeStepIdx=0;bpeRender();
+}
+bpeRender();
+
+// ===== TABS =====
+function openTab(e,id){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  e.target.classList.add('active');
+}
+
+// ===== QUIZ =====
+function checkQ(name,correct){
+  const selected=document.querySelector(`input[name="${name}"]:checked`);
+  const fb=document.getElementById(name+'-fb');
+  if(!selected){fb.className='feedback wrong';fb.style.display='block';fb.textContent='Please select an answer.';return;}
+  if(selected.value===correct){
+    fb.className='feedback correct';fb.textContent='Correct!';
+  } else {
+    fb.className='feedback wrong';fb.textContent='Incorrect. The correct answer is: '+document.querySelector(`input[name="${name}"][value="${correct}"] + span`).textContent;
+  }
+  fb.style.display='block';
+}
+
+// ===== ANSWER TOGGLE =====
+function toggleAns(btn){
+  const box=btn.nextElementSibling;
+  const show=box.style.display!=='block';
+  box.style.display=show?'block':'none';
+  btn.textContent=show?'Hide Answer':'Show Answer';
+  if(show&&window.MathJax)MathJax.typesetPromise([box]);
+}
+
+// ===== SCROLL ANIMATION =====
+try{
+  document.querySelectorAll('.fadein').forEach(el=>el.classList.add('anim-ready'));
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');e.target.classList.remove('anim-ready');}});
+  },{threshold:.05,rootMargin:'0px 0px -40px 0px'});
+  document.querySelectorAll('.fadein').forEach(el=>obs.observe(el));
+}catch(e){
+  document.querySelectorAll('.fadein').forEach(el=>{el.classList.remove('anim-ready');el.classList.add('visible');});
+}
+
+// ===== NAV HIGHLIGHT =====
+const navLinks=document.querySelectorAll('nav a');
+const sections=document.querySelectorAll('section');
+window.addEventListener('scroll',()=>{
+  let cur='';
+  sections.forEach(s=>{if(s.offsetTop-100<=scrollY)cur=s.id;});
+  navLinks.forEach(a=>{a.classList.toggle('active',a.getAttribute('href')==='#'+cur);});
+});
+</script>
+</body>
+</html>

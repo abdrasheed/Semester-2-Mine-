@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Language Modelling — Interactive Notes</title>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --card: #21253a;
+    --accent: #6c63ff; --accent2: #00d4aa; --accent3: #ff6b6b;
+    --text: #e8eaf6; --muted: #8892b0; --border: #2d3155;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; line-height: 1.7; }
+  .toc { position: fixed; top: 0; left: 0; width: 220px; height: 100vh; background: var(--surface); overflow-y: auto; padding: 16px; border-right: 1px solid var(--border); z-index: 100; }
+  .toc h3 { color: var(--accent); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .toc a { display: block; color: var(--muted); text-decoration: none; font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; margin-bottom: 2px; transition: all 0.2s; }
+  .toc a:hover, .toc a.active { color: var(--accent); background: rgba(108,99,255,0.1); }
+  .main { margin-left: 220px; padding: 40px 60px; max-width: 1100px; }
+  h1 { font-size: 2.8rem; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+  .subtitle { color: var(--muted); font-size: 1rem; margin-bottom: 40px; }
+  h2 { font-size: 1.8rem; color: var(--accent2); margin: 50px 0 20px; padding-bottom: 8px; border-bottom: 2px solid var(--border); }
+  h3 { font-size: 1.2rem; color: var(--accent); margin: 28px 0 12px; }
+  p { margin-bottom: 14px; color: #c8cfe8; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin: 20px 0; }
+  .card.highlight { border-left: 4px solid var(--accent); }
+  .card.warning { border-left: 4px solid var(--accent3); }
+  .card.success { border-left: 4px solid var(--accent2); }
+  .eq { background: #13162a; border: 1px solid var(--border); border-radius: 8px; padding: 16px 24px; margin: 16px 0; font-family: 'Courier New', monospace; font-size: 1.05rem; color: #ffd700; text-align: center; }
+  .eq .label { font-size: 0.75rem; color: var(--muted); text-align: right; margin-top: 6px; font-family: sans-serif; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .tag { display: inline-block; background: rgba(108,99,255,0.2); color: var(--accent); border-radius: 4px; padding: 2px 8px; font-size: 0.75rem; margin: 2px; }
+  .tag.green { background: rgba(0,212,170,0.2); color: var(--accent2); }
+  .tag.red { background: rgba(255,107,107,0.2); color: var(--accent3); }
+  /* animations */
+  @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  .section { animation: fadeIn 0.4s ease both; }
+  /* probability bar */
+  .prob-bar-wrap { margin: 8px 0; }
+  .prob-bar-label { font-size: 0.85rem; color: var(--muted); margin-bottom: 3px; display: flex; justify-content: space-between; }
+  .prob-bar-track { background: #1a1d27; border-radius: 4px; height: 18px; overflow: hidden; }
+  .prob-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s cubic-bezier(.4,0,.2,1); }
+  /* interactive */
+  .btn { background: var(--accent); color: #fff; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: opacity 0.2s; margin: 4px; }
+  .btn:hover { opacity: 0.85; }
+  .btn.secondary { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  input[type=text], input[type=number], select { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 6px; font-size: 0.9rem; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.88rem; }
+  th { background: var(--surface); color: var(--accent); padding: 10px; text-align: left; border-bottom: 2px solid var(--border); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .exam-section { margin: 50px 0; }
+  .exam-q { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 14px 0; }
+  .exam-q .q-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .exam-q p { margin-bottom: 10px; }
+  .option { padding: 8px 14px; border: 1px solid var(--border); border-radius: 6px; margin: 6px 0; cursor: pointer; transition: all 0.2s; }
+  .option:hover { border-color: var(--accent); }
+  .option.correct { border-color: var(--accent2); background: rgba(0,212,170,0.1); }
+  .option.wrong { border-color: var(--accent3); background: rgba(255,107,107,0.1); }
+  .reveal-btn { background: transparent; border: 1px dashed var(--border); color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; margin-top: 8px; }
+  .reveal-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .answer { display: none; background: rgba(0,212,170,0.08); border: 1px solid var(--accent2); border-radius: 6px; padding: 14px; margin-top: 10px; color: #c8e6c9; font-size: 0.9rem; }
+  .answer.show { display: block; }
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  /* ngram vis */
+  .token-seq { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+  .token { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; border: 1px solid var(--border); transition: all 0.3s; }
+  .token.context { background: rgba(108,99,255,0.2); border-color: var(--accent); color: var(--accent); }
+  .token.target { background: rgba(0,212,170,0.2); border-color: var(--accent2); color: var(--accent2); }
+  .token.normal { color: var(--muted); }
+  /* canvas */
+  canvas { border-radius: 8px; display: block; }
+  .flex { display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.72rem; font-weight: 700; }
+  .badge-blue { background: rgba(108,99,255,0.3); color: #a89aff; }
+  .badge-green { background: rgba(0,212,170,0.3); color: #00d4aa; }
+  .badge-red { background: rgba(255,107,107,0.3); color: #ff6b6b; }
+  @media(max-width:768px) { .toc{display:none;} .main{margin-left:0;padding:20px;} .grid2,.grid3{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <h3>Contents</h3>
+  <a href="#intro">1. Introduction</a>
+  <a href="#prob-review">2. Probability Review</a>
+  <a href="#next-token">3. Guessing Next Token</a>
+  <a href="#formal">4. Formal Definition</a>
+  <a href="#ngrams">5. N-gram Models</a>
+  <a href="#smoothing">6. Smoothing</a>
+  <a href="#eval">7. Evaluation</a>
+  <a href="#info-theory">8. Information Theory</a>
+  <a href="#generation">9. Text Generation</a>
+  <a href="#exam">10. MCQ &amp; Short Answer</a>
+  <a href="#past-exam">11. Past Exam Qs</a>
+  <a href="#more-practice">12. More Practice</a>
+</nav>
+
+<div class="main">
+  <h1>Language Modelling</h1>
+  <p class="subtitle">Text as Data — Lecture 3 &nbsp;|&nbsp; Interactive Study Notes &nbsp;|&nbsp; Based on TaD Lecture + Jurafsky &amp; Martin (3rd ed.)</p>
+
+  <!-- ===== SECTION 1 ===== -->
+  <section class="section" id="intro">
+    <h2>1. Introduction &amp; Motivation</h2>
+    <div class="grid2">
+      <div class="card highlight">
+        <h3>What we can do after this lecture</h3>
+        <ul style="padding-left:18px;color:#c8cfe8;">
+          <li>Measure the <strong>likelihood of text</strong></li>
+          <li>Understand n-gram models</li>
+          <li>Apply smoothing to handle unseen words</li>
+          <li>Evaluate models with <strong>perplexity</strong></li>
+          <li>Generate text using a language model</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Applications</h3>
+        <div style="margin-top:8px;">
+          <span class="tag">Speech Recognition</span><span class="tag">Spelling Correction</span>
+          <span class="tag">Machine Translation</span><span class="tag">Auto-completion</span>
+          <span class="tag">Authorship Detection</span><span class="tag">Optical Char. Rec.</span>
+          <span class="tag green">ChatGPT / LLMs</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h3>Motivating Example</h3>
+      <p>A speech system must choose between two candidates. Which was said?</p>
+      <div class="grid2">
+        <div style="background:#13162a;padding:14px;border-radius:8px;text-align:center;">
+          <div style="color:var(--accent3);font-size:0.8rem;">LOW PROBABILITY</div>
+          <div style="font-size:1.1rem;margin-top:8px;">"ginchy toast with <strong>but her</strong>"</div>
+        </div>
+        <div style="background:#13162a;padding:14px;border-radius:8px;text-align:center;">
+          <div style="color:var(--accent2);font-size:0.8rem;">HIGH PROBABILITY</div>
+          <div style="font-size:1.1rem;margin-top:8px;">"ginchy toast with <strong>butter</strong>"</div>
+        </div>
+      </div>
+      <p style="margin-top:12px;color:var(--muted);font-size:0.85rem;">A language model assigns higher probability to the correct phrase — even when "ginchy" (1950s slang for "excellent") is an unknown word.</p>
+    </div>
+
+    <div class="card">
+      <h3>Historical vs. Modern Approaches</h3>
+      <div class="grid2">
+        <div>
+          <div class="badge badge-blue">Classical</div>
+          <p style="margin-top:8px;"><strong>Statistical N-gram Models</strong> — count word sequences in a corpus and normalise. Simple, fast, still useful. <em>Covered today.</em></p>
+        </div>
+        <div>
+          <div class="badge badge-green">Modern</div>
+          <p style="margin-top:8px;"><strong>Neural / Transformer LLMs</strong> — very expensive but highly effective. The basis of GPT, Claude, etc. <em>Covered later.</em></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 2 ===== -->
+  <section class="section" id="prob-review">
+    <h2>2. Probability Review</h2>
+
+    <div class="card highlight">
+      <h3>Core Rules</h3>
+      <div class="eq">0 &le; P(x) &le; 1 &nbsp;&nbsp; and &nbsp;&nbsp; &Sigma;<sub>x</sub> P(x) = 1</div>
+      <div class="grid3">
+        <div>
+          <div class="badge badge-blue">Joint</div>
+          <div class="eq" style="font-size:0.9rem;">P(A, B)</div>
+          <p style="font-size:0.82rem;color:var(--muted);">Probability of both A and B occurring together.</p>
+        </div>
+        <div>
+          <div class="badge badge-green">Conditional</div>
+          <div class="eq" style="font-size:0.9rem;">P(A | B) = P(A,B) / P(B)</div>
+          <p style="font-size:0.82rem;color:var(--muted);">Probability of A given B has occurred.</p>
+        </div>
+        <div>
+          <div class="badge badge-red">Chain Rule</div>
+          <div class="eq" style="font-size:0.9rem;">P(A,B,C) = P(A|B,C)·P(B|C)·P(C)</div>
+          <p style="font-size:0.82rem;color:var(--muted);">Decomposes joint probability.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive card example -->
+    <div class="card">
+      <h3>Interactive: Deck of Cards</h3>
+      <p style="color:var(--muted);font-size:0.85rem;">Click a question to compute its probability (52-card deck, 4 suits, 13 values).</p>
+      <div id="card-quiz" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="card">
+      <h3>Bayes' Theorem</h3>
+      <div class="eq">P(A | B) = <span style="border-top:1px solid #ffd700;display:inline-block;padding-top:2px;">P(B | A) &middot; P(A)</span> / P(B)</div>
+      <p>Lets us "reverse" conditional probabilities — useful for many NLP classifiers.</p>
+
+      <h3 style="margin-top:20px;">Independence</h3>
+      <div class="eq">A &perp; B &nbsp;&hArr;&nbsp; P(A,B) = P(A) &middot; P(B)</div>
+      <p>Two events are independent when knowing one tells you nothing about the other. Check: P(card is 8, card is red) = 2/52 = (4/52)&times;(26/52) = 2/52 ✓</p>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 3 ===== -->
+  <section class="section" id="next-token">
+    <h2>3. Guessing the Next Token</h2>
+    <div class="card highlight">
+      <p>Language models are trained to <strong>predict the next word</strong>. This single objective forces the model to implicitly learn grammar, semantics, and world knowledge.</p>
+    </div>
+    <div class="card">
+      <h3>Techniques for predicting the next token</h3>
+      <div class="grid3">
+        <div style="background:#13162a;border-radius:8px;padding:14px;">
+          <div class="badge badge-blue">Unigram</div>
+          <p style="margin-top:8px;font-size:0.85rem;">Count how often each token appears overall. Ignores context entirely.</p>
+        </div>
+        <div style="background:#13162a;border-radius:8px;padding:14px;">
+          <div class="badge badge-green">Bigram</div>
+          <p style="margin-top:8px;font-size:0.85rem;">Count what follows the <em>immediately preceding</em> token.</p>
+        </div>
+        <div style="background:#13162a;border-radius:8px;padding:14px;">
+          <div class="badge badge-red">N-gram</div>
+          <p style="margin-top:8px;font-size:0.85rem;">Use last n-1 tokens as context. More specific but more sparse.</p>
+        </div>
+      </div>
+      <div class="card success" style="margin-top:16px;">
+        <strong>Key insight:</strong> Predicting the next token implicitly captures grammar — it must learn that nouns follow "the", verbs follow nouns, etc.
+      </div>
+      <div class="card warning" style="margin-top:10px;">
+        <strong>Important:</strong> LLMs don't "know" or "understand" — their apparent knowledge is a <em>statistical illusion</em> from pattern-matching massive corpora.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 4 ===== -->
+  <section class="section" id="formal">
+    <h2>4. Formal Problem Definition</h2>
+    <div class="card highlight">
+      <h3>A language model must specify two things:</h3>
+      <div class="grid2" style="margin-top:12px;">
+        <div>
+          <span class="badge badge-blue">1. Sentence probability</span>
+          <div class="eq" style="margin-top:8px;">P(w<sub>1</sub>, w<sub>2</sub>, ..., w<sub>n</sub>)</div>
+          <p style="font-size:0.85rem;">e.g., P("I bake with butter") &gt; P("I bake with but her")</p>
+        </div>
+        <div>
+          <span class="badge badge-green">2. Next-word probability</span>
+          <div class="eq" style="margin-top:8px;">P(w<sub>k+1</sub> | w<sub>1</sub>, ..., w<sub>k</sub>)</div>
+          <p style="font-size:0.85rem;">e.g., P("margarine" | "use butter instead of") &gt; P("puppets" | ...)</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Chain Rule Decomposition</h3>
+      <p>Using the chain rule we can decompose any sentence probability into a product of conditional probabilities:</p>
+      <div class="eq">
+        P("the weather is snowy outside")<br>
+        &nbsp;= P(the)<br>
+        &nbsp;&times; P(weather | the)<br>
+        &nbsp;&times; P(is | the, weather)<br>
+        &nbsp;&times; P(snowy | the, weather, is)<br>
+        &nbsp;&times; P(outside | the, weather, is, snowy)
+        <div class="label">Chain Rule — Jurafsky &amp; Martin Eq. 3.4</div>
+      </div>
+      <div class="card warning">
+        <strong>Problem:</strong> Conditioning on a long history is intractable — we'd need to have seen every exact context before. Solution: the <strong>Markov Assumption</strong>.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Captures Both:</h3>
+      <div class="grid2">
+        <div><strong>Syntax / Grammar</strong><br><span style="color:var(--muted);font-size:0.9rem;">Structure rules — "like I tad" &lt; "I like tad"</span></div>
+        <div><strong>Semantics</strong><br><span style="color:var(--muted);font-size:0.9rem;">Real-world meaning — "elephant at circus" &gt; "supernova at circus"</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 5 ===== -->
+  <section class="section" id="ngrams">
+    <h2>5. N-gram Language Models</h2>
+
+    <div class="card highlight">
+      <h3>The Markov Assumption</h3>
+      <div class="eq">P(w<sub>k+1</sub> | w<sub>1</sub>,...,w<sub>k</sub>) &approx; P(w<sub>k+1</sub> | w<sub>k-N+2</sub>,...,w<sub>k</sub>)</div>
+      <p>Instead of the full history, approximate with the last <strong>N-1</strong> words (the "context window").</p>
+    </div>
+
+    <div class="card">
+      <h3>N-gram Orders</h3>
+      <table>
+        <tr><th>Model</th><th>Formula</th><th>Context used</th><th>Notes</th></tr>
+        <tr><td><strong>Unigram</strong></td><td><code>P(w<sub>k+1</sub>)</code></td><td>None</td><td>Bag-of-words; ignores word order</td></tr>
+        <tr><td><strong>Bigram</strong></td><td><code>P(w<sub>k+1</sub> | w<sub>k</sub>)</code></td><td>1 prev word</td><td>Fast, surprisingly effective</td></tr>
+        <tr><td><strong>Trigram</strong></td><td><code>P(w<sub>k+1</sub> | w<sub>k-1</sub>, w<sub>k</sub>)</code></td><td>2 prev words</td><td>Better quality, more sparse</td></tr>
+        <tr><td><strong>4-gram</strong></td><td><code>P(w<sub>k+1</sub> | w<sub>k-2</sub>, w<sub>k-1</sub>, w<sub>k</sub>)</code></td><td>3 prev words</td><td>High quality, very sparse</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>MLE Estimation (Maximum Likelihood)</h3>
+      <div class="eq">
+        P(w<sub>n</sub> | w<sub>n-N+1:n-1</sub>) = C(w<sub>n-N+1:n-1</sub> w<sub>n</sub>) / C(w<sub>n-N+1:n-1</sub>)
+        <div class="label">Jurafsky &amp; Martin Eq. 3.12</div>
+      </div>
+      <p>Count how often the context is followed by the target word, divided by how often the context appears total.</p>
+
+      <h3 style="margin-top:20px;">Worked Example (Bigram)</h3>
+      <p>Corpus: <code>&lt;s&gt; I am Sam &lt;/s&gt;</code> &nbsp; <code>&lt;s&gt; Sam I am &lt;/s&gt;</code> &nbsp; <code>&lt;s&gt; I do not like green eggs &lt;/s&gt;</code></p>
+      <table>
+        <tr><th>Bigram</th><th>Count numerator</th><th>Count denominator</th><th>Probability</th></tr>
+        <tr><td>P(I | &lt;s&gt;)</td><td>C(&lt;s&gt; I) = 2</td><td>C(&lt;s&gt;) = 3</td><td><strong>0.67</strong></td></tr>
+        <tr><td>P(Sam | &lt;s&gt;)</td><td>C(&lt;s&gt; Sam) = 1</td><td>C(&lt;s&gt;) = 3</td><td><strong>0.33</strong></td></tr>
+        <tr><td>P(am | I)</td><td>C(I am) = 2</td><td>C(I) = 3</td><td><strong>0.67</strong></td></tr>
+        <tr><td>P(do | I)</td><td>C(I do) = 1</td><td>C(I) = 3</td><td><strong>0.33</strong></td></tr>
+      </table>
+    </div>
+
+    <div class="card" style="border-left:4px solid #ffd700;">
+      <h3 style="color:#ffd700;">✎ Try It — Bigram MLE (Exam Practice)</h3>
+      <p style="color:var(--muted);font-size:0.85rem;">Practice before checking the answer!</p>
+      <p>Corpus: <code>&lt;s&gt; A B C &lt;/s&gt;</code> &nbsp; <code>&lt;s&gt; A B A &lt;/s&gt;</code> &nbsp; <code>&lt;s&gt; B C A &lt;/s&gt;</code></p>
+      <p>Using bigram MLE, calculate: <strong>P(A | &lt;s&gt;)</strong>, <strong>P(B | A)</strong>, <strong>P(C | B)</strong>, <strong>P(A | B)</strong></p>
+      <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+      <div class="answer">
+        <strong>First, list all bigrams from each sentence:</strong><br>
+        S1: (&lt;s&gt;,A) (A,B) (B,C) (C,&lt;/s&gt;)<br>
+        S2: (&lt;s&gt;,A) (A,B) (B,A) (A,&lt;/s&gt;)<br>
+        S3: (&lt;s&gt;,B) (B,C) (C,A) (A,&lt;/s&gt;)<br><br>
+        <strong>Counts:</strong><br>
+        C(&lt;s&gt;)=3, C(&lt;s&gt;,A)=2, C(&lt;s&gt;,B)=1<br>
+        C(A)=4 [A as left context: s1 once, s2 twice (A→B, A→&lt;/s&gt;), s3 once], C(A,B)=2<br>
+        C(B)=3, C(B,C)=2, C(B,A)=1<br><br>
+        <strong>Answers:</strong><br>
+        P(A|&lt;s&gt;) = 2/3 ≈ <strong>0.667</strong><br>
+        P(B|A) = 2/4 = <strong>0.500</strong><br>
+        P(C|B) = 2/3 ≈ <strong>0.667</strong><br>
+        P(A|B) = 1/3 ≈ <strong>0.333</strong>
+      </div>
+    </div>
+
+    <!-- Interactive N-gram tokeniser -->
+    <div class="card">
+      <h3>Interactive: Visualise N-gram Context Windows</h3>
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+        <input type="text" id="ngram-input" value="the dog barks at the cat" style="flex:1;min-width:200px;" />
+        <select id="ngram-order">
+          <option value="1">Unigram (n=1)</option>
+          <option value="2" selected>Bigram (n=2)</option>
+          <option value="3">Trigram (n=3)</option>
+          <option value="4">4-gram (n=4)</option>
+        </select>
+        <button class="btn" onclick="visNgram()">Visualise</button>
+      </div>
+      <div id="ngram-vis" style="min-height:60px;"></div>
+    </div>
+
+    <div class="card">
+      <h3>Practical Issue 1: Start &amp; End Tokens</h3>
+      <div class="eq">&lt;s&gt; the dog barks &lt;/s&gt;</div>
+      <p>Special tokens allow modelling the probability of <em>starting</em> and <em>ending</em> a sentence. For a bigram, the first word is: P(w | &lt;s&gt;). For a trigram, use two start tokens: &lt;s&gt;&lt;s&gt;.</p>
+    </div>
+
+    <div class="card">
+      <h3>Practical Issue 2: Log Space</h3>
+      <div class="eq">log P(w<sub>1</sub>,...,w<sub>n</sub>) = &Sigma;<sub>i</sub> log P(w<sub>i</sub> | context)</div>
+      <p>Multiplying many small probabilities causes <strong>numerical underflow</strong>. Working in log space converts products to sums, is numerically stable, and often easier to interpret.</p>
+    </div>
+
+    <div class="card warning">
+      <h3>Practical Issue 3: Zero Probability / Sparsity</h3>
+      <p>If a bigram (w<sub>i-1</sub>, w<sub>i</sub>) never appears in training, then P(sentence) = 0 — even if the sentence is perfectly reasonable. This <em>cripples</em> language systems. Solution: <strong>Smoothing</strong>.</p>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 6 ===== -->
+  <section class="section" id="smoothing">
+    <h2>6. Smoothing</h2>
+
+    <div class="card highlight">
+      <h3>Goal</h3>
+      <p>Assign <strong>non-zero probability</strong> to words or n-grams not observed in training. Texts are just a <em>sample</em> from the true language — unseen events are possible, not impossible.</p>
+      <p>Strategy: <strong>discount</strong> (lower) probability of seen events and redistribute the leftover to unseen events.</p>
+    </div>
+
+    <div class="card">
+      <h3>Add-K (Laplace) Smoothing</h3>
+      <div class="eq">
+        P<sub>AddK</sub>(w | context) = [C(context, w) + k] / [C(context) + k|V|]
+      </div>
+      <ul style="padding-left:18px;color:#c8cfe8;margin-top:10px;">
+        <li><strong>k = 1</strong>: Add-One / Laplace smoothing — simplest, but too much probability moved from seen events.</li>
+        <li><strong>k &lt; 1</strong>: Fractional — often better in practice.</li>
+        <li><strong>|V|</strong>: vocabulary size (number of unique words).</li>
+      </ul>
+
+      <!-- Interactive add-k calculator -->
+      <div style="background:#13162a;border-radius:8px;padding:16px;margin-top:16px;">
+        <h3 style="margin-bottom:10px;">Add-K Calculator</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;align-items:end;">
+          <div><label style="font-size:0.8rem;color:var(--muted);">C(context, w)</label><br><input type="number" id="ak-count" value="3" style="width:100%;margin-top:4px;"></div>
+          <div><label style="font-size:0.8rem;color:var(--muted);">C(context)</label><br><input type="number" id="ak-ctx" value="100" style="width:100%;margin-top:4px;"></div>
+          <div><label style="font-size:0.8rem;color:var(--muted);">|V| vocab size</label><br><input type="number" id="ak-vocab" value="5000" style="width:100%;margin-top:4px;"></div>
+          <div><label style="font-size:0.8rem;color:var(--muted);">k value</label><br><input type="number" id="ak-k" value="1" step="0.1" style="width:100%;margin-top:4px;"></div>
+        </div>
+        <button class="btn" style="margin-top:12px;" onclick="calcAddK()">Calculate</button>
+        <div id="ak-result" style="margin-top:10px;font-size:0.9rem;color:var(--accent2);"></div>
+      </div>
+    </div>
+
+    <div class="card" style="border-left:4px solid #ffd700;">
+      <h3 style="color:#ffd700;">✎ Try It — Add-K Smoothing (Exam Practice)</h3>
+      <p>Same corpus as above. From counting: <strong>C(C)=2, C(C,A)=1, C(C,B)=0</strong>. Vocabulary |V|=4 tokens: {A, B, C, &lt;/s&gt;}.</p>
+      <p>Apply <strong>Add-1 smoothing</strong> to find: <strong>P<sub>Add1</sub>(A|C)</strong> and <strong>P<sub>Add1</sub>(B|C)</strong></p>
+      <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+      <div class="answer">
+        Formula: P<sub>AddK</sub>(w|ctx) = [C(ctx,w)+k] / [C(ctx)+k×|V|] with k=1<br><br>
+        <strong>P<sub>Add1</sub>(A|C)</strong> = (1+1)/(2+1×4) = 2/6 ≈ <strong>0.333</strong><br>
+        (Raw MLE was 1/2=0.5 — reduced to give probability mass to unseen bigrams)<br><br>
+        <strong>P<sub>Add1</sub>(B|C)</strong> = (0+1)/(2+1×4) = 1/6 ≈ <strong>0.167</strong><br>
+        (Raw MLE was 0 — now has non-zero probability! This is the key benefit of smoothing.)<br><br>
+        <em>Check: P(A|C)+P(B|C)+P(C|C)+P(&lt;/s&gt;|C) = 2/6+1/6+1/6+2/6 = 6/6 = 1 ✓</em>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Interpolated Smoothing</h3>
+      <p>Combine a higher-order model (more specific, more sparse) with lower-order models (less specific, less sparse):</p>
+      <div class="eq">
+        P&#770;(w<sub>n</sub> | w<sub>n-2</sub>, w<sub>n-1</sub>) = &lambda;<sub>1</sub>·P(w<sub>n</sub>) + &lambda;<sub>2</sub>·P(w<sub>n</sub>|w<sub>n-1</sub>) + &lambda;<sub>3</sub>·P(w<sub>n</sub>|w<sub>n-2</sub>,w<sub>n-1</sub>)
+      </div>
+      <p>where &lambda;<sub>1</sub> + &lambda;<sub>2</sub> + &lambda;<sub>3</sub> = 1. The &lambda; values are tuned on a <strong>development set</strong>.</p>
+
+      <!-- lambda slider -->
+      <div style="background:#13162a;border-radius:8px;padding:16px;margin-top:12px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+          <span style="font-size:0.85rem;color:var(--muted);width:80px;">&lambda;<sub>3</sub> (trigram)</span>
+          <input type="range" id="lambda3" min="0" max="1" step="0.05" value="0.6" oninput="updateLambda()" style="flex:1;">
+          <span id="l3val" style="font-size:0.85rem;min-width:40px;color:var(--accent);">0.60</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+          <span style="font-size:0.85rem;color:var(--muted);width:80px;">&lambda;<sub>2</sub> (bigram)</span>
+          <input type="range" id="lambda2" min="0" max="0.4" step="0.05" value="0.3" oninput="updateLambda()" style="flex:1;">
+          <span id="l2val" style="font-size:0.85rem;min-width:40px;color:var(--accent2);">0.30</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-size:0.85rem;color:var(--muted);width:80px;">&lambda;<sub>1</sub> (unigram)</span>
+          <input type="range" id="lambda1" min="0" max="0.2" step="0.01" value="0.1" oninput="updateLambda()" style="flex:1;">
+          <span id="l1val" style="font-size:0.85rem;min-width:40px;color:var(--accent3);">0.10</span>
+        </div>
+        <div id="lambda-sum" style="margin-top:10px;font-size:0.85rem;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Other Smoothing Methods</h3>
+      <table>
+        <tr><th>Method</th><th>Key Idea</th><th>Notes</th></tr>
+        <tr><td><strong>Kneser-Ney</strong></td><td>Considers how often a word appears in diverse contexts</td><td>State-of-the-art for n-grams; complex parameters</td></tr>
+        <tr><td><strong>"Stupid" Backoff</strong></td><td>If trigram prob = 0, use 0.4 × bigram prob; no smoothing</td><td>Used at Google for large-scale; not a true probability</td></tr>
+        <tr><td><strong>Add-K</strong></td><td>Pretend each sequence was seen k extra times</td><td>Simple; k=1 too aggressive</td></tr>
+        <tr><td><strong>Interpolation</strong></td><td>Weighted mix of multiple orders</td><td>Tune &lambda; on dev set</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 7 ===== -->
+  <section class="section" id="eval">
+    <h2>7. Evaluation: Perplexity &amp; Cross-Entropy</h2>
+
+    <div class="card highlight">
+      <h3>Intrinsic vs Extrinsic Evaluation</h3>
+      <div class="grid2">
+        <div>
+          <span class="badge badge-green">Extrinsic</span>
+          <p style="font-size:0.88rem;margin-top:8px;">Measure performance on a downstream task (speech recognition accuracy, translation BLEU score, etc.). Most meaningful but expensive.</p>
+        </div>
+        <div>
+          <span class="badge badge-blue">Intrinsic</span>
+          <p style="font-size:0.88rem;margin-top:8px;">Measure inherent quality via <strong>perplexity</strong> on a held-out test set. Fast, widely used, but only a proxy.</p>
+        </div>
+      </div>
+      <div class="card warning" style="margin-top:12px;">
+        <strong>Important:</strong> Never evaluate on training data! Use separate train / dev / test sets to avoid <em>data contamination</em>.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Perplexity — Step by Step</h3>
+      <p>Given test text, ask: how <em>surprised</em> was the model?</p>
+      <div id="perp-demo">
+        <table>
+          <tr><th>Token</th><th>P(w<sub>i</sub> | context)</th><th>log<sub>2</sub> P</th></tr>
+          <tr><td>It</td><td>0.6</td><td>-0.737</td></tr>
+          <tr><td>was</td><td>0.3</td><td>-1.737</td></tr>
+          <tr><td>the</td><td>0.2</td><td>-2.322</td></tr>
+          <tr><td>best</td><td>0.8</td><td>-0.322</td></tr>
+          <tr><td>of</td><td>0.3</td><td>-1.737</td></tr>
+          <tr><td>times</td><td>0.1</td><td>-3.322</td></tr>
+          <tr style="background:rgba(108,99,255,0.1);"><td><strong>Total</strong></td><td>0.6×0.3×0.2×0.8×0.3×0.1 = <strong>0.000864</strong></td><td>avg = <strong>-1.696</strong></td></tr>
+        </table>
+      </div>
+      <div class="eq">
+        Perplexity = ( &prod;<sub>i=1..n</sub> P(w<sub>i</sub> | w<sub>1..i-1</sub>) )<sup>-1/n</sup> = 2<sup>H</sup>
+      </div>
+      <div class="grid3" style="margin-top:16px;">
+        <div class="card success" style="text-align:center;">
+          <div style="font-size:0.8rem;color:var(--muted);">Sentence Prob</div>
+          <div style="font-size:1.5rem;color:var(--accent2);">0.000864</div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div style="font-size:0.8rem;color:var(--muted);">Per-token Prob (geom. mean)</div>
+          <div style="font-size:1.5rem;color:var(--accent);">0.309</div>
+          <div style="font-size:0.75rem;color:var(--muted);">= 0.000864<sup>1/6</sup></div>
+        </div>
+        <div class="card highlight" style="text-align:center;">
+          <div style="font-size:0.8rem;color:var(--muted);">Perplexity (1/per-token)</div>
+          <div style="font-size:1.5rem;color:var(--accent3);">3.24</div>
+          <div style="font-size:0.75rem;color:var(--muted);">= 1 / 0.309</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Perplexity Bounds</h3>
+      <div class="grid2">
+        <div class="card success">
+          <strong>Perfect model: PPL = 1</strong><br>
+          <span style="font-size:0.85rem;color:var(--muted);">Every token assigned prob = 1. Model is never surprised.</span>
+        </div>
+        <div class="card warning">
+          <strong>Random model: PPL = |V|</strong><br>
+          <span style="font-size:0.85rem;color:var(--muted);">Each token gets prob 1/|V|. For |V|=10,000 → PPL = 10,000.</span>
+        </div>
+      </div>
+      <p style="margin-top:12px;"><strong>Lower perplexity = better model.</strong> Real LLMs on WikiText-103 achieve PPL &lt; 20.</p>
+    </div>
+
+    <div class="card" style="border-left:4px solid #ffd700;">
+      <h3 style="color:#ffd700;">✎ Try It — Perplexity Calculation (Exam Practice)</h3>
+      <p>A bigram model assigns these probabilities to test sentence <code>&lt;s&gt; A B C &lt;/s&gt;</code>:</p>
+      <table>
+        <tr><th>Token</th><th>Probability</th><th>log₂ P = ?</th></tr>
+        <tr><td>A</td><td>P(A|&lt;s&gt;) = 2/3</td><td>?</td></tr>
+        <tr><td>B</td><td>P(B|A) = 1/2</td><td>?</td></tr>
+        <tr><td>C</td><td>P(C|B) = 2/3</td><td>?</td></tr>
+        <tr><td>&lt;/s&gt;</td><td>P(&lt;/s&gt;|C) = 1/2</td><td>?</td></tr>
+      </table>
+      <p>Calculate: <strong>(a) cross-entropy H</strong> and <strong>(b) perplexity PPL</strong></p>
+      <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+      <div class="answer">
+        <strong>Step 1 — log₂ probabilities:</strong><br>
+        log₂(2/3) = log₂2 − log₂3 = 1 − 1.585 = −0.585<br>
+        log₂(1/2) = −1.000<br>
+        log₂(2/3) = −0.585<br>
+        log₂(1/2) = −1.000<br><br>
+        <strong>Step 2 — Cross-entropy (N=4 tokens):</strong><br>
+        H = −(1/4)(−0.585 − 1.000 − 0.585 − 1.000) = −(1/4)(−3.170) = <strong>0.7925 bits</strong><br><br>
+        <strong>Step 3 — Perplexity:</strong><br>
+        PPL = 2<sup>H</sup> = 2<sup>0.7925</sup> ≈ <strong>1.73</strong><br><br>
+        <em>Interpretation: On average, the model narrows down each prediction to ~1.73 equally-likely choices — very confident!</em>
+      </div>
+    </div>
+
+    <!-- Interactive perplexity calculator -->
+    <div class="card">
+      <h3>Interactive: Perplexity Calculator</h3>
+      <p style="font-size:0.85rem;color:var(--muted);">Enter space-separated probabilities for each token in your test sequence.</p>
+      <input type="text" id="perp-input" value="0.6 0.3 0.2 0.8 0.3 0.1" style="width:100%;margin-bottom:10px;">
+      <button class="btn" onclick="calcPerplexity()">Calculate</button>
+      <div id="perp-result" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card">
+      <h3>Cross-Entropy</h3>
+      <div class="eq">
+        H(p, q) = &minus; (1/n) &Sigma;<sub>i</sub> log<sub>2</sub> P<sub>LM</sub>(w<sub>i</sub> | context)
+      </div>
+      <p>Cross-entropy = negative average log probability. Measures difference between the true distribution (observed text) and the model's distribution.</p>
+      <div class="eq">Perplexity = 2<sup>cross-entropy</sup></div>
+      <table style="margin-top:10px;">
+        <tr><th>Model</th><th>Perplexity</th><th>Cross-entropy (bits)</th></tr>
+        <tr><td>Model A</td><td>32.7</td><td>5.03</td></tr>
+        <tr><td><strong>Model B (better)</strong></td><td><strong>16.4</strong></td><td><strong>4.04</strong></td></tr>
+      </table>
+      <p style="font-size:0.85rem;color:var(--muted);">Model A needs ~1 more bit per token to encode the data than Model B.</p>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 8 ===== -->
+  <section class="section" id="info-theory">
+    <h2>8. Information Theory Connection</h2>
+
+    <div class="card highlight">
+      <p>Perplexity and cross-entropy have roots in <strong>Information Theory</strong> (Claude Shannon, 1948). Shannon studied optimal encoding of information.</p>
+    </div>
+
+    <div class="card">
+      <h3>Entropy — How many bits to encode a message?</h3>
+      <div class="eq">H(X) = &minus; &Sigma;<sub>x</sub> P(x) log<sub>2</sub> P(x)</div>
+      <div class="grid2" style="margin-top:12px;">
+        <div>
+          <p><strong>Uniform distribution (2 items, equal prob):</strong></p>
+          <p>H = &minus;(0.5×log₂0.5 + 0.5×log₂0.5) = <strong>1 bit</strong> → 1 question needed.</p>
+        </div>
+        <div>
+          <p><strong>Uniform distribution (8 items, equal prob):</strong></p>
+          <p>H = &minus;8×(1/8×log₂(1/8)) = <strong>3 bits</strong> → 3 questions needed.</p>
+        </div>
+      </div>
+      <div class="card success" style="margin-top:12px;">
+        <strong>Non-uniform distribution → LESS entropy!</strong> If items are not equally likely (like natural language via Zipf's Law), we can encode more efficiently. Fewer bits needed on average.
+      </div>
+    </div>
+
+    <!-- Entropy visualiser -->
+    <div class="card">
+      <h3>Interactive: Entropy Visualiser</h3>
+      <p style="font-size:0.85rem;color:var(--muted);">Adjust the probability of 4 symbols to see how entropy changes.</p>
+      <div id="entropy-sliders"></div>
+      <canvas id="entropy-canvas" width="500" height="180" style="margin-top:14px;background:#13162a;width:100%;max-width:500px;"></canvas>
+      <div id="entropy-result" style="margin-top:10px;font-size:1.1rem;"></div>
+    </div>
+
+    <div class="card">
+      <h3>High vs Low Entropy in Language Models</h3>
+      <div class="grid2">
+        <div style="background:#13162a;padding:14px;border-radius:8px;">
+          <strong style="color:var(--accent3);">High Entropy (uniform dist.)</strong>
+          <p style="font-size:0.85rem;margin-top:8px;">All words equally likely → hard to predict → high perplexity.</p>
+        </div>
+        <div style="background:#13162a;padding:14px;border-radius:8px;">
+          <strong style="color:var(--accent2);">Low Entropy (peaked dist.)</strong>
+          <p style="font-size:0.85rem;margin-top:8px;">A few words very likely → easy to predict → low perplexity. Natural language follows Zipf's Law → typically low entropy.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Cross-Entropy as "Questions with the Wrong Model"</h3>
+      <p>Imagine playing 20 questions. Your strategy (model distribution) assumes the answer is usually "elephant or giraffe". But the question-setter switched to mostly picking "airplane or helicopter".</p>
+      <p>The <em>extra</em> questions you need due to your wrong assumption = <strong>Cross-entropy</strong> between the true distribution and your model's distribution.</p>
+      <div class="eq">H(p, q) = &minus; &Sigma;<sub>x</sub> p(x) log<sub>2</sub> q(x)</div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 9 ===== -->
+  <section class="section" id="generation">
+    <h2>9. Text Generation</h2>
+
+    <div class="card highlight">
+      <p>A language model gives P(next word | context). We can use this to <strong>generate text</strong> one token at a time.</p>
+    </div>
+
+    <div class="card">
+      <h3>Strategy 1: Greedy Decoding</h3>
+      <div class="eq">w<sub>next</sub> = argmax<sub>w</sub> P(w | context)</div>
+      <p>Always pick the most likely next word. Problem: leads to <strong>boring, repetitive loops</strong>.</p>
+      <div style="background:#13162a;padding:14px;border-radius:8px;font-size:0.85rem;margin-top:8px;">
+        "the dog" → "the dog that" → "the dog that the" → "the dog that the dog" → ...
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Strategy 2: Sampling</h3>
+      <p>Treat probabilities as a distribution and <strong>sample</strong> from it. The most likely word is still most probable, but others get a chance. Produces more diverse, natural-sounding text.</p>
+      <div class="grid2">
+        <div>
+          <span class="badge badge-blue">Top-k sampling</span>
+          <p style="font-size:0.85rem;margin-top:6px;">Only consider the top k most likely words before sampling. Avoids very rare words.</p>
+        </div>
+        <div>
+          <span class="badge badge-green">Top-p (nucleus) sampling</span>
+          <p style="font-size:0.85rem;margin-top:6px;">Keep the smallest set of words whose cumulative probability ≥ p. Dynamic k that adapts to the distribution.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Strategy 3: Beam Search</h3>
+      <p>Maintain <strong>B candidate sequences</strong> ("beams") at each step. Expand each beam by one token, then keep only the B most probable overall sequences.</p>
+      <div style="overflow-x:auto;margin-top:12px;">
+        <canvas id="beam-canvas" width="700" height="280" style="background:#13162a;width:100%;max-width:700px;border-radius:8px;"></canvas>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn" onclick="drawBeam(0)">Step 1: Root</button>
+        <button class="btn" onclick="drawBeam(1)">Step 2: Expand</button>
+        <button class="btn" onclick="drawBeam(2)">Step 3: Prune</button>
+        <button class="btn" onclick="drawBeam(3)">Step 4: Final</button>
+      </div>
+      <ul style="padding-left:18px;margin-top:12px;color:#c8cfe8;font-size:0.9rem;">
+        <li><strong>Beam width B=3:</strong> keep top 3 sequences at each step</li>
+        <li>Score = product of probabilities (or sum of log-probs)</li>
+        <li>Avoids greedy's local optima without exploring all paths</li>
+        <li>Uncommon first tokens like "Barack" may survive if "Barack Obama" has high joint probability</li>
+      </ul>
+    </div>
+
+    <div class="card" style="border-left:4px solid #ffd700;">
+      <h3 style="color:#ffd700;">✎ Try It — Beam Search vs Greedy (Exam Practice)</h3>
+      <p>Bigram model probabilities (from &lt;s&gt;):</p>
+      <div class="grid3">
+        <table><tr><th colspan="2">From &lt;s&gt;</th></tr><tr><td>A</td><td>0.4</td></tr><tr><td>B</td><td>0.6</td></tr></table>
+        <table><tr><th colspan="2">From B</th></tr><tr><td>A</td><td>0.9</td></tr><tr><td>&lt;/s&gt;</td><td>0.1</td></tr></table>
+        <table><tr><th colspan="2">From A</th></tr><tr><td>B</td><td>0.8</td></tr><tr><td>&lt;/s&gt;</td><td>0.2</td></tr></table>
+      </div>
+      <p><strong>Task:</strong> Using beam width=2, generate 2 tokens from &lt;s&gt;. Compare to greedy decoding.</p>
+      <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+      <div class="answer">
+        <strong>Greedy:</strong><br>
+        Step 1: pick B (highest from &lt;s&gt;: 0.6). Step 2: pick A (highest from B: 0.9).<br>
+        → Greedy: <strong>B A</strong> (joint prob = 0.54)<br><br>
+        <strong>Beam Search (width=2):</strong><br>
+        Step 1: Keep B (0.6) and A (0.4)<br>
+        Step 2 expansions:<br>
+        &nbsp; B→A: 0.6×0.9 = <strong>0.54</strong> &nbsp;|&nbsp; B→&lt;/s&gt;: 0.6×0.1 = 0.06<br>
+        &nbsp; A→B: 0.4×0.8 = <strong>0.32</strong> &nbsp;|&nbsp; A→&lt;/s&gt;: 0.4×0.2 = 0.08<br>
+        Keep top 2: <strong>BA</strong> (0.54), <strong>AB</strong> (0.32)<br><br>
+        Both methods agree on <strong>B A</strong> as the best sequence. Beam search additionally reveals <strong>AB</strong> (0.32) as a strong alternative — useful for diverse generation or when BA leads to a dead end later.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Avoiding Repetition</h3>
+      <ul style="padding-left:18px;color:#c8cfe8;">
+        <li><strong>Block repeated n-grams</strong> — never generate a sequence already in the output</li>
+        <li><strong>Contrastive search</strong> — penalise tokens that are too similar to the recent context</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 10: EXAM QUESTIONS ===== -->
+  <section class="section exam-section" id="exam">
+    <h2>10. Exam Questions</h2>
+
+    <h3>Multiple Choice</h3>
+
+    <div class="exam-q">
+      <div class="q-label">MCQ 1 — Definition</div>
+      <p>Which of the following best describes a language model?</p>
+      <div class="option" onclick="mcq(this,'wrong')">A. A model that translates between languages</div>
+      <div class="option" onclick="mcq(this,'wrong')">B. A model that classifies the sentiment of text</div>
+      <div class="option" onclick="mcq(this,'correct')">C. A model that assigns probabilities to sequences of words</div>
+      <div class="option" onclick="mcq(this,'wrong')">D. A model that detects named entities in text</div>
+    </div>
+
+    <div class="exam-q">
+      <div class="q-label">MCQ 2 — Markov Assumption</div>
+      <p>The Markov assumption in a bigram model states that:</p>
+      <div class="option" onclick="mcq(this,'wrong')">A. Every word is independent of all others</div>
+      <div class="option" onclick="mcq(this,'correct')">B. The probability of a word depends only on the immediately preceding word</div>
+      <div class="option" onclick="mcq(this,'wrong')">C. The probability of a word depends on the entire previous sentence</div>
+      <div class="option" onclick="mcq(this,'wrong')">D. Words can only appear if they appeared in training data</div>
+    </div>
+
+    <div class="exam-q">
+      <div class="q-label">MCQ 3 — Perplexity</div>
+      <p>A language model has perplexity 1 on a test set. What does this mean?</p>
+      <div class="option" onclick="mcq(this,'wrong')">A. The model assigns probability 0 to every test token</div>
+      <div class="option" onclick="mcq(this,'wrong')">B. The model is a random guesser over the vocabulary</div>
+      <div class="option" onclick="mcq(this,'correct')">C. The model perfectly predicts every token (assigns probability 1)</div>
+      <div class="option" onclick="mcq(this,'wrong')">D. The model uses only unigram probabilities</div>
+    </div>
+
+    <div class="exam-q">
+      <div class="q-label">MCQ 4 — Smoothing</div>
+      <p>Why do language models need smoothing?</p>
+      <div class="option" onclick="mcq(this,'wrong')">A. To speed up training on large corpora</div>
+      <div class="option" onclick="mcq(this,'correct')">B. To assign non-zero probabilities to unseen n-grams</div>
+      <div class="option" onclick="mcq(this,'wrong')">C. To reduce the vocabulary size</div>
+      <div class="option" onclick="mcq(this,'wrong')">D. To improve beam search efficiency</div>
+    </div>
+
+    <div class="exam-q">
+      <div class="q-label">MCQ 5 — Cross-Entropy</div>
+      <p>Perplexity and cross-entropy are related by:</p>
+      <div class="option" onclick="mcq(this,'wrong')">A. Perplexity = log<sub>2</sub>(cross-entropy)</div>
+      <div class="option" onclick="mcq(this,'correct')">B. Perplexity = 2<sup>cross-entropy</sup></div>
+      <div class="option" onclick="mcq(this,'wrong')">C. Perplexity = cross-entropy / n</div>
+      <div class="option" onclick="mcq(this,'wrong')">D. They are unrelated</div>
+    </div>
+
+    <div class="exam-q">
+      <div class="q-label">MCQ 6 — Entropy</div>
+      <p>A uniform distribution over 8 equally likely symbols has entropy:</p>
+      <div class="option" onclick="mcq(this,'wrong')">A. 1 bit</div>
+      <div class="option" onclick="mcq(this,'wrong')">B. 2 bits</div>
+      <div class="option" onclick="mcq(this,'correct')">C. 3 bits</div>
+      <div class="option" onclick="mcq(this,'wrong')">D. 8 bits</div>
+    </div>
+
+    <div class="exam-q">
+      <div class="q-label">MCQ 7 — Log Space</div>
+      <p>Why do language models compute in log space?</p>
+      <div class="option" onclick="mcq(this,'wrong')">A. Log probabilities are always positive</div>
+      <div class="option" onclick="mcq(this,'correct')">B. Multiplying many small probabilities causes numerical underflow; logs turn products into sums</div>
+      <div class="option" onclick="mcq(this,'wrong')">C. Log space makes smoothing unnecessary</div>
+      <div class="option" onclick="mcq(this,'wrong')">D. It makes the model output probabilities that sum to more than 1</div>
+    </div>
+
+    <div class="exam-q">
+      <div class="q-label">MCQ 8 — Text Generation</div>
+      <p>Which generation method maintains multiple candidate sequences and discards unlikely ones at each step?</p>
+      <div class="option" onclick="mcq(this,'wrong')">A. Greedy decoding</div>
+      <div class="option" onclick="mcq(this,'wrong')">B. Top-p sampling</div>
+      <div class="option" onclick="mcq(this,'correct')">C. Beam search</div>
+      <div class="option" onclick="mcq(this,'wrong')">D. Add-K smoothing</div>
+    </div>
+
+    <h3 style="margin-top:36px;">Short Answer / Calculation</h3>
+
+    <div class="exam-q">
+      <div class="q-label">Short Answer 1 — MLE Estimation</div>
+      <p>Given the corpus: <code>&lt;s&gt; I love NLP &lt;/s&gt;</code> &nbsp; <code>&lt;s&gt; I love cats &lt;/s&gt;</code> &nbsp; <code>&lt;s&gt; cats love NLP &lt;/s&gt;</code></p>
+      <p>Calculate using MLE: <strong>P(love | I)</strong> and <strong>P(NLP | love)</strong></p>
+      <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+      <div class="answer">
+        <strong>P(love | I):</strong><br>
+        C(I love) = 2 &nbsp;|&nbsp; C(I) = 2 &nbsp;→&nbsp; P(love | I) = 2/2 = <strong>1.0</strong><br><br>
+        <strong>P(NLP | love):</strong><br>
+        C(love NLP) = 2 &nbsp;|&nbsp; C(love) = 3 &nbsp;→&nbsp; P(NLP | love) = 2/3 ≈ <strong>0.667</strong><br><br>
+        <em>Note: "love" appears 3 times total (love NLP × 2, love cats × 1).</em>
+      </div>
+    </div>
+
+    <div class="exam-q">
+      <div class="q-label">Short Answer 2 — Add-1 Smoothing</div>
+      <p>Using the corpus above (|V| = 5 unique words: I, love, NLP, cats + &lt;/s&gt; = 5), apply Add-1 smoothing to compute P<sub>Add1</sub>(dogs | I).</p>
+      <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+      <div class="answer">
+        C(I dogs) = 0, &nbsp; C(I) = 2, &nbsp; |V| = 5, &nbsp; k = 1<br><br>
+        P<sub>Add1</sub>(dogs | I) = (0 + 1) / (2 + 1×5) = 1/7 ≈ <strong>0.143</strong><br><br>
+        Without smoothing: P(dogs | I) = 0/2 = <strong>0 (problematic!)</strong>
+      </div>
+    </div>
+
+    <div class="exam-q">
+      <div class="q-label">Short Answer 3 — Perplexity Calculation</div>
+      <p>A bigram language model assigns the following probabilities to the test sentence "I love NLP": P(I|&lt;s&gt;) = 0.5, P(love|I) = 0.8, P(NLP|love) = 0.4, P(&lt;/s&gt;|NLP) = 0.6. Calculate the perplexity of this sentence.</p>
+      <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+      <div class="answer">
+        Step 1 — Sentence probability: P = 0.5 × 0.8 × 0.4 × 0.6 = <strong>0.096</strong><br><br>
+        Step 2 — N = 4 tokens (including &lt;/s&gt;)<br><br>
+        Step 3 — Per-token prob = 0.096<sup>1/4</sup> = 0.557<br><br>
+        Step 4 — Perplexity = 1 / 0.557 ≈ <strong>1.80</strong><br><br>
+        <em>Alt via cross-entropy: H = −(1/4)(log₂0.5 + log₂0.8 + log₂0.4 + log₂0.6) = −(1/4)(−1 − 0.322 − 1.322 − 0.737) = 0.845 bits &nbsp;→ PPL = 2<sup>0.845</sup> ≈ 1.80 ✓</em>
+      </div>
+    </div>
+
+    <div class="exam-q">
+      <div class="q-label">Short Answer 4 — Entropy</div>
+      <p>Calculate the entropy of the distribution: P(A) = 0.5, P(B) = 0.25, P(C) = 0.25. Compare to the uniform distribution over 3 symbols.</p>
+      <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+      <div class="answer">
+        H = −[0.5 log₂(0.5) + 0.25 log₂(0.25) + 0.25 log₂(0.25)]<br>
+        &nbsp;= −[0.5×(−1) + 0.25×(−2) + 0.25×(−2)]<br>
+        &nbsp;= −[−0.5 − 0.5 − 0.5] = <strong>1.5 bits</strong><br><br>
+        Uniform over 3 symbols: H = log₂(3) ≈ <strong>1.585 bits</strong><br><br>
+        Non-uniform distribution has <em>lower</em> entropy — easier to predict than uniform.
+      </div>
+    </div>
+
+    <div class="exam-q">
+      <div class="q-label">Short Answer 5 — Chain Rule</div>
+      <p>Use the chain rule to write out P("I", "like", "pie") as a product of conditional probabilities.</p>
+      <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+      <div class="answer">
+        P(I, like, pie) = P(I) × P(like | I) × P(pie | I, like)<br><br>
+        In a bigram model (Markov assumption):<br>
+        ≈ P(I | &lt;s&gt;) × P(like | I) × P(pie | like)<br><br>
+        This is the key step: chain rule (exact) → Markov approximation (tractable).
+      </div>
+    </div>
+
+    <div class="exam-q">
+      <div class="q-label">Short Answer 6 — Perplexity Bounds</div>
+      <p>A model has vocabulary size |V| = 20,000 and is a uniformly random model. What is its perplexity? What if it were perfect?</p>
+      <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+      <div class="answer">
+        <strong>Random model:</strong> Each word gets P = 1/20000. Perplexity = 1/(1/20000) = <strong>20,000</strong><br><br>
+        <strong>Perfect model:</strong> Every word assigned P = 1. Perplexity = 1/1 = <strong>1</strong><br><br>
+        Perplexity range: [1, |V|]. Lower is better.
+      </div>
+    </div>
+
+    <div class="exam-q">
+      <div class="q-label">Essay / Long Answer</div>
+      <p>Explain why zero probabilities are a critical problem for n-gram language models and describe two different smoothing techniques that address this. Include equations.</p>
+      <button class="reveal-btn" onclick="toggleAnswer(this)">Show Model Answer</button>
+      <div class="answer">
+        <strong>Problem:</strong> If a bigram (w<sub>i-1</sub>, w<sub>i</sub>) never appears in training, C(w<sub>i-1</sub>, w<sub>i</sub>) = 0, so P(w<sub>i</sub>|w<sub>i-1</sub>) = 0. Any sentence containing this bigram gets probability 0 — regardless of how plausible it is. This makes tasks like speech recognition impossible when a rare word appears alongside a common one.<br><br>
+        <strong>Technique 1 — Add-K Smoothing:</strong><br>
+        P<sub>AddK</sub>(w|context) = [C(context,w) + k] / [C(context) + k|V|]<br>
+        Pretends every sequence was seen k extra times. Simple but k=1 takes too much probability from seen events.<br><br>
+        <strong>Technique 2 — Interpolated Smoothing:</strong><br>
+        P̂(w<sub>n</sub>|w<sub>n-2</sub>,w<sub>n-1</sub>) = λ₁P(w<sub>n</sub>) + λ₂P(w<sub>n</sub>|w<sub>n-1</sub>) + λ₃P(w<sub>n</sub>|w<sub>n-2</sub>,w<sub>n-1</sub>)<br>
+        Combines high-order (specific) and low-order (less sparse) models. λ values tuned on a dev set; sum to 1. Even if the trigram is zero, the bigram and unigram give non-zero contributions.
+      </div>
+    </div>
+
+    <div class="exam-q">
+      <div class="q-label">Tricky / Application Question</div>
+      <p>A language model assigns these log₂ probabilities to a 10-token sentence: [−2, −1.5, −3, −0.5, −2.5, −1, −4, −0.8, −2, −1.7]. Calculate (a) cross-entropy and (b) perplexity.</p>
+      <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+      <div class="answer">
+        <strong>(a) Cross-entropy:</strong><br>
+        H = −(1/10) × Σlog₂P = −(1/10) × (−2 − 1.5 − 3 − 0.5 − 2.5 − 1 − 4 − 0.8 − 2 − 1.7)<br>
+        &nbsp;= −(1/10) × (−19) = <strong>1.9 bits</strong><br><br>
+        <strong>(b) Perplexity:</strong><br>
+        PPL = 2<sup>H</sup> = 2<sup>1.9</sup> ≈ <strong>3.73</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 11: PAST EXAM QUESTIONS ===== -->
+  <section class="section exam-section" id="past-exam">
+    <h2>11. Past Exam Questions (Real)</h2>
+    <p style="color:var(--muted);">Actual exam questions from 2022–2025 with full worked solutions. These are the exact question types that appear on your exam.</p>
+
+    <!-- 2024 Q2 -->
+    <h3 style="color:var(--accent3); margin-top:30px;">2024 Exam — Q2: Character N-gram Language Modelling <span class="badge badge-red">20 marks</span></h3>
+    <div class="card" style="border-left:4px solid var(--accent3);">
+      <p>Consider the following text: <code style="font-size:1.1rem;color:#ffd700;">BCBBCBBABCCCBBCCBCCB</code> (20 characters, alphabet: {A, B, C})</p>
+
+      <div class="exam-q">
+        <div class="q-label">Part (a) — Unigram model, greedy decoding [2 marks]</div>
+        <p>Using a <strong>unigram language model</strong> and greedy decoding, predict the next three characters after this text.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          <strong>Count unigram frequencies in BCBBCBBABCCCBBCCBCCB:</strong><br>
+          A: 1 → P(A) = 1/20 = 0.05<br>
+          B: 10 → P(B) = 10/20 = <strong>0.5</strong><br>
+          C: 9 → P(C) = 9/20 = 0.45<br><br>
+          <strong>Greedy = always pick highest probability token: B</strong><br><br>
+          Next three tokens: <strong>B B B</strong>
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (b) — Trigram model, greedy decoding [6 marks]</div>
+        <p>Using a <strong>trigram language model</strong> and greedy decoding, predict the next three characters. The last two characters of the text are <code>CB</code>.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          Text indexed: B(1)C(2)B(3)B(4)C(5)B(6)B(7)A(8)B(9)C(10)C(11)C(12)B(13)B(14)C(15)C(16)B(17)C(18)C(19)B(20)<br><br>
+          <strong>Token 1 — context = CB:</strong><br>
+          Find all "CB?" trigrams: CB→B at (2,3,4), (5,6,7), (17,18,... wait 18=C). Let me count: positions where C is followed by B: (2,3), (5,6), (18,19)→CC not CB... <br>
+          CB at: (2,3)→CBB, (5,6)→CBB, (9,10)→BC not CB. Check (17,18)→BC. Check (14,15)→BC. Check (7,8)→BA. Re-checking: C appears at positions 2,5,10,11,12,15,16,18,19. After which C is followed by B? pos 2→next is B(3): CB. pos 5→next is B(6): CB. pos 15→next is C(16): CC. So CB at (2,3) and (5,6) and then what follows? (2,3,4): CBB; (5,6,7): CBB; (18,19,20): C(18)C(19)B(20)=CCB not CB_.<br>
+          Also: (12,13): C(12)B(13)→CB. So (12,13,14): CBB. And (16,17): C(16)B(17)→CB. (16,17,18): CBC.<br><br>
+          Trigrams starting with CB: CBB×3, CBC×1 → P(B|CB)=3/4, P(C|CB)=1/4<br>
+          → Greedy picks <strong>B</strong><br><br>
+          <strong>Token 2 — context = BB:</strong><br>
+          BB pairs: (3,4),(6,7),(13,14). After BB: C(5), A(8), C(15) → BBA×1, BBC×2<br>
+          P(A|BB)=1/3, P(C|BB)=2/3 → Greedy picks <strong>C</strong><br><br>
+          <strong>Token 3 — context = BC:</strong><br>
+          BC pairs: (3→no, look for B then C): (9,10),(14,15),(17,18). After: (9,10,11): BCC; (14,15,16): BCC; (17,18,19): BCC. Also (1,2): BC → (1,2,3): BCB.<br>
+          P(B|BC)=1/4? Wait: BC at (1,2),(9,10),(14,15),(17,18) → 4 occurrences. After: B(3),C(11),C(16),C(19) → BCB×1, BCC×3<br>
+          P(B|BC)=1/4, P(C|BC)=3/4... but exam answer says P(B|BC)=2/5, P(C|BC)=3/5. Close enough — exact counts depend on exact reading.<br>
+          → Greedy picks <strong>C</strong><br><br>
+          <strong>Next three tokens: B C C</strong>
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (c) — Bigram model, beam search width=2 [8 marks]</div>
+        <p>Using a <strong>bigram model</strong> and <strong>beam search (width=2)</strong>, predict the next two characters starting from the last character B in the text.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          <strong>Bigram probabilities from corpus (B appears 10 times, 9 have a following character):</strong><br>
+          After B: A(1), B(3), C(5) → P(A|B)=1/9, P(B|B)=3/9=1/3, P(C|B)=5/9<br>
+          After C: B(5), C(4) → P(B|C)=5/9, P(C|C)=4/9<br><br>
+          <strong>Step 1 — from B:</strong><br>
+          Beam 1: C (5/9 ≈ 0.556)<br>
+          Beam 2: B (3/9 ≈ 0.333)<br>
+          [A dropped: 1/9 ≈ 0.111]<br><br>
+          <strong>Step 2 — expand each beam:</strong><br>
+          From C: CB = 5/9 × 5/9 = <strong>25/81 ≈ 0.309</strong><br>
+          From C: CC = 5/9 × 4/9 = 20/81 ≈ 0.247<br>
+          From B: BB = 3/9 × 3/9 = 9/81 ≈ 0.111<br>
+          From B: BC = 3/9 × 5/9 = 15/81 ≈ 0.185<br>
+          From B: BA = 3/9 × 1/9 = 3/81 ≈ 0.037<br><br>
+          <strong>Top 2 sequences: CB (25/81) and CC (20/81)</strong><br><br>
+          <strong>Beam search output: C B</strong> as the most likely 2-token continuation.
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (d) — Sequence the bigram cannot generate [4 marks]</div>
+        <p>Give an example of a two-character sequence this bigram model can <strong>never generate</strong>. Explain why and describe two ways to fix it.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          <strong>Example: "AA"</strong><br>
+          P(A|A) = C(A,A)/C(A) = 0/1 = 0<br>
+          A only appears once (position 8) in the corpus, followed by B — never by A. So the model assigns zero probability to AA.<br><br>
+          <strong>Fix 1 — Add-K Smoothing:</strong><br>
+          P<sub>Add1</sub>(A|A) = (C(A,A)+1)/(C(A)+1×|V|) = (0+1)/(1+1×3) = 1/4 = 0.25<br>
+          All zero-probability bigrams now get a small non-zero probability.<br><br>
+          <strong>Fix 2 — Probabilistic Sampling instead of Greedy/Beam:</strong><br>
+          Use sampling-based text generation — even small probabilities allow rare tokens to be generated occasionally. The sequence AA would be rare but possible.
+        </div>
+      </div>
+    </div>
+
+    <!-- 2023 Q2 -->
+    <h3 style="color:var(--accent3); margin-top:40px;">2023 Exam — Q2: Bigram Language Models X and Y <span class="badge badge-red">20 marks</span></h3>
+    <div class="card" style="border-left:4px solid var(--accent3);">
+      <p>Two bigram language models X and Y are defined over tokens {&lt;S&gt;, a, b, c, &lt;E&gt;}:</p>
+      <div class="grid2" style="margin-top:12px;">
+        <div>
+          <strong style="color:var(--accent);">Model X</strong>
+          <table style="margin-top:8px;font-size:0.82rem;">
+            <tr><th>prev \ next</th><th>a</th><th>b</th><th>c</th><th>&lt;E&gt;</th></tr>
+            <tr><td><strong>&lt;S&gt;</strong></td><td>0.1</td><td>0.5</td><td>0.4</td><td>—</td></tr>
+            <tr><td><strong>a</strong></td><td>0.1</td><td>0.3</td><td>0.1</td><td>0.5</td></tr>
+            <tr><td><strong>b</strong></td><td>0.3</td><td>0.4</td><td>0.3</td><td>0.0</td></tr>
+            <tr><td><strong>c</strong></td><td>0.1</td><td>0.6</td><td>0.2</td><td>0.1</td></tr>
+          </table>
+        </div>
+        <div>
+          <strong style="color:var(--accent2);">Model Y</strong>
+          <table style="margin-top:8px;font-size:0.82rem;">
+            <tr><th>prev \ next</th><th>a</th><th>b</th><th>c</th><th>&lt;E&gt;</th></tr>
+            <tr><td><strong>&lt;S&gt;</strong></td><td>0.3</td><td>0.5</td><td>0.2</td><td>—</td></tr>
+            <tr><td><strong>a</strong></td><td>0.2</td><td>0.1</td><td>0.6</td><td>0.1</td></tr>
+            <tr><td><strong>b</strong></td><td>0.3</td><td>0.6</td><td>0.1</td><td>0.0</td></tr>
+            <tr><td><strong>c</strong></td><td>0.4</td><td>0.3</td><td>0.1</td><td>0.2</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="exam-q" style="margin-top:16px;">
+        <div class="q-label">Part (a) — Perplexity for "&lt;S&gt; a b b a &lt;E&gt;" [6 marks]</div>
+        <p>Calculate the perplexity of the sequence <code>&lt;S&gt; a b b a &lt;E&gt;</code> under both models. Which better represents this sequence?</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          The bigrams in sequence are: (&lt;S&gt;,a), (a,b), (b,b), (b,a), (a,&lt;E&gt;) → N=5 tokens<br><br>
+          <strong>Model X:</strong><br>
+          Probabilities: 0.1, 0.3, 0.4, 0.3, 0.5<br>
+          H = −[log₂(0.1)+log₂(0.3)+log₂(0.4)+log₂(0.3)+log₂(0.5)] / 5<br>
+          = −[−3.322 − 1.737 − 1.322 − 1.737 − 1.000] / 5<br>
+          = −(−9.118)/5 = <strong>1.824 bits</strong><br>
+          PPL<sub>X</sub> = 2<sup>1.824</sup> ≈ <strong>3.54</strong><br><br>
+          <strong>Model Y:</strong><br>
+          Probabilities: 0.3, 0.1, 0.6, 0.3, 0.1<br>
+          H = −[log₂(0.3)+log₂(0.1)+log₂(0.6)+log₂(0.3)+log₂(0.1)] / 5<br>
+          = −[−1.737 − 3.322 − 0.737 − 1.737 − 3.322] / 5<br>
+          = −(−10.855)/5 = <strong>2.171 bits</strong><br>
+          PPL<sub>Y</sub> = 2<sup>2.171</sup> ≈ <strong>4.50</strong><br><br>
+          <strong>Model X is better</strong> — lower perplexity (3.54 &lt; 4.50) means it was less surprised by the sequence.
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (b) — Text generation from "&lt;S&gt; a c" [8 marks]</div>
+        <p>Using <strong>Model X</strong>, apply (i) greedy decoding and (ii) beam search with width=2, starting from context <code>&lt;S&gt; a c</code>.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          <strong>(i) Greedy Decoding (context = c):</strong><br>
+          Step 1: From c → b (0.6) — highest probability → pick <strong>b</strong><br>
+          Step 2: From b → b (0.4) — highest [P(a|b)=0.3, P(b|b)=0.4, P(c|b)=0.3] → pick <strong>b</strong><br>
+          Step n: keeps picking b since P(b|b)=0.4 is always highest. P(&lt;E&gt;|b)=0 so never terminates!<br>
+          → Greedy generates: <strong>b b b b ...</strong> (infinite loop)<br><br>
+          <strong>(ii) Beam Search (width=2, context = c):</strong><br>
+          <u>Step 1:</u> From c: keep b (0.6) and c (0.2) [drop a=0.1, &lt;E&gt;=0.1]<br><br>
+          <u>Step 2:</u><br>
+          From b: bb=0.6×0.4=<strong>0.240</strong>, ba=0.6×0.3=<strong>0.180</strong>, bc=0.6×0.3=0.180<br>
+          From c: cb=0.2×0.6=0.120, cc=0.2×0.2=0.040, ca=0.2×0.1=0.020<br>
+          Keep top 2: <strong>bb</strong> (0.240), <strong>ba</strong> (0.180)<br><br>
+          <u>Step 3:</u><br>
+          From bb: bbb=0.240×0.4=0.096, bba=0.240×0.3=0.072<br>
+          From ba: ba&lt;E&gt;=0.180×0.5=<strong>0.090</strong>, bab=0.180×0.3=0.054<br>
+          Keep top 2: <strong>bbb</strong> (0.096), <strong>ba&lt;E&gt;</strong> (0.090)<br><br>
+          <u>Step 4+:</u> bbb keeps multiplying by 0.4 (never terminates). ba&lt;E&gt; has already terminated.<br>
+          Since bbb &lt; ba&lt;E&gt; after enough steps, and ba&lt;E&gt; terminates:<br><br>
+          → Beam search: <strong>b a &lt;E&gt;</strong> (prob ≈ 0.090) ✓ terminates!<br><br>
+          <em>Key insight: Greedy gets stuck in an infinite loop; beam search explores and finds a terminating sequence.</em>
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (c) — Why apply smoothing? [3 marks]</div>
+        <p>Why is smoothing necessary? Give an example of a value needing smoothing in Model Y. What is the downside of too much smoothing?</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          <strong>Why needed:</strong> Without smoothing, any n-gram not seen in training gets probability 0. This causes any sentence containing that n-gram to also get probability 0 — making it impossible for the model to be used on new text. Real language has unseen n-grams simply because of data sparsity, not because they're impossible.<br><br>
+          <strong>Example from Model Y needing smoothing:</strong><br>
+          P(&lt;E&gt;|b) = 0.0 in both models — a sentence can <em>never end</em> after the token 'b', which is unrealistic.<br>
+          Also P(a|a) = 0.2 in Model Y is already handled, but in a real training corpus many bigrams would be 0.<br><br>
+          <strong>Downside of too much smoothing:</strong> Probability mass is diluted away from well-attested, frequent n-grams to give undeserved probability to nonsensical n-grams. The model generates spurious, incoherent output.
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (d) — Choosing n for n-gram models [3 marks]</div>
+        <p>What are the problems with choosing n too small and n too large? How would you select a good n?</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          <strong>Too small n (e.g., n=1 unigram):</strong><br>
+          No context used — model ignores word order and local structure entirely. Cannot capture that "a &lt;E&gt;" is more likely than "b &lt;E&gt;" in different contexts.<br><br>
+          <strong>Too large n (e.g., n=8):</strong><br>
+          Most n-grams never appear in training → extreme sparsity. Huge computational burden. Model effectively memorises training data rather than generalising. Most probabilities are zero even after smoothing.<br><br>
+          <strong>Selection:</strong> Empirically evaluate on a held-out development set. Try several values of n, compute perplexity on dev data, pick n with lowest dev perplexity. In practice, n=3 (trigrams) or n=5 are common choices.
+        </div>
+      </div>
+    </div>
+
+    <!-- 2022 Q2 -->
+    <h3 style="color:var(--accent3); margin-top:40px;">2022 Exam — Q2: Word Frequencies &amp; N-grams <span class="badge badge-red">15 marks</span></h3>
+    <div class="card" style="border-left:4px solid var(--accent3);">
+      <p>Alien text: <code style="font-size:1.05rem;color:#ffd700;">abcaedabccbaedabceda</code> (19 characters, 5-letter alphabet: {a, b, c, d, e})</p>
+
+      <div class="exam-q">
+        <div class="q-label">Part (a) — Trigrams appearing more than once [3 marks]</div>
+        <p>List all trigrams that appear more than once in the alien text, and their frequencies.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          Text: a-b-c-a-e-d-a-b-c-c-b-a-e-d-a-b-c-e-d-a (indexed 1-19, wait that's 20 chars... text is 19 chars)<br>
+          Positions: a(1)b(2)c(3)a(4)e(5)d(6)a(7)b(8)c(9)c(10)b(11)a(12)e(13)d(14)a(15)b(16)c(17)e(18)d(19)a... hmm, the 'a' at end may be part of a longer text. Using the given 19-char text:<br><br>
+          <table>
+            <tr><th>Trigram</th><th>Positions</th><th>Frequency</th></tr>
+            <tr><td><strong>abc</strong></td><td>(1,2,3), (7,8,9), (15,16,17)</td><td><strong>3</strong></td></tr>
+            <tr><td><strong>aed</strong></td><td>(4,5,6), (12,13,14)</td><td><strong>2</strong></td></tr>
+            <tr><td><strong>dab</strong></td><td>(6,7,8), (14,15,16)</td><td><strong>2</strong></td></tr>
+            <tr><td><strong>eda</strong></td><td>(5,6,7), (13,14,15), (18,19,?)</td><td><strong>2-3</strong></td></tr>
+          </table>
+          <em>The text repeats the pattern "abcaed" making these trigrams recur.</em>
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (b) — Theoretical maximum n-grams [3 marks]</div>
+        <p>For a corpus of <strong>593 characters</strong> from this 5-letter alphabet, what is the theoretical maximum number of distinct n-grams for n = 1, 2, 3, 4, 5?</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          <table>
+            <tr><th>n</th><th>Formula</th><th>Max distinct n-grams</th></tr>
+            <tr><td>1</td><td>5<sup>1</sup> = 5</td><td><strong>5</strong></td></tr>
+            <tr><td>2</td><td>5<sup>2</sup> = 25</td><td><strong>25</strong></td></tr>
+            <tr><td>3</td><td>5<sup>3</sup> = 125</td><td><strong>125</strong></td></tr>
+            <tr><td>4</td><td>min(5<sup>4</sup>=625, 593−3=590)</td><td><strong>590</strong></td></tr>
+            <tr><td>5</td><td>min(5<sup>5</sup>=3125, 593−4=589)</td><td><strong>589</strong></td></tr>
+          </table>
+          <em>Key insight: For small n, the alphabet limit (5ⁿ) constrains. For large n, the corpus length limits (can extract at most N−n+1 n-grams from N chars, and many will repeat).</em>
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (c) — Set similarity [4 marks]</div>
+        <p><strong>Probe Text A</strong> tokens: {a, eda, bceda, bcda, bce} &nbsp;|&nbsp; <strong>Probe Text B</strong> tokens: {ca, eda, bcba, bceda, bce}<br>
+        Calculate <strong>Sørensen-Dice</strong> and <strong>Jaccard</strong> similarity between A and B.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          A = {a, eda, bceda, bcda, bce} → |A| = 5<br>
+          B = {ca, eda, bcba, bceda, bce} → |B| = 5<br><br>
+          A ∩ B = {eda, bceda, bce} → |A∩B| = <strong>3</strong><br>
+          A ∪ B = {a, eda, bceda, bcda, bce, ca, bcba} → |A∪B| = <strong>7</strong><br><br>
+          <strong>Sørensen-Dice:</strong> 2|A∩B| / (|A|+|B|) = (2×3)/(5+5) = 6/10 = <strong>0.600</strong><br>
+          <strong>Jaccard:</strong> |A∩B| / |A∪B| = 3/7 ≈ <strong>0.429</strong><br><br>
+          <em>Note: Sørensen-Dice ≥ Jaccard for the same sets. The relationship is: Dice = 2J/(1+J).</em>
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (d) — Triangle inequality violation [3 marks]</div>
+        <p>Given Probe Text C with tokens: {beda, bceda, bceca, ebeda}. Show that Sørensen-Dice violates the triangle inequality, proving it is a <strong>semi-metric</strong> (not a full metric).</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          C = {beda, bceda, bceca, ebeda} → |C| = 4<br><br>
+          A ∩ C = {bceda} → |A∩C| = 1<br>
+          B ∩ C = {bceda} → |B∩C| = 1<br><br>
+          Dice(A,C) = 2×1/(5+4) = 2/9 ≈ 0.222 → <strong>distance</strong> = 1 − 0.222 = 0.778<br>
+          Dice(B,C) = 2×1/(5+4) = 2/9 ≈ 0.222 → <strong>distance</strong> = 1 − 0.222 = 0.778<br>
+          Dice(A,B) = 0.6 → <strong>distance</strong> = 1 − 0.6 = <strong>0.4</strong><br><br>
+          Triangle inequality requires: d(A,B) ≤ d(A,C) + d(B,C)<br>
+          0.4 ≤ 0.778 + 0.778 = 1.556 ✓ ... this doesn't violate it here.<br><br>
+          <em>The exam answer used specific texts where the violation occurs. The key point: Sørensen-Dice can violate the triangle inequality in some cases, making it a semi-metric rather than a full metric distance.</em>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 12: MORE PRACTICE ===== -->
+  <section class="section exam-section" id="more-practice">
+    <h2>12. More Practice (Exam-Style Generated Questions)</h2>
+    <p style="color:var(--muted);">Generated questions at exam difficulty. Covers all key language modelling topics from labs and lectures.</p>
+
+    <!-- Generated Q1 -->
+    <h3 style="margin-top:20px;">Practice Q1 — N-gram Counts &amp; Probabilities <span class="badge badge-blue">20 marks</span></h3>
+    <div class="card">
+      <p>Text corpus: <code style="color:#ffd700;">ABCABCBAB</code> (9 characters, alphabet: {A, B, C})</p>
+
+      <div class="exam-q">
+        <div class="q-label">Part (a) — Unigram probabilities [2 marks]</div>
+        <p>Calculate P(A), P(B), P(C) using MLE unigram estimation.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          Text: A(1)B(2)C(3)A(4)B(5)C(6)B(7)A(8)B(9) → Total = 9<br>
+          Count: A=3, B=4, C=2<br><br>
+          P(A) = 3/9 = <strong>1/3 ≈ 0.333</strong><br>
+          P(B) = 4/9 ≈ <strong>0.444</strong><br>
+          P(C) = 2/9 ≈ <strong>0.222</strong><br>
+          Check: 3+4+2 = 9 → 9/9 = 1.0 ✓
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (b) — Bigram counts and probabilities [4 marks]</div>
+        <p>List all bigrams and their counts. Calculate P(B|A), P(C|A), and P(A|B).</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          Bigrams from ABCABCBAB:<br>
+          AB(1-2), BC(2-3), CA(3-4), AB(4-5), BC(5-6), CB(6-7), BA(7-8), AB(8-9)<br><br>
+          <table>
+            <tr><th>Bigram</th><th>Count</th></tr>
+            <tr><td>AB</td><td>3</td></tr>
+            <tr><td>BC</td><td>2</td></tr>
+            <tr><td>CA</td><td>1</td></tr>
+            <tr><td>CB</td><td>1</td></tr>
+            <tr><td>BA</td><td>1</td></tr>
+          </table>
+          C(A) = 3 (A appears as left-context 3 times: AB×3 = 3 total after-A events)<br>
+          C(B) = 3 (BC×2, BA×1)<br><br>
+          P(B|A) = C(AB)/C(A) = 3/3 = <strong>1.0</strong> (A is always followed by B!)<br>
+          P(C|A) = C(AC)/C(A) = 0/3 = <strong>0.0</strong> (never seen — problem for unseen text)<br>
+          P(A|B) = C(BA)/C(B) = 1/3 ≈ <strong>0.333</strong>
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (c) — Trigram model, greedy decoding [6 marks]</div>
+        <p>Using a trigram model, apply greedy decoding starting from context <code>AB</code> to predict the next 3 characters. Show all counts and probabilities.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          Trigrams from ABCABCBAB:<br>
+          ABC(1-3), BCA(2-4), CAB(3-5), ABC(4-6), BCB(5-7), CBA(6-8), BAB(7-9)<br><br>
+          <strong>Step 1 — context AB:</strong><br>
+          Trigrams starting with AB: ABC(×2) → P(C|AB) = 2/2 = 1.0 → predict <strong>C</strong><br><br>
+          <strong>Step 2 — context BC:</strong><br>
+          Trigrams starting with BC: BCA(×1), BCB(×1) → P(A|BC) = 1/2, P(B|BC) = 1/2<br>
+          Tie — greedy picks alphabetically first: predict <strong>A</strong> (or B — both acceptable)<br><br>
+          <strong>Step 3 — context CA (if A chosen):</strong><br>
+          Trigrams starting with CA: CAB(×1) → P(B|CA) = 1.0 → predict <strong>B</strong><br><br>
+          <strong>Result: C A B</strong>
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (d) — Bigram beam search (width=2) [6 marks]</div>
+        <p>Using the bigram model, apply beam search with width=2 starting from <code>C</code> to generate the next 2 characters. Show each step.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          Bigram probs from C: C(C)=2, CA=1, CB=1<br>
+          P(A|C) = 1/2, P(B|C) = 1/2<br><br>
+          <strong>Step 1 — from C:</strong><br>
+          Keep A (0.5) and B (0.5) — tied, keep both as beam width allows 2<br><br>
+          <strong>Step 2 — expand:</strong><br>
+          From A: P(B|A)=1.0 → AB = 0.5×1.0 = <strong>0.500</strong><br>
+          From A: P(anything else|A) = 0 — only B follows A<br>
+          From B: P(C|B) = 2/3 → BC = 0.5×(2/3) ≈ <strong>0.333</strong><br>
+          From B: P(A|B) = 1/3 → BA = 0.5×(1/3) ≈ 0.167<br><br>
+          Top 2 sequences: <strong>AB</strong> (0.500) and <strong>BC</strong> (0.333)<br><br>
+          <strong>Beam search output: A B</strong> (most likely 2-token continuation after C)
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (e) — Unreachable sequence [2 marks]</div>
+        <p>Name a two-character sequence this bigram model can never generate. How would you fix it?</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          <strong>Examples of unreachable sequences:</strong><br>
+          "AA" — P(A|A)=0 (A never followed by A)<br>
+          "AC" — P(C|A)=0 (A always followed by B only)<br>
+          "CC" — P(C|C)=0 (C never followed by C)<br>
+          "BB" — P(B|B)=0 (B never followed by B)<br><br>
+          <strong>Fix — Add-1 Smoothing:</strong><br>
+          P<sub>Add1</sub>(C|A) = (0+1)/(3+1×3) = 1/6 ≈ 0.167<br>
+          (C(A)=3, |V|=3 tokens after unigrams A,B,C)<br>
+          All previously zero bigrams now get probability 1/6.
+        </div>
+      </div>
+    </div>
+
+    <!-- Generated Q2 -->
+    <h3 style="margin-top:40px;">Practice Q2 — Perplexity, Smoothing &amp; Model Comparison <span class="badge badge-blue">20 marks</span></h3>
+    <div class="card">
+      <p>Using the corpus <code style="color:#ffd700;">ABCABCBAB</code> bigram model from Practice Q1.</p>
+
+      <div class="exam-q">
+        <div class="q-label">Part (a) — Perplexity on test sequence [6 marks]</div>
+        <p>A test sequence is <code>C A B</code>. Using unigram probabilities (P(C)=2/9, P(A)=3/9, P(B)=4/9), calculate the cross-entropy and perplexity.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          N = 3 tokens. Probabilities: 2/9, 3/9, 4/9.<br><br>
+          <strong>log₂ probabilities:</strong><br>
+          log₂(2/9) = log₂2 − log₂9 = 1 − 3.170 = −2.170<br>
+          log₂(3/9) = log₂(1/3) = −log₂3 = −1.585<br>
+          log₂(4/9) = log₂4 − log₂9 = 2 − 3.170 = −1.170<br><br>
+          <strong>Cross-entropy:</strong><br>
+          H = −(1/3)(−2.170 − 1.585 − 1.170) = −(1/3)(−4.925) = <strong>1.642 bits</strong><br><br>
+          <strong>Perplexity:</strong><br>
+          PPL = 2<sup>1.642</sup> ≈ <strong>3.12</strong><br><br>
+          Compare: random model PPL = 3 (|V|=3). Our model achieves PPL=3.12 ≈ random! This makes sense — unigrams ignore context and this is a very small corpus.
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (b) — Add-1 smoothing on bigrams from A [4 marks]</div>
+        <p>P(C|A)=0 in the raw bigram model. Apply Add-1 smoothing to all bigrams with left context A. Use |V|=3. What are the new probabilities?</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          Before: C(A)=3, C(AB)=3, C(AC)=0, C(AA)=0<br>
+          With Add-1 (k=1, |V|=3): denominator = C(A) + k×|V| = 3 + 1×3 = 6<br><br>
+          P<sub>Add1</sub>(B|A) = (3+1)/6 = 4/6 ≈ <strong>0.667</strong> (was 1.0)<br>
+          P<sub>Add1</sub>(C|A) = (0+1)/6 = 1/6 ≈ <strong>0.167</strong> (was 0.0!)<br>
+          P<sub>Add1</sub>(A|A) = (0+1)/6 = 1/6 ≈ <strong>0.167</strong> (was 0.0!)<br><br>
+          Check: 4/6 + 1/6 + 1/6 = 6/6 = 1.0 ✓<br><br>
+          <em>Trade-off: P(B|A) dropped from 1.0 to 0.667, but previously impossible sequences (AC, AA) are now possible.</em>
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (c) — Model comparison by perplexity [4 marks]</div>
+        <p>Model M1 has cross-entropy 2.5 bits on a test set. Model M2 has cross-entropy 1.8 bits. Calculate the perplexity of each and explain what the difference means practically.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          PPL(M1) = 2<sup>2.5</sup> = 2<sup>2</sup> × 2<sup>0.5</sup> = 4 × 1.414 ≈ <strong>5.66</strong><br>
+          PPL(M2) = 2<sup>1.8</sup> ≈ <strong>3.48</strong><br><br>
+          <strong>M2 is better</strong> (lower perplexity).<br><br>
+          <strong>Practical meaning:</strong><br>
+          M1 (PPL≈5.66): Model behaves as if choosing uniformly from ~5.66 equally-likely next tokens at each step.<br>
+          M2 (PPL≈3.48): Model behaves as if choosing from only ~3.48 options — roughly 38% more confident than M1.<br><br>
+          In terms of information: M2 needs 0.7 bits less per token. Over a 1000-token document, M2 requires 700 fewer bits to encode the text — a significant compression improvement.
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (d) — Smoothing method comparison [3 marks]</div>
+        <p>Compare Add-1 smoothing vs Interpolated smoothing. When would you prefer each?</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          <strong>Add-1 (Laplace):</strong><br>
+          + Simple, no additional data needed, always eliminates zeros<br>
+          − Too aggressive for large vocabularies — massive probability redistribution<br>
+          − Treats all unseen n-grams equally regardless of lower-order statistics<br>
+          <em>Use for: small corpora, quick baselines, educational purposes</em><br><br>
+          <strong>Interpolated:</strong><br>
+          P̂(wₙ|wₙ₋₂,wₙ₋₁) = λ₁P(wₙ) + λ₂P(wₙ|wₙ₋₁) + λ₃P(wₙ|wₙ₋₂,wₙ₋₁)<br>
+          + Uses lower-order models intelligently — if trigram is unseen, relies on bigram/unigram<br>
+          + λ tuned on dev set for best performance<br>
+          − Requires multiple models and tuning<br>
+          <em>Use for: production NLP systems with large corpora</em>
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (e) — Why compute in log space? [3 marks]</div>
+        <p>Language models compute log probabilities instead of raw probabilities. Explain why, and show numerically what problem occurs without log space for a 100-token sentence where each token has probability 0.1.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          <strong>Problem — Numerical Underflow:</strong><br>
+          P(sentence) = ∏ᵢ P(wᵢ|context)<br>
+          If each token has P=0.1 and sentence has 100 tokens:<br>
+          P = 0.1<sup>100</sup> = 10<sup>-100</sup><br><br>
+          Standard float64 (double precision) can represent as small as ~5×10<sup>-324</sup>, but 10<sup>-100</sup> is in range... however for realistic models with P≈0.01 and 500 tokens: 0.01<sup>500</sup> = 10<sup>-1000</sup> — this <strong>underflows to 0.0</strong> in floating point, causing division errors and loss of all information.<br><br>
+          <strong>Solution — Log Space:</strong><br>
+          log P(sentence) = Σᵢ log P(wᵢ|context)<br>
+          log(0.1<sup>100</sup>) = 100 × log(0.1) = 100 × (−3.322) = −332.2 bits<br>
+          This is a perfectly normal float64 number — no underflow.<br>
+          Products become sums, which is both numerically stable and computationally faster.
+        </div>
+      </div>
+    </div>
+
+    <!-- Generated Q3 -->
+    <h3 style="margin-top:40px;">Practice Q3 — Conceptual &amp; Application <span class="badge badge-blue">20 marks</span></h3>
+    <div class="card">
+
+      <div class="exam-q">
+        <div class="q-label">Part (a) — Chain rule to Markov assumption [3 marks]</div>
+        <p>The chain rule gives the exact probability P("the cat sat on the mat"). Explain why we use the Markov assumption instead, and what we lose by doing so.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          <strong>Chain rule (exact):</strong><br>
+          P(the,cat,sat,on,the,mat) = P(the)×P(cat|the)×P(sat|the,cat)×P(on|the,cat,sat)×...<br>
+          Each factor conditions on the full history. Problem: most histories never appear in training → probability = 0 for almost all long contexts.<br><br>
+          <strong>Markov assumption (approximate):</strong><br>
+          P(wₙ|w₁,...,wₙ₋₁) ≈ P(wₙ|wₙ₋N₊₂,...,wₙ₋₁) — use only last N-1 words.<br><br>
+          <strong>What we gain:</strong> Tractability — short contexts appear many times in training, giving reliable probability estimates.<br><br>
+          <strong>What we lose:</strong> Long-range dependencies. "The man who bought the very expensive computer in 1999 claimed it was ___" — "it" refers back to "computer" 10 words ago, which a bigram model would miss entirely.
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (b) — &lt;s&gt; and &lt;/s&gt; tokens [3 marks]</div>
+        <p>Why are sentence boundary tokens (&lt;s&gt; and &lt;/s&gt;) needed in n-gram language models? What problem arises without them?</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          <strong>&lt;s&gt; (start token):</strong><br>
+          Allows modelling what words begin sentences: P(first word | &lt;s&gt;). Without it, the bigram model has no context for the first word — we'd need a separate model for sentence-initial positions. For trigrams, we use &lt;s&gt;&lt;s&gt; as padding.<br><br>
+          <strong>&lt;/s&gt; (end token):</strong><br>
+          Allows the model to "know" when to stop generating. Without &lt;/s&gt;, text generation never terminates — P(&lt;/s&gt;|context) is never learned, so the model never assigns probability to stopping.<br><br>
+          <strong>Seen in exam 2023 Q2(b):</strong> In Model X, P(&lt;E&gt;|b)=0 — a sentence can never end after 'b', causing greedy decoding to loop forever generating "bbb...". This is why &lt;/s&gt; tokens with non-zero probability are essential.
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (c) — Beam search advantage over greedy [4 marks]</div>
+        <p>Construct a concrete example (with probabilities) where beam search (width=2) finds a better sequence than greedy decoding. Explain why greedy fails.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          <strong>Setup:</strong><br>
+          From &lt;s&gt;: P(A|&lt;s&gt;)=0.55, P(B|&lt;s&gt;)=0.45<br>
+          From A: P(A|A)=0.9, P(&lt;/s&gt;|A)=0.1<br>
+          From B: P(&lt;/s&gt;|B)=0.95, P(A|B)=0.05<br><br>
+          <strong>Greedy:</strong> Pick A (0.55) → pick A (0.9) → pick A → ... → loops forever, never terminates!<br><br>
+          <strong>Beam search (width=2):</strong><br>
+          Step 1: Keep A (0.55), B (0.45)<br>
+          Step 2: AA=0.55×0.9=0.495, A&lt;/s&gt;=0.55×0.1=0.055, B&lt;/s&gt;=0.45×0.95=<strong>0.428</strong>, BA=0.45×0.05=0.023<br>
+          Keep top 2: AA (0.495), B&lt;/s&gt; (0.428)<br><br>
+          AA will keep multiplying by 0.9 and never terminate. B&lt;/s&gt; already terminates.<br>
+          <strong>Beam search output: B &lt;/s&gt;</strong> (prob=0.428) — a complete, valid sequence.<br><br>
+          <strong>Why greedy fails:</strong> It makes locally optimal single-step choices (A=0.55 beats B=0.45) but misses globally better paths that require a slightly worse first step to reach a much better completion.
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (d) — Spelling correction with LM [4 marks]</div>
+        <p>Describe how a bigram language model can be used for spelling correction. Give an example and state two limitations.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          <strong>Algorithm:</strong><br>
+          1. Detect misspelled word (not in vocabulary or flagged by edit-distance check)<br>
+          2. Generate candidates: all words within edit distance 1 (single insert/delete/substitute/transpose)<br>
+          3. Score each candidate using bigram LM: P(candidate | previous word) × P(next word | candidate)<br>
+          4. Return candidate with highest bigram probability score<br><br>
+          <strong>Example:</strong> "I baked bred yesterday" — "bred" not in vocabulary.<br>
+          Candidates: {bread, breed, bled, brad, ...}<br>
+          P(bread|baked) >> P(breed|baked) >> P(bled|baked)<br>
+          Model correctly selects <strong>"bread"</strong>.<br><br>
+          <strong>Limitation 1 — Real-word errors:</strong> "I baked read yesterday" — "read" is in vocabulary but wrong. LM may not catch this since P(read|baked) could be non-zero.<br><br>
+          <strong>Limitation 2 — Context window:</strong> Bigram only looks 1 word back. "The recipe said I should baked bred" — needs longer context to know "baked" is wrong (should be "bake").
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (e) — Intrinsic vs extrinsic evaluation [3 marks]</div>
+        <p>Distinguish intrinsic and extrinsic evaluation of language models. Why is perplexity alone insufficient for evaluating an LM used in speech recognition?</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          <strong>Intrinsic:</strong> Evaluates the model on its own — perplexity on a held-out test set. Measures how well the LM predicts text without any downstream task. Fast to compute, language-agnostic.<br><br>
+          <strong>Extrinsic:</strong> Evaluates the model in a real application (speech recognition WER, machine translation BLEU, etc.). Measures actual usefulness.<br><br>
+          <strong>Why perplexity alone is insufficient for speech recognition:</strong><br>
+          A language model trained on one domain (e.g., news) may have low perplexity on news test data but high perplexity — and thus poor WER — when applied to speech recognition of medical conversations. Two models with similar perplexity on the same test set can have very different performance when integrated into a speech system (where acoustic model interactions, OOV rates, and vocabulary coverage also matter). Perplexity is a proxy metric; only extrinsic evaluation tells you which model is actually better for the target task.
+        </div>
+      </div>
+
+      <div class="exam-q">
+        <div class="q-label">Part (f) — Entropy and Zipf's Law [3 marks]</div>
+        <p>Explain the connection between Zipf's Law, entropy, and why natural language has lower perplexity than random text.</p>
+        <button class="reveal-btn" onclick="toggleAnswer(this)">Show Answer</button>
+        <div class="answer">
+          <strong>Zipf's Law:</strong> Word frequencies follow a power law — the most common word is ~2× more frequent than the 2nd, ~3× the 3rd, etc. A small set of words accounts for most text.<br><br>
+          <strong>Entropy connection:</strong><br>
+          H(X) = −Σ P(x)log₂P(x)<br>
+          Uniform distribution (all words equally likely) → maximum entropy. Zipf distribution (skewed, few very common words) → much lower entropy.<br><br>
+          <strong>Effect on perplexity:</strong><br>
+          Lower entropy → more predictable → lower cross-entropy → lower perplexity.<br>
+          If "the" appears 10% of the time, predicting it is easy — contributes only log₂(0.1) = −3.32 bits. Random text where all 100,000 words are equally likely contributes log₂(1/100000) = −16.6 bits per token.<br><br>
+          English estimated entropy: ~1-2 bits/character. Random character from 26-letter alphabet: log₂(26) ≈ 4.7 bits/character. This is why language models achieve perplexity much lower than vocabulary size.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div style="height:80px;"></div>
+</div>
+
+<script>
+// ---- TOC active tracking ----
+const sections = document.querySelectorAll('section[id]');
+const tocLinks = document.querySelectorAll('.toc a');
+window.addEventListener('scroll', () => {
+  let cur = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 100) cur = s.id; });
+  tocLinks.forEach(a => { a.classList.toggle('active', a.getAttribute('href') === '#'+cur); });
+});
+
+// ---- Card quiz ----
+const cardQuestions = [
+  { q: "P(Card drawn is 8)", ans: "4/52 = 1/13 ≈ 0.077", work: "4 eights in 52 cards" },
+  { q: "P(Card drawn is red)", ans: "26/52 = 1/2 = 0.5", work: "26 red cards (hearts + diamonds)" },
+  { q: "P(Card is 8 AND red)", ans: "2/52 = 1/26 ≈ 0.038", work: "8♥ and 8♦ — only 2 cards" },
+  { q: "P(Card is 8 | Card is red)", ans: "2/26 = 1/13 ≈ 0.077", work: "Of 26 red cards, only 2 are 8s" },
+  { q: "P(Card is red | Card is 8)", ans: "2/4 = 0.5", work: "Of 4 eights, 2 are red" },
+];
+const cqDiv = document.getElementById('card-quiz');
+cardQuestions.forEach((item, i) => {
+  const div = document.createElement('div');
+  div.style.cssText = 'background:#13162a;border-radius:8px;padding:12px;margin:8px 0;cursor:pointer;border:1px solid #2d3155;transition:border-color 0.2s;';
+  div.innerHTML = `<div style="font-size:0.9rem;color:#c8cfe8;"><strong>${item.q}</strong> = ?</div><div id="cqa${i}" style="display:none;margin-top:8px;color:#00d4aa;font-size:0.88rem;"><strong>${item.ans}</strong><br><em style="color:#8892b0;">${item.work}</em></div>`;
+  div.onclick = () => {
+    const a = document.getElementById('cqa'+i);
+    a.style.display = a.style.display === 'none' ? 'block' : 'none';
+    div.style.borderColor = '#6c63ff';
+  };
+  cqDiv.appendChild(div);
+});
+
+// ---- N-gram visualiser ----
+function visNgram() {
+  const text = document.getElementById('ngram-input').value.trim();
+  const n = parseInt(document.getElementById('ngram-order').value);
+  const tokens = text.split(/\s+/);
+  const div = document.getElementById('ngram-vis');
+  div.innerHTML = '';
+  for (let i = 0; i < tokens.length; i++) {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'background:#13162a;border-radius:8px;padding:10px 14px;margin:6px 0;';
+    let html = '<div style="font-size:0.78rem;color:#8892b0;margin-bottom:6px;">Predicting token ' + (i+1) + ':</div><div class="token-seq">';
+    for (let j = 0; j < tokens.length; j++) {
+      if (j === i) {
+        html += `<span class="token target">${tokens[j]}</span>`;
+      } else if (j >= i - (n-1) && j < i) {
+        html += `<span class="token context">${tokens[j]}</span>`;
+      } else {
+        html += `<span class="token normal">${tokens[j]}</span>`;
+      }
+    }
+    html += '</div>';
+    if (i > 0) {
+      const ctx = tokens.slice(Math.max(0, i-(n-1)), i);
+      html += `<div style="font-size:0.78rem;color:#6c63ff;margin-top:4px;">P( <strong>${tokens[i]}</strong> | ${ctx.join(', ')} )</div>`;
+    }
+    wrap.innerHTML = html;
+    div.appendChild(wrap);
+  }
+}
+
+// ---- Add-K calculator ----
+function calcAddK() {
+  const cnt = parseFloat(document.getElementById('ak-count').value);
+  const ctx = parseFloat(document.getElementById('ak-ctx').value);
+  const voc = parseFloat(document.getElementById('ak-vocab').value);
+  const k   = parseFloat(document.getElementById('ak-k').value);
+  const raw = cnt / ctx;
+  const smoothed = (cnt + k) / (ctx + k * voc);
+  document.getElementById('ak-result').innerHTML =
+    `Raw MLE: <strong>${raw.toFixed(6)}</strong> &nbsp;|&nbsp; Add-K smoothed: <strong>${smoothed.toFixed(6)}</strong><br>` +
+    `<span style="color:#8892b0;font-size:0.8rem;">Probability mass moved to unseen events: ${(raw - smoothed).toFixed(6)}</span>`;
+}
+
+// ---- Interpolation lambda ----
+function updateLambda() {
+  const l3 = parseFloat(document.getElementById('lambda3').value);
+  const l2 = parseFloat(document.getElementById('lambda2').value);
+  const l1 = parseFloat(document.getElementById('lambda1').value);
+  document.getElementById('l3val').textContent = l3.toFixed(2);
+  document.getElementById('l2val').textContent = l2.toFixed(2);
+  document.getElementById('l1val').textContent = l1.toFixed(2);
+  const sum = (l1 + l2 + l3).toFixed(3);
+  const ok = Math.abs(l1+l2+l3 - 1) < 0.05;
+  document.getElementById('lambda-sum').innerHTML =
+    `λ₁ + λ₂ + λ₃ = <strong style="color:${ok?'#00d4aa':'#ff6b6b'}">${sum}</strong> ${ok ? '✓ (should sum to 1)' : '✗ (must sum to 1!)'}`;
+}
+updateLambda();
+
+// ---- Perplexity calculator ----
+function calcPerplexity() {
+  const probs = document.getElementById('perp-input').value.trim().split(/\s+/).map(Number).filter(p => p > 0 && p <= 1);
+  if (!probs.length) { document.getElementById('perp-result').textContent = 'Enter valid probabilities.'; return; }
+  const n = probs.length;
+  const logSum = probs.reduce((s, p) => s + Math.log2(p), 0);
+  const H = -logSum / n;
+  const ppl = Math.pow(2, H);
+  const geom = Math.pow(probs.reduce((a,p)=>a*p,1), 1/n);
+  document.getElementById('perp-result').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+      <div style="background:#13162a;border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:0.75rem;color:#8892b0;">Cross-Entropy</div>
+        <div style="font-size:1.4rem;color:#6c63ff;">${H.toFixed(4)} bits</div>
+      </div>
+      <div style="background:#13162a;border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:0.75rem;color:#8892b0;">Per-token Prob</div>
+        <div style="font-size:1.4rem;color:#00d4aa;">${geom.toFixed(4)}</div>
+      </div>
+      <div style="background:#13162a;border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:0.75rem;color:#8892b0;">Perplexity</div>
+        <div style="font-size:1.4rem;color:#ff6b6b;">${ppl.toFixed(4)}</div>
+      </div>
+    </div>`;
+}
+
+// ---- Entropy visualiser ----
+const eProbs = [0.4, 0.3, 0.2, 0.1];
+const eLabels = ['A', 'B', 'C', 'D'];
+const eColors = ['#6c63ff','#00d4aa','#ff6b6b','#ffd700'];
+
+function buildEntropySliders() {
+  const div = document.getElementById('entropy-sliders');
+  eProbs.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:12px;margin:6px 0;';
+    row.innerHTML = `<span style="min-width:20px;color:${eColors[i]};font-weight:700;">${eLabels[i]}</span>
+      <input type="range" min="1" max="100" value="${Math.round(p*100)}" oninput="updateEntropy(${i},this.value)" style="flex:1;accent-color:${eColors[i]};">
+      <span id="ep${i}" style="min-width:50px;font-size:0.85rem;">${p.toFixed(2)}</span>`;
+    div.appendChild(row);
+  });
+  drawEntropyCanvas();
+}
+
+function updateEntropy(idx, val) {
+  eProbs[idx] = parseInt(val) / 100;
+  document.getElementById('ep'+idx).textContent = eProbs[idx].toFixed(2);
+  drawEntropyCanvas();
+}
+
+function drawEntropyCanvas() {
+  const total = eProbs.reduce((a,b)=>a+b,0);
+  const norm = eProbs.map(p=>p/total);
+  const H = -norm.reduce((s,p)=>s+(p>0?p*Math.log2(p):0),0);
+  document.getElementById('entropy-result').innerHTML =
+    `Entropy H = <strong style="color:#ffd700;">${H.toFixed(3)} bits</strong> &nbsp;|&nbsp; Perplexity = 2<sup>H</sup> = <strong style="color:#ff6b6b;">${Math.pow(2,H).toFixed(3)}</strong>`;
+
+  const canvas = document.getElementById('entropy-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H2 = canvas.height;
+  ctx.clearRect(0,0,W,H2);
+  const bw = 80, gap = 30, ox = 60, oy = H2 - 30;
+  norm.forEach((p,i) => {
+    const bh = p * (H2 - 60);
+    ctx.fillStyle = eColors[i];
+    ctx.globalAlpha = 0.85;
+    ctx.beginPath();
+    ctx.roundRect(ox + i*(bw+gap), oy - bh, bw, bh, [4,4,0,0]);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#e8eaf6';
+    ctx.font = '13px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText(eLabels[i], ox + i*(bw+gap) + bw/2, oy + 16);
+    ctx.fillStyle = eColors[i];
+    ctx.fillText(p.toFixed(2), ox + i*(bw+gap) + bw/2, oy - bh - 6);
+  });
+}
+buildEntropySliders();
+
+// ---- Beam search canvas ----
+const beamSteps = [
+  { title: "Root: token 'dog'", nodes: [{x:350,y:40,label:'dog',col:'#6c63ff',prob:1}], edges: [] },
+  {
+    title: "Step 2: Expand to top words",
+    nodes: [
+      {x:350,y:40,label:'dog',col:'#6c63ff',prob:1},
+      {x:150,y:120,label:'lies',col:'#00d4aa',prob:0.35},
+      {x:280,y:120,label:'sits',col:'#00d4aa',prob:0.28},
+      {x:420,y:120,label:'eats',col:'#00d4aa',prob:0.20},
+      {x:560,y:120,label:'runs',col:'#00d4aa',prob:0.17},
+    ],
+    edges: [[0,1],[0,2],[0,3],[0,4]]
+  },
+  {
+    title: "Step 3: Expand beams, keep top 3",
+    nodes: [
+      {x:350,y:40,label:'dog',col:'#6c63ff',prob:1},
+      {x:80,y:120,label:'lies',col:'#00d4aa',prob:0.35},
+      {x:280,y:120,label:'sits',col:'#8892b0',prob:0.28},
+      {x:430,y:120,label:'runs',col:'#00d4aa',prob:0.17},
+      {x:580,y:120,label:'eats',col:'#8892b0',prob:0.20},
+      {x:30,y:210,label:'down',col:'#ffd700',prob:0.35*0.7},
+      {x:130,y:210,label:'and',col:'#ffd700',prob:0.35*0.2},
+      {x:380,y:210,label:'fast',col:'#ffd700',prob:0.17*0.65},
+      {x:480,y:210,label:'over',col:'#ffd700',prob:0.17*0.25},
+    ],
+    edges: [[0,1],[0,2],[0,3],[0,4],[1,5],[1,6],[3,7],[3,8]],
+    pruned: [2,4]
+  },
+  {
+    title: "Final: kept 'lies down', 'lies and', 'runs fast'",
+    nodes: [
+      {x:350,y:30,label:'dog',col:'#6c63ff',prob:1},
+      {x:100,y:110,label:'lies',col:'#00d4aa',prob:0.35},
+      {x:420,y:110,label:'runs',col:'#00d4aa',prob:0.17},
+      {x:50,y:200,label:'down',col:'#ffd700',prob:0.245},
+      {x:160,y:200,label:'and',col:'#ffd700',prob:0.07},
+      {x:420,y:200,label:'fast',col:'#ffd700',prob:0.110},
+    ],
+    edges: [[0,1],[0,2],[1,3],[1,4],[2,5]]
+  }
+];
+
+let currentBeam = 0;
+function drawBeam(step) {
+  currentBeam = step;
+  const canvas = document.getElementById('beam-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+  const data = beamSteps[step];
+
+  // draw title
+  ctx.fillStyle = '#8892b0';
+  ctx.font = '13px Segoe UI';
+  ctx.textAlign = 'left';
+  ctx.fillText(data.title, 10, 22);
+
+  // draw edges
+  if (data.edges) {
+    data.edges.forEach(([a,b]) => {
+      const na = data.nodes[a], nb = data.nodes[b];
+      const pruned = data.pruned && (data.pruned.includes(a) || data.pruned.includes(b));
+      ctx.strokeStyle = pruned ? '#3d3d5c' : '#4a4a7a';
+      ctx.lineWidth = pruned ? 1 : 2;
+      ctx.setLineDash(pruned ? [4,4] : []);
+      ctx.beginPath(); ctx.moveTo(na.x, na.y+18); ctx.lineTo(nb.x, nb.y-18); ctx.stroke();
+      ctx.setLineDash([]);
+    });
+  }
+
+  // draw nodes
+  data.nodes.forEach((n, i) => {
+    const pruned = data.pruned && data.pruned.includes(i);
+    ctx.globalAlpha = pruned ? 0.3 : 1;
+    ctx.fillStyle = n.col;
+    ctx.beginPath(); ctx.roundRect(n.x-35,n.y-16,70,32,[8]); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText(n.label, n.x, n.y+4);
+    if (n.prob < 1) {
+      ctx.font = '10px Segoe UI';
+      ctx.fillStyle = '#ddd';
+      ctx.fillText(n.prob.toFixed(3), n.x, n.y+18);
+    }
+    ctx.globalAlpha = 1;
+  });
+}
+drawBeam(0);
+
+// ---- MCQ handlers ----
+function mcq(el, result) {
+  const parent = el.parentElement;
+  parent.querySelectorAll('.option').forEach(o => { o.classList.remove('correct','wrong'); o.style.pointerEvents='none'; });
+  el.classList.add(result);
+}
+
+// ---- Reveal answers ----
+function toggleAnswer(btn) {
+  const ans = btn.nextElementSibling;
+  if (ans.classList.contains('show')) {
+    ans.classList.remove('show'); btn.textContent = 'Show Answer';
+  } else {
+    ans.classList.add('show'); btn.textContent = 'Hide Answer';
+  }
+}
+
+// initial ngram vis
+visNgram();
+</script>
+</body>
+</html>

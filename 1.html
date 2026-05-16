@@ -1,0 +1,2005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text as Data — Lecture 1: Introduction, Tokens & Document Similarity</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117; --surface: #1a1d27; --surface2: #22263a;
+    --border: #2e3250; --accent: #7c6af7; --accent2: #56cfb2;
+    --accent3: #f7a76c; --accent4: #f76c8a;
+    --text: #e2e4f0; --muted: #8b8fa8; --code-bg: #151820;
+    --green: #56cfb2; --yellow: #f7d76c; --red: #f76c8a;
+    --blue: #6ca8f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 16px; line-height: 1.7; }
+
+  /* Layout */
+  .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* Header */
+  .hero { background: linear-gradient(135deg, #1a1d27 0%, #0f1117 50%, #1a1327 100%);
+    border-bottom: 1px solid var(--border); padding: 3rem 2rem; text-align: center; }
+  .hero h1 { font-size: 2.2rem; font-weight: 700; color: var(--accent);
+    text-shadow: 0 0 40px rgba(124,106,247,0.4); margin-bottom: .5rem; }
+  .hero .subtitle { color: var(--muted); font-size: 1rem; }
+  .badge { display: inline-block; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 999px; padding: .2rem .8rem; font-size: .75rem; color: var(--accent2);
+    margin: .2rem; }
+
+  /* Nav pills */
+  .nav { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1.5rem 0; }
+  .nav a { background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
+    text-decoration: none; padding: .35rem .9rem; border-radius: 999px; font-size: .85rem;
+    transition: all .2s; }
+  .nav a:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Sections */
+  .section { margin: 2rem 0; }
+  .section-header { display: flex; align-items: center; gap: .75rem; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1rem 1.25rem; user-select: none; transition: border-color .2s; }
+  .section-header:hover { border-color: var(--accent); }
+  .section-header h2 { font-size: 1.2rem; font-weight: 600; flex: 1; }
+  .section-num { background: var(--accent); color: #fff; font-weight: 700; font-size: .85rem;
+    width: 2rem; height: 2rem; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0; }
+  .chevron { color: var(--muted); transition: transform .3s; font-size: 1.1rem; }
+  .section-body { background: var(--surface); border: 1px solid var(--border);
+    border-top: none; border-radius: 0 0 12px 12px; padding: 1.5rem; display: none; }
+  .section-body.open { display: block; }
+
+  /* Cards */
+  .card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1.25rem; margin: 1rem 0; }
+  .card.accent { border-left: 3px solid var(--accent); }
+  .card.green { border-left: 3px solid var(--green); }
+  .card.yellow { border-left: 3px solid var(--yellow); }
+  .card.red { border-left: 3px solid var(--red); }
+  .card.blue { border-left: 3px solid var(--blue); }
+  .card h3 { font-size: 1rem; font-weight: 600; margin-bottom: .6rem; }
+  .card.accent h3 { color: var(--accent); }
+  .card.green h3 { color: var(--green); }
+  .card.yellow h3 { color: var(--yellow); }
+  .card.red h3 { color: var(--red); }
+  .card.blue h3 { color: var(--blue); }
+
+  /* Grid */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  @media(max-width:700px){ .grid2,.grid3{ grid-template-columns:1fr; } }
+
+  /* Code */
+  pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1.1rem; overflow-x: auto; margin: 1rem 0; font-size: .87rem; }
+  code { font-family: 'Cascadia Code', 'Fira Code', monospace; }
+  .inline-code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px;
+    padding: .15rem .4rem; font-size: .85em; font-family: monospace; color: var(--accent2); }
+  .kw { color: #c792ea; } .fn { color: #82aaff; } .str { color: #c3e88d; }
+  .cm { color: #546e7a; font-style: italic; } .num { color: #f78c6c; }
+  .cls { color: #ffcb6b; }
+
+  /* Math display */
+  .math-box { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem 1.5rem; margin: 1rem 0; overflow-x: auto; text-align: center; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .9rem; }
+  th { background: var(--surface2); color: var(--accent); font-weight: 600;
+    padding: .6rem .9rem; text-align: left; border-bottom: 2px solid var(--border); }
+  td { padding: .55rem .9rem; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: rgba(124,106,247,.06); }
+
+  /* Diagram box */
+  .diagram { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1.5rem; margin: 1rem 0; overflow-x: auto; }
+  .diagram .mermaid { max-width: 100%; }
+
+  /* Callout */
+  .callout { display: flex; gap: .75rem; background: var(--surface2); border-radius: 8px;
+    padding: 1rem; margin: .75rem 0; border: 1px solid var(--border); align-items: flex-start; }
+  .callout-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: .1rem; }
+  .callout-body p { margin-top: .3rem; color: var(--muted); font-size: .92rem; }
+  .callout-body strong { color: var(--text); }
+
+  /* Highlight inline */
+  .hl-purple { color: var(--accent); font-weight: 600; }
+  .hl-green { color: var(--green); font-weight: 600; }
+  .hl-yellow { color: var(--yellow); font-weight: 600; }
+  .hl-red { color: var(--red); font-weight: 600; }
+  .hl-blue { color: var(--blue); font-weight: 600; }
+
+  /* Pipeline steps */
+  .pipeline { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin: 1rem 0; }
+  .pipe-step { background: var(--surface2); border: 1px solid var(--accent); border-radius: 8px;
+    padding: .5rem 1rem; font-size: .9rem; font-weight: 500; color: var(--accent); }
+  .pipe-arrow { color: var(--muted); font-size: 1.2rem; }
+
+  /* Quiz */
+  .quiz-q { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1.25rem; margin: 1rem 0; }
+  .quiz-q p { font-weight: 600; margin-bottom: .75rem; }
+  .quiz-option { display: block; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: .5rem .85rem; margin: .3rem 0; cursor: pointer;
+    transition: all .15s; font-size: .92rem; color: var(--text); width: 100%; text-align: left; }
+  .quiz-option:hover { border-color: var(--accent); color: var(--accent); }
+  .quiz-option.correct { border-color: var(--green); background: rgba(86,207,178,.1);
+    color: var(--green); }
+  .quiz-option.wrong { border-color: var(--red); background: rgba(247,108,138,.1);
+    color: var(--red); }
+  .quiz-explanation { margin-top: .75rem; padding: .75rem; background: var(--bg);
+    border-radius: 6px; font-size: .88rem; color: var(--muted); display: none; }
+  .quiz-btn { background: var(--accent); color: #fff; border: none; border-radius: 6px;
+    padding: .4rem .9rem; cursor: pointer; font-size: .85rem; margin-top: .5rem; display: inline-block; }
+  .quiz-btn:hover { opacity: .85; }
+  .quiz-tag { font-size: .7rem; font-weight: 700; padding: .15rem .5rem; border-radius: 4px;
+    display: inline-block; margin-bottom: .5rem; }
+  .tag-mcq { background: rgba(124,106,247,.2); color: var(--accent); }
+  .tag-short { background: rgba(86,207,178,.2); color: var(--green); }
+  .tag-calc { background: rgba(247,167,108,.2); color: var(--accent3); }
+  .tag-essay { background: rgba(247,108,138,.2); color: var(--red); }
+  .tag-exam { background: rgba(108,168,247,.2); color: var(--blue); }
+
+  /* Definition list */
+  .def-list { margin: .5rem 0; }
+  .def-list dt { color: var(--accent2); font-weight: 600; margin-top: .75rem; }
+  .def-list dd { color: var(--muted); padding-left: 1.2rem; font-size: .92rem; margin-top: .15rem; }
+
+  /* Divider */
+  hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  p { margin: .6rem 0; }
+  ul, ol { padding-left: 1.5rem; margin: .5rem 0; }
+  li { margin: .3rem 0; }
+  strong { color: var(--text); }
+  h3 { color: var(--accent2); margin: 1rem 0 .5rem; }
+  h4 { color: var(--accent3); margin: .8rem 0 .4rem; }
+</style>
+</head>
+<body>
+<script>mermaid.initialize({startOnLoad:true, theme:'dark', themeVariables:{primaryColor:'#7c6af7',primaryTextColor:'#e2e4f0',primaryBorderColor:'#2e3250',lineColor:'#56cfb2',background:'#1a1d27',nodeBorder:'#2e3250',clusterBkg:'#22263a'}});</script>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Text as Data — Lecture 1</h1>
+  <p class="subtitle">Introduction · Tokens · Document Similarity</p>
+  <div style="margin-top:1rem;">
+    <span class="badge">NLP / Text Analytics</span>
+    <span class="badge">Jurafsky & Martin Ch. 2</span>
+    <span class="badge">University of Glasgow MSc 5106</span>
+    <span class="badge">2026</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- NAV -->
+<div class="nav">
+  <a href="#sec1">1. Why Text?</a>
+  <a href="#sec2">2. Text as Input/Output</a>
+  <a href="#sec3">3. Structured vs Unstructured</a>
+  <a href="#sec4">4. NLP Tasks & History</a>
+  <a href="#sec5">5. Characters & Encodings</a>
+  <a href="#sec6">6. Tokenization</a>
+  <a href="#sec7">7. Preprocessing Pipeline</a>
+  <a href="#sec8">8. Words & Corpora (J&M)</a>
+  <a href="#sec9">9. Stemming & Lemmatization</a>
+  <a href="#sec10">10. Document Similarity</a>
+  <a href="#sec11">11. Set Similarity Measures</a>
+  <a href="#sec12">12. Exam Practice (40 Questions)</a>
+</div>
+
+<!-- ====================================================
+     SECTION 1 — WHY TEXT
+     ==================================================== -->
+<div class="section" id="sec1">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-num">1</div>
+    <h2>Why Do Computers Need to Work with Text?</h2>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="section-body open">
+    <div class="grid2">
+      <div class="card accent">
+        <h3>The Core Argument</h3>
+        <p>Humans communicate primarily through <span class="hl-purple">language</span>. Language is most conveniently stored and transmitted as <span class="hl-green">text</span>. Therefore, text is the natural interface between humans and computers.</p>
+      </div>
+      <div class="card green">
+        <h3>Scale of Text Data (Every Minute)</h3>
+        <ul>
+          <li>~200 million emails sent</li>
+          <li>~6 million Google searches</li>
+          <li>Billions of web pages indexed</li>
+        </ul>
+        <p style="margin-top:.5rem;color:var(--muted);font-size:.85rem;">Text data grows continuously — we <em>must</em> automate its processing.</p>
+      </div>
+    </div>
+
+    <div class="diagram">
+      <div class="mermaid">
+graph LR
+    H[Human] -->|"text / speech"| S[System]
+    S -->|"text / speech"| H
+    S -->|Input only| EX1["Search tools\nLogging"]
+    S -->|Output only| EX2["Assistants\ne.g. Alexa"]
+    S -->|Both| EX3["Chatbots\nTranslation"]
+    style H fill:#7c6af7,color:#fff
+    style S fill:#22263a,color:#e2e4f0
+      </div>
+    </div>
+
+    <div class="callout">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <strong>Key Tension</strong>
+        <p>Text is <em>unstructured</em> — unlike database tables, there are no column labels. This makes automated processing genuinely hard.</p>
+      </div>
+    </div>
+
+    <h3>Why Is This Field Hard?</h3>
+    <div class="card yellow">
+      <h3>Ambiguity Example</h3>
+      <p style="font-size:1.1rem;font-style:italic;">"I saw the elephant with my telescope."</p>
+      <p style="margin-top:.5rem;color:var(--muted);">Who has the telescope — the speaker or the elephant? Language requires prior knowledge and reasoning to resolve ambiguity. Rules alone are insufficient.</p>
+    </div>
+
+    <table>
+      <thead><tr><th>Text Source</th><th>Challenge</th></tr></thead>
+      <tbody>
+        <tr><td>Documents</td><td>Longer, require summarisation</td></tr>
+        <tr><td>Social media posts</td><td>Very short, no context, informal</td></tr>
+        <tr><td>Voice commands</td><td>Noisy, error-prone transcription</td></tr>
+        <tr><td>Search queries</td><td>Short and vague</td></tr>
+        <tr><td>Medical records</td><td>Jargon, abbreviations</td></tr>
+        <tr><td>Books</td><td>Very long, need structure</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ====================================================
+     SECTION 2 — TEXT AS INPUT/OUTPUT
+     ==================================================== -->
+<div class="section" id="sec2">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-num">2</div>
+    <h2>Common NLP Tasks</h2>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="grid3">
+      <div class="card accent">
+        <h3>Classification</h3>
+        <p>"Is this restaurant review <em>positive</em> or <em>negative</em>?"</p>
+        <p style="color:var(--muted);font-size:.85rem;">Sentiment analysis, spam detection</p>
+      </div>
+      <div class="card green">
+        <h3>Document Similarity</h3>
+        <p>"Are these two documents discussing <em>similar ideas</em>?"</p>
+        <p style="color:var(--muted);font-size:.85rem;">Clustering, search, deduplication</p>
+      </div>
+      <div class="card yellow">
+        <h3>Summarisation</h3>
+        <p>"Summarise this for a beginner."</p>
+        <p style="color:var(--muted);font-size:.85rem;">Extractive or abstractive</p>
+      </div>
+      <div class="card blue">
+        <h3>Information Extraction</h3>
+        <p>"List the companies mentioned."</p>
+        <p style="color:var(--muted);font-size:.85rem;">NER, relation extraction</p>
+      </div>
+      <div class="card red">
+        <h3>Machine Translation</h3>
+        <p>"Translate this into Spanish."</p>
+        <p style="color:var(--muted);font-size:.85rem;">Encoder-decoder, transformers</p>
+      </div>
+      <div class="card accent">
+        <h3>Question Answering</h3>
+        <p>"What is the capital of France?"</p>
+        <p style="color:var(--muted);font-size:.85rem;">RAG, LLMs, retrieval models</p>
+      </div>
+    </div>
+
+    <h3>Field Names (all refer to overlapping areas)</h3>
+    <div class="card accent">
+      <ul>
+        <li><span class="hl-purple">Natural Language Processing (NLP)</span> — computer science focus</li>
+        <li><span class="hl-green">Computational Linguistics</span> — linguistic theory focus</li>
+        <li><span class="hl-yellow">Text Analytics / Text as Data</span> — data science focus</li>
+      </ul>
+    </div>
+
+    <h3>Classical vs. Deep Learning</h3>
+    <table>
+      <thead><tr><th>Approach</th><th>Strengths</th><th>Weaknesses</th></tr></thead>
+      <tbody>
+        <tr><td>Classical (rule-based, statistical)</td><td>Fast, interpretable, low data needs</td><td>Limited generalisation, brittle</td></tr>
+        <tr><td>Deep Learning (transformers)</td><td>State-of-the-art accuracy, generalises</td><td>Very expensive (data, compute, power)</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <strong>Key Course Principle</strong>
+        <p>No single approach is best for all problems. You must run experiments to compare methods for your specific task.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================
+     SECTION 3 — STRUCTURED VS UNSTRUCTURED
+     ==================================================== -->
+<div class="section" id="sec3">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-num">3</div>
+    <h2>Structured vs. Unstructured Data</h2>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="grid2">
+      <div class="card green">
+        <h3>Structured Data</h3>
+        <table>
+          <thead><tr><th>Country</th><th>Capital</th><th>Population</th></tr></thead>
+          <tbody>
+            <tr><td>France</td><td>Paris</td><td>67M</td></tr>
+            <tr><td>Germany</td><td>Berlin</td><td>83M</td></tr>
+            <tr><td>Canada</td><td>Ottawa</td><td>38M</td></tr>
+          </tbody>
+        </table>
+        <p style="color:var(--muted);font-size:.85rem;margin-top:.5rem;">Column headings label meaning. Easy to query with SQL.</p>
+      </div>
+      <div class="card yellow">
+        <h3>Unstructured Text</h3>
+        <p style="font-style:italic;color:var(--muted);">"With 67 million people, France is the second most populous country in the European Union. Its capital is the beautiful city of Paris..."</p>
+        <p style="color:var(--muted);font-size:.85rem;margin-top:.5rem;">No labels. Must <em>infer</em> meaning from language patterns.</p>
+      </div>
+    </div>
+
+    <h3>Trade-offs for a Search System</h3>
+    <table>
+      <thead><tr><th></th><th>Structured</th><th>Unstructured</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Advantages</strong></td><td>Precise filtering (exact match), fast queries, easy aggregation</td><td>Richer information, captures nuance, natural to produce</td></tr>
+        <tr><td><strong>Disadvantages</strong></td><td>Expensive to create/maintain, misses context</td><td>Harder to process, ambiguous, noisy</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ====================================================
+     SECTION 4 — HISTORY & LLMs
+     ==================================================== -->
+<div class="section" id="sec4">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-num">4</div>
+    <h2>History: From Rules to LLMs</h2>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="diagram">
+      <div class="mermaid">
+timeline
+    title NLP Timeline (simplified)
+    1966 : ELIZA — first chatbot using pattern matching
+    1975 : Van Rijsbergen stopwords list (Glasgow!)
+    1990s : Statistical NLP — n-gram models
+    2013 : Word2Vec — dense word embeddings
+    2018 : ELMo & BERT — contextual embeddings / transformers
+    2020 : GPT-3 — few-shot large language models
+    2022 : ChatGPT — instruction-tuned LLMs (public launch)
+    2024+ : Bigger = better; agent-based LLM systems
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card accent">
+        <h3>ELIZA (1966) — J&M §2</h3>
+        <p>Used <span class="hl-purple">pattern matching on words</span> to simulate a therapist. When it saw "I need X", it responded "What would it mean to you if you got X?"</p>
+        <p style="color:var(--muted);font-size:.85rem;">Despite simplicity, users believed it understood them — highlighting how humans anthropomorphise language systems.</p>
+      </div>
+      <div class="card green">
+        <h3>The GPU Revolution</h3>
+        <p>GPUs were designed for graphics (lighting equations per pixel) — both require <span class="hl-green">massive parallelism over matrix operations</span>.</p>
+        <p style="color:var(--muted);font-size:.85rem;">Deep learning is fundamentally matrix multiplication. GPUs are orders of magnitude faster than CPUs for this.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <strong>Critical Thinking: AI "Understanding"</strong>
+        <p>Be skeptical of claims of human-level understanding. Most systems excel at specific tasks but struggle to reliably generalise. Models that appear to generalise are often already trained on the target task. Failure cases in high-stakes domains (e.g., medical queries) matter enormously.</p>
+      </div>
+    </div>
+
+    <h3>Ethical Concerns</h3>
+    <div class="grid2">
+      <ul>
+        <li>Environmental costs of large models</li>
+        <li>Impact on employment</li>
+        <li>Use in creative industries</li>
+        <li>Copyright issues with training data</li>
+      </ul>
+      <ul>
+        <li>Academic integrity / plagiarism</li>
+        <li>Misinformation & hate speech generation</li>
+        <li>Bias in models</li>
+        <li>Citing sources reliably</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================
+     SECTION 5 — CHARACTERS & ENCODINGS
+     ==================================================== -->
+<div class="section" id="sec5">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-num">5</div>
+    <h2>Characters, ASCII & Unicode</h2>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="section-body">
+    <p>Before working with words, text must be stored as numbers. Every character has a numeric code.</p>
+
+    <div class="grid2">
+      <div class="card blue">
+        <h3>ASCII</h3>
+        <ul>
+          <li>128 possible characters (1 byte)</li>
+          <li>A–Z, a–z, 0–9, standard punctuation</li>
+          <li>Control characters (newline, tab)</li>
+          <li><span class="hl-red">Cannot represent:</span> á, λ, 😀, Chinese characters</li>
+        </ul>
+      </div>
+      <div class="card accent">
+        <h3>Unicode (UTF-8 encoding)</h3>
+        <ul>
+          <li>Variable-byte encoding (2–4 bytes)</li>
+          <li>Encodes alphabets of most languages</li>
+          <li>Emojis, math symbols, CJK characters</li>
+          <li>Regularly updated (v16.0 in Sept 2024)</li>
+          <li>Default on Mac/Linux; <span class="hl-yellow">not default on Windows!</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>ASCII Example</h3>
+    <pre><code><span class="cm"># ASCII values for "IRN BRU"</span>
+<span class="kw">text</span> = <span class="str">"IRN BRU"</span>
+<span class="kw">for</span> ch <span class="kw">in</span> text:
+    <span class="fn">print</span>(ch, <span class="fn">ord</span>(ch))
+
+<span class="cm"># Output:
+# I  73
+# R  82
+# N  78
+# (space)  32
+# B  66
+# R  82
+# U  85</span></code></pre>
+
+    <div class="callout">
+      <span class="callout-icon">🐛</span>
+      <div class="callout-body">
+        <strong>Mojibake — Unicode errors in practice</strong>
+        <p>If you open a UTF-8 file with a Windows Latin-1 decoder you get garbled text like: <span class="inline-code">doesnÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢t</span> instead of <span class="inline-code">doesn't</span>. Always specify encoding!</p>
+      </div>
+    </div>
+
+    <pre><code><span class="cm"># Always specify encoding when reading files in Python</span>
+<span class="kw">with</span> <span class="fn">open</span>(<span class="str">"myfile.txt"</span>, <span class="str">"r"</span>, encoding=<span class="str">"utf-8"</span>) <span class="kw">as</span> f:
+    text = f.<span class="fn">read</span>()
+
+<span class="cm"># sys.stdout also needs reconfiguring on Windows:</span>
+<span class="kw">import</span> sys
+sys.stdout.<span class="fn">reconfigure</span>(encoding=<span class="str">'utf-8'</span>)</code></pre>
+
+    <h3>Character N-grams</h3>
+    <p>Individual characters carry little meaning. <span class="hl-purple">Character n-grams</span> (sequences of n consecutive characters) are more specific:</p>
+    <table>
+      <thead><tr><th>n</th><th>Name</th><th>Example from "IRN BRU"</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Unigram</td><td>I, R, N, &nbsp;, B, R, U</td></tr>
+        <tr><td>2</td><td>Bigram</td><td>IR, RN, N&nbsp;, &nbsp;B, BR, RU</td></tr>
+        <tr><td>3</td><td>Trigram</td><td>IRN, RN&nbsp;, N&nbsp;B, &nbsp;BR, BRU</td></tr>
+      </tbody>
+    </table>
+
+    <pre><code><span class="kw">def</span> <span class="fn">char_ngrams</span>(text, n):
+    <span class="kw">return</span> [text[i:i+n] <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(text) - n + <span class="num">1</span>)]
+
+<span class="fn">print</span>(<span class="fn">char_ngrams</span>(<span class="str">"IRN BRU"</span>, <span class="num">2</span>))
+<span class="cm"># ['IR', 'RN', 'N ', ' B', 'BR', 'RU']</span></code></pre>
+
+    <div class="grid2">
+      <div class="card green">
+        <h3>Strengths of Char N-grams</h3>
+        <ul>
+          <li>More specific than single characters</li>
+          <li>Easy to implement</li>
+          <li>Language-agnostic (no word boundaries needed)</li>
+          <li>Useful for language detection</li>
+        </ul>
+      </div>
+      <div class="card red">
+        <h3>Weaknesses of Char N-grams</h3>
+        <ul>
+          <li>Small n → not specific enough</li>
+          <li>Large n → very rare n-grams</li>
+          <li>Same n-gram, different meanings:<br><span class="hl-yellow">"ong"</span> in "wrong" and "strong"</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================
+     SECTION 6 — TOKENIZATION
+     ==================================================== -->
+<div class="section" id="sec6">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-num">6</div>
+    <h2>Tokenization</h2>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="section-body">
+
+    <div class="card accent">
+      <h3>Definition</h3>
+      <p><span class="hl-purple">Tokenization</span> is the process of splitting a section of text into individual <span class="hl-green">tokens</span>. A token (or term) is a meaningful sequence of characters — not exactly a word.</p>
+    </div>
+
+    <div class="callout">
+      <span class="callout-icon">📝</span>
+      <div class="callout-body">
+        <strong>Token ≠ Word</strong>
+        <p>"don't" is often split into two tokens: <span class="inline-code">do</span> + <span class="inline-code">n't</span>. Punctuation, numbers, and some whitespace can also be tokens.</p>
+      </div>
+    </div>
+
+    <h3>Tokenization Approaches</h3>
+
+    <h4>Approach 1: Split on whitespace</h4>
+    <pre><code>sentence = <span class="str">"John's father didn't have £100."</span>
+tokens = sentence.<span class="fn">split</span>()
+<span class="cm"># ["John's", "father", "didn't", "have", "£100."]
+# Problem: punctuation attached to words</span></code></pre>
+
+    <h4>Approach 2: Split on whitespace + punctuation</h4>
+    <pre><code><span class="kw">import</span> re
+tokens = re.<span class="fn">split</span>(<span class="str">r'[\s,\.;!@#$%\'"£]+'</span>, sentence)
+<span class="cm"># ["John", "s", "father", "didn", "t", "have", "100"]
+# Problem: "didn't" becomes ["didn", "t"] — loses meaning
+# "£100" loses the currency symbol</span></code></pre>
+
+    <h4>Ideal Tokenization (requires hand-crafted rules)</h4>
+    <pre><code><span class="cm"># Desired output:</span>
+<span class="cm"># ["John", "'s", "father", "did", "n't", "have", "£", "100", "."]</span>
+<span class="cm"># Rules needed:
+# - possessives: John's → John + 's
+# - contractions: didn't → did + n't
+# - currency: £100 → £ + 100
+# - keep final period separate</span></code></pre>
+
+    <h4>Using spaCy (used in labs)</h4>
+    <pre><code><span class="kw">import</span> spacy
+nlp = spacy.<span class="fn">load</span>(<span class="str">"en_core_web_sm"</span>)
+doc = nlp(<span class="str">"John's father didn't have £100."</span>)
+tokens = [token.text <span class="kw">for</span> token <span class="kw">in</span> doc]
+<span class="fn">print</span>(tokens)
+<span class="cm"># ["John", "'s", "father", "did", "n't", "have", "£", "100", "."]</span>
+
+<span class="cm"># Access token attributes:</span>
+<span class="kw">for</span> token <span class="kw">in</span> doc:
+    <span class="fn">print</span>(token.text, token.lemma_, token.pos_, token.is_stop)</code></pre>
+
+    <h3>Word N-grams</h3>
+    <p>Single words lose context. <span class="hl-purple">Word n-grams</span> capture phrases:</p>
+    <table>
+      <thead><tr><th>Type</th><th>Example from "It's a Scottish drink"</th></tr></thead>
+      <tbody>
+        <tr><td>Unigrams</td><td>It's, a, Scottish, drink</td></tr>
+        <tr><td>Bigrams (n=2)</td><td>"It's a", "a Scottish", "Scottish drink"</td></tr>
+        <tr><td>Trigrams (n=3)</td><td>"It's a Scottish", "a Scottish drink"</td></tr>
+      </tbody>
+    </table>
+    <pre><code><span class="kw">def</span> <span class="fn">word_ngrams</span>(tokens, n):
+    <span class="kw">return</span> [<span class="fn">tuple</span>(tokens[i:i+n]) <span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="fn">len</span>(tokens) - n + <span class="num">1</span>)]
+
+tokens = [<span class="str">"It's"</span>, <span class="str">"a"</span>, <span class="str">"Scottish"</span>, <span class="str">"drink"</span>]
+<span class="fn">print</span>(<span class="fn">word_ngrams</span>(tokens, <span class="num">2</span>))
+<span class="cm"># [("It's", 'a'), ('a', 'Scottish'), ('Scottish', 'drink')]</span></code></pre>
+
+    <div class="callout">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <strong>Scale consideration</strong>
+        <p>English has ~7 million words (Wiktionary). Bigrams could number in the tens of billions. This makes word n-gram models computationally expensive for large n.</p>
+      </div>
+    </div>
+
+    <h3>Stopwords</h3>
+    <p>Common words like "the", "is", "a", "it" carry little standalone meaning and can overwhelm similarity computations. <span class="hl-purple">Stopword filtering</span> removes them.</p>
+    <pre><code><span class="kw">import</span> spacy
+nlp = spacy.<span class="fn">load</span>(<span class="str">"en_core_web_sm"</span>)
+doc = nlp(<span class="str">"It's a Scottish drink and it's banned in some countries"</span>)
+
+<span class="cm"># Filter stopwords</span>
+meaningful = [token.text <span class="kw">for</span> token <span class="kw">in</span> doc <span class="kw">if not</span> token.is_stop]
+<span class="fn">print</span>(meaningful)
+<span class="cm"># ['Scottish', 'drink', 'banned', 'countries']</span></code></pre>
+
+    <div class="callout">
+      <span class="callout-icon">⚠️</span>
+      <div class="callout-body">
+        <strong>Stopword Caveat</strong>
+        <p>Stopword lists are not definitive. Some meaningful phrases are made of stopwords: "The Who" (band), "to be or not to be". Removing stopwords loses these. Fun fact: the first standardised stopword list was proposed by <strong>Keith Van Rijsbergen (~1975)</strong> — who founded the Information Retrieval group at the University of Glasgow!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================
+     SECTION 7 — PREPROCESSING PIPELINE
+     ==================================================== -->
+<div class="section" id="sec7">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-num">7</div>
+    <h2>Standard Text Preprocessing Pipeline</h2>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="section-body">
+    <div class="pipeline">
+      <div class="pipe-step">1. Data Cleaning</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">2. Tokenize</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">3. Lowercase</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">4. Stem / Lemmatize</div>
+      <span class="pipe-arrow">→</span>
+      <div class="pipe-step">5. Remove Stopwords</div>
+    </div>
+
+    <div class="grid2">
+      <div class="card blue">
+        <h3>Step 1: Data Cleaning</h3>
+        <ul>
+          <li>Remove HTML/Markdown formatting</li>
+          <li>Remove or keep URLs (task dependent)</li>
+          <li>Handle tables (remove or extract)</li>
+          <li>Fix encoding issues (UTF-8)</li>
+        </ul>
+      </div>
+      <div class="card accent">
+        <h3>Step 3: Case Normalisation</h3>
+        <p>"IRN" and "irn" should match. Convert to lowercase:</p>
+        <pre style="margin:.3rem 0;font-size:.82rem;"><code>text = text.<span class="fn">lower</span>()</code></pre>
+        <p style="color:var(--muted);font-size:.85rem;">Caveat: capitalization sometimes carries meaning (proper nouns, acronyms).</p>
+      </div>
+    </div>
+
+    <h3>Full Pipeline Example with spaCy</h3>
+    <pre><code><span class="kw">import</span> spacy
+
+nlp = spacy.<span class="fn">load</span>(<span class="str">"en_core_web_sm"</span>)
+
+<span class="kw">def</span> <span class="fn">preprocess</span>(text):
+    doc = nlp(text.<span class="fn">lower</span>())          <span class="cm"># tokenize + lowercase</span>
+    tokens = []
+    <span class="kw">for</span> token <span class="kw">in</span> doc:
+        <span class="kw">if</span> token.is_stop:  <span class="kw">continue</span>   <span class="cm"># remove stopwords</span>
+        <span class="kw">if</span> token.is_punct: <span class="kw">continue</span>   <span class="cm"># remove punctuation</span>
+        tokens.<span class="fn">append</span>(token.lemma_)   <span class="cm"># use lemma</span>
+    <span class="kw">return</span> tokens
+
+text = <span class="str">"Anyone tried Irn Bru? It's a Scottish drink!"</span>
+<span class="fn">print</span>(<span class="fn">preprocess</span>(text))
+<span class="cm"># ['try', 'irn', 'bru', 'scottish', 'drink']</span></code></pre>
+
+    <h3>Summary: Problems and Solutions</h3>
+    <table>
+      <thead><tr><th>Problem</th><th>Solution</th></tr></thead>
+      <tbody>
+        <tr><td>Individual characters carry little meaning</td><td>Use words (tokens)</td></tr>
+        <tr><td>Splitting text into words is non-trivial</td><td>Rule-based tokeniser (spaCy)</td></tr>
+        <tr><td>Common words dominate but carry little info</td><td>Stopword removal</td></tr>
+        <tr><td>Same word, different forms don't match (loved ≠ loves)</td><td>Stemming or Lemmatization</td></tr>
+        <tr><td>Words only meaningful with context (don't like ≠ really like)</td><td>Word n-grams (bigrams, trigrams)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ====================================================
+     SECTION 8 — WORDS & CORPORA (J&M Ch.2)
+     ==================================================== -->
+<div class="section" id="sec8">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-num">8</div>
+    <h2>Words & Corpora — Jurafsky & Martin Ch. 2</h2>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="section-body">
+
+    <div class="grid2">
+      <div class="card accent">
+        <h3>Word Type vs. Word Instance</h3>
+        <dl class="def-list">
+          <dt>Word Type (vocabulary item)</dt>
+          <dd>A distinct/unique word form. Vocabulary size = |V|</dd>
+          <dt>Word Instance (token count)</dt>
+          <dd>Total running words in a corpus = N</dd>
+        </dl>
+        <div class="math-box">$|V| = \text{types}, \quad N = \text{instances}$</div>
+        <p style="color:var(--muted);font-size:.85rem;">Example: "the cat sat on the mat" → N=6 instances, |V|=5 types ("the" repeats)</p>
+      </div>
+      <div class="card green">
+        <h3>Corpus Examples (J&M Fig 2.1)</h3>
+        <table>
+          <thead><tr><th>Corpus</th><th>Types |V|</th><th>Instances N</th></tr></thead>
+          <tbody>
+            <tr><td>Shakespeare</td><td>31K</td><td>884K</td></tr>
+            <tr><td>Brown corpus</td><td>38K</td><td>1M</td></tr>
+            <tr><td>COCA</td><td>2M</td><td>440M</td></tr>
+            <tr><td>Google n-grams</td><td>13M</td><td>1 trillion</td></tr>
+          </tbody>
+        </table>
+        <p style="color:var(--muted);font-size:.85rem;">Larger corpora → more types. Vocabulary grows without bound!</p>
+      </div>
+    </div>
+
+    <h3>Herdan's Law / Heaps' Law</h3>
+    <p>The relationship between vocabulary size and corpus size follows a power law:</p>
+    <div class="math-box">$$|V| = k \cdot N^b \quad \text{where } 0 < b < 1, \; k > 0$$</div>
+    <ul>
+      <li>Typical values: $b \approx 0.44$ to $0.56$</li>
+      <li>Vocabulary grows roughly as the <strong>square root</strong> of corpus length</li>
+      <li>Two regimes: early growth (function + content words) → later slower growth (content words only)</li>
+    </ul>
+
+    <div class="callout">
+      <span class="callout-icon">🔑</span>
+      <div class="callout-body">
+        <strong>Key Implication for NLP Models</strong>
+        <p>Since vocabulary grows without bound, any NLP model will encounter <em>out-of-vocabulary (OOV)</em> words — words it has never seen. This motivates subword tokenisation (BPE) rather than whole-word tokenisation in modern LLMs.</p>
+      </div>
+    </div>
+
+    <h3>Why Subword Tokenization? (J&M §2.4)</h3>
+    <p>Modern LLMs (GPT, BERT) use <span class="hl-purple">Byte-Pair Encoding (BPE)</span> to split text into subwords:</p>
+    <pre><code><span class="cm"># BPE example: "unbelievable" might tokenize as:</span>
+<span class="cm"># ["un", "##believe", "##able"]  (BERT-style)
+# or ["un", "believ", "able"]   (GPT-style)
+# New words can always be represented from known subword pieces</span>
+
+<span class="cm"># Using HuggingFace tokenizers:</span>
+<span class="kw">from</span> transformers <span class="kw">import</span> <span class="cls">AutoTokenizer</span>
+tokenizer = <span class="cls">AutoTokenizer</span>.<span class="fn">from_pretrained</span>(<span class="str">"bert-base-uncased"</span>)
+<span class="fn">print</span>(tokenizer.<span class="fn">tokenize</span>(<span class="str">"John's father didn't have £100."</span>))
+<span class="cm"># ['john', "'", 's', 'father', 'didn', "'", 't', 'have', '£', '100', '.']</span></code></pre>
+
+    <h3>BPE Step-by-Step Algorithm (High Exam Priority!)</h3>
+    <div class="card accent">
+      <h3>How BPE Training Works</h3>
+      <ol>
+        <li><strong>Initialise:</strong> Split every word into individual characters. Vocabulary = all unique characters.</li>
+        <li><strong>Count pairs:</strong> Find the most frequent adjacent pair in the current segmentation.</li>
+        <li><strong>Merge:</strong> Replace every occurrence of that pair with the merged token. Add it to the vocabulary.</li>
+        <li><strong>Repeat</strong> steps 2–3 until target vocabulary size is reached.</li>
+      </ol>
+      <p style="color:var(--muted);font-size:.85rem;margin-top:.5rem;">When <em>applying</em> (not training) BPE: apply learned merge rules in order from first-learned to last-learned.</p>
+    </div>
+
+    <div class="card yellow">
+      <h3>Worked Exam Example (2023 Past Paper) — "mississippi is pie", target vocab size = 8</h3>
+      <table>
+        <thead><tr><th>Step</th><th>Best Pair</th><th>Count</th><th>Segmentation After Merge</th><th>Vocab Size</th></tr></thead>
+        <tbody>
+          <tr><td>Init</td><td>—</td><td>—</td><td>[m][i][s][s][i][s][s][i][p][p][i] [i][s] [p][i][e]</td><td>5 → {m,i,s,p,e}</td></tr>
+          <tr><td>1</td><td>(i, s)</td><td>3</td><td>[m][<strong>is</strong>][s][<strong>is</strong>][s][i][p][p][i] [<strong>is</strong>] [p][i][e]</td><td>6 → +{is}</td></tr>
+          <tr><td>2</td><td>(is, s)</td><td>2</td><td>[m][<strong>iss</strong>][<strong>iss</strong>][i][p][p][i] [is] [p][i][e]</td><td>7 → +{iss}</td></tr>
+          <tr><td>3</td><td>(p, i)</td><td>2</td><td>[m][iss][iss][i][p][<strong>pi</strong>] [is] [<strong>pi</strong>][e]</td><td>8 → +{pi} ✓ DONE</td></tr>
+        </tbody>
+      </table>
+      <p>Final tokenisation of "mississippi is pie": <span class="inline-code">m | iss | iss | i | p | pi | is | pi | e</span></p>
+    </div>
+
+    <div class="card green">
+      <h3>Applying Pre-learned BPE Rules (2024 Past Paper Style)</h3>
+      <p>Rules are applied <em>in order</em>. Example rules: (i,s)→is; (p,i)→pi; (i,e)→ie; (p,ie)→pie</p>
+      <p>Encode "pie" with base characters {p, i, e}:</p>
+      <table>
+        <thead><tr><th>Rule</th><th>Segmentation</th></tr></thead>
+        <tbody>
+          <tr><td>Start</td><td>[p][i][e]</td></tr>
+          <tr><td>(i,s)→is</td><td>[p][i][e] — no match</td></tr>
+          <tr><td>(p,i)→pi</td><td>[<strong>pi</strong>][e]</td></tr>
+          <tr><td>(i,e)→ie</td><td>[pi][e] — no adjacent i,e pair now</td></tr>
+          <tr><td>(p,ie)→pie</td><td>[pi][e] — no match</td></tr>
+        </tbody>
+      </table>
+      <p>Final: <span class="inline-code">pi | e</span> — rules applied strictly in order, even if a later rule could have matched.</p>
+    </div>
+
+    <div class="quiz-q" id="bpe2">
+      <span class="quiz-tag tag-calc">Practice — BPE</span>
+      <p>Build a BPE vocabulary of size 7 for the text: <strong>"banana band ban"</strong>. Initial characters: {b, a, n, d} (size 4). Show all steps.</p>
+      <button class="quiz-btn" onclick="document.getElementById('bpe2-ans').style.display='block'">Show Answer</button>
+      <div id="bpe2-ans" class="quiz-explanation">
+        <strong>Init:</strong> [b][a][n][a][n][a] [b][a][n][d] [b][a][n] — Vocab: {b,a,n,d} (size 4)<br><br>
+        <strong>Step 1 — Count pairs:</strong> (b,a)=3, (a,n)=3, (n,a)=2, (n,d)=1. Tie → take first: <strong>(b,a)→ba</strong><br>
+        Text: [<strong>ba</strong>][n][a][n][a] [<strong>ba</strong>][n][d] [<strong>ba</strong>][n] — Vocab: {b,a,n,d,ba} (size 5)<br><br>
+        <strong>Step 2 — Count pairs:</strong> (ba,n)=3 is dominant. <strong>(ba,n)→ban</strong><br>
+        Text: [<strong>ban</strong>][a][n][a] [<strong>ban</strong>][d] [<strong>ban</strong>] — Vocab: {b,a,n,d,ba,ban} (size 6)<br><br>
+        <strong>Step 3 — Count pairs:</strong> (ban,a)=1, (a,n)=1, (n,a)=1, (ban,d)=1. All freq=1. Take <strong>(ban,a)→bana</strong><br>
+        Vocab: {b,a,n,d,ba,ban,bana} (size 7) ✓
+      </div>
+    </div>
+
+    <h3>Morphemes: Parts of Words</h3>
+    <dl class="def-list">
+      <dt>Morpheme</dt>
+      <dd>Minimal meaning-bearing unit in a language. "cats" = morpheme "cat" + morpheme "-s" (plural)</dd>
+      <dt>Stem</dt>
+      <dd>Core meaning-bearing part (e.g., "love" in "loved", "loves", "loving")</dd>
+      <dt>Affix</dt>
+      <dd>Prefix or suffix attached to stem (e.g., "-ed", "-ing", "-s", "un-")</dd>
+    </dl>
+    <pre><code><span class="cm"># Morpheme breakdown examples:</span>
+<span class="cm"># "Doc work-ed care-ful-ly wash-ing the glass-es"
+# Doc | work + ed | care + ful + ly | wash + ing | the | glass + es</span></code></pre>
+
+    <h3>Chinese Tokenization Challenge</h3>
+    <div class="card yellow">
+      <h3>No Spaces → Multiple Valid Segmentations</h3>
+      <p>Chinese sentence: 姚明进入总决赛 ("Yao Ming reaches the finals")</p>
+      <ul>
+        <li><strong>3 words</strong> (Chinese Treebank): 姚明 | 进入 | 总决赛</li>
+        <li><strong>5 words</strong> (Peking Univ.): 姚 | 明 | 进入 | 总 | 决赛</li>
+        <li><strong>7 characters</strong>: each character treated as a token</li>
+      </ul>
+      <p style="color:var(--muted);font-size:.85rem;">This is why universal subword tokenisation (BPE) works well across languages.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================
+     SECTION 9 — STEMMING & LEMMATIZATION
+     ==================================================== -->
+<div class="section" id="sec9">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-num">9</div>
+    <h2>Stemming & Lemmatization</h2>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="section-body">
+
+    <p>Problem: "loved" and "loves" have the same meaning but won't match as strings. We need to reduce words to a <span class="hl-purple">canonical form</span>.</p>
+
+    <div class="grid2">
+      <div class="card accent">
+        <h3>Stemming</h3>
+        <p>Rule-based removal of common suffixes. Works on single words without context. Fast but crude.</p>
+        <table>
+          <thead><tr><th>Input</th><th>Stem</th></tr></thead>
+          <tbody>
+            <tr><td>walking</td><td>walk</td></tr>
+            <tr><td>plastered</td><td>plaster</td></tr>
+            <tr><td>computing</td><td>comput</td></tr>
+            <tr><td>ponies</td><td>poni</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card green">
+        <h3>Lemmatization</h3>
+        <p>Uses Part-of-Speech + meaning. Smarter — distinguishes words with same stem but different meaning.</p>
+        <table>
+          <thead><tr><th>Input</th><th>Lemma</th></tr></thead>
+          <tbody>
+            <tr><td>emergency</td><td>emergency</td></tr>
+            <tr><td>emerge</td><td>emerge</td></tr>
+            <tr><td>better</td><td>good (adj.)</td></tr>
+            <tr><td>ran</td><td>run</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <h3>The Porter Stemmer Algorithm</h3>
+    <p>One of the most widely used stemming algorithms. Applies ordered rules in steps:</p>
+    <pre><code><span class="cm"># Porter Stemmer rules (sample):</span>
+
+<span class="cm"># Step 1a — plural/possessive</span>
+<span class="cm"># sses → ss : caresses → caress</span>
+<span class="cm"># ies  → i  : ponies   → poni</span>
+<span class="cm"># s    → ø  : cats     → cat</span>
+
+<span class="cm"># Step 1b — past tense / progressive</span>
+<span class="cm"># (*v*)ing → ø : walking   → walk</span>
+<span class="cm"># (*v*)ed  → ø : plastered → plaster</span>
+
+<span class="cm"># Step 2 (long stems only)</span>
+<span class="cm"># ational → ate : relational → relate</span>
+<span class="cm"># izer    → ize : digitizer  → digitize</span>
+
+<span class="kw">from</span> nltk.stem <span class="kw">import</span> <span class="cls">PorterStemmer</span>
+ps = <span class="cls">PorterStemmer</span>()
+words = [<span class="str">"caresses"</span>, <span class="str">"ponies"</span>, <span class="str">"walking"</span>, <span class="str">"plastered"</span>, <span class="str">"relational"</span>]
+<span class="kw">for</span> w <span class="kw">in</span> words:
+    <span class="fn">print</span>(f<span class="str">"{w} → {ps.stem(w)}"</span>)
+<span class="cm"># caresses → caress
+# ponies   → poni
+# walking  → walk
+# plastered → plaster
+# relational → relat</span></code></pre>
+
+    <div class="card red">
+      <h3>Stemming Weakness: Over-stemming</h3>
+      <p>Words with different meanings collapse to the same stem:</p>
+      <table>
+        <thead><tr><th>Word</th><th>Porter Stem</th><th>Problem</th></tr></thead>
+        <tbody>
+          <tr><td>emergency</td><td>emerg</td><td rowspan="2">Different meanings, same stem!</td></tr>
+          <tr><td>emerge</td><td>emerg</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:.5rem;color:var(--muted);font-size:.85rem;">Lemmatization uses POS to distinguish: emergency (noun) → emergency; emerge (verb) → emerge.</p>
+    </div>
+
+    <h3>Lemmatization with spaCy</h3>
+    <pre><code><span class="kw">import</span> spacy
+nlp = spacy.<span class="fn">load</span>(<span class="str">"en_core_web_sm"</span>)
+
+examples = [<span class="str">"loved"</span>, <span class="str">"loves"</span>, <span class="str">"loving"</span>, <span class="str">"better"</span>, <span class="str">"ran"</span>]
+doc = nlp(<span class="str">" "</span>.<span class="fn">join</span>(examples))
+<span class="kw">for</span> token <span class="kw">in</span> doc:
+    <span class="fn">print</span>(f<span class="str">"{token.text:12} → {token.lemma_:10} ({token.pos_})"</span>)
+<span class="cm"># loved        → love       (VERB)
+# loves        → love       (VERB)
+# loving       → love       (VERB)
+# better       → good       (ADJ)
+# ran          → run        (VERB)</span></code></pre>
+
+    <h3>When to use Stemming vs. Lemmatization</h3>
+    <table>
+      <thead><tr><th></th><th>Stemming</th><th>Lemmatization</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Speed</strong></td><td>Very fast (rule lookups)</td><td>Slower (needs POS tagging)</td></tr>
+        <tr><td><strong>Accuracy</strong></td><td>Lower</td><td>Higher</td></tr>
+        <tr><td><strong>Best for</strong></td><td>IR, large corpora</td><td>Tasks needing precision</td></tr>
+        <tr><td><strong>Library</strong></td><td>NLTK PorterStemmer</td><td>spaCy <span class="inline-code">.lemma_</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ====================================================
+     SECTION 10 — DOCUMENT SIMILARITY
+     ==================================================== -->
+<div class="section" id="sec10">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-num">10</div>
+    <h2>Document Similarity — Set Representation</h2>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="section-body">
+
+    <div class="card accent">
+      <h3>Core Hypothesis</h3>
+      <p>If two documents share many of the same tokens, they are likely discussing <span class="hl-purple">similar subjects</span>. The more overlap, the higher the similarity.</p>
+    </div>
+
+    <h3>Representing a Document as a Set</h3>
+    <p>A <span class="hl-green">set</span> is a collection of <em>unique</em> items. After preprocessing, represent each document as the set of its tokens:</p>
+
+    <pre><code><span class="cm"># Two Reddit posts about drinks:</span>
+post_A = <span class="str">"Anyone tried Irn Bru? It's a Scottish drink."</span>
+post_B = <span class="str">"Has anyone had Irn Bru before? Unique Scottish taste."</span>
+
+<span class="kw">import</span> spacy
+nlp = spacy.<span class="fn">load</span>(<span class="str">"en_core_web_sm"</span>)
+
+<span class="kw">def</span> <span class="fn">to_token_set</span>(text):
+    doc = nlp(text.<span class="fn">lower</span>())
+    <span class="kw">return</span> <span class="fn">set</span>(
+        token.lemma_ <span class="kw">for</span> token <span class="kw">in</span> doc
+        <span class="kw">if not</span> token.is_stop <span class="kw">and not</span> token.is_punct
+    )
+
+X = <span class="fn">to_token_set</span>(post_A)  <span class="cm"># {'try', 'irn', 'bru', 'scottish', 'drink'}</span>
+Y = <span class="fn">to_token_set</span>(post_B)  <span class="cm"># {'irn', 'bru', 'scottish', 'taste', 'unique'}</span></code></pre>
+
+    <h3>Set Operations</h3>
+    <div class="diagram">
+      <div class="mermaid">
+graph LR
+    subgraph "X = {irn, bru, scottish, drink, try}"
+    end
+    subgraph "Y = {irn, bru, scottish, taste, unique}"
+    end
+    I["X ∩ Y = {irn, bru, scottish}"]
+    U["X ∪ Y = {irn, bru, scottish, drink, try, taste, unique}"]
+    D["X − Y = {drink, try}"]
+      </div>
+    </div>
+
+    <table>
+      <thead><tr><th>Notation</th><th>Meaning</th><th>Python</th></tr></thead>
+      <tbody>
+        <tr><td>$|X|$</td><td>Number of elements in set X</td><td><span class="inline-code">len(X)</span></td></tr>
+        <tr><td>$X \cap Y$</td><td>Intersection — items in both</td><td><span class="inline-code">X & Y</span> or <span class="inline-code">X.intersection(Y)</span></td></tr>
+        <tr><td>$X \cup Y$</td><td>Union — items in either</td><td><span class="inline-code">X | Y</span> or <span class="inline-code">X.union(Y)</span></td></tr>
+        <tr><td>$X - Y$</td><td>Difference — in X but not Y</td><td><span class="inline-code">X - Y</span> or <span class="inline-code">X.difference(Y)</span></td></tr>
+      </tbody>
+    </table>
+
+    <pre><code>X = {<span class="str">'irn'</span>, <span class="str">'bru'</span>, <span class="str">'scottish'</span>, <span class="str">'drink'</span>, <span class="str">'try'</span>}
+Y = {<span class="str">'irn'</span>, <span class="str">'bru'</span>, <span class="str">'scottish'</span>, <span class="str">'taste'</span>, <span class="str">'unique'</span>}
+
+<span class="fn">print</span>(<span class="str">"Intersection:"</span>, X & Y)   <span class="cm"># {'irn', 'bru', 'scottish'}</span>
+<span class="fn">print</span>(<span class="str">"Union:"</span>,        X | Y)   <span class="cm"># {'irn', 'bru', 'scottish', 'drink', 'try', 'taste', 'unique'}</span>
+<span class="fn">print</span>(<span class="str">"|X|:"</span>, <span class="fn">len</span>(X))            <span class="cm"># 5</span>
+<span class="fn">print</span>(<span class="str">"|Y|:"</span>, <span class="fn">len</span>(Y))            <span class="cm"># 5</span>
+<span class="fn">print</span>(<span class="str">"|X∩Y|:"</span>, <span class="fn">len</span>(X & Y))    <span class="cm"># 3</span>
+<span class="fn">print</span>(<span class="str">"|X∪Y|:"</span>, <span class="fn">len</span>(X | Y))    <span class="cm"># 7</span></code></pre>
+  </div>
+</div>
+
+<!-- ====================================================
+     SECTION 11 — SET SIMILARITY MEASURES
+     ==================================================== -->
+<div class="section" id="sec11">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-num">11</div>
+    <h2>Set Similarity Measures</h2>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="section-body">
+
+    <div class="card accent">
+      <h3>What is a Similarity Measure?</h3>
+      <p>A function $\text{sim}(X, Y)$ where $X$ and $Y$ are token sets:</p>
+      <ul>
+        <li><strong>High value</strong> → documents are similar</li>
+        <li><strong>Low value</strong> → documents are dissimilar</li>
+        <li>Ideally <strong>bounded between 0 and 1</strong></li>
+      </ul>
+    </div>
+
+    <hr>
+
+    <h3>Measure 1: Raw Overlap Count</h3>
+    <div class="math-box">$$\text{sim}(X, Y) = |X \cap Y|$$</div>
+    <div class="grid2">
+      <div class="card green">
+        <h3>Pros</h3>
+        <ul><li>Simple and intuitive</li><li>Easy to compute</li></ul>
+      </div>
+      <div class="card red">
+        <h3>Cons</h3>
+        <ul>
+          <li>Not normalised — long documents always score higher</li>
+          <li>Not bounded between 0 and 1</li>
+        </ul>
+      </div>
+    </div>
+
+    <hr>
+
+    <h3>Measure 2: Overlap Coefficient</h3>
+    <div class="math-box">$$\text{sim}(X, Y) = \frac{|X \cap Y|}{\min(|X|, |Y|)}$$</div>
+    <p><strong>Interpretation:</strong> The percentage of tokens in the <em>smaller</em> document that also appear in the larger document.</p>
+    <div class="grid2">
+      <div class="card green">
+        <h3>Pros</h3>
+        <ul>
+          <li>Bounded [0, 1]</li>
+          <li>0 = no overlap; 1 = one set is subset of other</li>
+          <li>Good when one document is shorter</li>
+        </ul>
+      </div>
+      <div class="card red">
+        <h3>Cons</h3>
+        <ul>
+          <li>A short document with all words in common with a much larger document scores 1.0 even if the documents are very different in scope</li>
+        </ul>
+      </div>
+    </div>
+    <pre><code><span class="kw">def</span> <span class="fn">overlap_coefficient</span>(X, Y):
+    <span class="kw">return</span> <span class="fn">len</span>(X & Y) / <span class="fn">min</span>(<span class="fn">len</span>(X), <span class="fn">len</span>(Y))
+
+X = {<span class="str">'irn'</span>, <span class="str">'bru'</span>, <span class="str">'scottish'</span>, <span class="str">'drink'</span>, <span class="str">'try'</span>}
+Y = {<span class="str">'irn'</span>, <span class="str">'bru'</span>, <span class="str">'scottish'</span>, <span class="str">'taste'</span>, <span class="str">'unique'</span>}
+<span class="fn">print</span>(<span class="fn">overlap_coefficient</span>(X, Y))  <span class="cm"># 3/5 = 0.6</span></code></pre>
+
+    <hr>
+
+    <h3>Measure 3: Jaccard Similarity</h3>
+    <div class="math-box">$$\text{sim}(X, Y) = \frac{|X \cap Y|}{|X \cup Y|}$$</div>
+    <p><strong>Interpretation:</strong> Overlapping tokens divided by all unique tokens across both documents.</p>
+
+    <div class="callout">
+      <span class="callout-icon">🔑</span>
+      <div class="callout-body">
+        <strong>Equivalent form:</strong>
+        <p>Since $|X \cup Y| = |X| + |Y| - |X \cap Y|$, we can write: $\text{sim}(X,Y) = \frac{|X \cap Y|}{|X| + |Y| - |X \cap Y|}$</p>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card green">
+        <h3>Properties</h3>
+        <ul>
+          <li>Bounded [0, 1]</li>
+          <li>0 = completely different sets</li>
+          <li>1 = identical sets</li>
+          <li>Very widely used in practice</li>
+        </ul>
+      </div>
+      <div class="card blue">
+        <h3>Metric Properties</h3>
+        <p>Jaccard <em>distance</em> $d(X,Y) = 1 - \text{sim}(X,Y)$ is a proper metric:</p>
+        <ul>
+          <li>$d(X,X) = 0$</li>
+          <li>$d(X,Y) > 0$ if $X \neq Y$</li>
+          <li>$d(X,Y) = d(Y,X)$ (symmetric)</li>
+          <li>$d(X,Z) \leq d(X,Y) + d(Y,Z)$ (triangle inequality)</li>
+        </ul>
+      </div>
+    </div>
+
+    <pre><code><span class="kw">def</span> <span class="fn">jaccard_similarity</span>(X, Y):
+    intersection = X & Y
+    union = X | Y
+    <span class="kw">if not</span> union: <span class="kw">return</span> <span class="num">0.0</span>
+    <span class="kw">return</span> <span class="fn">len</span>(intersection) / <span class="fn">len</span>(union)
+
+X = {<span class="str">'irn'</span>, <span class="str">'bru'</span>, <span class="str">'scottish'</span>, <span class="str">'drink'</span>, <span class="str">'try'</span>}
+Y = {<span class="str">'irn'</span>, <span class="str">'bru'</span>, <span class="str">'scottish'</span>, <span class="str">'taste'</span>, <span class="str">'unique'</span>}
+
+<span class="cm"># |X∩Y| = 3, |X∪Y| = 7</span>
+<span class="fn">print</span>(<span class="fn">jaccard_similarity</span>(X, Y))  <span class="cm"># 3/7 ≈ 0.429</span>
+<span class="fn">print</span>(<span class="num">1</span> - <span class="fn">jaccard_similarity</span>(X, Y))  <span class="cm"># Jaccard distance ≈ 0.571</span></code></pre>
+
+    <h3>Worked Example — Full Pipeline</h3>
+    <pre><code><span class="kw">import</span> spacy
+nlp = spacy.<span class="fn">load</span>(<span class="str">"en_core_web_sm"</span>)
+
+posts = {
+    <span class="str">"interest"</span>: <span class="str">"Anyone tried Irn Bru? Scottish drink banned in some countries."</span>,
+    <span class="str">"A"</span>: <span class="str">"Irn Bru is a unique Scottish soft drink with a distinctive taste."</span>,
+    <span class="str">"B"</span>: <span class="str">"I love pizza. Italian food is the best cuisine in the world."</span>
+}
+
+<span class="kw">def</span> <span class="fn">to_set</span>(text):
+    doc = nlp(text.<span class="fn">lower</span>())
+    <span class="kw">return</span> <span class="fn">set</span>(t.lemma_ <span class="kw">for</span> t <span class="kw">in</span> doc <span class="kw">if not</span> t.is_stop <span class="kw">and not</span> t.is_punct)
+
+sets = {k: <span class="fn">to_set</span>(v) <span class="kw">for</span> k, v <span class="kw">in</span> posts.<span class="fn">items</span>()}
+
+interest = sets[<span class="str">"interest"</span>]
+<span class="fn">print</span>(<span class="str">"Jaccard(interest, A):"</span>, <span class="fn">jaccard_similarity</span>(interest, sets[<span class="str">"A"</span>]))
+<span class="fn">print</span>(<span class="str">"Jaccard(interest, B):"</span>, <span class="fn">jaccard_similarity</span>(interest, sets[<span class="str">"B"</span>]))
+<span class="cm"># interest, A should score much higher than interest, B</span></code></pre>
+
+    <hr>
+
+    <h3>Measure 4: Sørensen–Dice Coefficient</h3>
+    <div class="math-box">$$\text{Dice}(X, Y) = \frac{2|X \cap Y|}{|X| + |Y|}$$</div>
+    <p><strong>Interpretation:</strong> Double the intersection divided by the total elements across both sets. Gives proportionally higher weight to shared elements than Jaccard.</p>
+
+    <div class="callout">
+      <span class="callout-icon">💡</span>
+      <div class="callout-body">
+        <strong>Dice vs Jaccard Relationship</strong>
+        <p>If $J = \text{Jaccard}(X,Y)$, then $\text{Dice}(X,Y) = \dfrac{2J}{1+J}$. <strong>Dice ≥ Jaccard always.</strong> Example (Irn Bru, |∩|=3, |X|=|Y|=5): Jaccard = 3/7 ≈ 0.429, Dice = 6/10 = 0.6.</p>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card green">
+        <h3>Properties</h3>
+        <ul>
+          <li>Bounded [0, 1]</li>
+          <li>0 = disjoint sets (no overlap)</li>
+          <li>1 = identical sets</li>
+          <li>Symmetric: Dice(X,Y) = Dice(Y,X)</li>
+          <li>Dice ≥ Jaccard for any X, Y</li>
+        </ul>
+      </div>
+      <div class="card red">
+        <h3>⚠️ NOT a Proper Metric!</h3>
+        <p>The Sørensen–Dice <em>distance</em> $1 - \text{Dice}(X,Y)$ does <strong>NOT satisfy the triangle inequality</strong>, unlike Jaccard distance which does. This is a key exam distinction!</p>
+        <p style="color:var(--muted);font-size:.85rem;">Explicitly tested in 2022 past exam — see worked example below.</p>
+      </div>
+    </div>
+
+    <pre><code><span class="kw">def</span> <span class="fn">sorensen_dice</span>(X, Y):
+    <span class="kw">return</span> <span class="num">2</span> * <span class="fn">len</span>(X & Y) / (<span class="fn">len</span>(X) + <span class="fn">len</span>(Y))
+
+X = {<span class="str">'irn'</span>, <span class="str">'bru'</span>, <span class="str">'scottish'</span>, <span class="str">'drink'</span>, <span class="str">'try'</span>}
+Y = {<span class="str">'irn'</span>, <span class="str">'bru'</span>, <span class="str">'scottish'</span>, <span class="str">'taste'</span>, <span class="str">'unique'</span>}
+<span class="cm"># |X ∩ Y| = 3,  |X| = 5,  |Y| = 5</span>
+<span class="fn">print</span>(<span class="fn">sorensen_dice</span>(X, Y))       <span class="cm"># 2*3/(5+5) = 0.6</span>
+<span class="fn">print</span>(<span class="fn">jaccard_similarity</span>(X, Y))  <span class="cm"># 3/7 ≈ 0.429 (always ≤ Dice)</span></code></pre>
+
+    <div class="card yellow">
+      <h3>Triangle Inequality Violation — Exact 2022 Past Exam</h3>
+      <p>Three probe texts A, B, C (each with 5 unique tokens after deduplication):</p>
+      <ul>
+        <li><strong>A</strong> = {a, eda, bceda, bcda, bce} → |A| = 5</li>
+        <li><strong>B</strong> = {ca, eda, bcba, bceda, bce} → |B| = 5</li>
+        <li><strong>C</strong> = {beda, bceda, bceca, ebeda, b} → |C| = 5</li>
+      </ul>
+      <table>
+        <thead><tr><th>Pair</th><th>Intersection</th><th>|∩|</th><th>Dice Score</th></tr></thead>
+        <tbody>
+          <tr><td>A, B</td><td>{eda, bceda, bce}</td><td>3</td><td>2×3/(5+5) = <span class="hl-red">0.6</span></td></tr>
+          <tr><td>A, C</td><td>{bceda}</td><td>1</td><td>2×1/(5+5) = <span class="hl-green">0.2</span></td></tr>
+          <tr><td>B, C</td><td>{bceda}</td><td>1</td><td>2×1/(5+5) = <span class="hl-green">0.2</span></td></tr>
+        </tbody>
+      </table>
+      <p><strong>Triangle inequality test:</strong> Dice(A,B) ≤ Dice(A,C) + Dice(B,C)?</p>
+      <div class="math-box">$0.6 \leq 0.2 + 0.2 \implies 0.6 \leq 0.4 \quad \textbf{VIOLATED!}$</div>
+      <p style="color:var(--muted);font-size:.85rem;">Jaccard distance would NOT violate this. Dice distance is not a proper metric; Jaccard distance is.</p>
+    </div>
+
+    <div class="quiz-q" id="pqd1">
+      <span class="quiz-tag tag-calc">Practice</span>
+      <p>Given $A = \{p, q, r, s\}$ and $B = \{q, r, t, u, v\}$, compute (a) Jaccard similarity, (b) Sørensen–Dice coefficient, (c) state which is larger and why.</p>
+      <button class="quiz-btn" onclick="document.getElementById('pqd1-ans').style.display='block'">Show Answer</button>
+      <div id="pqd1-ans" class="quiz-explanation">
+        $|A \cap B| = |\{q, r\}| = 2$, $|A \cup B| = |\{p,q,r,s,t,u,v\}| = 7$, $|A| = 4$, $|B| = 5$<br><br>
+        <strong>(a) Jaccard:</strong> $\dfrac{2}{7} \approx 0.286$<br>
+        <strong>(b) Dice:</strong> $\dfrac{2 \times 2}{4 + 5} = \dfrac{4}{9} \approx 0.444$<br>
+        <strong>(c)</strong> Dice (0.444) > Jaccard (0.286). Dice always gives a higher or equal value because the denominator $|X|+|Y|$ counts shared elements twice, while Jaccard's denominator $|X \cup Y|$ counts them only once.
+      </div>
+    </div>
+
+    <h3>Comparison of Measures</h3>
+    <table>
+      <thead><tr><th>Measure</th><th>Formula</th><th>Range</th><th>Best for</th><th>Proper Metric?</th></tr></thead>
+      <tbody>
+        <tr><td>Raw Overlap</td><td>$|X \cap Y|$</td><td>[0, ∞)</td><td>Quick check</td><td>No</td></tr>
+        <tr><td>Overlap Coefficient</td><td>$\frac{|X \cap Y|}{\min(|X|,|Y|)}$</td><td>[0, 1]</td><td>Short vs long docs</td><td>No</td></tr>
+        <tr><td>Jaccard Similarity</td><td>$\frac{|X \cap Y|}{|X \cup Y|}$</td><td>[0, 1]</td><td>General use</td><td><span class="hl-green">Yes</span></td></tr>
+        <tr><td>Sørensen–Dice</td><td>$\frac{2|X \cap Y|}{|X|+|Y|}$</td><td>[0, 1]</td><td>Bioinformatics, NLP</td><td><span class="hl-red">No</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Weaknesses of Set-Based Similarity</h3>
+    <div class="card red">
+      <ul>
+        <li>All words are treated <strong>equally</strong> — but rare words should be more important</li>
+        <li>Word <strong>frequencies are ignored</strong> — "irn" appearing 10x vs 1x treated the same</li>
+        <li><strong>Synonyms cannot match</strong> — "happy" and "joyful" are different tokens in a set</li>
+        <li><strong>Word order ignored</strong> — set has no positional information</li>
+      </ul>
+      <p style="color:var(--muted);font-size:.85rem;margin-top:.5rem;">These weaknesses motivate TF-IDF (next lectures) and dense vector representations (word2vec, BERT).</p>
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================
+     SECTION 12 — EXAM QUESTIONS
+     ==================================================== -->
+<div class="section" id="sec12">
+  <div class="section-header" onclick="toggle(this)">
+    <div class="section-num">12</div>
+    <h2>Exam Practice — 40 Questions (Past Papers + Generated)</h2>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="section-body">
+
+    <h3>Multiple Choice</h3>
+
+    <!-- MCQ 1 -->
+    <div class="quiz-q" id="q1">
+      <span class="quiz-tag tag-mcq">MCQ</span>
+      <p>1. Which of the following best describes a <strong>token</strong> in NLP?</p>
+      <button class="quiz-option" onclick="answer(this,'q1',false)">A. A single character in a text</button>
+      <button class="quiz-option" onclick="answer(this,'q1',false)">B. A complete sentence in a document</button>
+      <button class="quiz-option" onclick="answer(this,'q1',true)">C. A meaningful sequence of characters — not necessarily a word</button>
+      <button class="quiz-option" onclick="answer(this,'q1',false)">D. Always equivalent to a dictionary word</button>
+      <div class="quiz-explanation" id="q1-exp">
+        Correct! A token is a meaningful sequence of characters. Punctuation, numbers, and word-parts like "n't" from "didn't" can all be tokens. Tokens ≠ words.
+      </div>
+    </div>
+
+    <!-- MCQ 2 -->
+    <div class="quiz-q" id="q2">
+      <span class="quiz-tag tag-mcq">MCQ</span>
+      <p>2. What does Herdan's/Heaps' Law state?</p>
+      <button class="quiz-option" onclick="answer(this,'q2',false)">A. Word frequency is inversely proportional to word rank (Zipf's Law)</button>
+      <button class="quiz-option" onclick="answer(this,'q2',true)">B. Vocabulary size grows as a power function of corpus size: $|V| = kN^b$</button>
+      <button class="quiz-option" onclick="answer(this,'q2',false)">C. The number of tokens is always larger than the number of types</button>
+      <button class="quiz-option" onclick="answer(this,'q2',false)">D. Vocabulary growth eventually plateaus for large corpora</button>
+      <div class="quiz-explanation" id="q2-exp">
+        Heaps' Law: $|V| = kN^b$ where $0 &lt; b &lt; 1$. Vocabulary grows without bound — roughly as the square root of corpus length ($b \approx 0.5$). It never truly plateaus; new content words keep appearing.
+      </div>
+    </div>
+
+    <!-- MCQ 3 -->
+    <div class="quiz-q" id="q3">
+      <span class="quiz-tag tag-mcq">MCQ</span>
+      <p>3. Given $X = \{a, b, c, d\}$ and $Y = \{b, c, e\}$, what is the Jaccard similarity?</p>
+      <button class="quiz-option" onclick="answer(this,'q3',false)">A. 2/4 = 0.5</button>
+      <button class="quiz-option" onclick="answer(this,'q3',true)">B. 2/5 = 0.4</button>
+      <button class="quiz-option" onclick="answer(this,'q3',false)">C. 2/3 ≈ 0.667</button>
+      <button class="quiz-option" onclick="answer(this,'q3',false)">D. 3/7 ≈ 0.429</button>
+      <div class="quiz-explanation" id="q3-exp">
+        $|X \cap Y| = |\{b,c\}| = 2$. $|X \cup Y| = |\{a,b,c,d,e\}| = 5$. Jaccard = $2/5 = 0.4$.
+      </div>
+    </div>
+
+    <!-- MCQ 4 -->
+    <div class="quiz-q" id="q4">
+      <span class="quiz-tag tag-mcq">MCQ</span>
+      <p>4. Which statement about stopword removal is <strong>most accurate</strong>?</p>
+      <button class="quiz-option" onclick="answer(this,'q4',false)">A. There is a single definitive list of stopwords accepted by all researchers</button>
+      <button class="quiz-option" onclick="answer(this,'q4',false)">B. Stopwords never appear in important phrases</button>
+      <button class="quiz-option" onclick="answer(this,'q4',true)">C. Stopwords reduce noise but can lose meaning in phrases like "The Who" or "to be or not to be"</button>
+      <button class="quiz-option" onclick="answer(this,'q4',false)">D. Stopword removal always improves NLP performance</button>
+      <div class="quiz-explanation" id="q4-exp">
+        Correct. Stopword lists vary between toolkits and are not definitive. Some meaningful phrases ("The Who", "to be or not to be") consist entirely of common words, so blanket stopword removal can hurt performance in some tasks.
+      </div>
+    </div>
+
+    <!-- MCQ 5 -->
+    <div class="quiz-q" id="q5">
+      <span class="quiz-tag tag-mcq">MCQ</span>
+      <p>5. The Jaccard distance $d(X,Y) = 1 - \text{Jaccard}(X,Y)$ satisfies all metric properties. Which property states that $d(X,Z) \leq d(X,Y) + d(Y,Z)$?</p>
+      <button class="quiz-option" onclick="answer(this,'q5',false)">A. Identity</button>
+      <button class="quiz-option" onclick="answer(this,'q5',false)">B. Symmetry</button>
+      <button class="quiz-option" onclick="answer(this,'q5',true)">C. Triangle inequality</button>
+      <button class="quiz-option" onclick="answer(this,'q5',false)">D. Positivity</button>
+      <div class="quiz-explanation" id="q5-exp">
+        The triangle inequality states that the distance from X to Z is at most the distance going via an intermediate point Y. This is what makes Jaccard distance a proper metric (not just a similarity measure).
+      </div>
+    </div>
+
+    <!-- MCQ 6 -->
+    <div class="quiz-q" id="q6">
+      <span class="quiz-tag tag-mcq">MCQ</span>
+      <p>6. Which of the following is a weakness of set-based document similarity?</p>
+      <button class="quiz-option" onclick="answer(this,'q6',false)">A. It cannot be computed efficiently</button>
+      <button class="quiz-option" onclick="answer(this,'q6',true)">B. Word frequency and word importance are both ignored</button>
+      <button class="quiz-option" onclick="answer(this,'q6',false)">C. It requires a GPU to compute</button>
+      <button class="quiz-option" onclick="answer(this,'q6',false)">D. It cannot handle documents of different lengths</button>
+      <div class="quiz-explanation" id="q6-exp">
+        Set-based similarity treats all words equally (no TF-IDF weighting) and ignores how often words appear. This means a rare, highly discriminative word like "photosynthesis" has the same weight as a stopword that slipped through. This motivates weighted approaches like TF-IDF.
+      </div>
+    </div>
+
+    <hr>
+    <h3>Short Answer Questions</h3>
+
+    <div class="quiz-q">
+      <span class="quiz-tag tag-short">Short Answer</span>
+      <p>7. Explain the difference between a <strong>word type</strong> and a <strong>word instance</strong>. Give an example.</p>
+      <div class="quiz-explanation" style="display:block;">
+        <strong>Model Answer:</strong> A <em>word type</em> is a distinct/unique word form (vocabulary item). A <em>word instance</em> is each individual occurrence of a word in running text. Example: in "the cat sat on the mat", there are 6 word instances but only 5 word types (since "the" appears twice).
+      </div>
+    </div>
+
+    <div class="quiz-q">
+      <span class="quiz-tag tag-short">Short Answer</span>
+      <p>8. Why might stemming cause problems in an NLP system? Give a concrete example.</p>
+      <div class="quiz-explanation" style="display:block;">
+        <strong>Model Answer:</strong> Stemming ignores word meaning and can collapse words with different meanings to the same stem. Example: "emergency" and "emerge" both stem to "emerg" under the Porter Stemmer. A system searching for documents about "emergency situations" might incorrectly retrieve documents about things "emerging" from water.
+      </div>
+    </div>
+
+    <div class="quiz-q">
+      <span class="quiz-tag tag-short">Short Answer</span>
+      <p>9. What is <strong>mojibake</strong> and how does it arise? How can you prevent it in Python?</p>
+      <div class="quiz-explanation" style="display:block;">
+        <strong>Model Answer:</strong> Mojibake is garbled text caused by opening a file encoded in one character encoding (e.g., UTF-8) using a different decoder (e.g., Windows Latin-1/cp1252). For example, the apostrophe in "doesn't" becomes "Ã¢â€žÂ¢". Prevent it by always specifying <span class="inline-code">encoding='utf-8'</span> when opening files: <span class="inline-code">open('file.txt', 'r', encoding='utf-8')</span>.
+      </div>
+    </div>
+
+    <div class="quiz-q">
+      <span class="quiz-tag tag-short">Short Answer</span>
+      <p>10. Why do modern LLMs use <strong>subword tokenisation</strong> (e.g., BPE) instead of whole-word tokenisation?</p>
+      <div class="quiz-explanation" style="display:block;">
+        <strong>Model Answer:</strong> Two reasons: (1) Many languages (Chinese, Japanese) do not delimit words with spaces, making word boundaries ambiguous. (2) Vocabulary grows without bound (Heaps' Law), so models constantly encounter out-of-vocabulary (OOV) words. Subword tokenisation solves both: rare or unseen words can always be decomposed into known subword pieces, giving a fixed vocabulary while still representing any string.
+      </div>
+    </div>
+
+    <div class="quiz-q">
+      <span class="quiz-tag tag-short">Short Answer</span>
+      <p>11. In the context of document similarity, why is case normalisation important? Give a situation where it might be undesirable.</p>
+      <div class="quiz-explanation" style="display:block;">
+        <strong>Model Answer:</strong> Without case normalisation, "IRN" and "irn" would not match even though they are the same token. Lowercasing ensures consistent matching. However, case sometimes carries meaning: "PYTHON" (the language) vs "python" (the snake), or proper nouns like named entities (Apple Inc. vs apple the fruit). In tasks requiring fine-grained entity recognition, preserving case may be important.
+      </div>
+    </div>
+
+    <hr>
+    <h3>Calculation Questions</h3>
+
+    <div class="quiz-q">
+      <span class="quiz-tag tag-calc">Calculation</span>
+      <p>12. Compute the <strong>Jaccard similarity</strong> and <strong>Overlap Coefficient</strong> for:<br>
+      $X = \{\text{drink}, \text{scottish}, \text{irn}, \text{bru}, \text{unique}\}$<br>
+      $Y = \{\text{taste}, \text{scottish}, \text{irn}, \text{bru}\}$</p>
+      <div class="quiz-explanation" style="display:block;">
+        <strong>Step-by-step:</strong><br>
+        $X \cap Y = \{\text{scottish}, \text{irn}, \text{bru}\}$ → $|X \cap Y| = 3$<br>
+        $X \cup Y = \{\text{drink}, \text{scottish}, \text{irn}, \text{bru}, \text{unique}, \text{taste}\}$ → $|X \cup Y| = 6$<br>
+        $\min(|X|, |Y|) = \min(5, 4) = 4$<br><br>
+        <strong>Jaccard:</strong> $\dfrac{3}{6} = 0.5$<br><br>
+        <strong>Overlap Coefficient:</strong> $\dfrac{3}{4} = 0.75$
+      </div>
+    </div>
+
+    <div class="quiz-q">
+      <span class="quiz-tag tag-calc">Calculation</span>
+      <p>13. A corpus has $N = 1{,}000{,}000$ word instances. Using Heaps' Law with $k = 10$ and $b = 0.5$, estimate the vocabulary size $|V|$.</p>
+      <div class="quiz-explanation" style="display:block;">
+        <strong>Solution:</strong><br>
+        $|V| = k \cdot N^b = 10 \times (1{,}000{,}000)^{0.5} = 10 \times 1{,}000 = 10{,}000$<br>
+        The estimated vocabulary size is <strong>10,000 types</strong>.
+      </div>
+    </div>
+
+    <div class="quiz-q">
+      <span class="quiz-tag tag-calc">Calculation</span>
+      <p>14. Extract all <strong>character bigrams</strong> from the word "bru". Then compute the Jaccard similarity between the bigram sets of "bru" and "bro".</p>
+      <div class="quiz-explanation" style="display:block;">
+        <strong>Bigrams of "bru":</strong> \{br, ru\}<br>
+        <strong>Bigrams of "bro":</strong> \{br, ro\}<br>
+        $|X \cap Y| = |\{br\}| = 1$<br>
+        $|X \cup Y| = |\{br, ru, ro\}| = 3$<br>
+        <strong>Jaccard = $1/3 \approx 0.333$</strong><br>
+        This illustrates how character n-gram similarity can detect related words.
+      </div>
+    </div>
+
+    <div class="quiz-q">
+      <span class="quiz-tag tag-calc">Calculation</span>
+      <p>15. For sets $X$ and $Y$: $|X| = 8$, $|Y| = 6$, $|X \cap Y| = 4$. Compute:<br>
+      (a) $|X \cup Y|$ &nbsp; (b) Jaccard similarity &nbsp; (c) Overlap coefficient &nbsp; (d) Jaccard distance</p>
+      <div class="quiz-explanation" style="display:block;">
+        <strong>(a)</strong> $|X \cup Y| = |X| + |Y| - |X \cap Y| = 8 + 6 - 4 = 10$<br>
+        <strong>(b)</strong> Jaccard $= 4/10 = 0.4$<br>
+        <strong>(c)</strong> Overlap $= 4 / \min(8,6) = 4/6 \approx 0.667$<br>
+        <strong>(d)</strong> Jaccard distance $= 1 - 0.4 = 0.6$
+      </div>
+    </div>
+
+    <hr>
+    <h3>Essay / Long Answer Questions</h3>
+
+    <div class="quiz-q">
+      <span class="quiz-tag tag-essay">Essay</span>
+      <p>16. Describe the standard text preprocessing pipeline for a document similarity system. For each step, explain its purpose and identify a potential drawback or edge case.</p>
+      <div class="quiz-explanation" style="display:block;">
+        <strong>Model Answer outline:</strong><br>
+        <ol>
+          <li><strong>Data Cleaning</strong> — Remove HTML tags, links, formatting. Ensures noise doesn't affect token extraction. Drawback: URLs sometimes contain useful information (domain = source).</li>
+          <li><strong>Tokenization</strong> — Split text into tokens using rule-based systems (spaCy). Handles contractions (didn't → did + n't), currency (£100 → £ + 100). Drawback: Language-specific; fails on Chinese without dedicated tools.</li>
+          <li><strong>Case Normalisation</strong> — Lowercase all tokens so "IRN" = "irn". Drawback: Loses named entity information ("Apple" company vs fruit).</li>
+          <li><strong>Stemming/Lemmatization</strong> — Reduce words to canonical form (loved → love). Drawback: Stemming can conflate different words (emergency → emerg, emerge → emerg).</li>
+          <li><strong>Stopword Removal</strong> — Filter out high-frequency, low-meaning words. Drawback: Some important phrases consist entirely of stopwords ("to be or not to be").</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="quiz-q">
+      <span class="quiz-tag tag-essay">Essay</span>
+      <p>17. Compare structured and unstructured data in the context of building a search system. What are the advantages and disadvantages of each, and why is processing unstructured text challenging?</p>
+      <div class="quiz-explanation" style="display:block;">
+        <strong>Model Answer outline:</strong><br>
+        <strong>Structured data advantages:</strong> Precise filtering (SQL queries), fast exact lookups, easy aggregation, no ambiguity in meaning (column headers label data).<br>
+        <strong>Structured data disadvantages:</strong> Expensive to create and maintain schemas; loses nuance (a 1-star review contains reasoning about why; the rating alone does not).<br>
+        <strong>Unstructured text advantages:</strong> Rich, contains full reasoning and context; natural for humans to produce; captures nuance, sentiment, relationships.<br>
+        <strong>Unstructured text disadvantages:</strong> Ambiguity ("I saw the elephant with my telescope"); no labels; requires NLP to extract meaning; noisy (typos, informal language, emoji).<br>
+        <strong>Why hard:</strong> Language requires world knowledge and reasoning, not just pattern matching. The same meaning can be expressed in infinitely many ways (paraphrase). Vocabulary grows without bound (Heaps' Law).
+      </div>
+    </div>
+
+    <div class="quiz-q">
+      <span class="quiz-tag tag-essay">Essay</span>
+      <p>18. Explain three limitations of using set-based similarity (Jaccard) for document similarity. For each limitation, suggest what kind of approach could address it.</p>
+      <div class="quiz-explanation" style="display:block;">
+        <strong>Model Answer:</strong><br>
+        <ol>
+          <li><strong>All words equally weighted.</strong> "the" and "photosynthesis" contribute equally if both appear. Fix: TF-IDF weighting, which upweights rare, discriminative terms and downweights common ones.</li>
+          <li><strong>Word frequency ignored.</strong> A word appearing 50 times vs 1 time is treated the same in a set. Fix: Bag-of-words (count) vectors or TF-IDF vectors capture frequency information.</li>
+          <li><strong>Synonyms cannot match.</strong> "happy" and "joyful" are different tokens; two documents about the same concept using synonyms score 0 overlap. Fix: Dense vector representations (Word2Vec, BERT embeddings) place synonyms near each other in vector space, enabling semantic similarity beyond string matching.</li>
+        </ol>
+      </div>
+    </div>
+
+    <hr>
+    <h3>Exam-Style Applied Questions</h3>
+
+    <div class="quiz-q">
+      <span class="quiz-tag tag-exam">Applied</span>
+      <p>19. A student applies the Porter Stemmer to the following words. Give the expected stem for each and identify which pair demonstrates a problematic conflation.<br>
+      Words: "running", "runner", "emergency", "emerge", "ponies", "pony"</p>
+      <div class="quiz-explanation" style="display:block;">
+        <strong>Expected stems:</strong><br>
+        running → run | runner → runner | emergency → emerg | emerge → emerg | ponies → poni | pony → poni<br><br>
+        <strong>Problematic pair:</strong> "emergency" and "emerge" → both map to "emerg". These have entirely different meanings (a crisis vs appearing), so conflating them would cause incorrect matches in a search or similarity system.
+      </div>
+    </div>
+
+    <div class="quiz-q">
+      <span class="quiz-tag tag-exam">Applied</span>
+      <p>20. You are building a system to find Reddit posts similar to a given query. Describe your full implementation plan: preprocessing, similarity measure choice, and known limitations. Which Python libraries would you use?</p>
+      <div class="quiz-explanation" style="display:block;">
+        <strong>Model Answer:</strong><br>
+        <strong>Preprocessing:</strong> Use spaCy to (1) clean raw Reddit HTML/markdown, (2) tokenise, (3) lowercase, (4) lemmatize using <span class="inline-code">token.lemma_</span>, (5) remove stopwords (<span class="inline-code">token.is_stop</span>) and punctuation.<br>
+        <strong>Representation:</strong> Represent each post as a Python <span class="inline-code">set</span> of lemmatised tokens.<br>
+        <strong>Similarity:</strong> Use Jaccard similarity (normalised, bounded [0,1], metric properties). Rank all posts by descending Jaccard score relative to query.<br>
+        <strong>Libraries:</strong> <span class="inline-code">spacy</span> (preprocessing), built-in Python <span class="inline-code">set</span> operations, optionally <span class="inline-code">sklearn</span> for TF-IDF extensions.<br>
+        <strong>Limitations:</strong> Set ignores word frequency, treats all words equally, cannot handle synonyms. A post about "happy Scottish beverages" won't match "joyful drinks from Scotland" well. Next step: TF-IDF weighted vectors + cosine similarity.
+      </div>
+    </div>
+
+    <div class="quiz-q">
+      <span class="quiz-tag tag-exam">Applied</span>
+      <p>21. Consider the sentence: <em>"John's father didn't have £100."</em><br>
+      (a) What tokens would naive whitespace splitting produce?<br>
+      (b) What tokens would a well-implemented tokeniser (e.g. spaCy) produce?<br>
+      (c) Why does the difference matter for downstream tasks?</p>
+      <div class="quiz-explanation" style="display:block;">
+        <strong>(a) Whitespace splitting:</strong> ["John's", "father", "didn't", "have", "£100."]<br>
+        <strong>(b) spaCy tokenisation:</strong> ["John", "'s", "father", "did", "n't", "have", "£", "100", "."]<br>
+        <strong>(c) Why it matters:</strong><br>
+        — "John's" should split so "John" matches other occurrences of the name<br>
+        — "didn't" → "did" + "n't" lets you lemmatize "n't" to "not" and "did" to "do" separately<br>
+        — "£100" → "£" + "100" lets you extract the currency symbol and numeric value as separate features<br>
+        — Poorly tokenised text leads to vocabulary bloat (thousands of wordform variants) and reduces matching precision
+      </div>
+    </div>
+
+    <hr>
+    <h3>Past Paper Questions — Real Exam Questions with Solutions</h3>
+
+    <!-- === CHARACTER N-GRAMS (2022 Q2a) === -->
+    <div class="quiz-q">
+      <span class="quiz-tag tag-exam">Past Paper 2022 — Q2a [3 marks]</span>
+      <p>22. An alien probe text uses a five-letter alphabet {a, b, c, d, e}. The sample text is: <span class="inline-code">abcaedabccbaedabceda</span><br>
+      Write out all <strong>character trigrams</strong> that appear <strong>more than once</strong> and give their frequencies.</p>
+      <button class="quiz-btn" onclick="document.getElementById('q22-ans').style.display='block'">Show Answer</button>
+      <div id="q22-ans" class="quiz-explanation">
+        <strong>Method:</strong> Extract every window of 3 consecutive characters and count each.<br><br>
+        Full trigrams from "abcaedabccbaedabceda":<br>
+        abc(pos 0), bca(1), cae(2), aed(3), eda(4), dab(5), abc(6), bcc(7), ccb(8), cba(9), bae(10), aed(11), eda(12), dab(13), abc(14), bce(15), ced(16), eda(17)<br><br>
+        <table>
+          <thead><tr><th>Trigram</th><th>Frequency</th></tr></thead>
+          <tbody>
+            <tr><td>abc</td><td>3</td></tr>
+            <tr><td>eda</td><td>3</td></tr>
+            <tr><td>aed</td><td>2</td></tr>
+            <tr><td>dab</td><td>2</td></tr>
+          </tbody>
+        </table>
+        <strong>Tip:</strong> Only count trigrams appearing &gt;1 time — 1 mark per row (3 marks for ≥3 correct).
+      </div>
+    </div>
+
+    <!-- === MAX N-GRAMS (2022 Q2b) === -->
+    <div class="quiz-q">
+      <span class="quiz-tag tag-exam">Past Paper 2022 — Q2b [3 marks]</span>
+      <p>23. Using the same alien alphabet {a, b, c, d, e} and a full text of 593 characters, give the <strong>theoretical maximum</strong> number of character n-grams for n = 1, 2, 3, 4, and 5.</p>
+      <button class="quiz-btn" onclick="document.getElementById('q23-ans').style.display='block'">Show Answer</button>
+      <div id="q23-ans" class="quiz-explanation">
+        <strong>Formula:</strong> Max n-grams from alphabet of size $k$: $k^n$. But for n ≥ 4, the corpus length limits distinct n-grams to $(593 - n + 1)$.<br><br>
+        <table>
+          <thead><tr><th>n</th><th>Formula</th><th>Max n-grams</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>5¹ = 5</td><td>5</td></tr>
+            <tr><td>2</td><td>5² = 25</td><td>25</td></tr>
+            <tr><td>3</td><td>5³ = 125</td><td>125</td></tr>
+            <tr><td>4</td><td>min(5⁴, 593−3) = min(625, 590)</td><td>590</td></tr>
+            <tr><td>5</td><td>min(5⁵, 593−4) = min(3125, 589)</td><td>589</td></tr>
+          </tbody>
+        </table>
+        <strong>Key insight:</strong> For large n, the corpus length (not alphabet) becomes the limiting factor. There can be at most (L − n + 1) distinct n-grams in a corpus of L characters.
+      </div>
+    </div>
+
+    <!-- === TOKENIZATION RULES (2022 Q2c) === -->
+    <div class="quiz-q">
+      <span class="quiz-tag tag-exam">Past Paper 2022 — Q2c [2 marks]</span>
+      <p>24. A linguist provides two segmentations of the alien text "abcaedabccbaedabceda". Give a <strong>single rule</strong> that explains each segmentation:<br>
+      (i) a | bca | eda | bccba | eda | bceda<br>
+      (ii) ab | caedab | ccbaedab | ceda</p>
+      <button class="quiz-btn" onclick="document.getElementById('q24-ans').style.display='block'">Show Answer</button>
+      <div id="q24-ans" class="quiz-explanation">
+        <strong>(i)</strong> Start a new token whenever the <em>previous character</em> is 'a'. The character 'a' acts as a token boundary (delimiter), much like a space in English.<br><br>
+        <strong>(ii)</strong> Start a new token whenever the sequence "ab" begins — i.e., whenever the current character is 'a' and the next is 'b'.<br><br>
+        <strong>Exam tip:</strong> Look at where each token begins/ends and identify the shared property. Verify your rule on every split point.
+      </div>
+    </div>
+
+    <!-- === SORENSEN-DICE + JACCARD (2022 Q2d) === -->
+    <div class="quiz-q">
+      <span class="quiz-tag tag-exam">Past Paper 2022 — Q2d [7 marks]</span>
+      <p>25. Two probe texts are tokenised into the following sets:<br>
+      <strong>Probe A</strong>: {a, eda, bceda, bcda, bce} (|A| = 5)<br>
+      <strong>Probe B</strong>: {ca, eda, bcba, bceda, bce} (|B| = 5)<br>
+      <strong>Probe C</strong>: {beda, bceda, bceca, ebeda, b} (|C| = 5)<br><br>
+      (i) Calculate Sørensen–Dice Coefficient and Jaccard Similarity between A and B. [4 marks]<br>
+      (ii) Using Sørensen–Dice, show that the triangle inequality is violated for A, B, and C. [3 marks]</p>
+      <button class="quiz-btn" onclick="document.getElementById('q25-ans').style.display='block'">Show Answer</button>
+      <div id="q25-ans" class="quiz-explanation">
+        <strong>Part (i):</strong><br>
+        A ∩ B = {eda, bceda, bce} → |A ∩ B| = 3<br>
+        A ∪ B = {a, eda, bceda, bcda, bce, ca, bcba} → |A ∪ B| = 7<br><br>
+        $\text{Dice}(A,B) = \dfrac{2 \times 3}{5 + 5} = \dfrac{6}{10} = \mathbf{0.6}$<br><br>
+        $\text{Jaccard}(A,B) = \dfrac{3}{7} \approx \mathbf{0.429}$<br><br>
+        <strong>Part (ii):</strong><br>
+        A ∩ C = {bceda} → |A ∩ C| = 1 → Dice(A,C) = 2/10 = 0.2<br>
+        B ∩ C = {bceda} → |B ∩ C| = 1 → Dice(B,C) = 2/10 = 0.2<br><br>
+        Triangle inequality requires: Dice(A,B) ≤ Dice(A,C) + Dice(B,C)<br>
+        But: 0.6 ≤ 0.2 + 0.2 → <strong>0.6 ≤ 0.4 is FALSE</strong> → Triangle inequality violated ✓<br><br>
+        Therefore the Sørensen–Dice coefficient does not satisfy the triangle inequality and is not a proper metric.
+      </div>
+    </div>
+
+    <!-- === BPE STEP-BY-STEP (2023 Q1c) === -->
+    <div class="quiz-q">
+      <span class="quiz-tag tag-exam">Past Paper 2023 — Q1c [8 marks]</span>
+      <p>26. Build a <strong>byte pair tokenisation vocabulary of size 8</strong> for the text: <span class="inline-code">"mississippi is pie"</span>. Show all your steps.</p>
+      <button class="quiz-btn" onclick="document.getElementById('q26-ans').style.display='block'">Show Answer</button>
+      <div id="q26-ans" class="quiz-explanation">
+        <strong>Step 0 — Character split:</strong><br>
+        Text: [m][i][s][s][i][s][s][i][p][p][i] [i][s] [p][i][e]<br>
+        Vocab: {m, i, s, p, e} → size 5<br><br>
+        <strong>Step 1 — Most frequent pair: (i,s) appears 3 times → merge to "is"</strong><br>
+        Text: [m][<strong>is</strong>][s][<strong>is</strong>][s][i][p][p][i] [<strong>is</strong>] [p][i][e]<br>
+        Vocab: {m, i, s, p, e, is} → size 6<br><br>
+        <strong>Step 2 — Most frequent pair: (is,s) appears 2 times → merge to "iss"</strong><br>
+        Text: [m][<strong>iss</strong>][<strong>iss</strong>][i][p][p][i] [is] [p][i][e]<br>
+        Vocab: {m, i, s, p, e, is, iss} → size 7<br><br>
+        <strong>Step 3 — Most frequent pair: (p,i) appears 2 times → merge to "pi"</strong><br>
+        Text: [m][iss][iss][i][p][<strong>pi</strong>] [is] [<strong>pi</strong>][e]<br>
+        Vocab: {m, i, s, p, e, is, iss, pi} → size 8 ✓<br><br>
+        <strong>Final tokenisation of "mississippi is pie":</strong> m | iss | iss | i | p | pi | is | pi | e
+      </div>
+    </div>
+
+    <!-- === BPE ADVANTAGES (2023 Q1d) === -->
+    <div class="quiz-q">
+      <span class="quiz-tag tag-exam">Past Paper 2023 — Q1d [4 marks]</span>
+      <p>27. Name <strong>two advantages of BPE</strong> over rule-based tokenisation, and <strong>two advantages of rule-based</strong> tokenisation over BPE.</p>
+      <button class="quiz-btn" onclick="document.getElementById('q27-ans').style.display='block'">Show Answer</button>
+      <div id="q27-ans" class="quiz-explanation">
+        <strong>BPE advantages over rule-based:</strong>
+        <ol>
+          <li>Can be applied to <em>any</em> language with sufficient text — no need for a human fluent in the language to write rules.</li>
+          <li>Discovers useful patterns from data that may not be apparent to human linguists (e.g., domain-specific compound words).</li>
+        </ol>
+        <strong>Rule-based advantages over BPE:</strong>
+        <ol>
+          <li>Does not require a large corpus of training text.</li>
+          <li>Linguistic knowledge/intuition can be encoded directly, providing coverage of rare or unseen patterns in any corpus.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- === PREPROCESSING IN CONTEXT (2023 Q1e) === -->
+    <div class="quiz-q">
+      <span class="quiz-tag tag-exam">Past Paper 2023 — Q1e [4 marks]</span>
+      <p>28. You are building an <strong>automatic writing assistant</strong> that provides grammar suggestions as a user writes. Would you use <strong>stemming, lemmatisation, and/or stopword removal</strong>? Explain why or why not for each.</p>
+      <button class="quiz-btn" onclick="document.getElementById('q28-ans').style.display='block'">Show Answer</button>
+      <div id="q28-ans" class="quiz-explanation">
+        <strong>Stemming — No.</strong> Grammar errors often involve incorrect inflection (wrong endings). Stemming removes endings, making it impossible to identify these errors. E.g., "I runned home" — the erroneous "-ned" would be stemmed away, hiding the mistake.<br><br>
+        <strong>Lemmatisation — No.</strong> Lemmatisation also treats different inflectional forms as the same token, so incorrect inflections would be normalised and errors missed. Unlike stemming it uses POS, but the effect is the same — it erases the very surface form you need to flag.<br><br>
+        <strong>Stopword removal — No.</strong> Stopwords are essential to grammar. Errors like "She go to store" involve function words and verb agreement that depend on stopwords being present. Removing them would blind the system to most grammatical error types.<br><br>
+        <strong>Summary:</strong> None of the three are appropriate. This application needs to preserve surface forms, not normalise them.
+      </div>
+    </div>
+
+    <!-- === PREPROCESSING JUSTIFICATION (2022 Q3a) === -->
+    <div class="quiz-q">
+      <span class="quiz-tag tag-exam">Past Paper 2022 — Q3a [4 marks]</span>
+      <p>29. You are classifying patent applications into 8 sections. You apply <strong>case normalisation</strong> and a <strong>stemmer</strong>. Justify each preprocessing stage with a concrete example showing improved classification.</p>
+      <button class="quiz-btn" onclick="document.getElementById('q29-ans').style.display='block'">Show Answer</button>
+      <div id="q29-ans" class="quiz-explanation">
+        <strong>Case normalisation:</strong> Inconsistent capitalisation arises from sentence position. "textile" (mid-sentence) and "Textile" (start-of-sentence) should be treated as the same signal for Section D (Textiles; Paper). Without lowercasing, these are two different features — the classifier receives mixed signals for what is actually the same word. Lowercasing merges them into a single feature, giving a stronger, more reliable signal.<br><br>
+        <strong>Stemming:</strong> Plurality and verb tense rarely change a patent's topic. "textiles", "textile", and "textilist" all indicate Section D. Without stemming these are three separate, sparse features. Stemming maps them to the same stem, increasing the feature count and improving the classifier's ability to generalise to new forms of the same root.
+      </div>
+    </div>
+
+    <hr>
+    <h3>TF-IDF Questions (2025 Exam Style)</h3>
+
+    <div class="card blue">
+      <h3>TF-IDF Formula Reminder</h3>
+      <p>$\text{TF-IDF}(t, d) = \text{TF}(t, d) \times \text{IDF}(t)$</p>
+      <p>With <strong>linear TF scaling</strong>: $\text{TF}(t, d) = $ raw count of term $t$ in document $d$.</p>
+      <p>IDF is usually given in exams. Higher IDF = rarer term = more discriminative.</p>
+      <p>The <strong>bag-of-words vector</strong> has one entry per vocabulary term, ordered by token ID.</p>
+    </div>
+
+    <!-- === TF-IDF REPRESENTATION (2025 Q1a) === -->
+    <div class="quiz-q">
+      <span class="quiz-tag tag-exam">Past Paper 2025 — Q1a [4 marks]</span>
+      <p>30. Given the following IDF values and DocX, construct a <strong>dense TF-IDF bag-of-words</strong> representation. Use linear TF scaling. Tokenise on whitespace.</p>
+      <table>
+        <thead><tr><th>Token ID</th><th>Token</th><th>IDF</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>A</td><td>2</td></tr>
+          <tr><td>1</td><td>B</td><td>4</td></tr>
+          <tr><td>2</td><td>C</td><td>1</td></tr>
+          <tr><td>3</td><td>D</td><td>3</td></tr>
+          <tr><td>4</td><td>E</td><td>6</td></tr>
+          <tr><td>5</td><td>F</td><td>4</td></tr>
+          <tr><td>6</td><td>G</td><td>1</td></tr>
+          <tr><td>7</td><td>H</td><td>3</td></tr>
+          <tr><td>8</td><td>I</td><td>3</td></tr>
+          <tr><td>9</td><td>J</td><td>5</td></tr>
+        </tbody>
+      </table>
+      <p><strong>DocX:</strong> G C G A H A G</p>
+      <button class="quiz-btn" onclick="document.getElementById('q30-ans').style.display='block'">Show Answer</button>
+      <div id="q30-ans" class="quiz-explanation">
+        <strong>Step 1 — Count tokens in DocX:</strong> A×2, C×1, G×3, H×1 (all others = 0)<br><br>
+        <strong>Step 2 — Multiply TF × IDF for each position:</strong><br>
+        <table>
+          <thead><tr><th>ID</th><th>Token</th><th>TF</th><th>IDF</th><th>TF-IDF</th></tr></thead>
+          <tbody>
+            <tr><td>0</td><td>A</td><td>2</td><td>2</td><td><strong>4</strong></td></tr>
+            <tr><td>1</td><td>B</td><td>0</td><td>4</td><td><strong>0</strong></td></tr>
+            <tr><td>2</td><td>C</td><td>1</td><td>1</td><td><strong>1</strong></td></tr>
+            <tr><td>3</td><td>D</td><td>0</td><td>3</td><td><strong>0</strong></td></tr>
+            <tr><td>4</td><td>E</td><td>0</td><td>6</td><td><strong>0</strong></td></tr>
+            <tr><td>5</td><td>F</td><td>0</td><td>4</td><td><strong>0</strong></td></tr>
+            <tr><td>6</td><td>G</td><td>3</td><td>1</td><td><strong>3</strong></td></tr>
+            <tr><td>7</td><td>H</td><td>1</td><td>3</td><td><strong>3</strong></td></tr>
+            <tr><td>8</td><td>I</td><td>0</td><td>3</td><td><strong>0</strong></td></tr>
+            <tr><td>9</td><td>J</td><td>0</td><td>5</td><td><strong>0</strong></td></tr>
+          </tbody>
+        </table>
+        <strong>TF-IDF vector for DocX: [4, 0, 1, 0, 0, 0, 3, 3, 0, 0]</strong>
+      </div>
+    </div>
+
+    <!-- === RECONSTRUCT FROM TF-IDF (2025 Q1b) === -->
+    <div class="quiz-q">
+      <span class="quiz-tag tag-exam">Past Paper 2025 — Q1b [4 marks]</span>
+      <p>31. Using the same IDF table from Q30, the following TF-IDF vector is given for DocY. <strong>Reconstruct the original text</strong> and state any ambiguities.</p>
+      <p>DocY: [6, 8, 0, 6, 6, 0, 2, 3, 3, 10]</p>
+      <button class="quiz-btn" onclick="document.getElementById('q31-ans').style.display='block'">Show Answer</button>
+      <div id="q31-ans" class="quiz-explanation">
+        <strong>Step 1 — Divide each TF-IDF by IDF to get TF:</strong><br>
+        A: 6/2=3, B: 8/4=2, C: 0, D: 6/3=2, E: 6/6=1, F: 0, G: 2/1=2, H: 3/3=1, I: 3/3=1, J: 10/5=2<br><br>
+        <strong>DocY contains:</strong> A A A B B D D E G G H I J J<br><br>
+        <strong>Ambiguity:</strong> The order of words is unknown — TF-IDF is a <em>bag-of-words</em> representation that loses word order. The document "A B D D A J E G G A B H I J" would produce the same vector.
+      </div>
+    </div>
+
+    <!-- === OVERLAP + JACCARD FROM TF-IDF (2025 Q1c) === -->
+    <div class="quiz-q">
+      <span class="quiz-tag tag-exam">Past Paper 2025 — Q1c [4 marks]</span>
+      <p>32. Using DocX and DocY from Q30 and Q31, compute the <strong>Overlap Coefficient</strong> and <strong>Jaccard Similarity</strong> between them (using the set of unique tokens each document contains).</p>
+      <button class="quiz-btn" onclick="document.getElementById('q32-ans').style.display='block'">Show Answer</button>
+      <div id="q32-ans" class="quiz-explanation">
+        <strong>Set(DocX)</strong> = {A, C, G, H} → |DocX| = 4<br>
+        <strong>Set(DocY)</strong> = {A, B, D, E, G, H, I, J} → |DocY| = 8<br><br>
+        DocX ∩ DocY = {A, G, H} → |∩| = 3<br>
+        DocX ∪ DocY = {A, B, C, D, E, G, H, I, J} → |∪| = 9<br><br>
+        <strong>Overlap Coefficient:</strong> $\dfrac{3}{\min(4, 8)} = \dfrac{3}{4} = 0.75$<br><br>
+        <strong>Jaccard Similarity:</strong> $\dfrac{3}{9} = \dfrac{1}{3} \approx 0.333$<br><br>
+        <strong>Note:</strong> Overlap is 0.75 because DocX (the smaller set) has 3 out of 4 tokens also in DocY.
+      </div>
+    </div>
+
+    <!-- === CUSTOM SIMILARITY PROBLEMS (2025 Q1e) === -->
+    <div class="quiz-q">
+      <span class="quiz-tag tag-exam">Past Paper 2025 — Q1e [6 marks]</span>
+      <p>33. A colleague proposes a new set similarity measure:<br>
+      $\text{sim}(A, B) = \dfrac{|A - B|}{|A \cap B|}$<br>
+      (where $A - B$ is the set difference: elements in A but not in B)<br>
+      Using DocX and DocY: compute sim(DocX, DocY) and describe <strong>three problems</strong> with this measure.</p>
+      <button class="quiz-btn" onclick="document.getElementById('q33-ans').style.display='block'">Show Answer</button>
+      <div id="q33-ans" class="quiz-explanation">
+        <strong>Calculation:</strong><br>
+        |DocX − DocY| = |{C}| = 1 (C is in DocX but not DocY)<br>
+        |DocX ∩ DocY| = 3<br>
+        sim(DocX, DocY) = 1/3 ≈ 0.333<br><br>
+        <strong>Three problems:</strong>
+        <ol>
+          <li><strong>Measures dissimilarity, not similarity.</strong> A larger value means DocX has MORE elements not in DocY — i.e., they are LESS similar. This is counterintuitive and backwards from what "similarity" should mean.</li>
+          <li><strong>Asymmetric.</strong> sim(DocX, DocY) ≠ sim(DocY, DocX). The set difference |A−B| ≠ |B−A| when |A| ≠ |B|. Similarity between two documents should be the same regardless of which is called A or B.</li>
+          <li><strong>Division by zero.</strong> If A ∩ B = ∅ (no common tokens), the denominator is 0, making the measure undefined. Two completely different documents produce an error rather than a similarity of 0.</li>
+        </ol>
+      </div>
+    </div>
+
+    <hr>
+    <h3>Additional Generated Practice Questions</h3>
+
+    <!-- === PRACTICE: Character N-grams === -->
+    <div class="quiz-q" id="pg1">
+      <span class="quiz-tag tag-calc">Practice — Character N-grams</span>
+      <p>34. From the text: <span class="inline-code">abaabba</span> (alphabet: {a, b})<br>
+      (a) List all character bigrams with their frequencies.<br>
+      (b) What is the theoretical maximum number of distinct bigrams for this alphabet?<br>
+      (c) What is the theoretical maximum for trigrams?</p>
+      <button class="quiz-btn" onclick="document.getElementById('pg1-ans').style.display='block'">Show Answer</button>
+      <div id="pg1-ans" class="quiz-explanation">
+        <strong>(a) Bigrams from "abaabba":</strong><br>
+        ab(pos0), ba(1), aa(2), ab(3), bb(4), ba(5) → positions 0–5<br>
+        <table>
+          <thead><tr><th>Bigram</th><th>Frequency</th></tr></thead>
+          <tbody>
+            <tr><td>ab</td><td>2</td></tr>
+            <tr><td>ba</td><td>2</td></tr>
+            <tr><td>aa</td><td>1</td></tr>
+            <tr><td>bb</td><td>1</td></tr>
+          </tbody>
+        </table>
+        <strong>(b) Max distinct bigrams</strong> = 2² = <strong>4</strong> (ab, ba, aa, bb — all appear!)<br>
+        <strong>(c) Max distinct trigrams</strong> = 2³ = <strong>8</strong>
+      </div>
+    </div>
+
+    <!-- === PRACTICE: Full Similarity Comparison === -->
+    <div class="quiz-q" id="pg2">
+      <span class="quiz-tag tag-calc">Practice — All Three Measures</span>
+      <p>35. Given three documents with token sets:<br>
+      $D_1 = \{cat, dog, pet\}$, $D_2 = \{dog, pet, animal, wild\}$, $D_3 = \{cat, lion, tiger, animal\}$<br>
+      Compute for each pair: (a) Jaccard, (b) Sørensen–Dice, (c) Overlap Coefficient.<br>
+      Then determine which pair of documents is most similar by each measure.</p>
+      <button class="quiz-btn" onclick="document.getElementById('pg2-ans').style.display='block'">Show Answer</button>
+      <div id="pg2-ans" class="quiz-explanation">
+        <strong>Pair D1, D2:</strong> ∩={dog,pet}, ∪={cat,dog,pet,animal,wild} → |∩|=2, |∪|=5, |D1|=3, |D2|=4<br>
+        Jaccard = 2/5 = 0.4 | Dice = 4/7 ≈ 0.571 | Overlap = 2/min(3,4) = 2/3 ≈ 0.667<br><br>
+        <strong>Pair D1, D3:</strong> ∩={cat}, ∪={cat,dog,pet,lion,tiger,animal} → |∩|=1, |∪|=6, |D1|=3, |D3|=4<br>
+        Jaccard = 1/6 ≈ 0.167 | Dice = 2/7 ≈ 0.286 | Overlap = 1/min(3,4) = 1/3 ≈ 0.333<br><br>
+        <strong>Pair D2, D3:</strong> ∩={animal}, ∪={dog,pet,animal,wild,cat,lion,tiger} → |∩|=1, |∪|=7, |D2|=4, |D3|=4<br>
+        Jaccard = 1/7 ≈ 0.143 | Dice = 2/8 = 0.25 | Overlap = 1/min(4,4) = 1/4 = 0.25<br><br>
+        <strong>Most similar pair by all measures: D1 and D2</strong> (consistently highest scores).
+      </div>
+    </div>
+
+    <!-- === PRACTICE: Heaps Law + OOV === -->
+    <div class="quiz-q" id="pg3">
+      <span class="quiz-tag tag-calc">Practice — Heaps' Law</span>
+      <p>36. A model is trained on a corpus with $N = 4,000,000$ word instances. Using Heaps' Law with $k = 10$ and $b = 0.5$:<br>
+      (a) Estimate the vocabulary size $|V|$.<br>
+      (b) The corpus doubles to $N = 8,000,000$. Estimate the new vocabulary size.<br>
+      (c) By what factor did the corpus grow? By what factor did vocabulary grow?<br>
+      (d) What does this imply about out-of-vocabulary (OOV) words?</p>
+      <button class="quiz-btn" onclick="document.getElementById('pg3-ans').style.display='block'">Show Answer</button>
+      <div id="pg3-ans" class="quiz-explanation">
+        <strong>(a)</strong> $|V| = 10 \times (4{,}000{,}000)^{0.5} = 10 \times 2000 = \mathbf{20,000}$<br>
+        <strong>(b)</strong> $|V| = 10 \times (8{,}000{,}000)^{0.5} = 10 \times 2828 \approx \mathbf{28,280}$<br>
+        <strong>(c)</strong> Corpus doubled (×2). Vocabulary grew by factor ≈ 28,280/20,000 ≈ <strong>×1.41 ≈ √2</strong><br>
+        <strong>(d)</strong> Vocabulary grows sub-linearly — even with very large corpora you will always encounter new words. Any model with a fixed vocabulary will inevitably see OOV words in deployment. This motivates subword tokenisation (BPE) which can represent any new word from known subword pieces.
+      </div>
+    </div>
+
+    <!-- === PRACTICE: TF-IDF calculation === -->
+    <div class="quiz-q" id="pg4">
+      <span class="quiz-tag tag-calc">Practice — TF-IDF Calculation</span>
+      <p>37. Given IDF values: "data"=3, "science"=4, "is"=1, "fun"=5, "hard"=4.<br>
+      Compute the TF-IDF vector (in vocabulary order: data, science, is, fun, hard) for:<br>
+      Document: "data science is fun data"</p>
+      <button class="quiz-btn" onclick="document.getElementById('pg4-ans').style.display='block'">Show Answer</button>
+      <div id="pg4-ans" class="quiz-explanation">
+        <strong>Token counts (TF):</strong> data=2, science=1, is=1, fun=1, hard=0<br><br>
+        <strong>TF-IDF = TF × IDF:</strong><br>
+        data: 2 × 3 = <strong>6</strong><br>
+        science: 1 × 4 = <strong>4</strong><br>
+        is: 1 × 1 = <strong>1</strong><br>
+        fun: 1 × 5 = <strong>5</strong><br>
+        hard: 0 × 4 = <strong>0</strong><br><br>
+        <strong>TF-IDF vector: [6, 4, 1, 5, 0]</strong><br><br>
+        Note: "is" gets a low weight (IDF=1) because it appears in many documents — TF-IDF correctly down-weights common words even without explicit stopword removal.
+      </div>
+    </div>
+
+    <!-- === PRACTICE: Preprocessing justification === -->
+    <div class="quiz-q" id="pg5">
+      <span class="quiz-tag tag-short">Practice — Contextual Preprocessing</span>
+      <p>38. For each application below, state whether you would apply stemming, lemmatisation, and/or stopword removal — and briefly justify each decision.<br>
+      (a) A patent similarity search system.<br>
+      (b) A chatbot that answers factual questions.<br>
+      (c) A sentiment analysis system for product reviews.</p>
+      <button class="quiz-btn" onclick="document.getElementById('pg5-ans').style.display='block'">Show Answer</button>
+      <div id="pg5-ans" class="quiz-explanation">
+        <strong>(a) Patent similarity search:</strong><br>
+        — <strong>Stemming/Lemmatisation: YES.</strong> "compute", "computing", "computed" all indicate the same technical concept. Normalising improves recall of relevant patents using different inflections.<br>
+        — <strong>Stopword removal: YES.</strong> Common words like "the", "is" add noise to similarity calculations but carry no domain signal.<br>
+        — <em>Caveat:</em> Over-stemming could collapse different patent concepts (e.g., "alloys" and "alloying" vs a stem that matches unrelated words).<br><br>
+        <strong>(b) Factual Q&amp;A chatbot:</strong><br>
+        — <strong>Stemming: NO.</strong> "Is Australia" vs "was Australia" matters for temporal accuracy. Stemming would destroy this.<br>
+        — <strong>Lemmatisation: MAYBE.</strong> For question understanding, lemmatising verbs helps (running → run). But for answer generation, surface forms matter.<br>
+        — <strong>Stopword removal: NO.</strong> "Who is the president of France?" — removing stopwords gives "Who president France?" which loses critical question structure.<br><br>
+        <strong>(c) Sentiment analysis:</strong><br>
+        — <strong>Stemming/Lemmatisation: YES</strong> for feature extraction — "loved", "loves", "loving" all indicate positive sentiment.<br>
+        — <strong>Stopword removal: CAREFUL.</strong> "not bad" → removing "not" inverts the sentiment! Negation words matter. Custom stopword lists that preserve "not", "never", "no" are essential.
+      </div>
+    </div>
+
+    <!-- === PRACTICE: Word/Token distinction === -->
+    <div class="quiz-q" id="q39">
+      <span class="quiz-tag tag-mcq">MCQ — Practice</span>
+      <p>39. Which sentence correctly identifies how words differ from tokens in NLP?</p>
+      <button class="quiz-option" onclick="answer(this,'q39',false)">A. Words are always longer than tokens</button>
+      <button class="quiz-option" onclick="answer(this,'q39',true)">B. Tokens can include punctuation, numbers, and word-parts like "n't", while words are typically dictionary entries</button>
+      <button class="quiz-option" onclick="answer(this,'q39',false)">C. In modern NLP systems, tokens and words are always identical</button>
+      <button class="quiz-option" onclick="answer(this,'q39',false)">D. Tokens are always produced by whitespace splitting</button>
+      <div class="quiz-explanation" id="q39-exp">
+        Correct. A token is any meaningful sequence of characters produced by a tokeniser — this includes punctuation marks, numbers, currency symbols, and sub-word units like "n't" from "didn't". Words are dictionary entries; tokens are the atomic units a NLP system actually processes. (2023 Q1a)
+      </div>
+    </div>
+
+    <!-- === PRACTICE: Set similarity intuition === -->
+    <div class="quiz-q" id="q40">
+      <span class="quiz-tag tag-mcq">MCQ — Practice</span>
+      <p>40. Set X = {a, b, c, d, e} and Set Y = {a, b, c}. What is the Overlap Coefficient of X and Y, and what does the result tell you?</p>
+      <button class="quiz-option" onclick="answer(this,'q40',false)">A. 3/5 = 0.6 — X and Y are moderately similar</button>
+      <button class="quiz-option" onclick="answer(this,'q40',true)">B. 3/3 = 1.0 — Y is a complete subset of X, so Overlap Coefficient = 1</button>
+      <button class="quiz-option" onclick="answer(this,'q40',false)">C. 3/8 = 0.375 — the Jaccard formula applies here</button>
+      <button class="quiz-option" onclick="answer(this,'q40',false)">D. 6/8 = 0.75 — twice the intersection over the sum</button>
+      <div class="quiz-explanation" id="q40-exp">
+        Correct. Overlap Coefficient = |X ∩ Y| / min(|X|,|Y|) = 3/min(5,3) = 3/3 = 1.0. This means Y is entirely contained in X. The weakness of Overlap Coefficient is exactly this: a small document that is a complete subset of a large one scores 1.0 even if the documents cover very different topics overall. Jaccard would give 3/5 = 0.6, which is more informative.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="text-align:center;color:var(--muted);font-size:.8rem;margin-top:3rem;padding:2rem 0;border-top:1px solid var(--border);">
+  Text as Data 2026 · Lecture 1 · Interactive Notes · Based on lecture slides (MacAvaney & Lever) and Jurafsky & Martin (3rd ed. draft, Jan 2026)
+</div>
+
+</div><!-- /container -->
+
+<script>
+// Toggle sections
+function toggle(header) {
+  const body = header.nextElementSibling;
+  const chevron = header.querySelector('.chevron');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+// Quiz answers
+function answer(btn, qid, correct) {
+  const q = document.getElementById(qid);
+  const opts = q.querySelectorAll('.quiz-option');
+  opts.forEach(o => { o.disabled = true; });
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  if (!correct) {
+    // highlight correct
+    opts.forEach(o => { if (o.onclick.toString().includes('true')) o.classList.add('correct'); });
+  }
+  document.getElementById(qid + '-exp').style.display = 'block';
+}
+
+// Open first section
+document.addEventListener('DOMContentLoaded', () => {
+  renderMathInElement && renderMathInElement(document.body);
+});
+</script>
+</body>
+</html>

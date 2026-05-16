@@ -1,0 +1,2017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 2: Geometric Similarity, Text Distributions & Clustering</title>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  :root {
+    --primary: #1a237e;
+    --accent: #0288d1;
+    --green: #2e7d32;
+    --orange: #e65100;
+    --red: #b71c1c;
+    --purple: #6a1b9a;
+    --bg: #f8f9fa;
+    --card: #ffffff;
+    --border: #dee2e6;
+    --code-bg: #1e1e2e;
+    --code-fg: #cdd6f4;
+    --highlight: #fff9c4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: #212529;
+    line-height: 1.7;
+  }
+  /* ====== SIDEBAR NAV ====== */
+  .nav {
+    position: fixed; top: 0; left: 0; width: 240px; height: 100vh;
+    background: var(--primary); color: #fff; overflow-y: auto;
+    padding: 20px 0; z-index: 100;
+  }
+  .nav h3 { padding: 0 16px 12px; font-size: 0.8rem; text-transform: uppercase;
+    letter-spacing: 1px; color: #90caf9; border-bottom: 1px solid rgba(255,255,255,.15); }
+  .nav a { display: block; padding: 7px 16px; color: #e3f2fd; text-decoration: none;
+    font-size: 0.82rem; transition: background .15s; }
+  .nav a:hover { background: rgba(255,255,255,.12); }
+  .nav a.sub { padding-left: 28px; font-size: 0.78rem; color: #bbdefb; }
+  /* ====== MAIN ====== */
+  .main { margin-left: 240px; padding: 32px 40px; max-width: 1000px; }
+  h1.page-title {
+    font-size: 2rem; color: var(--primary); margin-bottom: 6px;
+    border-bottom: 3px solid var(--accent); padding-bottom: 10px;
+  }
+  .subtitle { color: #666; font-size: 0.95rem; margin-bottom: 32px; }
+  /* ====== TOPIC CARDS ====== */
+  .section { margin-bottom: 50px; }
+  .section-header {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: white; padding: 14px 20px; border-radius: 10px 10px 0 0;
+    font-size: 1.3rem; font-weight: 700;
+  }
+  .section-body { background: var(--card); border: 1px solid var(--border);
+    border-top: none; border-radius: 0 0 10px 10px; padding: 24px; }
+  .subsection { margin-bottom: 28px; }
+  .subsection h3 { color: var(--accent); font-size: 1.05rem; margin-bottom: 10px;
+    padding-bottom: 4px; border-bottom: 2px solid #e3f2fd; }
+  /* ====== CARDS / BOXES ====== */
+  .card { border-radius: 8px; padding: 16px 20px; margin: 14px 0; }
+  .card.blue { background: #e3f2fd; border-left: 5px solid var(--accent); }
+  .card.green { background: #e8f5e9; border-left: 5px solid var(--green); }
+  .card.orange { background: #fff3e0; border-left: 5px solid var(--orange); }
+  .card.red { background: #ffebee; border-left: 5px solid var(--red); }
+  .card.purple { background: #f3e5f5; border-left: 5px solid var(--purple); }
+  .card.yellow { background: var(--highlight); border-left: 5px solid #f9a825; }
+  .card-title { font-weight: 700; margin-bottom: 6px; font-size: 0.95rem; }
+  /* ====== MATH / FORMULA ====== */
+  .formula-box {
+    background: #f0f4ff; border: 2px solid var(--accent); border-radius: 8px;
+    padding: 16px 20px; margin: 14px 0; text-align: center; font-size: 1.1rem;
+  }
+  .formula-box .label { font-size: 0.8rem; color: #555; display: block; margin-top: 6px; }
+  /* ====== CODE ====== */
+  pre {
+    background: var(--code-bg); color: var(--code-fg); border-radius: 8px;
+    padding: 16px; overflow-x: auto; font-size: 0.88rem; margin: 14px 0;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+  }
+  .kw { color: #cba6f7; }
+  .fn { color: #89dceb; }
+  .st { color: #a6e3a1; }
+  .cm { color: #6c7086; }
+  .num { color: #fab387; }
+  /* ====== TABLES ====== */
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 0.9rem; }
+  th { background: var(--primary); color: white; padding: 10px 12px; text-align: left; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) { background: #f5f5f5; }
+  tr:hover { background: #e8f4fd; }
+  /* ====== DIAGRAM ====== */
+  .diagram {
+    background: #fff; border: 2px dashed var(--accent); border-radius: 10px;
+    padding: 20px; margin: 14px 0; text-align: center;
+    font-family: monospace; font-size: 0.9rem; line-height: 1.6;
+  }
+  /* ====== INTERACTIVE ====== */
+  .quiz-section {
+    background: linear-gradient(135deg, #1b5e20, #2e7d32);
+    color: white; border-radius: 10px 10px 0 0; padding: 14px 20px;
+    font-size: 1.2rem; font-weight: 700;
+  }
+  .quiz-body { background: #f1f8e9; border: 1px solid #c8e6c9;
+    border-top: none; border-radius: 0 0 10px 10px; padding: 20px; }
+  details { margin: 12px 0; }
+  summary {
+    cursor: pointer; padding: 12px 16px; background: var(--primary);
+    color: white; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+    list-style: none; display: flex; justify-content: space-between; align-items: center;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '+ Show Answer'; font-size: 0.8rem; font-weight: 400; }
+  details[open] summary::after { content: '- Hide Answer'; }
+  details[open] summary { border-radius: 8px 8px 0 0; }
+  .answer {
+    background: #fff; border: 1px solid #b0bec5; border-top: none;
+    border-radius: 0 0 8px 8px; padding: 16px;
+  }
+  .q-label {
+    display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;
+    font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .q-mcq { background: #1565c0; color: white; }
+  .q-short { background: var(--green); color: white; }
+  .q-long { background: var(--orange); color: white; }
+  .q-calc { background: var(--purple); color: white; }
+  .q-truefalse { background: var(--red); color: white; }
+  /* ====== STEPS ====== */
+  .steps { list-style: none; counter-reset: step; }
+  .steps li { counter-increment: step; margin: 10px 0; padding-left: 44px; position: relative; }
+  .steps li::before {
+    content: counter(step); position: absolute; left: 0; top: 2px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: white; display: flex;
+    align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem;
+  }
+  /* ====== COMPARISON TABLE ====== */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 14px 0; }
+  .compare-card { border-radius: 8px; padding: 14px; }
+  .compare-card.good { background: #e8f5e9; border: 2px solid var(--green); }
+  .compare-card.bad { background: #ffebee; border: 2px solid var(--red); }
+  .compare-card h4 { margin-bottom: 8px; }
+  /* ====== PROGRESS / TOC ====== */
+  .toc-badge {
+    display: inline-block; background: var(--accent); color: white;
+    border-radius: 20px; padding: 3px 12px; font-size: 0.75rem; margin: 2px;
+  }
+  /* ====== VECTOR VISUAL ====== */
+  .vector-vis {
+    display: flex; gap: 4px; align-items: flex-end; margin: 14px 0;
+    padding: 16px; background: #f8f9fa; border-radius: 8px; border: 1px solid var(--border);
+  }
+  .vec-bar { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .vec-bar .bar {
+    width: 36px; background: var(--accent); border-radius: 3px 3px 0 0;
+    transition: height .3s;
+  }
+  .vec-bar .label { font-size: 0.65rem; color: #555; text-align: center; word-break: break-word; }
+  .vec-bar .val { font-size: 0.7rem; font-weight: 700; color: var(--primary); }
+  svg.plot { display: block; margin: 14px auto; border-radius: 8px; }
+  @media (max-width: 768px) {
+    .nav { display: none; }
+    .main { margin-left: 0; padding: 16px; }
+    .compare { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<nav class="nav">
+  <h3>Lecture 2 Notes</h3>
+  <a href="#overview">Overview</a>
+  <a href="#sets-to-vectors">Sets to Vectors</a>
+  <a class="sub" href="#one-hot">One-Hot Encoding</a>
+  <a class="sub" href="#bag-of-words">Bag of Words</a>
+  <a class="sub" href="#sparse">Sparse vs Dense</a>
+  <a href="#tf-idf">TF-IDF</a>
+  <a class="sub" href="#tf">Term Frequency</a>
+  <a class="sub" href="#idf">IDF</a>
+  <a class="sub" href="#tfidf-formula">TF-IDF Formula</a>
+  <a href="#zipf">Zipf's Law</a>
+  <a href="#cosine">Cosine Similarity</a>
+  <a class="sub" href="#euclidean">Euclidean Distance</a>
+  <a class="sub" href="#cosine-formula">Cosine Formula</a>
+  <a class="sub" href="#worked-example">Worked Example</a>
+  <a href="#clustering">Clustering</a>
+  <a class="sub" href="#intro-cluster">Introduction</a>
+  <a class="sub" href="#kmeans">K-Means</a>
+  <a class="sub" href="#elbow">Elbow Method</a>
+  <a class="sub" href="#silhouette">Silhouette Coefficient</a>
+  <a class="sub" href="#hierarchical">Hierarchical Clustering</a>
+  <a class="sub" href="#evaluation">Cluster Evaluation</a>
+  <a href="#exam-questions">6. Exam Questions</a>
+  <a class="sub" href="#mcq">A — MCQ</a>
+  <a class="sub" href="#truefalse">A — True / False</a>
+  <a class="sub" href="#short">A — Short Answer</a>
+  <a class="sub" href="#calc">A — Calculation</a>
+  <a class="sub" href="#long">A — Long Answer</a>
+  <a class="sub" href="#past-sets" style="color:#ffd54f;">B — Set Similarity</a>
+  <a class="sub" href="#past-tfidf" style="color:#ffd54f;">B — TF-IDF</a>
+  <a class="sub" href="#past-cosine" style="color:#ffd54f;">B — Cosine</a>
+  <a class="sub" href="#past-kmeans" style="color:#ffd54f;">B — K-Means</a>
+  <a class="sub" href="#past-eval" style="color:#ffd54f;">B — Evaluation</a>
+  <a class="sub" href="#past-zipf" style="color:#ffd54f;">B — Zipf's Law</a>
+  <a class="sub" href="#past-conceptual" style="color:#ffd54f;">B — Conceptual</a>
+</nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main">
+
+<h1 class="page-title">Lecture 2: Geometric Similarity, Text Distributions &amp; Clustering</h1>
+<p class="subtitle">
+  Text as Data &mdash; Sean MacAvaney &amp; Jake Lever &nbsp;|&nbsp;
+  Sources: Lecture slides + Jurafsky &amp; Martin, <em>Speech and Language Processing</em>, 3rd ed. (2026)
+  <br>
+  <span class="toc-badge">Vector Space Model</span>
+  <span class="toc-badge">TF-IDF</span>
+  <span class="toc-badge">Zipf's Law</span>
+  <span class="toc-badge">Cosine Similarity</span>
+  <span class="toc-badge">K-Means</span>
+  <span class="toc-badge">Clustering Evaluation</span>
+</p>
+
+<!-- ======================================================= -->
+<!-- SECTION 0: OVERVIEW -->
+<!-- ======================================================= -->
+<div class="section" id="overview">
+  <div class="section-header">Learning Objectives</div>
+  <div class="section-body">
+    <p>By the end of this lecture you should be able to:</p>
+    <ul style="padding-left:20px; margin-top:8px;">
+      <li>Represent documents as vectors in a term space</li>
+      <li>Explain sparse vs. dense representations</li>
+      <li>Compute TF, IDF, and TF-IDF weights</li>
+      <li>Describe Zipf's Law and its implications for NLP</li>
+      <li>Calculate cosine similarity between document vectors</li>
+      <li>Explain the K-Means algorithm step-by-step</li>
+      <li>Apply the Elbow Method and Silhouette Coefficient for cluster evaluation</li>
+      <li>Compare K-Means with hierarchical clustering</li>
+    </ul>
+    <div class="card blue" style="margin-top:16px;">
+      <div class="card-title">Prerequisite (Lecture 1)</div>
+      Tokenisation, stemming, case folding, set-based similarity (Jaccard, Overlap).
+      <br>Example: Jaccard(X,Y) = |X &cap; Y| / |X &cup; Y|
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- SECTION 1: FROM SETS TO VECTORS -->
+<!-- ======================================================= -->
+<div class="section" id="sets-to-vectors">
+  <div class="section-header">1. From Sets to Vectors</div>
+  <div class="section-body">
+
+    <div class="card orange">
+      <div class="card-title">Motivation: Limitations of Set-Based Similarity</div>
+      <ul style="padding-left:18px; margin-top:6px;">
+        <li>Sets discard <strong>word frequency</strong> ("Djokovic" appearing 10 times vs once)</li>
+        <li>Sets treat all words as <strong>equally important</strong> (common words like "the" get same weight as "Djokovic")</li>
+        <li>No notion of <strong>how rare</strong> a term is across the corpus</li>
+      </ul>
+    </div>
+
+    <!-- ONE-HOT ENCODING -->
+    <div class="subsection" id="one-hot">
+      <h3>1.1 One-Hot (Boolean) Encoding</h3>
+
+      <ol class="steps">
+        <li><strong>Build a vocabulary</strong>: collect every unique token across all documents, assign each an integer ID.</li>
+        <li><strong>Build the vector</strong>: set index = 1 if token is in the document, 0 otherwise. Vector length = vocabulary size |V|.</li>
+      </ol>
+
+      <div class="diagram">
+        <strong>Vocabulary (size = 10)</strong><br><br>
+        ID:  &nbsp;0&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;2&nbsp;&nbsp;&nbsp;3&nbsp;&nbsp;&nbsp;4&nbsp;&nbsp;&nbsp;5&nbsp;&nbsp;&nbsp;6&nbsp;&nbsp;&nbsp;7&nbsp;&nbsp;&nbsp;8&nbsp;&nbsp;&nbsp;9<br>
+        Token: a   bad  bru   i   irn   is  like  soda taste  the<br><br>
+        <strong>Document: "i like irn bru"</strong><br>
+        Vector: [0, 0, <span style="color:#0288d1;font-weight:700">1</span>, <span style="color:#0288d1;font-weight:700">1</span>, <span style="color:#0288d1;font-weight:700">1</span>, 0, <span style="color:#0288d1;font-weight:700">1</span>, 0, 0, 0]
+      </div>
+
+      <div class="card blue">
+        <div class="card-title">Key Insight</div>
+        Standard English has ~150K–200K unique tokens, but documents are short &rarr; most vector entries are <strong>zero</strong> (sparse data).
+      </div>
+    </div>
+
+    <!-- BAG OF WORDS -->
+    <div class="subsection" id="bag-of-words">
+      <h3>1.2 Bag of Words (BoW) / Term Frequency Vectors</h3>
+      <p>Instead of storing just 0/1, store the <strong>raw count</strong> (term frequency) of each token.</p>
+
+      <div class="diagram">
+        Document: "i like irn bru irn bru taste like"<br><br>
+        ID:  &nbsp;0&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;2&nbsp;&nbsp;&nbsp;3&nbsp;&nbsp;&nbsp;4&nbsp;&nbsp;&nbsp;5&nbsp;&nbsp;&nbsp;6&nbsp;&nbsp;&nbsp;7&nbsp;&nbsp;&nbsp;8<br>
+        Token:  a  bad  bru   i   irn   is  like  soda taste<br>
+        Count: [0,  0,  <span style="color:#2e7d32;font-weight:700">2</span>,  <span style="color:#2e7d32;font-weight:700">1</span>,   <span style="color:#2e7d32;font-weight:700">2</span>,   0,   <span style="color:#2e7d32;font-weight:700">2</span>,   0,  <span style="color:#2e7d32;font-weight:700">1</span>]
+      </div>
+
+      <div class="card yellow">
+        <div class="card-title">The "Bag" Analogy</div>
+        Drop each word of a sentence into a bag. The bag doesn't preserve order or structure &mdash; only counts.
+        "I like IRN-BRU" and "IRN-BRU likes I" produce the same BoW vector.
+      </div>
+    </div>
+
+    <!-- SPARSE REPRESENTATION -->
+    <div class="subsection" id="sparse">
+      <h3>1.3 Sparse vs. Dense Representations</h3>
+      <table>
+        <thead><tr><th>Representation</th><th>Format</th><th>Size</th><th>Best When</th></tr></thead>
+        <tbody>
+          <tr><td>Dense (array)</td><td>[0, 0, 2, 1, 2, 0, 2, 0, 1]</td><td>Fixed = |V|</td><td>Data is mostly non-zero</td></tr>
+          <tr><td>Sparse (pairs)</td><td>[(2,2), (3,1), (4,2), (6,2), (8,1)]</td><td>Variable = doc length</td><td>Data is mostly zero</td></tr>
+        </tbody>
+      </table>
+
+      <div class="card green">
+        <div class="card-title">UNK Tokens</div>
+        At inference time, words not seen during vocabulary building are replaced with a special <code>UNK</code> (unknown) token to handle out-of-vocabulary words gracefully.
+      </div>
+
+<pre><span class="cm"># Python: Creating BoW with sklearn</span>
+<span class="kw">from</span> sklearn.feature_extraction.text <span class="kw">import</span> CountVectorizer
+
+docs = [<span class="st">"i like irn bru"</span>, <span class="st">"irn bru is bad"</span>]
+vec = CountVectorizer()
+X = vec.fit_transform(docs)
+
+<span class="fn">print</span>(vec.get_feature_names_out())
+<span class="cm"># ['bad', 'bru', 'irn', 'is', 'like']</span>
+<span class="fn">print</span>(X.toarray())
+<span class="cm"># [[0, 1, 1, 0, 1],   <- "i like irn bru"
+#  [1, 1, 1, 1, 0]]   <- "irn bru is bad"</span></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- SECTION 2: TF-IDF -->
+<!-- ======================================================= -->
+<div class="section" id="tf-idf">
+  <div class="section-header">2. TF-IDF Weighting</div>
+  <div class="section-body">
+
+    <!-- TF -->
+    <div class="subsection" id="tf">
+      <h3>2.1 Term Frequency (TF)</h3>
+      <p>The raw count of term <em>t</em> in document <em>d</em>.</p>
+
+      <div class="card orange">
+        <div class="card-title">Problem with Raw TF</div>
+        A document with 10 occurrences of "visa" is NOT 10x more about "visa" than one with 1 occurrence.
+        Aboutness does not scale linearly.
+      </div>
+
+      <h4 style="margin-top:14px; color:#555;">Solution: Sublinear TF Scaling (Log TF)</h4>
+      <div class="formula-box">
+        \[
+          \text{tf}_{t,d} = \begin{cases} 1 + \log_{10}(\text{count}_{t,d}) & \text{if count}_{t,d} > 0 \\ 0 & \text{otherwise} \end{cases}
+        \]
+        <span class="label">Dampens large frequencies: 1&rarr;1, 2&rarr;1.3, 10&rarr;2, 1000&rarr;4</span>
+      </div>
+
+      <table>
+        <thead><tr><th>Raw Count</th><th>Log TF</th><th>Linear would give</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>1</td><td>1.0</td><td>1</td></tr>
+          <tr><td>2</td><td>1.30</td><td>2</td></tr>
+          <tr><td>10</td><td>2.00</td><td>10</td></tr>
+          <tr><td>100</td><td>3.00</td><td>100</td></tr>
+          <tr><td>1,000</td><td>4.00</td><td>1,000</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- IDF -->
+    <div class="subsection" id="idf">
+      <h3>2.2 Document Frequency (DF) &amp; Inverse Document Frequency (IDF)</h3>
+
+      <div class="card blue">
+        <div class="card-title">Document Frequency (DF)</div>
+        <strong>df<sub>t</sub></strong> = the number of documents in the corpus that contain term <em>t</em>.
+        <br>High DF &rarr; term appears in many docs &rarr; not very informative (e.g., "the", "a").
+      </div>
+
+      <div class="formula-box">
+        \[
+          \text{idf}_{t} = \log_{10}\!\left(\frac{N}{df_t}\right)
+        \]
+        <span class="label">N = total number of documents in the corpus</span>
+      </div>
+
+      <div class="card green">
+        <div class="card-title">Key Historical Note (J&amp;M)</div>
+        <strong>Karen Sp&auml;rck Jones</strong> (British computer scientist) pioneered the concept of inverse document frequency in the 1970s. She was also an outspoken supporter of diversity in computer science.
+      </div>
+
+      <h4 style="margin-top:14px; color:#555;">IDF Example (N = 1,000,000)</h4>
+      <table>
+        <thead><tr><th>Term</th><th>df<sub>t</sub></th><th>idf<sub>t</sub> = log<sub>10</sub>(N/df)</th></tr></thead>
+        <tbody>
+          <tr><td>calpurnia</td><td>1</td><td>6</td></tr>
+          <tr><td>animal</td><td>100</td><td>4</td></tr>
+          <tr><td>sunday</td><td>1,000</td><td>3</td></tr>
+          <tr><td>fly</td><td>10,000</td><td>2</td></tr>
+          <tr><td>under</td><td>100,000</td><td>1</td></tr>
+          <tr><td>the</td><td>1,000,000</td><td>0</td></tr>
+        </tbody>
+      </table>
+      <p style="color:#555; font-size:0.9rem; margin-top:6px;">
+        Note: "the" appears in every document, so IDF = log(1M/1M) = log(1) = 0. It contributes nothing.
+      </p>
+    </div>
+
+    <!-- TF-IDF FORMULA -->
+    <div class="subsection" id="tfidf-formula">
+      <h3>2.3 TF-IDF Formula</h3>
+
+      <div class="formula-box">
+        \[
+          w_{t,d} = \text{tf-idf}(t,d) = \underbrace{(1 + \log_{10} \text{tf}_{t,d})}_{\text{TF weight}} \times \underbrace{\log_{10}\!\left(\frac{N}{df_t}\right)}_{\text{IDF weight}}
+        \]
+        <span class="label">"tf-idf" &mdash; the hyphen is a <em>hyphen</em>, not a minus sign!</span>
+      </div>
+
+      <table>
+        <thead><tr><th>Metric</th><th>High Value Means</th><th>Low Value Means</th></tr></thead>
+        <tbody>
+          <tr><td>TF (term frequency)</td><td>Document likely about this term</td><td>Document probably not about this term</td></tr>
+          <tr><td>DF (document frequency)</td><td>Term is common &amp; probably uninformative</td><td>Term is rare &amp; probably informative</td></tr>
+          <tr><td>IDF (inverse doc freq)</td><td>Term is rare &amp; informative</td><td>Term is common &amp; uninformative</td></tr>
+          <tr><td>TF-IDF</td><td>Term is frequent in this doc AND rare in corpus</td><td>Term is rare in doc OR common in corpus</td></tr>
+        </tbody>
+      </table>
+
+<pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> sklearn.feature_extraction.text <span class="kw">import</span> TfidfVectorizer
+
+corpus = [
+    <span class="st">"I like IRN-BRU"</span>,
+    <span class="st">"IRN-BRU is bad"</span>,
+    <span class="st">"I like soda"</span>
+]
+
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(corpus)
+
+<span class="fn">print</span>(vectorizer.get_feature_names_out())
+<span class="fn">print</span>(np.round(X.toarray(), <span class="num">3</span>))
+<span class="cm"># Higher values = more distinctive in that document</span></pre>
+
+      <div class="card purple">
+        <div class="card-title">TF-IDF Variants (J&amp;M Table 6.7 style)</div>
+        Many variants exist: log-normalised TF, probabilistic IDF, BM25 (used in search engines like Elasticsearch).
+        BM25 also accounts for document length normalisation.
+      </div>
+
+      <!-- ===== INLINE PRACTICE: TF-IDF Vector (Exam Style) ===== -->
+      <div class="card green" style="margin-top:20px;">
+        <div class="card-title">Practice: Exam-Style TF-IDF Vector Computation</div>
+        <p style="margin-bottom:8px;"><strong>Vocabulary (10 tokens A–J) with IDF values:</strong></p>
+        <table style="width:auto;">
+          <thead><tr><th>Token</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th><th>I</th><th>J</th></tr></thead>
+          <tbody><tr><td><strong>IDF</strong></td><td>2</td><td>4</td><td>1</td><td>3</td><td>6</td><td>4</td><td>1</td><td>3</td><td>3</td><td>5</td></tr></tbody>
+        </table>
+
+        <details style="margin-top:12px;">
+          <summary><span class="q-label q-calc">PRACTICE P1</span> &nbsp; Document: "G C G A H A G". Compute the TF-IDF vector using <em>linear TF × IDF</em>.</summary>
+          <div class="answer">
+            <p><strong>Step 1: Count term frequencies</strong> (tokenise on whitespace)</p>
+            <table>
+              <thead><tr><th>Token</th><th>TF (raw count)</th><th>IDF</th><th>TF-IDF</th></tr></thead>
+              <tbody>
+                <tr><td>A</td><td>2</td><td>2</td><td><strong>4</strong></td></tr>
+                <tr><td>C</td><td>1</td><td>1</td><td><strong>1</strong></td></tr>
+                <tr><td>G</td><td>3</td><td>1</td><td><strong>3</strong></td></tr>
+                <tr><td>H</td><td>1</td><td>3</td><td><strong>3</strong></td></tr>
+                <tr><td>B,D,E,F,I,J</td><td>0</td><td>—</td><td><strong>0</strong></td></tr>
+              </tbody>
+            </table>
+            <p><strong>TF-IDF Vector</strong> (ordered A,B,C,D,E,F,G,H,I,J):</p>
+            <div class="formula-box">[4, 0, 1, 0, 0, 0, 3, 3, 0, 0]</div>
+            <p style="font-size:0.88rem; color:#555;"><em>Exam tip: Always zero-out tokens not in the document. Order follows the vocabulary index, not the document order.</em></p>
+          </div>
+        </details>
+
+        <details style="margin-top:8px;">
+          <summary><span class="q-label q-calc">PRACTICE P2</span> &nbsp; Reverse reconstruction: Document Y has TF-IDF vector [6, 8, 0, 6, 6, 0, 2, 3, 3, 10]. Which tokens appear, and how many times?</summary>
+          <div class="answer">
+            <p>Divide each TF-IDF value by its IDF to recover the raw count:</p>
+            <table>
+              <thead><tr><th>Token</th><th>TF-IDF</th><th>IDF</th><th>Count = TF-IDF ÷ IDF</th></tr></thead>
+              <tbody>
+                <tr><td>A</td><td>6</td><td>2</td><td><strong>3</strong></td></tr>
+                <tr><td>B</td><td>8</td><td>4</td><td><strong>2</strong></td></tr>
+                <tr><td>C</td><td>0</td><td>1</td><td>0 (absent)</td></tr>
+                <tr><td>D</td><td>6</td><td>3</td><td><strong>2</strong></td></tr>
+                <tr><td>E</td><td>6</td><td>6</td><td><strong>1</strong></td></tr>
+                <tr><td>F</td><td>0</td><td>4</td><td>0 (absent)</td></tr>
+                <tr><td>G</td><td>2</td><td>1</td><td><strong>2</strong></td></tr>
+                <tr><td>H</td><td>3</td><td>3</td><td><strong>1</strong></td></tr>
+                <tr><td>I</td><td>3</td><td>3</td><td><strong>1</strong></td></tr>
+                <tr><td>J</td><td>10</td><td>5</td><td><strong>2</strong></td></tr>
+              </tbody>
+            </table>
+            <p><strong>Document Y contains:</strong> A A A B B D D E G G H I J J (exact order unknown — BoW discards order!).</p>
+          </div>
+        </details>
+
+        <details style="margin-top:8px;">
+          <summary><span class="q-label q-calc">PRACTICE P3</span> &nbsp; Given N=5 documents. Term "cat" appears in 2 documents; "the" appears in 5 documents; "neuron" appears in 1 document. Compute IDF for each.</summary>
+          <div class="answer">
+            \[ \text{IDF(cat)} = \log_{10}(5/2) = \log_{10}(2.5) \approx 0.398 \]
+            \[ \text{IDF(the)} = \log_{10}(5/5) = \log_{10}(1) = 0 \]
+            \[ \text{IDF(neuron)} = \log_{10}(5/1) = \log_{10}(5) \approx 0.699 \]
+            <p>"the" contributes nothing (IDF=0). "neuron" is the most informative (highest IDF).</p>
+          </div>
+        </details>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- SECTION 3: ZIPF'S LAW -->
+<!-- ======================================================= -->
+<div class="section" id="zipf">
+  <div class="section-header">3. Zipf's Law &amp; Word Distributions</div>
+  <div class="section-body">
+
+    <div class="card blue">
+      <div class="card-title">Zipf's Law (George Kingsley Zipf, 1949)</div>
+      The frequency of a word is <strong>inversely proportional to its rank</strong> in the frequency table.
+      <br>The <em>r</em>-th most frequent word has frequency &prop; 1/<em>r</em>.
+    </div>
+
+    <div class="formula-box">
+      \[
+        f(r) \propto \frac{1}{r^{\alpha}} \quad \text{where } \alpha \approx 1
+      \]
+      \[
+        \log f \approx C - \alpha \cdot \log r
+      \]
+      <span class="label">A straight line on a log-log plot (a "power law")</span>
+    </div>
+
+    <!-- Log-log plot using SVG -->
+    <div class="diagram">
+      <svg class="plot" width="500" height="280" style="background:#fff;">
+        <!-- Axes -->
+        <line x1="60" y1="240" x2="460" y2="240" stroke="#333" stroke-width="2"/>
+        <line x1="60" y1="240" x2="60" y2="20" stroke="#333" stroke-width="2"/>
+        <!-- Axis Labels -->
+        <text x="250" y="270" text-anchor="middle" font-size="14" fill="#333">log(rank)</text>
+        <text x="20" y="130" text-anchor="middle" font-size="14" fill="#333" transform="rotate(-90,20,130)">log(frequency)</text>
+        <!-- Zipf line (approximate) -->
+        <line x1="80" y1="30" x2="440" y2="230" stroke="#0288d1" stroke-width="3" stroke-dasharray="0"/>
+        <!-- Actual data points (scatter, approximate) -->
+        <circle cx="85" cy="35" r="4" fill="#1a237e"/>
+        <circle cx="110" cy="55" r="4" fill="#1a237e"/>
+        <circle cx="145" cy="80" r="4" fill="#1a237e"/>
+        <circle cx="180" cy="100" r="4" fill="#1a237e"/>
+        <circle cx="220" cy="125" r="4" fill="#1a237e"/>
+        <circle cx="265" cy="150" r="4" fill="#1a237e"/>
+        <circle cx="310" cy="172" r="4" fill="#1a237e"/>
+        <circle cx="355" cy="193" r="4" fill="#1a237e"/>
+        <circle cx="400" cy="210" r="4" fill="#1a237e"/>
+        <circle cx="435" cy="225" r="4" fill="#1a237e"/>
+        <!-- Labels -->
+        <text x="80" y="25" font-size="11" fill="#b71c1c">HEAD: "the","of"...</text>
+        <text x="380" y="245" font-size="11" fill="#2e7d32">TAIL: rare terms</text>
+        <text x="280" y="90" font-size="12" fill="#0288d1" font-style="italic">Zipf line (slope = -1)</text>
+        <!-- Tick marks -->
+        <text x="57" y="244" text-anchor="end" font-size="10" fill="#555">0</text>
+        <text x="250" y="255" text-anchor="middle" font-size="10" fill="#555">mid rank</text>
+        <text x="440" y="255" text-anchor="middle" font-size="10" fill="#555">high rank</text>
+      </svg>
+      <br>
+      <strong>Log-log plot of word rank vs. frequency follows a straight line</strong>
+    </div>
+
+    <div class="card orange">
+      <div class="card-title">Real Data: MS MARCO (~9M documents, ~500M tokens)</div>
+      <table style="width:auto;">
+        <thead><tr><th>Rank</th><th>Token</th><th>Document Frequency</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>the</td><td>7,714,694</td></tr>
+          <tr><td>2</td><td>of</td><td>6,562,777</td></tr>
+          <tr><td>3</td><td>and</td><td>6,432,856</td></tr>
+          <tr><td>...</td><td>...</td><td>...</td></tr>
+          <tr><td>1,242,320</td><td>tukana</td><td>1</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card green">
+      <div class="card-title">Why Zipf's Law Justifies IDF &amp; Log Scaling</div>
+      <ul style="padding-left:18px;">
+        <li>The <strong>head</strong>: very few terms, each appearing in nearly every document &rarr; IDF &asymp; 0, filtered out</li>
+        <li>The <strong>tail</strong>: millions of rare terms, each appearing in very few documents &rarr; high IDF, highly discriminative</li>
+        <li>Taking <code>log(N/df)</code> maps the exponential DF distribution to a manageable linear IDF scale</li>
+      </ul>
+    </div>
+
+<pre><span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> collections <span class="kw">import</span> Counter
+
+<span class="cm"># Simulate Zipf distribution</span>
+words = np.random.zipf(<span class="num">1.5</span>, size=<span class="num">100000</span>)
+counts = Counter(words)
+ranks = sorted(counts, key=<span class="kw">lambda</span> x: -counts[x])
+freqs = [counts[r] <span class="kw">for</span> r <span class="kw">in</span> ranks]
+
+plt.figure(figsize=(<span class="num">8</span>, <span class="num">4</span>))
+plt.subplot(<span class="num">1</span>, <span class="num">2</span>, <span class="num">1</span>)
+plt.plot(freqs[:<span class="num">200</span>]); plt.title(<span class="st">'Linear scale'</span>)
+
+plt.subplot(<span class="num">1</span>, <span class="num">2</span>, <span class="num">2</span>)
+plt.loglog(range(<span class="num">1</span>, len(freqs)+<span class="num">1</span>), freqs)
+plt.title(<span class="st">'Log-log scale (Zipf line)'</span>)
+plt.tight_layout(); plt.show()</pre>
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- SECTION 4: COSINE SIMILARITY -->
+<!-- ======================================================= -->
+<div class="section" id="cosine">
+  <div class="section-header">4. Geometric Similarity: Cosine Similarity</div>
+  <div class="section-body">
+
+    <!-- EUCLIDEAN -->
+    <div class="subsection" id="euclidean">
+      <h3>4.1 Euclidean Distance (and Why It Fails)</h3>
+
+      <div class="formula-box">
+        \[
+          d(D_1, D_2) = \sqrt{\sum_{i=1}^{|V|} (D_1[i] - D_2[i])^2}
+        \]
+      </div>
+
+      <div class="card red">
+        <div class="card-title">Problem: Length Sensitivity</div>
+        Two documents with the same <em>proportions</em> of words can have very different vector lengths if one is much longer.
+        A long "happy" review and a short "happy" review would appear far apart in Euclidean space, despite being topically similar.
+      </div>
+
+      <div class="diagram">
+                  "great"<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;^ <br>
+        &nbsp;&nbsp;&nbsp;d3 /  (very unhappy, long)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/<br>
+        &nbsp;&nbsp;d2 (unhappy)<br>
+        &nbsp;&nbsp;&nbsp;/   ^d1 (happy)<br>
+        ----+-----------> "terrible"<br>
+        <br>
+        d2 and d3 point in the SAME direction but Euclidean distance is large!
+      </div>
+    </div>
+
+    <!-- COSINE FORMULA -->
+    <div class="subsection" id="cosine-formula">
+      <h3>4.2 Cosine Similarity</h3>
+      <p>Instead of measuring distance, measure the <strong>angle</strong> between vectors. Direction reflects topical similarity, not document length.</p>
+
+      <div class="formula-box">
+        \[
+          \cos(\theta) = \frac{\vec{D_1} \cdot \vec{D_2}}{|\vec{D_1}|\ |\vec{D_2}|} = \frac{\displaystyle\sum_{i=1}^{|V|} D_1[i] \cdot D_2[i]}{\displaystyle\sqrt{\sum_i D_1[i]^2}\ \sqrt{\sum_i D_2[i]^2}}
+        \]
+        <span class="label">Ranges from 0 (no shared terms) to 1 (identical direction)</span>
+      </div>
+
+      <!-- SVG Cosine diagram -->
+      <div class="diagram">
+        <svg width="380" height="200" style="background:#fff;">
+          <!-- Axes -->
+          <line x1="40" y1="170" x2="340" y2="170" stroke="#aaa" stroke-width="1.5"/>
+          <line x1="40" y1="170" x2="40" y2="20" stroke="#aaa" stroke-width="1.5"/>
+          <text x="345" y="174" font-size="11" fill="#555">term 1</text>
+          <text x="42" y="16" font-size="11" fill="#555">term 2</text>
+
+          <!-- Vector 1 (similar direction to 2) -->
+          <line x1="40" y1="170" x2="200" y2="50" stroke="#0288d1" stroke-width="2.5" marker-end="url(#arr1)"/>
+          <text x="215" y="45" font-size="12" fill="#0288d1" font-weight="bold">D1</text>
+
+          <!-- Vector 2 -->
+          <line x1="40" y1="170" x2="260" y2="80" stroke="#2e7d32" stroke-width="2.5" marker-end="url(#arr2)"/>
+          <text x="268" y="78" font-size="12" fill="#2e7d32" font-weight="bold">D2</text>
+
+          <!-- Vector 3 (perpendicular) -->
+          <line x1="40" y1="170" x2="320" y2="170" stroke="#b71c1c" stroke-width="2.5" marker-end="url(#arr3)"/>
+          <text x="325" y="165" font-size="12" fill="#b71c1c" font-weight="bold">D3</text>
+
+          <!-- Angle arc for D1-D2 -->
+          <path d="M 120,150 A 85,85 0 0,1 100,100" fill="none" stroke="#e65100" stroke-width="1.5"/>
+          <text x="125" y="145" font-size="10" fill="#e65100">&theta; small &rarr; cos&asymp;1</text>
+
+          <!-- Arrow markers -->
+          <defs>
+            <marker id="arr1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#0288d1"/>
+            </marker>
+            <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#2e7d32"/>
+            </marker>
+            <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#b71c1c"/>
+            </marker>
+          </defs>
+
+          <!-- Annotations -->
+          <text x="45" y="195" font-size="10" fill="#0288d1">D1 &amp; D2: similar topics, cos&asymp;0.95</text>
+          <text x="45" y="208" font-size="10" fill="#b71c1c">D3: no shared terms (perpendicular), cos=0</text>
+        </svg>
+      </div>
+
+      <table>
+        <thead><tr><th>Angle (&theta;)</th><th>cos(&theta;)</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>0&deg;</td><td>1.0</td><td>Identical direction (same relative proportions)</td></tr>
+          <tr><td>45&deg;</td><td>0.71</td><td>Moderately similar</td></tr>
+          <tr><td>90&deg;</td><td>0.0</td><td>No shared terms (perpendicular)</td></tr>
+          <tr><td>&gt;90&deg;</td><td>&lt;0</td><td>Not possible with non-negative TF/TF-IDF</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- WORKED EXAMPLE -->
+    <div class="subsection" id="worked-example">
+      <h3>4.3 Worked Example: Cosine Similarity</h3>
+
+      <div class="card blue">
+        <div class="card-title">Given</div>
+        D1 = (1, 0, 3), &nbsp; D2 = (4, 2, 1) &nbsp;&nbsp;(3-term vocabulary)
+      </div>
+
+      <p><strong>Step 1: Dot product</strong></p>
+      <div class="formula-box">
+        \[
+          D_1 \cdot D_2 = (1 \times 4) + (0 \times 2) + (3 \times 1) = 4 + 0 + 3 = 7
+        \]
+      </div>
+
+      <p><strong>Step 2: Magnitudes</strong></p>
+      <div class="formula-box">
+        \[
+          |D_1| = \sqrt{1^2 + 0^2 + 3^2} = \sqrt{10} \approx 3.162
+        \]
+        \[
+          |D_2| = \sqrt{4^2 + 2^2 + 1^2} = \sqrt{21} \approx 4.583
+        \]
+      </div>
+
+      <p><strong>Step 3: Cosine Similarity</strong></p>
+      <div class="formula-box">
+        \[
+          \cos(D_1, D_2) = \frac{7}{\sqrt{10} \times \sqrt{21}} = \frac{7}{\sqrt{210}} = \frac{7}{14.49} \approx 0.483
+        \]
+      </div>
+
+<pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+
+D1 = np.array([<span class="num">1</span>, <span class="num">0</span>, <span class="num">3</span>])
+D2 = np.array([<span class="num">4</span>, <span class="num">2</span>, <span class="num">1</span>])
+
+dot = np.dot(D1, D2)          <span class="cm"># 7</span>
+mag1 = np.linalg.norm(D1)     <span class="cm"># 3.162</span>
+mag2 = np.linalg.norm(D2)     <span class="cm"># 4.583</span>
+cos_sim = dot / (mag1 * mag2) <span class="cm"># 0.483</span>
+
+<span class="fn">print</span>(<span class="st">f"Cosine similarity: {cos_sim:.4f}"</span>)
+
+<span class="cm"># Or using sklearn:</span>
+<span class="kw">from</span> sklearn.metrics.pairwise <span class="kw">import</span> cosine_similarity
+cos_sim2 = cosine_similarity(D1.reshape(<span class="num">1</span>,-<span class="num">1</span>), D2.reshape(<span class="num">1</span>,-<span class="num">1</span>))
+<span class="fn">print</span>(cos_sim2)  <span class="cm"># [[0.4830...]]</span></pre>
+
+      <div class="card green">
+        <div class="card-title">J&amp;M Example (Chapter 5): cherry vs. digital vs. information</div>
+        Using co-occurrence counts with "pie", "data", "computer" as dimensions:
+        <br>cos(cherry, information) &asymp; <strong>0.018</strong> (very different)
+        <br>cos(digital, information) &asymp; <strong>0.996</strong> (very similar)
+        <br>This confirms "information" and "digital" are semantically related, while "cherry" is not.
+      </div>
+
+      <!-- ===== INLINE PRACTICE: Cosine Similarity ===== -->
+      <div class="card orange" style="margin-top:20px;">
+        <div class="card-title">Practice: Cosine Similarity Calculations</div>
+
+        <details style="margin-top:10px;">
+          <summary><span class="q-label q-calc">PRACTICE C1</span> &nbsp; Compute cosine similarity: D1 = (2, 1, 0, 3) and D2 = (1, 0, 1, 2). Show all steps.</summary>
+          <div class="answer">
+            <p><strong>Step 1: Dot product</strong></p>
+            \[ D_1 \cdot D_2 = (2\times1)+(1\times0)+(0\times1)+(3\times2) = 2+0+0+6 = 8 \]
+            <p><strong>Step 2: Magnitudes</strong></p>
+            \[ |D_1| = \sqrt{4+1+0+9} = \sqrt{14} \approx 3.742 \]
+            \[ |D_2| = \sqrt{1+0+1+4} = \sqrt{6} \approx 2.449 \]
+            <p><strong>Step 3: Cosine Similarity</strong></p>
+            \[ \cos(D_1,D_2) = \frac{8}{\sqrt{14}\times\sqrt{6}} = \frac{8}{\sqrt{84}} \approx \frac{8}{9.165} \approx 0.873 \]
+            <p>High similarity (0.87) — the documents share significant overlapping vocabulary.</p>
+          </div>
+        </details>
+
+        <details style="margin-top:8px;">
+          <summary><span class="q-label q-calc">PRACTICE C2</span> &nbsp; Are D1=(3,0,4) and D2=(0,5,0) similar? Compute cosine similarity.</summary>
+          <div class="answer">
+            <p><strong>Dot product:</strong> (3×0)+(0×5)+(4×0) = 0</p>
+            <p><strong>Cosine similarity = 0/anything = 0</strong></p>
+            <p>The vectors share <em>no common non-zero dimensions</em> — they are orthogonal (perpendicular). Cosine = 0 means completely dissimilar. This happens when documents share no common vocabulary.</p>
+          </div>
+        </details>
+
+        <details style="margin-top:8px;">
+          <summary><span class="q-label q-calc">PRACTICE C3 (Exam-style)</span> &nbsp; Using the TF-IDF vector from P1 (DocX = [4,0,1,0,0,0,3,3,0,0]) and DocY = [6,8,0,6,6,0,2,3,3,10], compute cosine similarity between DocX and DocY.</summary>
+          <div class="answer">
+            <p><strong>Step 1: Dot product</strong> (only non-zero pairs contribute)</p>
+            \[ = (4\times6)+(0\times8)+(1\times0)+(0\times6)+(0\times6)+(0\times0)+(3\times2)+(3\times3)+(0\times3)+(0\times10) \]
+            \[ = 24 + 0 + 0 + 0 + 0 + 0 + 6 + 9 + 0 + 0 = 39 \]
+            <p><strong>Step 2: Magnitudes</strong></p>
+            \[ |X| = \sqrt{16+0+1+0+0+0+9+9+0+0} = \sqrt{35} \approx 5.916 \]
+            \[ |Y| = \sqrt{36+64+0+36+36+0+4+9+9+100} = \sqrt{294} \approx 17.146 \]
+            <p><strong>Step 3:</strong></p>
+            \[ \cos(X,Y) = \frac{39}{5.916 \times 17.146} \approx \frac{39}{101.46} \approx 0.384 \]
+            <p>Moderate similarity — they share tokens A, G, H but DocY has many tokens not in DocX.</p>
+          </div>
+        </details>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- SECTION 5: CLUSTERING -->
+<!-- ======================================================= -->
+<div class="section" id="clustering">
+  <div class="section-header">5. Document Clustering</div>
+  <div class="section-body">
+
+    <div class="subsection" id="intro-cluster">
+      <h3>5.1 Introduction to Clustering</h3>
+
+      <div class="card blue">
+        <div class="card-title">Definition</div>
+        Clustering = discovering the underlying structure of data by grouping <strong>similar objects</strong> together without pre-defined labels (unsupervised learning).
+      </div>
+
+      <div class="compare">
+        <div class="compare-card good">
+          <h4 style="color:#2e7d32;">Clustering (Unsupervised)</h4>
+          <ul style="padding-left:16px; font-size:0.9rem;">
+            <li>No labelled training data</li>
+            <li>Clusters discovered by algorithm</li>
+            <li>Number of classes not pre-defined</li>
+            <li>Examples: K-Means, DBSCAN, Hierarchical</li>
+          </ul>
+        </div>
+        <div class="compare-card bad" style="border-color:#1565c0; background:#e3f2fd;">
+          <h4 style="color:#1565c0;">Classification (Supervised)</h4>
+          <ul style="padding-left:16px; font-size:0.9rem;">
+            <li>Requires labelled training data</li>
+            <li>Classes are pre-defined</li>
+            <li>Model learns decision boundary</li>
+            <li>Examples: Logistic Regression, SVM, BERT</li>
+          </ul>
+        </div>
+      </div>
+
+      <h4 style="margin-top:16px;">Applications of Document Clustering</h4>
+      <table>
+        <thead><tr><th>Application</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>News article grouping</td><td>Cluster thousands of articles by topic (sports, politics, tech)</td></tr>
+          <tr><td>Customer segmentation</td><td>Group customers by purchase history for targeted marketing</td></tr>
+          <tr><td>Product organisation</td><td>Amazon groups products by category using buying patterns</td></tr>
+          <tr><td>Search result clustering</td><td>Group search results by subtopic</td></tr>
+          <tr><td>Term clustering</td><td>Group terms that frequently co-occur in same documents</td></tr>
+        </tbody>
+      </table>
+
+      <h4 style="margin-top:14px;">The Clustering Pipeline</h4>
+      <ol class="steps">
+        <li>Derive document representation (e.g., TF-IDF vectors)</li>
+        <li>Measure similarity between documents (e.g., cosine similarity)</li>
+        <li>Apply a clustering algorithm (e.g., K-Means)</li>
+        <li>Evaluate clustering quality (intrinsic or extrinsic)</li>
+      </ol>
+    </div>
+
+    <!-- K-MEANS -->
+    <div class="subsection" id="kmeans">
+      <h3>5.2 K-Means Clustering</h3>
+
+      <div class="card purple">
+        <div class="card-title">K-Means: Input &amp; Output</div>
+        <strong>Input:</strong> Dataset of N document vectors, k (number of clusters)
+        <br><strong>Output:</strong> N partitioned into k disjoint clusters, each with a centroid (mean point)
+      </div>
+
+      <h4 style="margin-top:14px;">Algorithm Steps</h4>
+
+      <div class="diagram" style="text-align:left; padding:20px 30px;">
+        <span style="font-weight:700; font-size:1rem;">K-Means Algorithm</span><br><br>
+        <span style="color:#0288d1; font-weight:600;">Step 0:</span> Randomly select <em>k</em> data points as initial centroids &mu;<sub>1</sub>, ..., &mu;<sub>k</sub><br><br>
+        <span style="color:#2e7d32; font-weight:600;">Repeat until convergence:</span><br>
+        &nbsp;&nbsp;&nbsp;<span style="color:#e65100; font-weight:600;">Step 1 (Assign):</span> For each point x<sub>i</sub>:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c(i) = argmin<sub>j</sub> dist(x<sub>i</sub>, &mu;<sub>j</sub>)<br><br>
+        &nbsp;&nbsp;&nbsp;<span style="color:#6a1b9a; font-weight:600;">Step 2 (Update):</span> Recalculate each centroid:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&mu;<sub>j</sub> = mean of all x<sub>i</sub> where c(i) = j<br><br>
+        <span style="color:#b71c1c; font-weight:600;">Convergence:</span> Centroids stop moving (or change &lt; &epsilon;)
+      </div>
+
+      <!-- K-Means SVG step-by-step -->
+      <div class="diagram">
+        <svg width="480" height="200" style="background:#f9f9f9;">
+          <!-- Step 0 -->
+          <text x="80" y="15" text-anchor="middle" font-size="11" font-weight="bold" fill="#0288d1">Step 0: Init centroids</text>
+          <!-- Data points cluster 1 (left) -->
+          <circle cx="30" cy="80" r="4" fill="#ccc"/><circle cx="45" cy="95" r="4" fill="#ccc"/>
+          <circle cx="35" cy="110" r="4" fill="#ccc"/><circle cx="55" cy="85" r="4" fill="#ccc"/>
+          <!-- Data points cluster 2 (mid) -->
+          <circle cx="105" cy="60" r="4" fill="#ccc"/><circle cx="115" cy="75" r="4" fill="#ccc"/>
+          <circle cx="100" cy="90" r="4" fill="#ccc"/><circle cx="125" cy="65" r="4" fill="#ccc"/>
+          <!-- Data points cluster 3 (right) -->
+          <circle cx="145" cy="130" r="4" fill="#ccc"/><circle cx="160" cy="145" r="4" fill="#ccc"/>
+          <circle cx="150" cy="160" r="4" fill="#ccc"/>
+          <!-- Random centroids (stars) -->
+          <polygon points="25,50 28,62 40,62 30,70 34,82 25,75 16,82 20,70 10,62 22,62" fill="#0288d1" transform="scale(0.6) translate(30,40)"/>
+          <polygon points="130,40 133,52 145,52 135,60 139,72 130,65 121,72 125,60 115,52 127,52" fill="#2e7d32" transform="scale(0.6) translate(60,10)"/>
+          <polygon points="160,110 163,122 175,122 165,130 169,142 160,135 151,142 155,130 145,122 157,122" fill="#b71c1c" transform="scale(0.6) translate(60,55)"/>
+          <text x="80" y="185" text-anchor="middle" font-size="9" fill="#555">Random init</text>
+
+          <!-- Divider -->
+          <line x1="170" y1="10" x2="170" y2="175" stroke="#ddd" stroke-width="1.5"/>
+
+          <!-- Step 1: Assign -->
+          <text x="270" y="15" text-anchor="middle" font-size="11" font-weight="bold" fill="#e65100">Step 1: Assign to nearest</text>
+          <circle cx="190" cy="80" r="5" fill="#6ec6f5"/><circle cx="205" cy="95" r="5" fill="#6ec6f5"/>
+          <circle cx="195" cy="110" r="5" fill="#6ec6f5"/><circle cx="215" cy="85" r="5" fill="#6ec6f5"/>
+          <circle cx="265" cy="60" r="5" fill="#a5d6a7"/><circle cx="275" cy="75" r="5" fill="#a5d6a7"/>
+          <circle cx="260" cy="90" r="5" fill="#a5d6a7"/><circle cx="285" cy="65" r="5" fill="#a5d6a7"/>
+          <circle cx="305" cy="130" r="5" fill="#ef9a9a"/><circle cx="320" cy="145" r="5" fill="#ef9a9a"/>
+          <circle cx="310" cy="160" r="5" fill="#ef9a9a"/>
+          <text x="270" y="185" text-anchor="middle" font-size="9" fill="#555">Colour = assigned cluster</text>
+
+          <!-- Divider -->
+          <line x1="345" y1="10" x2="345" y2="175" stroke="#ddd" stroke-width="1.5"/>
+
+          <!-- Step 2: Update centroids -->
+          <text x="415" y="15" text-anchor="middle" font-size="11" font-weight="bold" fill="#6a1b9a">Step 2: Update centroids</text>
+          <circle cx="360" cy="80" r="5" fill="#6ec6f5"/><circle cx="375" cy="95" r="5" fill="#6ec6f5"/>
+          <circle cx="365" cy="110" r="5" fill="#6ec6f5"/><circle cx="385" cy="85" r="5" fill="#6ec6f5"/>
+          <!-- New centroid (star) -->
+          <circle cx="371" cy="93" r="8" fill="none" stroke="#0288d1" stroke-width="2"/>
+          <circle cx="371" cy="93" r="3" fill="#0288d1"/>
+
+          <circle cx="405" cy="60" r="5" fill="#a5d6a7"/><circle cx="415" cy="75" r="5" fill="#a5d6a7"/>
+          <circle cx="400" cy="90" r="5" fill="#a5d6a7"/><circle cx="425" cy="65" r="5" fill="#a5d6a7"/>
+          <circle cx="411" cy="73" r="8" fill="none" stroke="#2e7d32" stroke-width="2"/>
+          <circle cx="411" cy="73" r="3" fill="#2e7d32"/>
+
+          <circle cx="445" cy="130" r="5" fill="#ef9a9a"/><circle cx="460" cy="145" r="5" fill="#ef9a9a"/>
+          <circle cx="450" cy="160" r="5" fill="#ef9a9a"/>
+          <circle cx="452" cy="145" r="8" fill="none" stroke="#b71c1c" stroke-width="2"/>
+          <circle cx="452" cy="145" r="3" fill="#b71c1c"/>
+          <text x="415" y="185" text-anchor="middle" font-size="9" fill="#555">Centroids = cluster means</text>
+        </svg>
+      </div>
+
+      <h4 style="margin-top:14px;">Complexity</h4>
+      <div class="formula-box">
+        \[
+          O(N \times K \times I \times |V|)
+        \]
+        <span class="label">N = documents, K = clusters, I = iterations, |V| = vocabulary size</span>
+      </div>
+
+      <div class="compare">
+        <div class="compare-card good">
+          <h4 style="color:#2e7d32;">K-Means Strengths</h4>
+          <ul style="padding-left:14px; font-size:0.9rem;">
+            <li>Simple and fast: O(NK)</li>
+            <li>Always converges</li>
+            <li>Works well with globular clusters</li>
+            <li>Mini-batch variant for web scale</li>
+          </ul>
+        </div>
+        <div class="compare-card bad">
+          <h4 style="color:#b71c1c;">K-Means Weaknesses</h4>
+          <ul style="padding-left:14px; font-size:0.9rem;">
+            <li>Requires k specified in advance</li>
+            <li>Sensitive to initial seed choice</li>
+            <li>May converge to local minima</li>
+            <li>Produces flat, hard, non-overlapping clusters</li>
+          </ul>
+        </div>
+      </div>
+
+      <h4 style="margin-top:14px;">Seed Initialisation Methods</h4>
+      <table>
+        <thead><tr><th>Method</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Forgy</td><td>Randomly pick k data points as initial centroids</td></tr>
+          <tr><td>Random Partition</td><td>Randomly assign each point to a cluster, compute centroids</td></tr>
+          <tr><td>K-Means++</td><td>Choose seeds that are far apart (reduces local minima risk)</td></tr>
+        </tbody>
+      </table>
+
+<pre><span class="kw">from</span> sklearn.cluster <span class="kw">import</span> KMeans
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+<span class="cm"># Assume X is your TF-IDF matrix (n_docs x n_features)</span>
+k = <span class="num">3</span>
+kmeans = KMeans(n_clusters=k, init=<span class="st">'k-means++'</span>, n_init=<span class="num">10</span>, random_state=<span class="num">42</span>)
+kmeans.fit(X)
+
+labels = kmeans.labels_       <span class="cm"># cluster assignment per document</span>
+centroids = kmeans.cluster_centers_  <span class="cm"># k x n_features</span>
+inertia = kmeans.inertia_     <span class="cm"># sum of squared distances (distortion)</span>
+
+<span class="fn">print</span>(<span class="st">f"Cluster labels: {labels}"</span>)
+<span class="fn">print</span>(<span class="st">f"Inertia (distortion): {inertia:.2f}"</span>)</pre>
+    </div>
+
+    <!-- ELBOW METHOD -->
+    <div class="subsection" id="elbow">
+      <h3>5.3 Choosing K: The Elbow Method</h3>
+
+      <div class="formula-box">
+        \[
+          \text{Distortion}(k) = \sum_{i=1}^{N} \|x_i - \mu_{c(i)}\|^2
+        \]
+        <span class="label">Sum of squared distances from each point to its assigned centroid</span>
+      </div>
+
+      <div class="diagram">
+        <svg width="420" height="220" style="background:#fff;">
+          <!-- Axes -->
+          <line x1="60" y1="190" x2="390" y2="190" stroke="#333" stroke-width="2"/>
+          <line x1="60" y1="190" x2="60" y2="20" stroke="#333" stroke-width="2"/>
+          <text x="225" y="212" text-anchor="middle" font-size="13" fill="#333">Number of Clusters (k)</text>
+          <text x="20" y="110" text-anchor="middle" font-size="13" fill="#333" transform="rotate(-90,20,110)">Distortion</text>
+
+          <!-- Distortion curve -->
+          <polyline points="80,30 130,70 180,110 230,135 280,148 330,155 380,158"
+                    fill="none" stroke="#0288d1" stroke-width="3"/>
+          <!-- Data points -->
+          <circle cx="80" cy="30" r="5" fill="#1a237e"/>
+          <circle cx="130" cy="70" r="5" fill="#1a237e"/>
+          <circle cx="180" cy="110" r="5" fill="#1a237e"/>
+          <circle cx="230" cy="135" r="5" fill="#1a237e"/>
+          <circle cx="280" cy="148" r="5" fill="#1a237e"/>
+          <circle cx="330" cy="155" r="5" fill="#1a237e"/>
+          <circle cx="380" cy="158" r="5" fill="#1a237e"/>
+
+          <!-- Elbow marker -->
+          <circle cx="230" cy="135" r="12" fill="none" stroke="#e65100" stroke-width="2.5"/>
+          <line x1="230" y1="135" x2="230" y2="190" stroke="#e65100" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <text x="230" y="205" text-anchor="middle" font-size="11" fill="#e65100">Elbow (k=4)</text>
+
+          <!-- X-axis ticks -->
+          <text x="80" y="200" text-anchor="middle" font-size="10" fill="#555">1</text>
+          <text x="130" y="200" text-anchor="middle" font-size="10" fill="#555">2</text>
+          <text x="180" y="200" text-anchor="middle" font-size="10" fill="#555">3</text>
+          <text x="230" y="200" text-anchor="middle" font-size="10" fill="#555">4</text>
+          <text x="280" y="200" text-anchor="middle" font-size="10" fill="#555">5</text>
+          <text x="330" y="200" text-anchor="middle" font-size="10" fill="#555">6</text>
+          <text x="380" y="200" text-anchor="middle" font-size="10" fill="#555">7</text>
+        </svg>
+        <br>The "elbow" point is where adding more clusters gives diminishing returns.
+      </div>
+
+<pre><span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">from</span> sklearn.cluster <span class="kw">import</span> KMeans
+
+inertias = []
+K_range = range(<span class="num">1</span>, <span class="num">11</span>)
+<span class="kw">for</span> k <span class="kw">in</span> K_range:
+    km = KMeans(n_clusters=k, n_init=<span class="num">10</span>, random_state=<span class="num">42</span>)
+    km.fit(X)
+    inertias.append(km.inertia_)
+
+plt.plot(K_range, inertias, <span class="st">'bo-'</span>)
+plt.xlabel(<span class="st">'Number of clusters (k)'</span>)
+plt.ylabel(<span class="st">'Distortion (Inertia)'</span>)
+plt.title(<span class="st">'Elbow Method'</span>)
+plt.show()</pre>
+    </div>
+
+    <!-- SILHOUETTE -->
+    <div class="subsection" id="silhouette">
+      <h3>5.4 Measuring Quality: Silhouette Coefficient</h3>
+
+      <div class="card blue">
+        <div class="card-title">Silhouette Score for a Single Point i</div>
+        <strong>Cohesion a(i)</strong>: average distance of <em>i</em> to all other points in its own cluster (want <em>small</em>)<br>
+        <strong>Separation b(i)</strong>: minimum average distance of <em>i</em> to points in <em>any other</em> cluster (want <em>large</em>)
+      </div>
+
+      <div class="formula-box">
+        \[
+          s(i) = \begin{cases}
+            1 - \dfrac{a(i)}{b(i)} & \text{if } a(i) < b(i) \\[8pt]
+            0 & \text{if } a(i) = b(i) \\[8pt]
+            \dfrac{b(i)}{a(i)} - 1 & \text{if } a(i) > b(i)
+          \end{cases}
+        \]
+        <span class="label">s(i) &isin; [&minus;1, +1]. Close to +1: well-placed. Close to &minus;1: misclassified. Near 0: border point.</span>
+      </div>
+
+      <table>
+        <thead><tr><th>s(i) range</th><th>Interpretation</th></tr></thead>
+        <tbody>
+          <tr><td>0.71 &ndash; 1.00</td><td>Excellent: point clearly in correct cluster</td></tr>
+          <tr><td>0.51 &ndash; 0.70</td><td>Reasonable structure</td></tr>
+          <tr><td>0.26 &ndash; 0.50</td><td>Weak structure, could be artificial</td></tr>
+          <tr><td>&lt; 0.25</td><td>No substantial structure; possible misclassification</td></tr>
+          <tr><td>&lt; 0</td><td>Point likely in wrong cluster</td></tr>
+        </tbody>
+      </table>
+
+      <div class="card yellow">
+        <div class="card-title">Overall Silhouette Score</div>
+        Average s(i) across all points. Can also be used to pick k: choose k that maximises mean silhouette score.
+      </div>
+
+<pre><span class="kw">from</span> sklearn.metrics <span class="kw">import</span> silhouette_score, silhouette_samples
+
+labels = kmeans.labels_
+
+<span class="cm"># Overall score</span>
+score = silhouette_score(X, labels)
+<span class="fn">print</span>(<span class="st">f"Mean silhouette score: {score:.4f}"</span>)
+
+<span class="cm"># Per-sample scores</span>
+sample_scores = silhouette_samples(X, labels)
+<span class="cm"># Negative values = misclassified points</span>
+misclassified = np.where(sample_scores < <span class="num">0</span>)[<span class="num">0</span>]
+<span class="fn">print</span>(<span class="st">f"Potentially misclassified: {misclassified}"</span>)</pre>
+
+      <!-- ===== INLINE PRACTICE: Silhouette ===== -->
+      <div class="card blue" style="margin-top:16px;">
+        <div class="card-title">Practice: Silhouette Coefficient Calculations</div>
+
+        <details style="margin-top:10px;">
+          <summary><span class="q-label q-calc">PRACTICE S1</span> &nbsp; Point i: a(i)=1.2, b(i)=4.8. Compute s(i) and interpret.</summary>
+          <div class="answer">
+            <p>Since a(i) = 1.2 &lt; b(i) = 4.8:</p>
+            \[ s(i) = 1 - \frac{1.2}{4.8} = 1 - 0.25 = 0.75 \]
+            <p>Range 0.71–1.00 → <strong>Excellent</strong>. Point is clearly in the correct cluster. Much closer to its own cluster (a=1.2) than to any other cluster (b=4.8).</p>
+          </div>
+        </details>
+
+        <details style="margin-top:8px;">
+          <summary><span class="q-label q-calc">PRACTICE S2</span> &nbsp; Point j: a(j)=5.0, b(j)=2.0. Compute s(j) and interpret.</summary>
+          <div class="answer">
+            <p>Since a(j) = 5.0 &gt; b(j) = 2.0:</p>
+            \[ s(j) = \frac{b(j)}{a(j)} - 1 = \frac{2.0}{5.0} - 1 = 0.4 - 1 = -0.6 \]
+            <p>s(j) = &minus;0.6 → <strong>Likely misclassified</strong>. Point j is much closer to a neighbouring cluster (b=2.0) than to its own cluster (a=5.0). K-Means should have assigned it to a different cluster.</p>
+          </div>
+        </details>
+
+        <details style="margin-top:8px;">
+          <summary><span class="q-label q-calc">PRACTICE S3</span> &nbsp; 4 points: s(1)=0.8, s(2)=0.4, s(3)=-0.1, s(4)=0.6. What is the overall silhouette score? Which point is possibly misclassified?</summary>
+          <div class="answer">
+            \[ \bar{s} = \frac{0.8 + 0.4 + (-0.1) + 0.6}{4} = \frac{1.7}{4} = 0.425 \]
+            <p>Overall score = 0.425 → "weak to reasonable structure."<br>
+            Point 3 (s=&minus;0.1) is negative → <strong>possibly misclassified</strong>.</p>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- HIERARCHICAL -->
+    <div class="subsection" id="hierarchical">
+      <h3>5.5 Hierarchical Clustering</h3>
+
+      <div class="diagram">
+        Agglomerative (Bottom-Up):<br><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[A,B,C,D,E]<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\<br>
+        &nbsp;&nbsp;[A,B,C]&nbsp;&nbsp;&nbsp;&nbsp;[D,E]<br>
+        &nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;\&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|<br>
+        [A,B]&nbsp;&nbsp;[C]&nbsp;&nbsp;&nbsp;&nbsp;[D][E]<br>
+        &nbsp;/&nbsp;\<br>
+        [A]&nbsp;[B]<br><br>
+        Start: each doc is its own cluster &rarr; merge closest pairs &rarr; tree (dendrogram)
+      </div>
+
+      <table>
+        <thead><tr><th>Property</th><th>K-Means</th><th>Hierarchical (Agglomerative)</th></tr></thead>
+        <tbody>
+          <tr><td>Complexity</td><td>O(NK) &mdash; fast</td><td>O(N&sup3;) &mdash; slow for large N</td></tr>
+          <tr><td>Need to specify k?</td><td>Yes (upfront)</td><td>No (cut dendrogram at any level)</td></tr>
+          <tr><td>Cluster structure</td><td>Flat, disjoint</td><td>Hierarchical (nested)</td></tr>
+          <tr><td>Typical use</td><td>Large-scale text</td><td>Small datasets, phylogenetics</td></tr>
+          <tr><td>Quality</td><td>Similar in practice</td><td>Similar in practice</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- EVALUATION -->
+    <div class="subsection" id="evaluation">
+      <h3>5.6 Cluster Evaluation</h3>
+      <table>
+        <thead><tr><th>Type</th><th>Method</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="3">Intrinsic</td><td>Cohesion</td><td>Items in same cluster are similar to each other</td></tr>
+          <tr><td>Separation</td><td>Clusters are well-separated from each other</td></tr>
+          <tr><td>Silhouette</td><td>Combines cohesion &amp; separation per point</td></tr>
+          <tr><td rowspan="2">Extrinsic (needs labels)</td><td>Purity</td><td>Fraction of dominant class in each cluster (requires human labels)</td></tr>
+          <tr><td>Rand Index / NMI</td><td>Compare cluster assignments to ground-truth labels</td></tr>
+          <tr><td>Task-based</td><td>Downstream performance</td><td>Does clustering improve a downstream task (e.g., classification)?</td></tr>
+          <tr><td>Qualitative</td><td>Smell test</td><td>Look at sample documents per cluster; check for 90/10 skew</td></tr>
+        </tbody>
+      </table>
+
+      <div class="formula-box">
+        \[
+          \text{Purity} = \frac{1}{N} \sum_{k=1}^{K} \max_{j} |C_k \cap L_j|
+        \]
+        <span class="label">C<sub>k</sub> = set of documents in cluster k, L<sub>j</sub> = set of documents in class j</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- SECTION 6: EXAM QUESTIONS -->
+<!-- ======================================================= -->
+<div class="section" id="exam-questions">
+  <div class="quiz-section">Section 6: Exam Questions &amp; Past Papers</div>
+  <div class="quiz-body">
+
+    <!-- ============================================================ -->
+    <!-- BLOCK A: PRACTICE BY QUESTION TYPE -->
+    <!-- ============================================================ -->
+    <div style="background:linear-gradient(135deg,#1565c0,#0288d1); color:white; border-radius:8px; padding:12px 18px; margin-bottom:18px;">
+      <strong style="font-size:1.05rem;">A &mdash; Practice Questions by Type</strong>
+      <span style="font-size:0.85rem; opacity:0.85; margin-left:8px;">Click any question to reveal the answer</span>
+    </div>
+
+    <!-- ---- MCQ ---- -->
+    <h3 id="mcq" style="color:#1565c0; margin-bottom:12px;">Multiple Choice Questions</h3>
+
+    <details>
+      <summary><span class="q-label q-mcq">MCQ 1</span> &nbsp; Which of the following correctly explains why cosine similarity is preferred over Euclidean distance for document similarity?</summary>
+      <div class="answer">
+        <p><strong>Options:</strong></p>
+        <p>A) Cosine similarity is always faster to compute<br>
+        B) Cosine similarity is invariant to vector length/document length<br>
+        C) Cosine similarity always gives values between -1 and 0<br>
+        D) Euclidean distance cannot handle sparse vectors</p>
+        <p style="margin-top:10px;"><strong>Answer: B</strong></p>
+        <p>Cosine similarity measures the angle between vectors, making it invariant to document length. A long happy review and a short happy review will have the same cosine similarity with another happy document. Euclidean distance would penalise length differences even when the topic is identical.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-mcq">MCQ 2</span> &nbsp; A term that appears in every document in a corpus will have an IDF of:</summary>
+      <div class="answer">
+        <p><strong>Options:</strong></p>
+        <p>A) 1 &nbsp;&nbsp; B) &infin; &nbsp;&nbsp; C) 0 &nbsp;&nbsp; D) N (corpus size)</p>
+        <p style="margin-top:10px;"><strong>Answer: C</strong></p>
+        <p>IDF = log(N/df). If df = N (term in every document), IDF = log(N/N) = log(1) = 0. The term contributes nothing to TF-IDF weighting, effectively acting like a stopword.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-mcq">MCQ 3</span> &nbsp; Zipf's Law states that in natural language:</summary>
+      <div class="answer">
+        <p><strong>Options:</strong></p>
+        <p>A) All words occur with equal frequency<br>
+        B) The frequency of a word is inversely proportional to its frequency rank<br>
+        C) The most common word occurs exactly twice as often as the second most common<br>
+        D) Word frequencies follow a normal (Gaussian) distribution</p>
+        <p style="margin-top:10px;"><strong>Answer: B</strong></p>
+        <p>Zipf's Law: f(r) &prop; 1/r (approximately). On a log-log plot, this appears as a straight line (power law). It explains why a few words ("the", "of") dominate and most words are rare, justifying IDF weighting.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-mcq">MCQ 4</span> &nbsp; K-Means clustering produces clusters that are:</summary>
+      <div class="answer">
+        <p><strong>Options:</strong></p>
+        <p>A) Hierarchical, overlapping, soft assignments<br>
+        B) Flat, non-overlapping, hard assignments<br>
+        C) Hierarchical, non-overlapping, hard assignments<br>
+        D) Flat, overlapping, soft assignments</p>
+        <p style="margin-top:10px;"><strong>Answer: B</strong></p>
+        <p>K-Means is a flat (non-hierarchical) partitioning method. Each document belongs to exactly one cluster (non-overlapping, exclusive). Assignments are hard (binary: in or out).</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-mcq">MCQ 5</span> &nbsp; In the Silhouette Coefficient, a value close to -1 for a point i means:</summary>
+      <div class="answer">
+        <p><strong>Options:</strong></p>
+        <p>A) Point i is perfectly placed in its cluster<br>
+        B) Point i is on the boundary between two clusters<br>
+        C) Point i is likely in the wrong cluster<br>
+        D) Point i is the centroid of its cluster</p>
+        <p style="margin-top:10px;"><strong>Answer: C</strong></p>
+        <p>s(i) close to -1 means cohesion &gt;&gt; separation: the point is much closer to points in a neighbouring cluster than to its own cluster members. This suggests a misclassification.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-mcq">MCQ 6</span> &nbsp; The Elbow Method for choosing k looks for:</summary>
+      <div class="answer">
+        <p><strong>Options:</strong></p>
+        <p>A) The k that maximises distortion<br>
+        B) The k where distortion starts increasing<br>
+        C) The k where the rate of decrease in distortion levels off<br>
+        D) The k that gives the fewest clusters</p>
+        <p style="margin-top:10px;"><strong>Answer: C</strong></p>
+        <p>The Elbow method plots distortion (sum of squared distances to centroids) vs. k. We look for the "elbow" point where adding more clusters yields diminishing returns in reducing distortion. Beyond this point, clusters become too fine-grained.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-mcq">MCQ 7</span> &nbsp; Why do we store document vectors in a sparse representation?</summary>
+      <div class="answer">
+        <p><strong>Options:</strong></p>
+        <p>A) To enable faster cosine similarity computation<br>
+        B) Because most entries are zero (vocabulary >> document length)<br>
+        C) Because dense representations cannot handle negative values<br>
+        D) To make the vectors smaller than the document</p>
+        <p style="margin-top:10px;"><strong>Answer: B</strong></p>
+        <p>Standard English has ~150K-200K unique tokens, but any given document contains only a tiny fraction of these. Storing a full fixed-length array of ~200K floats per document wastes enormous memory. Sparse representation (pairs of index, value) only stores non-zero entries.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-mcq">MCQ 8</span> &nbsp; Which statement about sublinear TF scaling is TRUE?</summary>
+      <div class="answer">
+        <p><strong>Options:</strong></p>
+        <p>A) A term appearing 100 times gets 100x the weight of a term appearing once<br>
+        B) A term appearing 0 times still gets a small positive weight<br>
+        C) log TF scaling ensures that the weight for count=10 is roughly 2x the weight for count=1<br>
+        D) Sublinear TF is identical to raw TF for counts below 10</p>
+        <p style="margin-top:10px;"><strong>Answer: C</strong></p>
+        <p>With 1+log<sub>10</sub>(tf): count=1 gives weight 1.0, count=10 gives weight 2.0 (exactly 2x, not 10x). This "dampens" the effect of very high frequencies. Count=0 gives weight 0 (the 0 branch of the piecewise formula).</p>
+      </div>
+    </details>
+
+    <!-- ---- TRUE/FALSE ---- -->
+    <h3 id="truefalse" style="color:#b71c1c; margin: 20px 0 12px;">True / False Questions</h3>
+
+    <details>
+      <summary><span class="q-label q-truefalse">T/F 1</span> &nbsp; Bag-of-Words preserves the order of words in a sentence.</summary>
+      <div class="answer">
+        <strong>FALSE.</strong> Bag-of-Words drops word order entirely. "I like dogs" and "Dogs like I" produce the same BoW vector. This is an intentional simplification for computing term frequency statistics, but loses syntactic information.
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-truefalse">T/F 2</span> &nbsp; K-Means is guaranteed to find the globally optimal clustering.</summary>
+      <div class="answer">
+        <strong>FALSE.</strong> K-Means is guaranteed to converge, but only to a <em>local</em> minimum. The result depends on the initial centroid selection. Running K-Means multiple times with different random seeds (n_init parameter) and taking the best result helps mitigate this.
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-truefalse">T/F 3</span> &nbsp; A high IDF value means the term appears in many documents.</summary>
+      <div class="answer">
+        <strong>FALSE.</strong> IDF = log(N/df). A high IDF means <em>low</em> df (the term appears in few documents). Rare terms have high IDF and are considered more informative. The most common terms (like "the") have IDF &asymp; 0.
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-truefalse">T/F 4</span> &nbsp; The cosine similarity between two TF-IDF vectors can be negative.</summary>
+      <div class="answer">
+        <strong>FALSE.</strong> TF-IDF weights are always non-negative (counts multiplied by log ratios which are also non-negative for df &le; N). Therefore, all vector entries are &ge; 0, and cosine similarity is bounded [0, 1] for these vectors.
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-truefalse">T/F 5</span> &nbsp; Hierarchical clustering is generally more scalable than K-Means for large datasets.</summary>
+      <div class="answer">
+        <strong>FALSE.</strong> K-Means is O(NKI) and is generally much faster. Agglomerative hierarchical clustering is O(N&sup3;), making it impractical for large datasets. K-Means (especially with mini-batch variants) is the standard choice for large-scale text clustering.
+      </div>
+    </details>
+
+    <!-- ---- SHORT ANSWER ---- -->
+    <h3 id="short" style="color:#2e7d32; margin: 20px 0 12px;">Short Answer Questions</h3>
+
+    <details>
+      <summary><span class="q-label q-short">SA 1</span> &nbsp; Explain what Zipf's Law is and give two NLP implications.</summary>
+      <div class="answer">
+        <p><strong>Zipf's Law:</strong> The frequency of any word in a corpus is inversely proportional to its rank in the frequency table. More precisely: f(r) &prop; 1/r. On a log-log scale, this produces a straight line (power law distribution).</p>
+        <p><strong>Implications:</strong></p>
+        <ul style="padding-left:18px;">
+          <li><strong>Stopword justification:</strong> A tiny fraction of very frequent words (the HEAD: "the", "a", "of") dominate token counts but carry little semantic information &rarr; filter them as stopwords.</li>
+          <li><strong>IDF justification:</strong> Applying log(N/df) naturally downweights these frequent terms to near zero, and amplifies the signal from informative rare terms in the TAIL.</li>
+          <li><strong>Vocabulary coverage:</strong> The TAIL contains an enormous number of rare words; adding more training data keeps revealing new vocabulary (why UNK tokens are needed).</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-short">SA 2</span> &nbsp; What is the difference between dense and sparse data representations? When should each be used?</summary>
+      <div class="answer">
+        <p><strong>Dense representation:</strong> A fixed-length array storing all values including zeros. Size = |V| (vocabulary size). Best when most entries are non-zero.</p>
+        <p><strong>Sparse representation:</strong> Only non-zero entries stored as (index, value) pairs. Variable length proportional to document length. Best when most entries are zero (as in BoW).</p>
+        <p><strong>In text:</strong> Since |V| ~ 150K-200K but documents have few hundred unique tokens, BoW vectors are inherently sparse. Storing them densely wastes ~99.9% of memory. Sparse formats (scipy.sparse.csr_matrix) are standard in NLP.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-short">SA 3</span> &nbsp; Describe the K-Means++ initialization strategy and why it is better than random Forgy initialization.</summary>
+      <div class="answer">
+        <p><strong>K-Means++:</strong></p>
+        <ol style="padding-left:18px;">
+          <li>Choose first centroid uniformly at random from data points.</li>
+          <li>For each subsequent centroid, choose a data point with probability proportional to its squared distance from the nearest already-chosen centroid.</li>
+          <li>This biases selection towards points far from existing centroids.</li>
+        </ol>
+        <p><strong>Why better:</strong> Random Forgy may select initial centroids that are all close together, trapping K-Means in a poor local minimum. K-Means++ spreads centroids more evenly across the data space, leading to better final clusters and typically requiring fewer iterations to converge. It has theoretical guarantees: expected distortion is O(log k) of optimal.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-short">SA 4</span> &nbsp; What are the cohesion and separation components of the Silhouette Coefficient, and how are they combined?</summary>
+      <div class="answer">
+        <p><strong>Cohesion a(i):</strong> Average distance from point i to all other points in its own cluster. A small value means the point is a good fit for its cluster.</p>
+        <p><strong>Separation b(i):</strong> Minimum over all other clusters of the average distance from point i to points in that cluster. A large value means the point is far from neighbouring clusters.</p>
+        <p><strong>Combination:</strong></p>
+        <ul style="padding-left:18px;">
+          <li>If a(i) &lt; b(i): s(i) = 1 - a(i)/b(i) &nbsp; (positive, good)</li>
+          <li>If a(i) = b(i): s(i) = 0 &nbsp; (border point)</li>
+          <li>If a(i) &gt; b(i): s(i) = b(i)/a(i) - 1 &nbsp; (negative, misclassified)</li>
+        </ul>
+        <p>Range: [-1, +1]. The average s(i) across all points is the overall silhouette score.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-short">SA 5</span> &nbsp; Why is clustering considered unsupervised learning? How does it differ from text classification?</summary>
+      <div class="answer">
+        <p><strong>Unsupervised:</strong> Clustering requires no labelled training data. The algorithm discovers structure directly from the input features (document vectors) without being told what the correct groups are. There are no "gold standard" cluster assignments to learn from.</p>
+        <p><strong>vs. Classification:</strong> In (supervised) text classification, a model is trained on labelled examples (e.g., "spam" / "not spam") and learns to assign new documents to pre-defined categories. The categories are known upfront. In clustering, the categories (clusters) themselves are discovered by the algorithm &mdash; neither the number of categories nor what they represent is known in advance.</p>
+      </div>
+    </details>
+
+    <!-- ---- CALCULATION ---- -->
+    <h3 id="calc" style="color:#6a1b9a; margin: 20px 0 12px;">Calculation Questions</h3>
+
+    <details>
+      <summary><span class="q-label q-calc">CALC 1</span> &nbsp; Compute the TF-IDF weight for the term "djokovic" in a document where it appears 4 times, given N = 1,000,000 and df = 1,000.</summary>
+      <div class="answer">
+        <p><strong>Step 1: Sublinear TF</strong></p>
+        \[ \text{tf} = 1 + \log_{10}(4) = 1 + 0.602 = 1.602 \]
+
+        <p><strong>Step 2: IDF</strong></p>
+        \[ \text{idf} = \log_{10}\!\left(\frac{1{,}000{,}000}{1{,}000}\right) = \log_{10}(1000) = 3 \]
+
+        <p><strong>Step 3: TF-IDF</strong></p>
+        \[ w = \text{tf} \times \text{idf} = 1.602 \times 3 = 4.806 \]
+
+        <p>Compare with "the" (df=1,000,000): tf=1+log(4)=1.602, idf=log(1M/1M)=0 &rarr; TF-IDF = 0. "Djokovic" is correctly rated as more important.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-calc">CALC 2</span> &nbsp; Calculate the cosine similarity between D1 = (2, 1, 0, 3) and D2 = (1, 0, 1, 2). Show all steps.</summary>
+      <div class="answer">
+        <p><strong>Step 1: Dot product</strong></p>
+        \[ D_1 \cdot D_2 = (2 \times 1) + (1 \times 0) + (0 \times 1) + (3 \times 2) = 2 + 0 + 0 + 6 = 8 \]
+
+        <p><strong>Step 2: Magnitude of D1</strong></p>
+        \[ |D_1| = \sqrt{2^2 + 1^2 + 0^2 + 3^2} = \sqrt{4+1+0+9} = \sqrt{14} \approx 3.742 \]
+
+        <p><strong>Step 3: Magnitude of D2</strong></p>
+        \[ |D_2| = \sqrt{1^2 + 0^2 + 1^2 + 2^2} = \sqrt{1+0+1+4} = \sqrt{6} \approx 2.449 \]
+
+        <p><strong>Step 4: Cosine Similarity</strong></p>
+        \[ \cos(D_1, D_2) = \frac{8}{\sqrt{14} \times \sqrt{6}} = \frac{8}{\sqrt{84}} = \frac{8}{9.165} \approx 0.873 \]
+
+        <p>Interpretation: High similarity (0.87) &mdash; the documents share significant vocabulary overlap in similar proportions.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-calc">CALC 3</span> &nbsp; IDF calculation: Given N=10 and the following DFs, compute IDF for each term: "neural" (df=2), "learning" (df=5), "the" (df=10), "backpropagation" (df=1).</summary>
+      <div class="answer">
+        <p>Using IDF = log<sub>10</sub>(N/df):</p>
+        <table>
+          <thead><tr><th>Term</th><th>df</th><th>N/df</th><th>IDF = log<sub>10</sub>(N/df)</th></tr></thead>
+          <tbody>
+            <tr><td>neural</td><td>2</td><td>5</td><td>log<sub>10</sub>(5) = 0.699</td></tr>
+            <tr><td>learning</td><td>5</td><td>2</td><td>log<sub>10</sub>(2) = 0.301</td></tr>
+            <tr><td>the</td><td>10</td><td>1</td><td>log<sub>10</sub>(1) = 0</td></tr>
+            <tr><td>backpropagation</td><td>1</td><td>10</td><td>log<sub>10</sub>(10) = 1</td></tr>
+          </tbody>
+        </table>
+        <p>"Backpropagation" has the highest IDF (rarest term &rarr; most informative). "The" has IDF=0 (appears in all documents &rarr; useless for discrimination).</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-calc">CALC 4</span> &nbsp; Silhouette coefficient: Point i has cohesion a(i)=2.4 and separation b(i)=3.6. Calculate s(i) and interpret.</summary>
+      <div class="answer">
+        <p>Since a(i) = 2.4 &lt; b(i) = 3.6, use formula:</p>
+        \[ s(i) = 1 - \frac{a(i)}{b(i)} = 1 - \frac{2.4}{3.6} = 1 - 0.667 = 0.333 \]
+        <p><strong>Interpretation:</strong> s(i) = 0.33 is in the range 0.26-0.50 &mdash; "weak structure." The point belongs to its cluster but is not a very tight fit. It's reasonably closer to its own cluster than to neighbouring clusters, but there is some ambiguity. The clustering is not ideal for this point.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-calc">CALC 5</span> &nbsp; One iteration of K-Means: 6 points in 2D. Initial centroids: C1=(1,1), C2=(5,5). Points: A=(2,1), B=(1,2), C=(3,2), D=(4,5), E=(5,4), F=(6,5). Assign points and compute new centroids.</summary>
+      <div class="answer">
+        <p><strong>Step 1: Assign each point to nearest centroid</strong> (using Euclidean distance)</p>
+        <p>dist(point, C1=(1,1)) vs dist(point, C2=(5,5)):</p>
+        <table>
+          <thead><tr><th>Point</th><th>dist to C1=(1,1)</th><th>dist to C2=(5,5)</th><th>Assigned to</th></tr></thead>
+          <tbody>
+            <tr><td>A=(2,1)</td><td>&radic;(1+0)=1.00</td><td>&radic;(9+16)=5.00</td><td><strong>C1</strong></td></tr>
+            <tr><td>B=(1,2)</td><td>&radic;(0+1)=1.00</td><td>&radic;(16+9)=5.00</td><td><strong>C1</strong></td></tr>
+            <tr><td>C=(3,2)</td><td>&radic;(4+1)=2.24</td><td>&radic;(4+9)=3.61</td><td><strong>C1</strong></td></tr>
+            <tr><td>D=(4,5)</td><td>&radic;(9+16)=5.00</td><td>&radic;(1+0)=1.00</td><td><strong>C2</strong></td></tr>
+            <tr><td>E=(5,4)</td><td>&radic;(16+9)=5.00</td><td>&radic;(0+1)=1.00</td><td><strong>C2</strong></td></tr>
+            <tr><td>F=(6,5)</td><td>&radic;(25+16)=6.40</td><td>&radic;(1+0)=1.00</td><td><strong>C2</strong></td></tr>
+          </tbody>
+        </table>
+
+        <p><strong>Step 2: Recompute centroids</strong></p>
+        \[ C_1^{\text{new}} = \text{mean}(A,B,C) = \left(\frac{2+1+3}{3}, \frac{1+2+2}{3}\right) = (2, 1.67) \]
+        \[ C_2^{\text{new}} = \text{mean}(D,E,F) = \left(\frac{4+5+6}{3}, \frac{5+4+5}{3}\right) = (5, 4.67) \]
+      </div>
+    </details>
+
+    <!-- ---- LONG ANSWER ---- -->
+    <h3 id="long" style="color:#e65100; margin: 20px 0 12px;">Long Answer / Essay Questions</h3>
+
+    <details>
+      <summary><span class="q-label q-long">LA 1</span> &nbsp; Describe the Vector Space Model for documents. Explain how moving from one-hot encoding to TF-IDF weighting improves document representation. Use equations and examples.</summary>
+      <div class="answer">
+        <p><strong>Vector Space Model (VSM):</strong> Each document d is represented as a vector in an |V|-dimensional term space, where |V| is vocabulary size. Each dimension corresponds to a term t; the value in that dimension reflects how "important" t is in d.</p>
+
+        <p><strong>One-Hot Encoding:</strong> Binary; value=1 if t appears in d, 0 otherwise. Problem: treats all present terms equally, ignores frequency information. "Djokovic" (appearing 10 times) = "tennis" (appearing once).</p>
+
+        <p><strong>Term Frequency (TF):</strong> Store raw count. Better &mdash; captures how often each term appears. Problem: raw TF implies linear "aboutness" (10 occurrences = 10x more about the topic), and common words like "the" dominate.</p>
+
+        <p><strong>Sublinear TF:</strong> 1+log(tf). Dampens the effect of high counts. 10 occurrences &rarr; weight 2.0, not 10x.</p>
+
+        <p><strong>IDF:</strong> Terms that appear in many documents carry less "new information." IDF = log(N/df) penalises common terms and rewards rare, discriminative ones.</p>
+
+        <p><strong>TF-IDF:</strong> w(t,d) = tf(t,d) &times; idf(t). A term gets high weight only if it appears frequently in this document AND is rare across the corpus. This precisely captures "aboutness." For the Djokovic article: "djokovic" (df=1000) gets high IDF; "the" (df=1M) gets IDF=0.</p>
+
+        <p><strong>Geometric interpretation:</strong> Documents become points in |V|-dimensional space. Similar documents cluster together. We measure similarity using cosine similarity (angle between vectors) rather than Euclidean distance (length-sensitive).</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-long">LA 2</span> &nbsp; Explain the K-Means clustering algorithm in detail. Discuss its strengths, weaknesses, and how Mini-Batch K-Means addresses the scalability problem. What strategies exist for choosing k?</summary>
+      <div class="answer">
+        <p><strong>K-Means Algorithm:</strong></p>
+        <p><strong>Input:</strong> N document vectors, k (number of clusters). <strong>Output:</strong> k disjoint clusters, each with a centroid.</p>
+        <ol style="padding-left:18px;">
+          <li><strong>Initialise:</strong> Select k random centroids &mu;<sub>1</sub>, ..., &mu;<sub>k</sub> (e.g., using K-Means++ for better init).</li>
+          <li><strong>Assign:</strong> Each point x<sub>i</sub> assigned to cluster j* = argmin<sub>j</sub> dist(x<sub>i</sub>, &mu;<sub>j</sub>).</li>
+          <li><strong>Update:</strong> Recompute &mu;<sub>j</sub> = mean of all points assigned to cluster j.</li>
+          <li><strong>Repeat</strong> steps 2&ndash;3 until convergence (centroids don't move).</li>
+        </ol>
+
+        <p><strong>Strengths:</strong></p>
+        <ul style="padding-left:18px;">
+          <li>Simple and fast: O(NKI) &mdash; linear in N</li>
+          <li>Always converges (objective = total squared distance to centroids is monotonically non-increasing)</li>
+          <li>Works well as a general-purpose algorithm</li>
+        </ul>
+
+        <p><strong>Weaknesses:</strong></p>
+        <ul style="padding-left:18px;">
+          <li>Requires k to be specified upfront</li>
+          <li>Sensitive to initial seed selection (may find local, not global, optimum)</li>
+          <li>Produces flat, hard, non-overlapping clusters only</li>
+          <li>Assumes clusters are roughly spherical (globular)</li>
+        </ul>
+
+        <p><strong>Mini-Batch K-Means (Sculley, 2010):</strong> Instead of computing distances over all N points each iteration, use a random sample (mini-batch). Dramatically reduces wall-clock time with only slightly worse cluster quality. Essential for web-scale text corpora (billions of documents).</p>
+
+        <p><strong>Choosing k:</strong></p>
+        <ul style="padding-left:18px;">
+          <li><strong>Elbow Method:</strong> Plot distortion vs. k; choose k at the "elbow" where rate of improvement flattens.</li>
+          <li><strong>Silhouette Score:</strong> Compute average silhouette coefficient for each k; choose k that maximises it.</li>
+          <li><strong>Domain knowledge:</strong> If you know how many categories exist (e.g., 20 news topics), use that.</li>
+          <li><strong>Downstream task performance:</strong> Try several values of k and evaluate impact on the end application.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-long">LA 3</span> &nbsp; Compare and contrast intrinsic and extrinsic cluster evaluation methods. When would you use each, and what are their limitations?</summary>
+      <div class="answer">
+        <p><strong>Intrinsic Evaluation</strong> (no external labels needed):</p>
+        <ul style="padding-left:18px;">
+          <li><strong>Cohesion:</strong> Items within a cluster should be similar. Measured by average intra-cluster distance.</li>
+          <li><strong>Separation:</strong> Clusters should be well-separated. Measured by inter-cluster distance.</li>
+          <li><strong>Silhouette Coefficient:</strong> Combines both. s(i) = (b(i) - a(i)) / max(a(i), b(i)). Range [-1, 1].</li>
+          <li><strong>Distortion (Inertia):</strong> Sum of squared distances to centroid. Used in Elbow method.</li>
+          <li><strong>Limitation:</strong> A high intrinsic score doesn't guarantee the clustering is meaningful for any particular task.</li>
+        </ul>
+
+        <p><strong>Extrinsic Evaluation</strong> (requires human-labelled ground-truth):</p>
+        <ul style="padding-left:18px;">
+          <li><strong>Purity:</strong> For each cluster, find the dominant class; purity = fraction of points that match. Ranges [0,1].</li>
+          <li><strong>Rand Index / Adjusted Rand Index (ARI):</strong> Measures agreement between cluster assignments and ground truth labels.</li>
+          <li><strong>Normalised Mutual Information (NMI):</strong> Information-theoretic measure of cluster-label agreement.</li>
+          <li><strong>Limitation:</strong> Requires labelled data, which may be expensive to obtain. Also, if labels exist, supervised classification may be more appropriate than clustering.</li>
+        </ul>
+
+        <p><strong>Task-based (Downstream) Evaluation:</strong></p>
+        <ul style="padding-left:18px;">
+          <li>Use the clustering as input to a downstream task (e.g., cluster membership as feature for a classifier).</li>
+          <li>Evaluate end-to-end performance. If clustering helps the classifier, it's good.</li>
+          <li><strong>Limitation:</strong> Confounds clustering quality with downstream model quality.</li>
+        </ul>
+
+        <p><strong>When to use which:</strong> Always start with a qualitative "smell test" (look at sample documents per cluster). Use intrinsic metrics during development when labels are unavailable. Use extrinsic metrics when you have ground truth and care about cluster semantics. Use task-based evaluation for production systems.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-long">LA 4</span> &nbsp; How does Zipf's Law explain the distribution of word frequencies in natural language, and why does this motivate both stopword removal and IDF weighting?</summary>
+      <div class="answer">
+        <p><strong>Zipf's Law:</strong> In any sufficiently large corpus, the frequency f of any word is inversely proportional to its rank r: f(r) &prop; 1/r. On a log-log scale, this produces a straight line &mdash; a power law distribution.</p>
+
+        <p><strong>Structure this creates:</strong></p>
+        <ul style="padding-left:18px;">
+          <li><strong>The HEAD:</strong> A tiny number of extremely common words ("the", "of", "and", "a", "to") account for a disproportionately large fraction of all token occurrences. These words appear in virtually every document.</li>
+          <li><strong>The MIDDLE:</strong> Words of moderate frequency (common nouns, verbs) carry some topical signal.</li>
+          <li><strong>The LONG TAIL:</strong> The vast majority of vocabulary consists of words that appear rarely. These rare words are often highly specific and informative (e.g., "djokovic", "backpropagation", "calpurnia").</li>
+        </ul>
+
+        <p><strong>Motivation for stopword removal:</strong> HEAD words are so frequent that including them in similarity computations swamps the signal from informative words. "the" occurring 14 times in a document doesn't tell us what the document is about. Removing a predefined stopword list prevents these from dominating TF-based similarity.</p>
+
+        <p><strong>Motivation for IDF:</strong> Rather than maintaining a manual stopword list, IDF automatically downweights any term that appears in many documents. For HEAD terms (df &asymp; N), IDF = log(N/N) = 0. For TAIL terms (df &lt;&lt; N), IDF is large. This is a principled, data-driven way to weight terms by their discriminative power.</p>
+
+        <p><strong>Why log(N/df) specifically?</strong> Because document frequencies follow a Zipf distribution (spanning many orders of magnitude), the IDF formula applies a log to "linearise" this scale, ensuring that a term appearing in 1 doc vs. 10 docs gives more weight than a term appearing in 10,000 docs vs. 100,000 docs.</p>
+      </div>
+    </details>
+
+    <!-- ================================================================ -->
+    <!-- BLOCK B: PAST EXAM QUESTIONS -->
+    <!-- ================================================================ -->
+    <div style="background:linear-gradient(135deg,#4a148c,#7b1fa2); color:white; border-radius:8px; padding:12px 18px; margin:32px 0 18px;">
+      <strong style="font-size:1.05rem;">B &mdash; Past Paper Questions (2022–2025)</strong>
+      <span style="font-size:0.85rem; opacity:0.85; margin-left:8px;">Real exam questions — this is exactly what you'll face</span>
+    </div>
+
+    <!-- ---- SET SIMILARITY ---- -->
+    <h3 id="past-sets" style="color:#6a1b9a; margin: 18px 0 10px; padding-bottom:4px; border-bottom:2px solid #e1bee7;">Set-Based Similarity</h3>
+
+    <details>
+      <summary><span class="q-label q-calc" style="background:#e65100;">PAST EXAM 2025</span> &nbsp; DocX = {A,C,G,H} and DocY = {A,B,D,E,G,H,I,J}. Compute: (a) Jaccard, (b) Overlap Coefficient.</summary>
+      <div class="answer">
+        <p><strong>Intersection:</strong> {A, G, H} → |A∩B| = 3</p>
+        <p><strong>Union:</strong> {A,B,C,D,E,G,H,I,J} → |A∪B| = 9</p>
+        <p><strong>(a) Jaccard:</strong></p>
+        \[ J = \frac{|A \cap B|}{|A \cup B|} = \frac{3}{9} \approx 0.333 \]
+        <p><strong>(b) Overlap Coefficient:</strong></p>
+        \[ \text{Overlap} = \frac{|A \cap B|}{\min(|A|, |B|)} = \frac{3}{\min(4,8)} = \frac{3}{4} = 0.75 \]
+        <p>Note: Overlap is higher because it normalises by the <em>smaller</em> set. It's less sensitive to size differences between documents.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-calc" style="background:#e65100;">PAST EXAM 2022</span> &nbsp; ProbeA = {a, eda, bceda, bcda, bce} and ProbeB = {ca, eda, bcba, bceda, bce}. Compute (a) Jaccard and (b) Sørensen-Dice. Does Sørensen-Dice satisfy the triangle inequality?</summary>
+      <div class="answer">
+        <p><strong>Intersection:</strong> {eda, bceda, bce} → |A∩B| = 3</p>
+        <p><strong>|A|=5, |B|=5, |A∪B|=7</strong></p>
+        <p><strong>(a) Jaccard:</strong></p>
+        \[ J = \frac{3}{7} \approx 0.429 \]
+        <p><strong>(b) Sørensen-Dice:</strong></p>
+        \[ \text{SD} = \frac{2|A \cap B|}{|A|+|B|} = \frac{2 \times 3}{5+5} = \frac{6}{10} = 0.6 \]
+        <p><strong>Triangle inequality:</strong> Sørensen-Dice does NOT satisfy the triangle inequality (it is a <em>semi-metric</em>, not a full metric). Counter-example: if SD(A,C)=0.2 and SD(B,C)=0.2, then SD(A,B)=0.6, but 0.6 &gt; 0.2+0.2=0.4. This violates dist(A,B) &le; dist(A,C)+dist(B,C).</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-short" style="background:#e65100;">PAST EXAM 2025</span> &nbsp; A student proposes: sim(A,B) = |A−B| / |A∩B|. Identify <strong>three problems</strong> with this measure.</summary>
+      <div class="answer">
+        <ol style="padding-left:18px;">
+          <li><strong>Measures distance, not similarity:</strong> Larger values indicate <em>less</em> similarity (more asymmetric difference). A similarity measure should give larger values for more similar items.</li>
+          <li><strong>Asymmetric:</strong> sim(A,B) ≠ sim(B,A) in general (|A−B| = A\B ≠ B\A = |B−A|). Similarity is typically expected to be symmetric.</li>
+          <li><strong>Division by zero:</strong> When A and B are disjoint, |A∩B|=0, causing undefined behaviour. Any two completely different documents would crash the measure.</li>
+        </ol>
+      </div>
+    </details>
+
+    <!-- ---- TF-IDF ---- -->
+    <h3 id="past-tfidf" style="color:#6a1b9a; margin: 24px 0 10px; padding-bottom:4px; border-bottom:2px solid #e1bee7;">TF-IDF Computation <span style="font-size:0.8rem; color:#888; font-weight:400;">(most common exam question type)</span></h3>
+
+    <details>
+      <summary><span class="q-label q-calc" style="background:#e65100;">PAST EXAM 2025</span> &nbsp; Using the vocabulary below, compute the TF-IDF vector for document "G C G A H A G" using <em>linear TF × IDF</em>. Then verify: can you reconstruct the document from the vector?</summary>
+      <div class="answer">
+        <p><strong>Vocabulary + IDF:</strong> A=2, B=4, C=1, D=3, E=6, F=4, G=1, H=3, I=3, J=5</p>
+        <p><strong>Tokens in doc:</strong> G, C, G, A, H, A, G → TF: A=2, C=1, G=3, H=1</p>
+        <table>
+          <thead><tr><th>Position</th><th>Token</th><th>TF</th><th>IDF</th><th>TF-IDF</th></tr></thead>
+          <tbody>
+            <tr><td>0</td><td>A</td><td>2</td><td>2</td><td><strong>4</strong></td></tr>
+            <tr><td>1</td><td>B</td><td>0</td><td>4</td><td><strong>0</strong></td></tr>
+            <tr><td>2</td><td>C</td><td>1</td><td>1</td><td><strong>1</strong></td></tr>
+            <tr><td>3</td><td>D</td><td>0</td><td>3</td><td><strong>0</strong></td></tr>
+            <tr><td>4</td><td>E</td><td>0</td><td>6</td><td><strong>0</strong></td></tr>
+            <tr><td>5</td><td>F</td><td>0</td><td>4</td><td><strong>0</strong></td></tr>
+            <tr><td>6</td><td>G</td><td>3</td><td>1</td><td><strong>3</strong></td></tr>
+            <tr><td>7</td><td>H</td><td>1</td><td>3</td><td><strong>3</strong></td></tr>
+            <tr><td>8</td><td>I</td><td>0</td><td>3</td><td><strong>0</strong></td></tr>
+            <tr><td>9</td><td>J</td><td>0</td><td>5</td><td><strong>0</strong></td></tr>
+          </tbody>
+        </table>
+        <div class="formula-box"><strong>Result: [4, 0, 1, 0, 0, 0, 3, 3, 0, 0]</strong></div>
+        <p><strong>Reconstruction:</strong> Divide each value by its IDF: A=4/2=2, C=1/1=1, G=3/1=3, H=3/3=1. So document contains: A A C G G G H (7 tokens total, order unknown).</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-calc">PRACTICE</span> &nbsp; Same vocabulary (A=2,B=4,C=1,D=3,E=6,F=4,G=1,H=3,I=3,J=5). Compute TF-IDF for document "B A B E B I".</summary>
+      <div class="answer">
+        <p>Term counts: A=1, B=3, E=1, I=1. All others = 0.</p>
+        <table>
+          <thead><tr><th>Token</th><th>TF</th><th>IDF</th><th>TF-IDF</th></tr></thead>
+          <tbody>
+            <tr><td>A</td><td>1</td><td>2</td><td><strong>2</strong></td></tr>
+            <tr><td>B</td><td>3</td><td>4</td><td><strong>12</strong></td></tr>
+            <tr><td>C</td><td>0</td><td>—</td><td>0</td></tr>
+            <tr><td>D</td><td>0</td><td>—</td><td>0</td></tr>
+            <tr><td>E</td><td>1</td><td>6</td><td><strong>6</strong></td></tr>
+            <tr><td>F,G,H</td><td>0</td><td>—</td><td>0</td></tr>
+            <tr><td>I</td><td>1</td><td>3</td><td><strong>3</strong></td></tr>
+            <tr><td>J</td><td>0</td><td>—</td><td>0</td></tr>
+          </tbody>
+        </table>
+        <div class="formula-box"><strong>Result: [2, 12, 0, 0, 6, 0, 0, 0, 3, 0]</strong></div>
+        <p>B has the highest TF-IDF (appears 3 times, and has a high IDF of 4). E has high IDF (6) but only appears once.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-calc">PRACTICE</span> &nbsp; A new document Z has TF-IDF vector [0, 4, 2, 0, 12, 0, 5, 0, 6, 0] under the same vocabulary. What tokens appear and how many times?</summary>
+      <div class="answer">
+        <p>Divide each non-zero TF-IDF by the token's IDF:</p>
+        <table>
+          <thead><tr><th>Token</th><th>TF-IDF</th><th>IDF</th><th>Count</th></tr></thead>
+          <tbody>
+            <tr><td>B</td><td>4</td><td>4</td><td><strong>1</strong></td></tr>
+            <tr><td>C</td><td>2</td><td>1</td><td><strong>2</strong></td></tr>
+            <tr><td>E</td><td>12</td><td>6</td><td><strong>2</strong></td></tr>
+            <tr><td>G</td><td>5</td><td>1</td><td><strong>5</strong></td></tr>
+            <tr><td>I</td><td>6</td><td>3</td><td><strong>2</strong></td></tr>
+          </tbody>
+        </table>
+        <p><strong>Document Z contains:</strong> B C C E E G G G G G I I (12 tokens, order unknown)</p>
+      </div>
+    </details>
+
+    <!-- ---- COSINE ---- -->
+    <h3 id="past-cosine" style="color:#6a1b9a; margin: 24px 0 10px; padding-bottom:4px; border-bottom:2px solid #e1bee7;">Cosine Similarity on TF-IDF Vectors</h3>
+
+    <details>
+      <summary><span class="q-label q-calc" style="background:#e65100;">PAST EXAM 2025</span> &nbsp; DocX TF-IDF = [4,0,1,0,0,0,3,3,0,0] and DocY TF-IDF = [6,8,0,6,6,0,2,3,3,10]. Compute cosine similarity.</summary>
+      <div class="answer">
+        <p><strong>Dot product</strong> (only matching non-zero positions):</p>
+        \[ (4\times6) + (1\times0) + (3\times2) + (3\times3) = 24 + 0 + 6 + 9 = 39 \]
+        <p><strong>|DocX|:</strong></p>
+        \[ \sqrt{16+0+1+0+0+0+9+9+0+0} = \sqrt{35} \approx 5.916 \]
+        <p><strong>|DocY|:</strong></p>
+        \[ \sqrt{36+64+0+36+36+0+4+9+9+100} = \sqrt{294} \approx 17.146 \]
+        <p><strong>Cosine:</strong></p>
+        \[ \cos(X,Y) = \frac{39}{5.916 \times 17.146} \approx \frac{39}{101.47} \approx 0.384 \]
+        <p>Moderate similarity. They share tokens A (pos 0), G (pos 6), H (pos 7) but DocY has many additional tokens.</p>
+      </div>
+    </details>
+
+    <!-- ---- K-MEANS ---- -->
+    <h3 id="past-kmeans" style="color:#6a1b9a; margin: 24px 0 10px; padding-bottom:4px; border-bottom:2px solid #e1bee7;">K-Means Algorithm</h3>
+
+    <details>
+      <summary><span class="q-label q-calc" style="background:#e65100;">PAST EXAM STYLE</span> &nbsp; Run ONE iteration of K-Means on 5 points in 1D: {1, 2, 8, 9, 10}. Initial centroids: C1=2, C2=9. Show assign + update steps.</summary>
+      <div class="answer">
+        <p><strong>Step 1: Assign each point to nearest centroid</strong></p>
+        <table>
+          <thead><tr><th>Point</th><th>|dist to C1=2|</th><th>|dist to C2=9|</th><th>Assigned</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>|1−2|=1</td><td>|1−9|=8</td><td><strong>C1</strong></td></tr>
+            <tr><td>2</td><td>|2−2|=0</td><td>|2−9|=7</td><td><strong>C1</strong></td></tr>
+            <tr><td>8</td><td>|8−2|=6</td><td>|8−9|=1</td><td><strong>C2</strong></td></tr>
+            <tr><td>9</td><td>|9−2|=7</td><td>|9−9|=0</td><td><strong>C2</strong></td></tr>
+            <tr><td>10</td><td>|10−2|=8</td><td>|10−9|=1</td><td><strong>C2</strong></td></tr>
+          </tbody>
+        </table>
+        <p><strong>Step 2: Update centroids</strong></p>
+        \[ C_1^{\text{new}} = \frac{1+2}{2} = 1.5 \]
+        \[ C_2^{\text{new}} = \frac{8+9+10}{3} = 9 \]
+        <p>C2 didn't change; C1 moved from 2.0 to 1.5. Algorithm continues until convergence.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-calc">PRACTICE</span> &nbsp; 6 documents represented as 1D TF-IDF scores: {3, 4, 5, 12, 13, 15}. Run K-Means with k=2, initial centroids C1=4, C2=13. Show two full iterations.</summary>
+      <div class="answer">
+        <p><strong>Iteration 1 — Assign:</strong></p>
+        <table>
+          <thead><tr><th>Point</th><th>dist to C1=4</th><th>dist to C2=13</th><th>Cluster</th></tr></thead>
+          <tbody>
+            <tr><td>3</td><td>1</td><td>10</td><td>C1</td></tr>
+            <tr><td>4</td><td>0</td><td>9</td><td>C1</td></tr>
+            <tr><td>5</td><td>1</td><td>8</td><td>C1</td></tr>
+            <tr><td>12</td><td>8</td><td>1</td><td>C2</td></tr>
+            <tr><td>13</td><td>9</td><td>0</td><td>C2</td></tr>
+            <tr><td>15</td><td>11</td><td>2</td><td>C2</td></tr>
+          </tbody>
+        </table>
+        <p><strong>Iteration 1 — Update:</strong></p>
+        \[ C_1^{(1)} = \frac{3+4+5}{3} = 4, \quad C_2^{(1)} = \frac{12+13+15}{3} = \frac{40}{3} \approx 13.33 \]
+        <p><strong>Iteration 2 — Assign:</strong> (C1=4, C2=13.33)</p>
+        <p>Midpoint between centroids = (4+13.33)/2 = 8.67. Points ≤ 8.67 → C1; points > 8.67 → C2. Assignments unchanged.</p>
+        <p><strong>Converged after iteration 2</strong> (centroids don't move significantly).</p>
+        <p>Final clusters: C1={3,4,5}, C2={12,13,15}</p>
+      </div>
+    </details>
+
+    <!-- ---- CLUSTER EVALUATION ---- -->
+    <h3 id="past-eval" style="color:#6a1b9a; margin: 24px 0 10px; padding-bottom:4px; border-bottom:2px solid #e1bee7;">Cluster Evaluation</h3>
+
+    <details>
+      <summary><span class="q-label q-calc">PRACTICE</span> &nbsp; 3 clusters. Cluster 1: {sports×4, politics×1}. Cluster 2: {politics×3, tech×2}. Cluster 3: {tech×5}. Compute <strong>Purity</strong>. N=15.</summary>
+      <div class="answer">
+        <p>For each cluster, take the count of the <strong>dominant</strong> class:</p>
+        <ul style="padding-left:18px;">
+          <li>Cluster 1: dominant = sports (4)</li>
+          <li>Cluster 2: dominant = politics (3)</li>
+          <li>Cluster 3: dominant = tech (5)</li>
+        </ul>
+        \[ \text{Purity} = \frac{1}{N}(4 + 3 + 5) = \frac{12}{15} = 0.8 \]
+        <p>80% purity — reasonably good clustering. Cluster 2 is the weakest (mixed politics and tech).</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-short">PRACTICE</span> &nbsp; Why might a clustering with Purity=1.0 still be a poor clustering? Give a specific example.</summary>
+      <div class="answer">
+        <p><strong>Purity can always be trivially maximised by assigning each document its own cluster</strong> (N clusters of size 1 each). Every cluster is "pure" (1 dominant class = 1 document) so Purity = N×1/N = 1.0, but the clustering is completely uninformative.</p>
+        <p><strong>Example:</strong> 10 documents, 10 clusters of 1 → Purity = 10/10 = 1.0, but k=10 gives no grouping insight.</p>
+        <p><strong>Fix:</strong> Use metrics that also penalise too many clusters, like NMI (Normalised Mutual Information) or ARI (Adjusted Rand Index).</p>
+      </div>
+    </details>
+
+    <!-- ---- ZIPF ---- -->
+    <h3 id="past-zipf" style="color:#6a1b9a; margin: 24px 0 10px; padding-bottom:4px; border-bottom:2px solid #e1bee7;">Zipf's Law</h3>
+
+    <details>
+      <summary><span class="q-label q-calc">PRACTICE</span> &nbsp; In a corpus, the most frequent word appears 12,000 times. Predict approximate frequencies for the 2nd, 3rd, and 6th most common words using Zipf's Law.</summary>
+      <div class="answer">
+        <p>Zipf: f(r) &prop; 1/r, so f(r) = f(1)/r</p>
+        \[ f(1) = 12000 \]
+        \[ f(2) \approx \frac{12000}{2} = 6000 \]
+        \[ f(3) \approx \frac{12000}{3} = 4000 \]
+        \[ f(6) \approx \frac{12000}{6} = 2000 \]
+        <p>This is an approximation — real corpora follow Zipf approximately but not exactly.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-short">PRACTICE</span> &nbsp; Why does Zipf's Law mean that adding more training data keeps introducing new vocabulary words? What NLP implication does this have?</summary>
+      <div class="answer">
+        <p>Zipf's Law implies a very long tail: there are vast numbers of words with frequency 1, 2, or 3. These rare words are never fully "covered" — as you add more data, you keep discovering new rare words.</p>
+        <p><strong>Implication:</strong> No matter how large your training corpus, unseen words (out-of-vocabulary, OOV) will appear at test time. This means:</p>
+        <ul style="padding-left:18px;">
+          <li>An <strong>[UNK] (unknown) token</strong> is always necessary to handle OOV words gracefully.</li>
+          <li>Subword tokenisation methods (like BPE) help by decomposing rare words into known subword pieces.</li>
+          <li>Fixed vocabularies will always face coverage issues — the vocabulary cannot grow indefinitely.</li>
+        </ul>
+      </div>
+    </details>
+
+    <!-- ---- CONCEPTUAL ---- -->
+    <h3 id="past-conceptual" style="color:#6a1b9a; margin: 24px 0 10px; padding-bottom:4px; border-bottom:2px solid #e1bee7;">Conceptual &amp; Short Answer</h3>
+
+    <details>
+      <summary><span class="q-label q-short">PRACTICE</span> &nbsp; Explain why two documents with identical word proportions but different lengths get the SAME cosine similarity score, but DIFFERENT Euclidean distances.</summary>
+      <div class="answer">
+        <p><strong>Cosine similarity</strong> normalises by the magnitude of each vector: cos = (u·v) / (|u||v|). If document D2 = 2×D1 (twice as long but same proportions), then:</p>
+        \[ \cos(D_1, D_2) = \frac{D_1 \cdot (2D_1)}{|D_1| \cdot |2D_1|} = \frac{2|D_1|^2}{2|D_1|^2} = 1.0 \]
+        <p>Cosine = 1.0 regardless of length — only direction matters.</p>
+        <p><strong>Euclidean distance:</strong> Measures geometric distance between endpoints. If D2 = 2×D1, then dist(D1, D2) = |D1 - 2D1| = |D1| &gt; 0. A longer document will appear farther away even if topically identical.</p>
+        <p><strong>Why cosine is preferred:</strong> In document similarity, we care about <em>topic</em> (direction), not document length.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-short">PRACTICE</span> &nbsp; A corpus has N=10,000 documents. Term "blockchain" appears in 10 documents. Term "AI" appears in 5,000 documents. Compute both IDFs. Which term is more discriminative and why?</summary>
+      <div class="answer">
+        \[ \text{IDF(blockchain)} = \log_{10}\!\left(\frac{10000}{10}\right) = \log_{10}(1000) = 3 \]
+        \[ \text{IDF(AI)} = \log_{10}\!\left(\frac{10000}{5000}\right) = \log_{10}(2) \approx 0.301 \]
+        <p><strong>"blockchain" is far more discriminative</strong> (IDF=3 vs 0.3). It appears in only 0.1% of documents, so its presence strongly signals the document's topic. "AI" appears in half the corpus — finding it in a document tells you little that distinguishes this document from others.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-mcq">PRACTICE MCQ</span> &nbsp; Document X has TF-IDF vector [0, 0, 5, 0]. Document Y has TF-IDF vector [0, 0, 5, 0]. What is their cosine similarity?</summary>
+      <div class="answer">
+        <p><strong>Options:</strong> A) 0 &nbsp;&nbsp; B) 0.5 &nbsp;&nbsp; C) 1.0 &nbsp;&nbsp; D) 5.0</p>
+        <p><strong>Answer: C (1.0)</strong></p>
+        <p>Both vectors point in exactly the same direction (they are identical). Dot product = 5×5 = 25. |X| = 5, |Y| = 5. cos = 25/(5×5) = 1.0. Identical direction → cosine = 1 regardless of magnitude.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="q-label q-mcq">PRACTICE MCQ</span> &nbsp; Which document representation captures word <em>frequency</em> but NOT word <em>order</em> AND down-weights common words?</summary>
+      <div class="answer">
+        <p><strong>Options:</strong></p>
+        <p>A) One-hot encoding<br>
+        B) Bag-of-Words (raw counts)<br>
+        C) TF-IDF weighted vectors<br>
+        D) Character n-gram features</p>
+        <p><strong>Answer: C</strong></p>
+        <p>TF-IDF: uses term <em>frequency</em> (captures how often words appear) but like all BoW representations, discards word <em>order</em>. IDF down-weights words that appear in many documents (common words). One-hot (A) doesn't capture frequency. Raw BoW (B) doesn't down-weight common words. Character n-grams (D) capture sub-word patterns, not the same concept.</p>
+      </div>
+    </details>
+
+  </div>
+</div>
+
+<!-- ======================================================= -->
+<!-- SUMMARY CARD -->
+<!-- ======================================================= -->
+<div class="section">
+  <div class="section-header">Key Formulae Summary</div>
+  <div class="section-body">
+    <table>
+      <thead><tr><th>Concept</th><th>Formula</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Jaccard Similarity (Lec 1)</td>
+          <td>\( J(X,Y) = \frac{|X \cap Y|}{|X \cup Y|} \)</td>
+          <td>Set-based, ignores frequency</td>
+        </tr>
+        <tr>
+          <td>Log TF</td>
+          <td>\( \text{tf}_{t,d} = 1 + \log_{10}(\text{count}_{t,d}) \)</td>
+          <td>Only when count &gt; 0</td>
+        </tr>
+        <tr>
+          <td>IDF</td>
+          <td>\( \text{idf}_t = \log_{10}(N / df_t) \)</td>
+          <td>N = corpus size</td>
+        </tr>
+        <tr>
+          <td>TF-IDF</td>
+          <td>\( w_{t,d} = \text{tf}_{t,d} \times \text{idf}_t \)</td>
+          <td>Product (hyphen = hyphen!)</td>
+        </tr>
+        <tr>
+          <td>Zipf's Law</td>
+          <td>\( f(r) \propto 1/r \)</td>
+          <td>Linear on log-log scale</td>
+        </tr>
+        <tr>
+          <td>Dot Product</td>
+          <td>\( \vec{u} \cdot \vec{v} = \sum_i u_i v_i \)</td>
+          <td>Numerator of cosine</td>
+        </tr>
+        <tr>
+          <td>Vector Magnitude</td>
+          <td>\( |\vec{u}| = \sqrt{\sum_i u_i^2} \)</td>
+          <td>L2 norm</td>
+        </tr>
+        <tr>
+          <td>Cosine Similarity</td>
+          <td>\( \cos(\vec{u},\vec{v}) = \frac{\vec{u}\cdot\vec{v}}{|\vec{u}||\vec{v}|} \)</td>
+          <td>&isin; [0,1] for TF/TF-IDF</td>
+        </tr>
+        <tr>
+          <td>K-Means Assign</td>
+          <td>\( c(i) = \arg\min_j \|\mathbf{x}_i - \boldsymbol{\mu}_j\|^2 \)</td>
+          <td>Step 1</td>
+        </tr>
+        <tr>
+          <td>K-Means Update</td>
+          <td>\( \boldsymbol{\mu}_j = \frac{1}{|C_j|}\sum_{i \in C_j} \mathbf{x}_i \)</td>
+          <td>Step 2</td>
+        </tr>
+        <tr>
+          <td>Silhouette</td>
+          <td>\( s(i) = 1 - a(i)/b(i) \) (if a &lt; b)</td>
+          <td>&isin; [-1,1]</td>
+        </tr>
+        <tr>
+          <td>Purity</td>
+          <td>\( \text{Purity} = \frac{1}{N}\sum_k \max_j |C_k \cap L_j| \)</td>
+          <td>Extrinsic metric</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<p style="text-align:center; color:#aaa; font-size:0.8rem; padding: 20px 0;">
+  Notes generated from: Lecture 2 slides (MacAvaney &amp; Lever, 2026) +
+  Jurafsky &amp; Martin, <em>Speech and Language Processing</em>, 3rd ed. draft (Jan 2026)
+</p>
+
+</div><!-- end .main -->
+</body>
+</html>

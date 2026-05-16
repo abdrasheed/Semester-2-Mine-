@@ -1,0 +1,2388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 4: Text Classification — Interactive Notes</title>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+:root {
+  --primary: #2563eb;
+  --secondary: #7c3aed;
+  --accent: #059669;
+  --warn: #d97706;
+  --danger: #dc2626;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --text: #1e293b;
+  --muted: #64748b;
+  --border: #e2e8f0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+/* NAV */
+nav { background: linear-gradient(135deg, #1e40af, #7c3aed); color: white; padding: 1rem 2rem; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+nav h1 { font-size: 1.2rem; font-weight: 700; }
+nav p { font-size: .8rem; opacity: .8; }
+.nav-pills { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+.nav-pill { background: rgba(255,255,255,.15); border: none; color: white; padding: .3rem .8rem; border-radius: 999px; cursor: pointer; font-size: .75rem; transition: background .2s; }
+.nav-pill:hover, .nav-pill.active { background: rgba(255,255,255,.35); }
+
+/* LAYOUT */
+.container { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; }
+section { margin-bottom: 3rem; scroll-margin-top: 80px; }
+
+/* CARDS */
+.card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 1.2rem; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
+.card-title { font-size: 1.1rem; font-weight: 700; color: var(--primary); margin-bottom: .8rem; display: flex; align-items: center; gap: .5rem; }
+.section-title { font-size: 1.5rem; font-weight: 800; color: var(--text); border-left: 4px solid var(--primary); padding-left: .8rem; margin-bottom: 1rem; }
+
+/* BADGES */
+.badge { display: inline-block; padding: .2rem .6rem; border-radius: 999px; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.badge-blue { background: #dbeafe; color: #1d4ed8; }
+.badge-purple { background: #ede9fe; color: #6d28d9; }
+.badge-green { background: #d1fae5; color: #065f46; }
+.badge-orange { background: #ffedd5; color: #9a3412; }
+.badge-red { background: #fee2e2; color: #991b1b; }
+
+/* GRID */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+@media(max-width:700px){ .grid-2,.grid-3{ grid-template-columns:1fr; } }
+
+/* HIGHLIGHT BOXES */
+.info-box { border-left: 4px solid var(--primary); background: #eff6ff; padding: 1rem; border-radius: 0 8px 8px 0; margin: .8rem 0; }
+.warn-box { border-left: 4px solid var(--warn); background: #fffbeb; padding: 1rem; border-radius: 0 8px 8px 0; margin: .8rem 0; }
+.success-box { border-left: 4px solid var(--accent); background: #ecfdf5; padding: 1rem; border-radius: 0 8px 8px 0; margin: .8rem 0; }
+.danger-box { border-left: 4px solid var(--danger); background: #fef2f2; padding: 1rem; border-radius: 0 8px 8px 0; margin: .8rem 0; }
+.formula-box { background: #1e293b; color: #e2e8f0; padding: 1.2rem; border-radius: 8px; font-family: monospace; margin: .8rem 0; text-align: center; }
+
+/* TABS */
+.tabs { display: flex; gap: .3rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.tab-btn { background: var(--border); border: none; padding: .5rem 1rem; border-radius: 8px 8px 0 0; cursor: pointer; font-size: .85rem; font-weight: 600; color: var(--muted); transition: all .2s; }
+.tab-btn.active { background: var(--primary); color: white; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ANIMATIONS */
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+@keyframes flow { 0%{stroke-dashoffset:20} 100%{stroke-dashoffset:0} }
+.animate-in { animation: fadeIn .4s ease; }
+
+/* PIPELINE DIAGRAM */
+.pipeline { display: flex; align-items: center; gap: 0; flex-wrap: wrap; margin: 1rem 0; }
+.pipe-step { background: var(--primary); color: white; padding: .6rem 1rem; border-radius: 8px; font-size: .82rem; font-weight: 600; text-align: center; min-width: 110px; animation: fadeIn .4s ease; }
+.pipe-arrow { color: var(--primary); font-size: 1.4rem; padding: 0 .3rem; }
+.pipe-step.train { background: #7c3aed; }
+.pipe-step.eval { background: #059669; }
+.pipe-step.deploy { background: #d97706; }
+
+/* CONFUSION MATRIX */
+.cm-table { border-collapse: collapse; width: 100%; }
+.cm-table td, .cm-table th { border: 2px solid var(--border); padding: .6rem; text-align: center; font-size: .9rem; }
+.cm-table th { background: #f1f5f9; font-weight: 700; }
+.cm-tp { background: #bbf7d0; font-weight: 700; color: #166534; }
+.cm-tn { background: #bbf7d0; font-weight: 700; color: #166534; }
+.cm-fp { background: #fecaca; font-weight: 700; color: #991b1b; }
+.cm-fn { background: #fecaca; font-weight: 700; color: #991b1b; }
+.cm-input { width: 60px; padding: .3rem; border: 2px solid var(--border); border-radius: 6px; text-align: center; font-size: 1rem; }
+
+/* METRICS DISPLAY */
+.metric-card { background: white; border: 2px solid var(--border); border-radius: 10px; padding: 1rem; text-align: center; }
+.metric-val { font-size: 2rem; font-weight: 800; }
+.metric-label { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+
+/* ROC CANVAS */
+canvas { border-radius: 8px; }
+
+/* QUIZ */
+.quiz-question { background: white; border: 2px solid var(--border); border-radius: 10px; padding: 1.2rem; margin-bottom: 1rem; }
+.quiz-q { font-weight: 700; margin-bottom: .8rem; }
+.quiz-options { display: flex; flex-direction: column; gap: .5rem; }
+.quiz-opt { background: #f8fafc; border: 2px solid var(--border); border-radius: 8px; padding: .6rem 1rem; cursor: pointer; transition: all .2s; font-size: .9rem; }
+.quiz-opt:hover { border-color: var(--primary); background: #eff6ff; }
+.quiz-opt.correct { border-color: var(--accent); background: #ecfdf5; }
+.quiz-opt.wrong { border-color: var(--danger); background: #fef2f2; }
+.quiz-feedback { margin-top: .6rem; padding: .6rem 1rem; border-radius: 8px; font-size: .85rem; display: none; }
+.quiz-feedback.show { display: block; }
+.btn { background: var(--primary); color: white; border: none; padding: .6rem 1.4rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: .9rem; transition: background .2s; }
+.btn:hover { background: #1d4ed8; }
+.btn-green { background: var(--accent); }
+.btn-green:hover { background: #047857; }
+.btn-orange { background: var(--warn); }
+
+/* SIGMOID SLIDER */
+.slider-container { display: flex; flex-direction: column; gap: .5rem; }
+input[type=range] { width: 100%; accent-color: var(--primary); }
+.sig-output { font-size: 2rem; font-weight: 800; color: var(--primary); text-align: center; }
+
+/* ACCORDION */
+.accordion { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: .8rem; }
+.accordion-header { background: #f1f5f9; padding: 1rem; cursor: pointer; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+.accordion-header:hover { background: #e2e8f0; }
+.accordion-body { display: none; padding: 1rem; border-top: 1px solid var(--border); }
+.accordion-body.open { display: block; }
+
+/* TABLE */
+table.nice { width: 100%; border-collapse: collapse; font-size: .85rem; }
+table.nice th { background: var(--primary); color: white; padding: .6rem; text-align: left; }
+table.nice td { padding: .6rem; border-bottom: 1px solid var(--border); }
+table.nice tr:hover td { background: #f8fafc; }
+
+/* PROGRESS BAR */
+.progress-bar { height: 10px; background: var(--border); border-radius: 999px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 999px; transition: width 1s ease; }
+
+/* CODE */
+code { background: #f1f5f9; padding: .1rem .4rem; border-radius: 4px; font-family: monospace; font-size: .85em; color: #7c3aed; }
+pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: .82rem; }
+
+.tag { display: inline-block; background: #dbeafe; color: #1d4ed8; padding: .1rem .5rem; border-radius: 4px; font-size: .75rem; margin: .1rem; }
+
+.divider { border: none; border-top: 2px solid var(--border); margin: 2rem 0; }
+</style>
+</head>
+<body>
+
+<nav>
+  <h1>Lecture 4: Text Classification</h1>
+  <p>Text as Data &nbsp;|&nbsp; Sean MacAvaney &amp; Jake Lever &nbsp;|&nbsp; Based on Jurafsky &amp; Martin Ch.4</p>
+  <div class="nav-pills">
+    <button class="nav-pill active" onclick="scrollTo('#intro')">Intro</button>
+    <button class="nav-pill" onclick="scrollTo('#types')">Classification Types</button>
+    <button class="nav-pill" onclick="scrollTo('#supervised')">Supervised Learning</button>
+    <button class="nav-pill" onclick="scrollTo('#features')">Features</button>
+    <button class="nav-pill" onclick="scrollTo('#classifiers')">Classifiers</button>
+    <button class="nav-pill" onclick="scrollTo('#logistic')">Logistic Regression</button>
+    <button class="nav-pill" onclick="scrollTo('#evaluation')">Evaluation</button>
+    <button class="nav-pill" onclick="scrollTo('#roc')">ROC / AUC</button>
+    <button class="nav-pill" onclick="scrollTo('#multiclass')">Multi-class Metrics</button>
+    <button class="nav-pill" onclick="scrollTo('#improving')">Improving</button>
+    <button class="nav-pill" onclick="scrollTo('#workflow')">Workflow</button>
+    <button class="nav-pill" onclick="scrollTo('#exam')">Exam Questions</button>
+  </div>
+</nav>
+
+<div class="container">
+
+<!-- ===== SECTION 1: INTRO ===== -->
+<section id="intro">
+  <h2 class="section-title">1. What is Text Classification?</h2>
+  <div class="card">
+    <div class="card-title">Core Definition</div>
+    <p>The task of predicting <strong>which of a predefined set of classes</strong> (categories) an object belongs to — assigning a label to text based on pre-trained knowledge.</p>
+    <div class="info-box" style="margin-top:1rem">
+      <strong>In NLP, objects we classify include:</strong>
+      Web pages &bull; News articles &bull; Emails &bull; Product descriptions &bull; Social media posts &bull; NL questions &bull; Individual words
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Applications</div>
+    <div class="grid-3">
+      <div style="padding:.8rem;background:#eff6ff;border-radius:8px">
+        <div class="badge badge-blue">Topic</div>
+        <p style="margin-top:.4rem;font-size:.85rem">Is this about Technology / Sports / Lifestyle?</p>
+      </div>
+      <div style="padding:.8rem;background:#fffbeb;border-radius:8px">
+        <div class="badge badge-orange">Spam</div>
+        <p style="margin-top:.4rem;font-size:.85rem">Is this comment/email spam?</p>
+      </div>
+      <div style="padding:.8rem;background:#ecfdf5;border-radius:8px">
+        <div class="badge badge-green">Sentiment</div>
+        <p style="margin-top:.4rem;font-size:.85rem">Does this tweet express negative opinion?</p>
+      </div>
+      <div style="padding:.8rem;background:#fdf4ff;border-radius:8px">
+        <div class="badge badge-purple">Language ID</div>
+        <p style="margin-top:.4rem;font-size:.85rem">Is this written in Spanish?</p>
+      </div>
+      <div style="padding:.8rem;background:#fff1f2;border-radius:8px">
+        <div class="badge badge-red">Authorship</div>
+        <p style="margin-top:.4rem;font-size:.85rem">Was this written by John Smith?</p>
+      </div>
+      <div style="padding:.8rem;background:#f0fdf4;border-radius:8px">
+        <div class="badge badge-green">Discourse</div>
+        <p style="margin-top:.4rem;font-size:.85rem">Is this Reddit post a question, answer, or clickbait?</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== SECTION 2: TYPES ===== -->
+<section id="types">
+  <h2 class="section-title">2. Classification Types</h2>
+
+  <!-- Animated type selector -->
+  <div class="card">
+    <div class="card-title">Binary vs Multi-Class vs Multi-Label</div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('binary','type-tabs')">Binary</button>
+      <button class="tab-btn" onclick="showTab('multiclass','type-tabs')">Multi-Class</button>
+      <button class="tab-btn" onclick="showTab('multilabel','type-tabs')">Multi-Label</button>
+      <button class="tab-btn" onclick="showTab('extreme','type-tabs')">Extreme Classification</button>
+    </div>
+
+    <div id="binary" class="tab-content type-tabs active animate-in">
+      <div class="grid-2">
+        <div>
+          <h4 style="color:var(--primary)">Binary Classification</h4>
+          <ul style="margin:.5rem 0 0 1.2rem">
+            <li>Each item belongs to <strong>exactly 1 of 2</strong> classes</li>
+            <li>Number of classes: <strong>2</strong></li>
+            <li>Labels per item: <strong>Exactly 1</strong></li>
+          </ul>
+          <div class="success-box" style="margin-top:.8rem">
+            <strong>Example:</strong> Spam vs Not-Spam &bull; Positive vs Negative sentiment
+          </div>
+        </div>
+        <div>
+          <svg width="200" height="150" viewBox="0 0 200 150">
+            <circle cx="70" cy="75" r="55" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+            <circle cx="130" cy="75" r="55" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+            <text x="55" y="75" font-size="11" fill="#1d4ed8" font-weight="bold">NOT</text>
+            <text x="52" y="90" font-size="11" fill="#1d4ed8" font-weight="bold">SPAM</text>
+            <text x="118" y="80" font-size="11" fill="#991b1b" font-weight="bold">SPAM</text>
+            <text x="80" y="30" font-size="10" fill="#475569">2 Classes</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div id="multiclass" class="tab-content type-tabs animate-in">
+      <div class="grid-2">
+        <div>
+          <h4 style="color:var(--secondary)">Multi-Class Classification</h4>
+          <ul style="margin:.5rem 0 0 1.2rem">
+            <li>Each item belongs to <strong>exactly 1 of &gt;2</strong> classes</li>
+            <li>Number of classes: <strong>&gt; 2</strong></li>
+            <li>Labels per item: <strong>Exactly 1</strong></li>
+          </ul>
+          <div class="warn-box" style="margin-top:.8rem">
+            <strong>Example:</strong> News topic: Sports / Politics / Tech / Entertainment
+          </div>
+        </div>
+        <div>
+          <svg width="220" height="150" viewBox="0 0 220 150">
+            <polygon points="110,10 180,60 155,130 65,130 40,60" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+            <text x="95" y="55" font-size="10" fill="#6d28d9">Sports</text>
+            <text x="145" y="90" font-size="10" fill="#6d28d9">Politics</text>
+            <text x="120" y="125" font-size="10" fill="#6d28d9">Tech</text>
+            <text x="62" y="125" font-size="10" fill="#6d28d9">Lifestyle</text>
+            <text x="40" y="90" font-size="10" fill="#6d28d9">Entertain</text>
+            <circle cx="110" cy="80" r="8" fill="#7c3aed"/>
+            <text x="106" y="83" font-size="8" fill="white">✓</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div id="multilabel" class="tab-content type-tabs animate-in">
+      <div class="grid-2">
+        <div>
+          <h4 style="color:var(--accent)">Multi-Label Classification</h4>
+          <ul style="margin:.5rem 0 0 1.2rem">
+            <li>Each item can belong to <strong>0, 1, or many</strong> classes</li>
+            <li>Number of classes: <strong>&gt; 2</strong></li>
+            <li>Labels per item: <strong>Any number</strong></li>
+          </ul>
+          <div class="success-box" style="margin-top:.8rem">
+            <strong>Example:</strong> A news article can be tagged: Tech + Health + Business simultaneously
+          </div>
+        </div>
+        <div>
+          <svg width="220" height="160" viewBox="0 0 220 160">
+            <circle cx="80" cy="70" r="45" fill="rgba(37,99,235,.15)" stroke="#2563eb" stroke-width="2"/>
+            <circle cx="140" cy="70" r="45" fill="rgba(124,58,237,.15)" stroke="#7c3aed" stroke-width="2"/>
+            <circle cx="110" cy="120" r="45" fill="rgba(5,150,105,.15)" stroke="#059669" stroke-width="2"/>
+            <text x="55" y="65" font-size="9" fill="#1d4ed8" font-weight="bold">Tech</text>
+            <text x="155" y="65" font-size="9" fill="#6d28d9" font-weight="bold">Health</text>
+            <text x="100" y="150" font-size="9" fill="#065f46" font-weight="bold">Business</text>
+            <text x="93" y="95" font-size="8" fill="#374151">✓ doc</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div id="extreme" class="tab-content type-tabs animate-in">
+      <div class="warn-box">
+        <h4>Extreme Classification / Extreme Labeling</h4>
+        <p style="margin-top:.5rem">When the number of classes scales to <strong>thousands, millions, or billions</strong> — special techniques are required.</p>
+        <ul style="margin:.5rem 0 0 1.2rem">
+          <li>Standard classifiers become computationally infeasible</li>
+          <li>Requires hierarchical or approximate methods</li>
+          <li>Example: Classifying a product into Amazon's full taxonomy</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Table -->
+  <div class="card">
+    <div class="card-title">Quick Reference Table</div>
+    <table class="nice">
+      <tr><th>Type</th><th># Classes</th><th>Labels/Item</th><th>Example</th><th>Metrics</th></tr>
+      <tr><td><span class="badge badge-blue">Binary</span></td><td>2</td><td>Exactly 1</td><td>Spam detection</td><td>P, R, F1, AUC</td></tr>
+      <tr><td><span class="badge badge-purple">Multi-Class</span></td><td>&gt;2</td><td>Exactly 1</td><td>Language ID</td><td>Accuracy, macro/micro P,R,F1</td></tr>
+      <tr><td><span class="badge badge-green">Multi-Label</span></td><td>&gt;2</td><td>0 to N</td><td>Image tagging</td><td>macro/micro P,R,F1</td></tr>
+      <tr><td><span class="badge badge-orange">Extreme</span></td><td>Millions+</td><td>Any</td><td>Product taxonomy</td><td>Special methods</td></tr>
+    </table>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== SECTION 3: SUPERVISED LEARNING ===== -->
+<section id="supervised">
+  <h2 class="section-title">3. Supervised Learning</h2>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title" style="color:var(--accent)">Supervised</div>
+      <ul style="margin-left:1.2rem">
+        <li>There <strong>is</strong> a right answer</li>
+        <li>Need <strong>annotated labels</strong> for each sample</li>
+        <li>Algorithm learns from labelled examples</li>
+      </ul>
+      <div class="success-box" style="margin-top:.8rem">
+        <em>"We had the worst time at this restaurant. Would never recommend!"</em> → <strong>Negative</strong>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--secondary)">Unsupervised</div>
+      <ul style="margin-left:1.2rem">
+        <li><strong>No labels</strong> for data</li>
+        <li>Used to <strong>explore</strong> data — find patterns and groups</li>
+        <li>Clustering is a popular approach</li>
+      </ul>
+      <div class="warn-box" style="margin-top:.8rem">
+        No supervision signal — model finds structure on its own.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">The Training Pipeline</div>
+    <div class="pipeline">
+      <div class="pipe-step">Raw Text</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step train">Feature Extraction</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step train">ML Algorithm</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step eval">Trained Model</div>
+      <div class="pipe-arrow">&#8594;</div>
+      <div class="pipe-step deploy">Predictions</div>
+    </div>
+    <div class="info-box" style="margin-top:.8rem">
+      <strong>Key insight:</strong> ML algorithms work with <em>numbers</em>, not text.
+      We must convert text to numerical feature vectors (vectorisation).
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Labelled Data Quality</div>
+    <div class="warn-box">
+      <strong>Garbage in, Garbage out.</strong> Data quality makes or breaks an ML project.
+      <ul style="margin:.5rem 0 0 1.2rem">
+        <li>Expensive to prepare — typically requires humans</li>
+        <li>Labels must be <strong>accurate</strong> and <strong>consistent</strong></li>
+        <li>Use <strong>multiple assessors</strong> + measure <strong>inter-annotator agreement</strong></li>
+      </ul>
+    </div>
+    <div class="warn-box">
+      <strong>Synthetic Data (ChatGPT-generated training data):</strong><br>
+      <span style="color:var(--accent)">Benefits:</span> Cheap, fast, scalable, no human annotation needed.<br>
+      <span style="color:var(--danger)">Risks:</span> Model learns LLM biases, hallucinations in training data, may not reflect real distribution.
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== SECTION 4: FEATURES ===== -->
+<section id="features">
+  <h2 class="section-title">4. Feature Representation</h2>
+
+  <div class="card">
+    <div class="card-title">ML Feature Types</div>
+    <div class="grid-3">
+      <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:.8rem">
+        <strong>Numerical</strong><br>
+        <code>-0.73</code>, <code>42</code><br>
+        <span style="font-size:.8rem;color:var(--muted)">Floats or integers</span>
+      </div>
+      <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:.8rem">
+        <strong>Binary</strong><br>
+        <code>TRUE/FALSE</code>, <code>0/1</code><br>
+        <span style="font-size:.8rem;color:var(--muted)">Two possible values</span>
+      </div>
+      <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:.8rem">
+        <strong>Categorical (Nominal/Ordinal)</strong><br>
+        <code>single/married</code><br>
+        <code>small/medium/large</code>
+      </div>
+    </div>
+    <div class="danger-box" style="margin-top:.8rem">
+      <strong>There is no "text" feature type!</strong> We must convert text to numbers.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Vectorisation Methods</div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('bow','vec-tabs')">Bag of Words</button>
+      <button class="tab-btn" onclick="showTab('binary-enc','vec-tabs')">Binary Encoding</button>
+      <button class="tab-btn" onclick="showTab('tfidf','vec-tabs')">TF-IDF</button>
+    </div>
+
+    <div id="bow" class="tab-content vec-tabs active">
+      <p style="margin-bottom:.8rem">Count how many times each word occurs in a document.</p>
+      <div style="background:#f8fafc;border-radius:8px;padding:1rem;font-family:monospace;font-size:.85rem">
+        <div>Vocabulary: [<span style="color:#2563eb">bru</span>, <span style="color:#7c3aed">i</span>, <span style="color:#059669">irn</span>, <span style="color:#d97706">like</span>, <span style="color:#dc2626">sprite</span>]</div>
+        <div style="margin-top:.5rem">Doc: "I like sprite"</div>
+        <div style="margin-top:.3rem">Vector: [<span style="color:#2563eb">0</span>, <span style="color:#7c3aed">1</span>, <span style="color:#059669">0</span>, <span style="color:#d97706">1</span>, <span style="color:#dc2626">1</span>]</div>
+      </div>
+    </div>
+    <div id="binary-enc" class="tab-content vec-tabs">
+      <p style="margin-bottom:.8rem">1 if word occurs, 0 if not — ignores frequency.</p>
+      <div style="background:#f8fafc;border-radius:8px;padding:1rem;font-family:monospace;font-size:.85rem">
+        <div>"I like sprite like like" → [0, 1, 0, 1, 1] (NOT [0, 1, 0, 3, 1])</div>
+      </div>
+    </div>
+    <div id="tfidf" class="tab-content vec-tabs">
+      <p style="margin-bottom:.8rem">Weights words by frequency in document but inverse frequency across corpus.</p>
+      <div class="formula-box">
+        TF(t,d) = count(t in d) / total terms in d<br>
+        IDF(t) = log(N / df(t))<br>
+        <strong>TF-IDF(t,d) = TF(t,d) × IDF(t)</strong>
+      </div>
+      <div class="info-box">Common words (like "the") get low IDF → low weight. Rare distinctive words get high weight.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Feature Engineering</div>
+    <p>Some tasks benefit from <strong>hand-crafted features</strong> beyond raw word counts.</p>
+    <div class="grid-2" style="margin-top:.8rem">
+      <div class="info-box">
+        <strong>Author Attribution features:</strong><br>
+        Average word length, average sentence length, punctuation frequency (Juola, 2006)
+      </div>
+      <div class="warn-box">
+        <strong>Warning:</strong> More features ≠ better performance. Features can <em>confuse</em> a classifier. Feature selection matters!
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== SECTION 5: CLASSIFIERS ===== -->
+<section id="classifiers">
+  <h2 class="section-title">5. Classifiers Overview</h2>
+
+  <div class="card">
+    <div class="card-title">What is a Classifier?</div>
+    <p>A function <strong>f(x)</strong> that maps an N-dimensional feature vector to a label. It learns a "model" from training data.</p>
+    <pre>if counts['great'] > 2:
+    return 'positive'
+else:
+    return 'negative'
+# Simple rule-based classifier</pre>
+  </div>
+
+  <div class="grid-2">
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">Naive Bayes <span>+</span></div>
+      <div class="accordion-body">
+        <p>Probabilistic classifier based on Bayes' theorem with "naive" independence assumption.</p>
+        <div class="formula-box">P(class|doc) ∝ P(class) × ∏ P(word_i|class)</div>
+        <ul style="margin:.5rem 0 0 1.2rem;font-size:.9rem">
+          <li>Fast, works well with little data</li>
+          <li>Strong baseline for text classification</li>
+          <li>Good for: spam detection, sentiment, language ID</li>
+        </ul>
+      </div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">Logistic Regression <span>+</span></div>
+      <div class="accordion-body">
+        <p>Discriminative classifier learning weights for features. Output is a probability.</p>
+        <div class="formula-box">P(y=1|x) = σ(w·x + b) = 1/(1+e^(-(w·x+b)))</div>
+        <ul style="margin:.5rem 0 0 1.2rem;font-size:.9rem">
+          <li>Interpretable weights</li>
+          <li>Good probabilistic output</li>
+          <li>Foundation for neural networks</li>
+        </ul>
+      </div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">SVM — Support Vector Machine <span>+</span></div>
+      <div class="accordion-body">
+        <p>Finds the maximum-margin hyperplane separating classes.</p>
+        <ul style="margin:.5rem 0 0 1.2rem;font-size:.9rem">
+          <li>Very effective for high-dimensional text features</li>
+          <li>Kernel trick for non-linear boundaries</li>
+          <li>Strong performer for many NLP tasks</li>
+        </ul>
+      </div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">Decision Tree / Random Forest <span>+</span></div>
+      <div class="accordion-body">
+        <p>Tree-based methods that split data on features recursively.</p>
+        <ul style="margin:.5rem 0 0 1.2rem;font-size:.9rem">
+          <li>Highly interpretable (decision tree)</li>
+          <li>Random Forest = ensemble of trees → more robust</li>
+          <li>Can overfit easily (single tree)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Handling Multi-Class with Binary Classifiers</div>
+    <div class="grid-2">
+      <div class="info-box">
+        <strong>One-vs-All (OvA)</strong><br>
+        Train one binary classifier per class. Positive = that class, Negative = all others.<br>
+        K classifiers for K classes.
+      </div>
+      <div class="warn-box">
+        <strong>All-vs-All (AvA)</strong><br>
+        Train classifier for each pair of classes.<br>
+        K(K-1)/2 classifiers — doesn't scale to extreme classification!
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Hyperparameters</div>
+    <div class="info-box">
+      Classification pipelines have many tunable options: vectorisation approach, classifier type, classifier settings (e.g. regularisation strength C in SVM/LR).
+      <br><br>
+      <strong>Hyperparameter tuning:</strong> Try different combinations systematically. Use libraries like <code>optuna</code> or scikit-learn's <code>GridSearchCV</code>.
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== SECTION 6: LOGISTIC REGRESSION (BOOK DETAIL) ===== -->
+<section id="logistic">
+  <h2 class="section-title">6. Logistic Regression (Deep Dive)</h2>
+  <p style="color:var(--muted);margin-bottom:1rem"><em>From Jurafsky &amp; Martin, Chapter 4</em></p>
+
+  <div class="card">
+    <div class="card-title">The Sigmoid Function</div>
+    <div class="grid-2">
+      <div>
+        <p>The sigmoid maps any real number to (0,1) — perfect for probabilities.</p>
+        <div class="formula-box">
+          σ(z) = 1 / (1 + e<sup>−z</sup>)
+          <br><br>
+          P(y=1|x) = σ(w·x + b)<br>
+          P(y=0|x) = 1 − σ(w·x + b)
+        </div>
+        <div class="info-box" style="margin-top:.8rem">
+          <strong>Key property:</strong> 1 − σ(x) = σ(−x)<br>
+          The input z = w·x + b is called the <strong>logit</strong>.
+        </div>
+      </div>
+      <div>
+        <canvas id="sigmoidCanvas" width="280" height="200"></canvas>
+        <div style="margin-top:.5rem">
+          <label>z = <span id="sigZ">0</span></label>
+          <input type="range" id="sigSlider" min="-6" max="6" step="0.1" value="0" oninput="updateSigmoid()">
+          <div class="sig-output">σ(z) = <span id="sigVal">0.500</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Worked Example: Sentiment Classification</div>
+    <p>Features for the review: <em>"It's hokey. There are virtually no surprises... I love this place!"</em></p>
+    <table class="nice" style="margin:.8rem 0">
+      <tr><th>Feature</th><th>Definition</th><th>Value</th><th>Weight</th></tr>
+      <tr><td>x₁</td><td>count(positive words)</td><td>3</td><td>+2.5</td></tr>
+      <tr><td>x₂</td><td>count(negative words)</td><td>2</td><td>−5.0</td></tr>
+      <tr><td>x₃</td><td>1 if "no" in doc</td><td>1</td><td>−1.2</td></tr>
+      <tr><td>x₄</td><td>count(1st/2nd pronouns)</td><td>3</td><td>+0.5</td></tr>
+      <tr><td>x₅</td><td>1 if "!" in doc</td><td>0</td><td>+2.0</td></tr>
+      <tr><td>x₆</td><td>ln(word count) = ln(66)</td><td>4.19</td><td>+0.7</td></tr>
+    </table>
+    <div class="formula-box">
+      z = w·x + b = [2.5×3] + [−5.0×2] + [−1.2×1] + [0.5×3] + [2.0×0] + [0.7×4.19] + 0.1<br>
+      = 7.5 − 10.0 − 1.2 + 1.5 + 0 + 2.933 + 0.1 = <strong>0.833</strong><br><br>
+      P(+|x) = σ(0.833) ≈ <strong>0.70</strong> → <strong>Positive!</strong>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Cross-Entropy Loss</div>
+    <div class="formula-box">
+      L_CE(ŷ, y) = −[y·log(ŷ) + (1−y)·log(1−ŷ)]
+    </div>
+    <div class="grid-2" style="margin-top:.8rem">
+      <div class="success-box">
+        <strong>Correct prediction (y=1, ŷ=0.70):</strong><br>
+        L = −log(0.70) ≈ 0.357 (low loss)
+      </div>
+      <div class="danger-box">
+        <strong>Wrong prediction (y=1, ŷ=0.30):</strong><br>
+        L = −log(0.30) ≈ 1.204 (high loss)
+      </div>
+    </div>
+    <div class="info-box" style="margin-top:.8rem">
+      We minimise this loss using <strong>Gradient Descent</strong> — iteratively update weights in the direction that reduces loss.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Regularisation (Avoiding Overfitting)</div>
+    <div class="grid-2">
+      <div class="info-box">
+        <strong>L2 (Ridge):</strong><br>
+        Adds λ‖w‖² to the loss. Shrinks weights toward zero. Most common for logistic regression.
+      </div>
+      <div class="info-box">
+        <strong>L1 (Lasso):</strong><br>
+        Adds λ‖w‖₁ to the loss. Produces sparse weights — drives some to exactly 0.
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== INLINE PRACTICE: LOGISTIC REGRESSION ===== -->
+  <div class="card" style="border:2px solid #7c3aed;background:linear-gradient(135deg,#fdf4ff,#ede9fe20)">
+    <div class="card-title" style="color:#6d28d9">Practice Problems — Logistic Regression</div>
+
+    <div class="accordion" style="margin-bottom:.8rem">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        Practice LR1: Compute P(y=1|x) <span>+</span>
+      </div>
+      <div class="accordion-body">
+        <p>Given: weights <strong>w = [2, −1, 3]</strong>, bias <strong>b = −0.5</strong>, and input <strong>x = [1, 2, 0]</strong>.<br>Calculate P(y=1|x) using logistic regression. Show full working.</p>
+        <div class="formula-box" style="margin-top:.8rem">
+          z = w·x + b = (2×1) + (−1×2) + (3×0) + (−0.5)<br>
+          z = 2 − 2 + 0 − 0.5 = <strong>−0.5</strong><br><br>
+          σ(z) = 1 / (1 + e^(−(−0.5))) = 1 / (1 + e^0.5) = 1 / (1 + 1.6487) = 1 / 2.6487 ≈ <strong>0.378</strong><br><br>
+          P(y=1|x) ≈ <strong>0.378</strong> → Classified as negative (below 0.5 threshold)
+        </div>
+      </div>
+    </div>
+
+    <div class="accordion" style="margin-bottom:.8rem">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        Practice LR2: Cross-Entropy Loss <span>+</span>
+      </div>
+      <div class="accordion-body">
+        <p>A model predicts <strong>ŷ = 0.3</strong> for a sample where the true label is <strong>y = 1</strong>. Calculate the cross-entropy loss. Then compare to loss when ŷ = 0.9 for the same sample.</p>
+        <div class="formula-box" style="margin-top:.8rem">
+          L_CE = −[y·log(ŷ) + (1−y)·log(1−ŷ)]<br><br>
+          When ŷ=0.3, y=1: L = −[1·log(0.3) + 0] = −log(0.3) = −(−1.204) ≈ <strong>1.204</strong><br><br>
+          When ŷ=0.9, y=1: L = −[1·log(0.9) + 0] = −log(0.9) = −(−0.105) ≈ <strong>0.105</strong>
+        </div>
+        <div class="success-box">The model is heavily penalised for ŷ=0.3 when the true label is 1 (loss=1.204). Confident correct predictions (ŷ=0.9, y=1) get very low loss (0.105). This is how cross-entropy drives the model to be confident and correct.</div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        Practice LR3: C parameter and regularisation (Lab 4 style) <span>+</span>
+      </div>
+      <div class="accordion-body">
+        <p>In scikit-learn's LogisticRegression, the parameter <code>C</code> controls regularisation. You try C=1 (default) and C=10. Training F1 improves significantly with C=10, but so does validation F1. Does this indicate overfitting? What does C control?</p>
+        <div class="info-box" style="margin-top:.8rem">
+          <strong>C = 1/λ</strong> — the inverse of regularisation strength.<br><br>
+          <strong>C=1</strong>: More regularisation → weights are penalised more → model can't fit training data as closely.<br>
+          <strong>C=10</strong>: Less regularisation → model can learn stronger per-feature weights.<br><br>
+          If <em>both</em> training AND validation F1 improve with C=10, this is NOT overfitting — it means the model was underfitting with C=1 (too much regularisation suppressing useful features). Overfitting would show training F1 going up but validation F1 going down.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== SECTION 7: EVALUATION ===== -->
+<section id="evaluation">
+  <h2 class="section-title">7. Evaluation Metrics</h2>
+
+  <div class="card">
+    <div class="card-title">Data Splits</div>
+    <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.8rem 0">
+      <div style="background:#dbeafe;border-radius:8px;padding:.8rem 1.5rem;text-align:center;flex:3">
+        <div style="font-weight:700;color:#1d4ed8">Training Set</div>
+        <div style="font-size:.75rem;color:#3b82f6">60% — Model Construction</div>
+      </div>
+      <div style="background:#ede9fe;border-radius:8px;padding:.8rem 1.5rem;text-align:center;flex:1">
+        <div style="font-weight:700;color:#6d28d9">Validation Set</div>
+        <div style="font-size:.75rem;color:#7c3aed">20% — Hyperparameter Tuning</div>
+      </div>
+      <div style="background:#d1fae5;border-radius:8px;padding:.8rem 1.5rem;text-align:center;flex:1">
+        <div style="font-weight:700;color:#065f46">Test Set</div>
+        <div style="font-size:.75rem;color:#059669">20% — Final Evaluation</div>
+      </div>
+    </div>
+    <div class="danger-box">
+      <strong>Your test data is SACRED.</strong> Never use the test set to tune or select models. Use it ONLY once for final reporting.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Interactive Confusion Matrix Calculator</div>
+    <p style="margin-bottom:.8rem;font-size:.85rem;color:var(--muted)">Enter values to compute all metrics automatically:</p>
+    <div class="grid-2">
+      <div>
+        <table class="cm-table">
+          <tr>
+            <td></td><td></td><th colspan="2">Predicted</th>
+          </tr>
+          <tr>
+            <td></td><td></td><th>Positive</th><th>Negative</th>
+          </tr>
+          <tr>
+            <th rowspan="2">Actual</th><th>Positive</th>
+            <td class="cm-tp">TP: <input class="cm-input" id="tp" type="number" value="20" oninput="calcMetrics()"></td>
+            <td class="cm-fn">FN: <input class="cm-input" id="fn" type="number" value="5" oninput="calcMetrics()"></td>
+          </tr>
+          <tr>
+            <th>Negative</th>
+            <td class="cm-fp">FP: <input class="cm-input" id="fp" type="number" value="3" oninput="calcMetrics()"></td>
+            <td class="cm-tn">TN: <input class="cm-input" id="tn" type="number" value="72" oninput="calcMetrics()"></td>
+          </tr>
+        </table>
+        <div class="info-box" style="margin-top:.8rem;font-size:.82rem">
+          <strong>TP</strong> = Correctly predicted positive &bull;
+          <strong>TN</strong> = Correctly predicted negative<br>
+          <strong>FP</strong> = Predicted positive, actually negative (Type I error)<br>
+          <strong>FN</strong> = Predicted negative, actually positive (Type II error)
+        </div>
+      </div>
+      <div>
+        <div class="grid-2" id="metricsDisplay">
+          <div class="metric-card"><div class="metric-val" id="m-acc" style="color:var(--primary)">—</div><div class="metric-label">Accuracy</div></div>
+          <div class="metric-card"><div class="metric-val" id="m-prec" style="color:var(--secondary)">—</div><div class="metric-label">Precision</div></div>
+          <div class="metric-card"><div class="metric-val" id="m-rec" style="color:var(--accent)">—</div><div class="metric-label">Recall</div></div>
+          <div class="metric-card"><div class="metric-val" id="m-f1" style="color:var(--warn)">—</div><div class="metric-label">F1 Score</div></div>
+        </div>
+        <div id="metricsFormulas" style="margin-top:.8rem;font-size:.8rem;color:var(--muted)">
+          <div>Accuracy = (TP+TN)/(TP+TN+FP+FN)</div>
+          <div>Precision = TP/(TP+FP)</div>
+          <div>Recall = TP/(TP+FN)</div>
+          <div>F1 = 2×P×R/(P+R)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Precision vs Recall — The Tradeoff</div>
+    <div class="grid-2">
+      <div>
+        <div style="background:#ede9fe;border-radius:8px;padding:1rem;text-align:center">
+          <div style="font-size:1.3rem;font-weight:800;color:#6d28d9">Precision</div>
+          <div class="formula-box" style="margin:.5rem 0">P = TP / (TP + FP)</div>
+          <p style="font-size:.85rem">Of all items I <em>predicted</em> as positive, what fraction actually are?</p>
+          <p style="font-size:.8rem;color:var(--muted);margin-top:.4rem">High precision = few false alarms</p>
+        </div>
+      </div>
+      <div>
+        <div style="background:#ecfdf5;border-radius:8px;padding:1rem;text-align:center">
+          <div style="font-size:1.3rem;font-weight:800;color:#065f46">Recall</div>
+          <div class="formula-box" style="margin:.5rem 0">R = TP / (TP + FN)</div>
+          <p style="font-size:.85rem">Of all items that <em>actually are</em> positive, what fraction did I find?</p>
+          <p style="font-size:.8rem;color:var(--muted);margin-top:.4rem">Also called: Sensitivity, True Positive Rate</p>
+        </div>
+      </div>
+    </div>
+    <div class="warn-box" style="margin-top:.8rem">
+      <strong>The Tradeoff:</strong> Increasing precision often decreases recall and vice versa. The decision threshold controls this.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">F1 and F-beta Scores</div>
+    <div class="formula-box">
+      F1 = 2 × (Precision × Recall) / (Precision + Recall) &nbsp; = &nbsp; 2TP / (2TP + FP + FN)<br><br>
+      Fβ = (1 + β²) × (P × R) / (β²×P + R)
+    </div>
+    <div class="grid-3" style="margin-top:.8rem">
+      <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:.8rem;text-align:center">
+        <strong>F0.5</strong><br><span style="font-size:.8rem;color:var(--muted)">Weights Precision more</span>
+      </div>
+      <div style="background:#dbeafe;border-radius:8px;padding:.8rem;text-align:center">
+        <strong>F1</strong><br><span style="font-size:.8rem;color:#1d4ed8">Equal weight (most common)</span>
+      </div>
+      <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:.8rem;text-align:center">
+        <strong>F2</strong><br><span style="font-size:.8rem;color:var(--muted)">Weights Recall more</span>
+      </div>
+    </div>
+    <div class="info-box" style="margin-top:.8rem">
+      <strong>When to use Fβ?</strong> Medical diagnosis → use F2 (missing a disease is worse than false alarm). Spam filter → use F0.5 (false alarms more annoying than missing spam).
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">The Problem with Accuracy</div>
+    <div class="danger-box">
+      <strong>Class Imbalance Problem:</strong> If 99% of emails are NOT spam, a classifier that always predicts "Not Spam" achieves <strong>99% accuracy</strong> — but is useless!
+      <br><br>
+      Use Precision, Recall, F1 instead when classes are imbalanced.
+    </div>
+  </div>
+
+  <!-- ===== INLINE PRACTICE: EVALUATION ===== -->
+  <div class="card" style="border:2px solid #7c3aed;background:linear-gradient(135deg,#fdf4ff,#ede9fe20)">
+    <div class="card-title" style="color:#6d28d9">Practice Problems — Evaluation Metrics</div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Work through these before checking the answers. These mirror real exam question styles.</p>
+
+    <div class="accordion" style="margin-bottom:.8rem">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        Practice P1: Confusion Matrix Calculation (Lab 4 style) <span>+</span>
+      </div>
+      <div class="accordion-body">
+        <p>A clinical trial classifier gives on the validation set: TP=20, FP=8, FN=52, TN=124. Calculate accuracy, precision, recall, and F1. Then interpret: is this a good classifier?</p>
+        <div class="formula-box" style="margin-top:.8rem">
+          Accuracy = (20+124)/(20+8+52+124) = 144/204 ≈ <strong>0.706</strong><br>
+          Precision = 20/(20+8) = 20/28 ≈ <strong>0.714</strong><br>
+          Recall = 20/(20+52) = 20/72 ≈ <strong>0.278</strong><br>
+          F1 = 2×(0.714×0.278)/(0.714+0.278) = 0.397/0.992 ≈ <strong>0.400</strong>
+        </div>
+        <div class="warn-box">The "always predict False" dummy classifier achieves accuracy ≈ 0.647 (the proportion of negatives). So 0.706 is only slightly better. High precision but very low recall — the classifier misses most clinical trials. F1=0.40 reflects this imbalance.</div>
+        <p style="margin-top:.5rem;font-size:.85rem"><em>Source: Lab 4 actual results</em></p>
+      </div>
+    </div>
+
+    <div class="accordion" style="margin-bottom:.8rem">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        Practice P2: Spot the F1 Error (Exam-style) <span>+</span>
+      </div>
+      <div class="accordion-body">
+        <p>A report claims: Precision = 0.2, Recall = 0.5, F1 = 0.6. Is the F1 value correct? Show your working.</p>
+        <div class="formula-box" style="margin-top:.8rem">
+          F1 = 2 × (P × R) / (P + R) = 2 × (0.2 × 0.5) / (0.2 + 0.5)<br>
+          = 2 × 0.10 / 0.70 = 0.20 / 0.70 ≈ <strong>0.286</strong>
+        </div>
+        <div class="danger-box"><strong>The reported F1 of 0.6 is WRONG.</strong> The F1 score (harmonic mean) must always be between the precision and recall values. Since P=0.2 and R=0.5, F1 must be between 0.2 and 0.5. A value of 0.6 is mathematically impossible. This appeared as an anomaly in the 2025 exam!</div>
+      </div>
+    </div>
+
+    <div class="accordion" style="margin-bottom:.8rem">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        Practice P3: Macro vs Weighted F1 <span>+</span>
+      </div>
+      <div class="accordion-body">
+        <p>Three-class classifier with results: Class A: F1=0.80, n=100 | Class B: F1=0.60, n=50 | Class C: F1=0.40, n=50. Calculate Macro-F1 and Weighted-F1.</p>
+        <div class="formula-box" style="margin-top:.8rem">
+          Macro-F1 = (0.80 + 0.60 + 0.40) / 3 = 1.80/3 = <strong>0.600</strong><br><br>
+          Weighted-F1 = (100×0.80 + 50×0.60 + 50×0.40) / (100+50+50)<br>
+          = (80 + 30 + 20) / 200 = 130/200 = <strong>0.650</strong>
+        </div>
+        <div class="info-box">Weighted-F1 (0.650) > Macro-F1 (0.600) here because Class A (the best class) has the most samples. Macro-F1 treats all classes equally. Use Macro when all classes matter equally; use Weighted when class frequency matters.</div>
+      </div>
+    </div>
+
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        Practice P4: Hyperparameter Tuning (Lab 4 style) <span>+</span>
+      </div>
+      <div class="accordion-body">
+        <p>A grid search over LogisticRegression C and TfidfVectorizer max_df gives these validation F1 scores:</p>
+        <table class="nice" style="margin:.5rem 0;max-width:300px">
+          <tr><th>C</th><th>max_df</th><th>Val F1</th></tr>
+          <tr><td>1</td><td>0.7</td><td>0.642</td></tr>
+          <tr><td>1</td><td>1.0</td><td>0.602</td></tr>
+          <tr><td>10</td><td>0.7</td><td>0.793</td></tr>
+          <tr><td>10</td><td>1.0</td><td>0.783</td></tr>
+        </table>
+        <p>Which hyperparameters would you select? Why does a lower max_df help? Why does a higher C help?</p>
+        <div class="success-box" style="margin-top:.8rem">
+          <strong>Best: C=10, max_df=0.7</strong> (Val F1 = 0.793)<br><br>
+          <strong>max_df=0.7</strong> removes the top 30% most frequent terms. Terms appearing in >70% of documents are likely generic (stop words) that don't help distinguish classes. Removing them reduces noise.<br><br>
+          <strong>Higher C=10</strong> means less regularisation — the model is allowed to fit the training data more closely. Since the data (biomedical text) likely has distinctive vocabulary, stronger weights on specific terms help.
+        </div>
+        <p style="margin-top:.5rem;font-size:.85rem"><em>Source: Lab 4 actual results</em></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== SECTION 8: ROC / AUC ===== -->
+<section id="roc">
+  <h2 class="section-title">8. ROC Curves &amp; AUC</h2>
+
+  <div class="card">
+    <div class="card-title">Classifier Scores vs Labels</div>
+    <p style="margin-bottom:.8rem">Most classifiers output a <strong>score</strong>, not just a label. We choose a <strong>threshold</strong> to convert scores to labels.</p>
+    <div class="info-box">
+      <strong>Example scores:</strong><br>
+      "Delicious food. Would go again" → Score: <strong>0.82</strong> → Positive<br>
+      "Horrible place. Never again" → Score: <strong>0.05</strong> → Negative<br>
+      "Bad food. Great staff" → Score: <strong>0.47</strong> → depends on threshold!
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">ROC Curve Construction</div>
+    <div class="grid-2">
+      <div>
+        <p style="font-size:.9rem;margin-bottom:.8rem">Sort predictions by score, then sweep threshold from highest to lowest:</p>
+        <ul style="font-size:.85rem;margin-left:1.2rem">
+          <li>Start at bottom-left (0,0)</li>
+          <li>Each <strong>actual positive</strong>: move <strong>UP</strong> (TPR ↑)</li>
+          <li>Each <strong>actual negative</strong>: move <strong>RIGHT</strong> (FPR ↑)</li>
+          <li>End at top-right (1,1)</li>
+        </ul>
+        <div style="margin-top:1rem">
+          <strong>Axes:</strong><br>
+          X-axis: FPR = FP/(FP+TN) &nbsp;&nbsp; Y-axis: TPR = Recall = TP/(TP+FN)
+        </div>
+        <div class="info-box" style="margin-top:.8rem">
+          <strong>AUC = Area Under the ROC Curve</strong><br>
+          Range: 0.0 – 1.0<br>
+          AUC = 0.5 → Random classifier (diagonal line)<br>
+          AUC = 1.0 → Perfect classifier
+        </div>
+      </div>
+      <div>
+        <canvas id="rocCanvas" width="280" height="280"></canvas>
+      </div>
+    </div>
+    <div class="grid-3" style="margin-top:.8rem">
+      <div class="success-box" style="text-align:center"><strong>Good ROC</strong><br>Bows toward top-left<br>AUC ≈ 0.95</div>
+      <div class="warn-box" style="text-align:center"><strong>Random (bad)</strong><br>Diagonal y=x<br>AUC ≈ 0.5</div>
+      <div class="danger-box" style="text-align:center"><strong>Disaster</strong><br>Bows toward bottom-right<br>AUC ≈ 0.1</div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== SECTION 9: MULTI-CLASS METRICS ===== -->
+<section id="multiclass">
+  <h2 class="section-title">9. Multi-Class &amp; Multi-Label Metrics</h2>
+
+  <div class="card">
+    <div class="card-title">Multi-Class Confusion Matrix Example</div>
+    <table class="cm-table" style="max-width:400px">
+      <tr><td></td><td></td><th>Pred: Happy</th><th>Pred: Annoyed</th><th>Pred: Sad</th></tr>
+      <tr><th rowspan="3">Actual</th><th>Happy</th><td class="cm-tp">5</td><td>0</td><td class="cm-fp">3</td></tr>
+      <tr><th>Annoyed</th><td class="cm-fp">1</td><td class="cm-tp">2</td><td class="cm-fp">1</td></tr>
+      <tr><th>Sad</th><td class="cm-fp">6</td><td class="cm-fp">1</td><td class="cm-tp">2</td></tr>
+    </table>
+    <div class="formula-box" style="margin-top:.8rem">
+      Accuracy = (5+2+2) / (5+0+3+1+2+1+6+1+2) = 9/21 ≈ 0.43
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Averaging Methods</div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('macro-avg','avg-tabs')">Macro Average</button>
+      <button class="tab-btn" onclick="showTab('micro-avg','avg-tabs')">Micro Average</button>
+      <button class="tab-btn" onclick="showTab('weighted-avg','avg-tabs')">Weighted Average</button>
+    </div>
+
+    <div id="macro-avg" class="tab-content avg-tabs active">
+      <div class="info-box">
+        <strong>Macro Average:</strong> Calculate per-class metric, then take <em>unweighted mean</em>.
+        Does NOT factor in class imbalance.
+      </div>
+      <table class="nice" style="margin-top:.8rem">
+        <tr><th>Class</th><th>Precision</th><th>Recall</th><th>F1</th><th># Samples</th></tr>
+        <tr><td>Happy</td><td>0.42</td><td>0.62</td><td>0.50</td><td>8</td></tr>
+        <tr><td>Annoyed</td><td>0.67</td><td>0.50</td><td>0.57</td><td>4</td></tr>
+        <tr><td>Sad</td><td>0.33</td><td>0.22</td><td>0.27</td><td>9</td></tr>
+        <tr style="background:#dbeafe;font-weight:700"><td>Macro Avg</td><td>0.47</td><td>0.45</td><td>0.45</td><td>21</td></tr>
+      </table>
+    </div>
+    <div id="micro-avg" class="tab-content avg-tabs">
+      <div class="info-box">
+        <strong>Micro Average:</strong> Calculate global TP, FP, FN from per-class confusion matrices, then compute metric.
+        <em>Favours majority classes.</em>
+      </div>
+      <div class="formula-box">
+        Micro-Precision = Σ(TP_i) / Σ(TP_i + FP_i)
+      </div>
+    </div>
+    <div id="weighted-avg" class="tab-content avg-tabs">
+      <div class="info-box">
+        <strong>Weighted Average:</strong> Take a weighted mean of per-class metrics, weighted by class frequency.
+        <em>Accounts for class imbalance.</em>
+      </div>
+      <div class="formula-box">
+        Weighted-F1 = Σ(n_i × F1_i) / Σ(n_i)
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">K-Fold Cross-Validation</div>
+    <svg width="100%" height="130" viewBox="0 0 600 130">
+      <rect x="10" y="40" width="580" height="70" rx="6" fill="#f1f5f9" stroke="#e2e8f0" stroke-width="1"/>
+      <!-- Fold 1 test -->
+      <rect x="10" y="40" width="116" height="35" rx="4" fill="#fca5a5"/>
+      <text x="68" y="62" text-anchor="middle" font-size="11" fill="#991b1b" font-weight="bold">TEST</text>
+      <rect x="126" y="40" width="464" height="35" rx="4" fill="#bbf7d0"/>
+      <text x="358" y="62" text-anchor="middle" font-size="11" fill="#065f46">TRAIN</text>
+      <!-- Fold 2 -->
+      <rect x="126" y="75" width="116" height="35" rx="4" fill="#fca5a5"/>
+      <text x="184" y="97" text-anchor="middle" font-size="11" fill="#991b1b" font-weight="bold">TEST</text>
+      <text x="68" y="97" text-anchor="middle" font-size="11" fill="#065f46">TR</text>
+      <text x="400" y="97" text-anchor="middle" font-size="11" fill="#065f46">TRAIN</text>
+      <text x="300" y="20" text-anchor="middle" font-size="12" fill="#475569" font-weight="bold">K-Fold (k=5): Rotate the test fold k times, average results</text>
+    </svg>
+    <div class="info-box" style="margin-top:.5rem">
+      <strong>Why?</strong> For small datasets, k-fold gives a more reliable estimate of generalisation performance. You still want a <em>separate final test set</em>!
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Statistical Significance Testing</div>
+    <div class="warn-box">
+      <strong>Higher score ≠ Better model!</strong><br>
+      Small differences (0.682 vs 0.688 on N=27 test set) may be due to random chance.
+      Use statistical tests (e.g. McNemar's test, bootstrap) to check if improvement is <em>statistically significant</em>.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Evaluating Multi-Label Classifications</div>
+    <div class="info-box">
+      <strong>Problem:</strong> You cannot create one global confusion matrix for multi-label classification — no single accuracy measure applies across all labels simultaneously.
+    </div>
+    <div style="margin-top:.8rem;display:flex;flex-direction:column;gap:.6rem">
+      <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:.9rem">
+        <strong>Solution: Per-Label Evaluation</strong><br>
+        Create a <strong>separate confusion matrix for each label</strong>. Calculate Precision, Recall, and F1 for each label independently.
+        Then aggregate using <em>macro-average</em> (equal weight per label) or <em>micro-average</em> (weighted by label frequency).
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.9rem;font-size:.9rem">
+        <strong>Example:</strong> For a document tagged with labels {Sports, Finance, Politics}:<br>
+        → Build 3 binary classifiers (one per label)<br>
+        → Evaluate each separately: Sports F1=0.82, Finance F1=0.74, Politics F1=0.79<br>
+        → Macro-F1 = (0.82 + 0.74 + 0.79) / 3 = <strong>0.783</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Summary: Metrics by Classification Type</div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+        <thead>
+          <tr style="background:var(--primary);color:white">
+            <th style="padding:.6rem .9rem;text-align:left;border-radius:6px 0 0 0">Type</th>
+            <th style="padding:.6rem .9rem;text-align:left">Example Tasks</th>
+            <th style="padding:.6rem .9rem;text-align:left">Typical Classifiers</th>
+            <th style="padding:.6rem .9rem;text-align:left;border-radius:0 6px 0 0">Key Metrics</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:#eff6ff">
+            <td style="padding:.6rem .9rem;border-bottom:1px solid #e2e8f0"><span class="badge badge-blue">Binary</span></td>
+            <td style="padding:.6rem .9rem;border-bottom:1px solid #e2e8f0">Spam detection, sentiment</td>
+            <td style="padding:.6rem .9rem;border-bottom:1px solid #e2e8f0">All classifiers (LR, NB, SVM…)</td>
+            <td style="padding:.6rem .9rem;border-bottom:1px solid #e2e8f0">Precision, Recall, F1, AUC/ROC</td>
+          </tr>
+          <tr style="background:#f5f3ff">
+            <td style="padding:.6rem .9rem;border-bottom:1px solid #e2e8f0"><span class="badge badge-purple">Multi-Class</span></td>
+            <td style="padding:.6rem .9rem;border-bottom:1px solid #e2e8f0">Language ID, topic classification, authorship</td>
+            <td style="padding:.6rem .9rem;border-bottom:1px solid #e2e8f0">Naïve Bayes, k-NN, Decision Trees, LR + OvA</td>
+            <td style="padding:.6rem .9rem;border-bottom:1px solid #e2e8f0">Accuracy, micro/macro P, R, F1</td>
+          </tr>
+          <tr style="background:#f0fdf4">
+            <td style="padding:.6rem .9rem"><span class="badge badge-green">Multi-Label</span></td>
+            <td style="padding:.6rem .9rem">Image tagging, multi-topic docs, multi-author</td>
+            <td style="padding:.6rem .9rem">Multiple binary classifiers (OvA per label)</td>
+            <td style="padding:.6rem .9rem">Per-label P, R, F1; micro/macro F1</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== SECTION 10: IMPROVING ===== -->
+<section id="improving">
+  <h2 class="section-title">10. Building a Better Classifier</h2>
+
+  <div class="card">
+    <div class="card-title">Why Doesn't My Classifier Do Better?</div>
+    <div class="grid-3">
+      <div style="background:#fff7ed;border:2px solid var(--warn);border-radius:10px;padding:1rem">
+        <div style="font-weight:700;color:var(--warn);margin-bottom:.5rem">Data Problems</div>
+        <ul style="font-size:.85rem;margin-left:1rem">
+          <li>Label noise (unclear annotation guidelines)</li>
+          <li>Feature noise (typos, inconsistencies)</li>
+          <li>Class imbalance</li>
+          <li>Not enough data</li>
+        </ul>
+      </div>
+      <div style="background:#fff1f2;border:2px solid var(--danger);border-radius:10px;padding:1rem">
+        <div style="font-weight:700;color:var(--danger);margin-bottom:.5rem">Feature Problems</div>
+        <ul style="font-size:.85rem;margin-left:1rem">
+          <li>Missing key features</li>
+          <li>Irrelevant features added</li>
+          <li>Features not scaled properly</li>
+          <li>Wrong representation</li>
+        </ul>
+      </div>
+      <div style="background:#eff6ff;border:2px solid var(--primary);border-radius:10px;padding:1rem">
+        <div style="font-weight:700;color:var(--primary);margin-bottom:.5rem">Classifier Problems</div>
+        <ul style="font-size:.85rem;margin-left:1rem">
+          <li>Underfitting (too simple)</li>
+          <li>Overfitting (too complex)</li>
+          <li>Wrong algorithm</li>
+          <li>Poor hyperparameter tuning</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Underfitting vs Overfitting</div>
+    <div class="grid-2">
+      <div>
+        <canvas id="fitCanvas" width="320" height="200"></canvas>
+      </div>
+      <div>
+        <div class="danger-box">
+          <strong>Underfitting:</strong> Model is too simple to capture patterns. High training error AND high test error.<br>
+          Fix: More complex model, more features.
+        </div>
+        <div class="warn-box" style="margin-top:.8rem">
+          <strong>Overfitting:</strong> Model fits training data too closely. Low training error but HIGH test error.<br>
+          Fix: Regularisation, simpler model, more training data.
+        </div>
+        <div class="success-box" style="margin-top:.8rem">
+          <strong>Good fit:</strong> Low error on both training and test sets. Generalises well.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Error Analysis</div>
+    <div style="display:flex;flex-direction:column;gap:.8rem">
+      <div class="info-box">
+        <strong>Step 1:</strong> Look at errors on the <em>training set</em> → Do features have the right values? Are labels correct?
+      </div>
+      <div class="info-box">
+        <strong>Step 2:</strong> Look at errors on the <em>validation set</em> → Which classes have most mistakes? Are there obvious missing features?
+      </div>
+      <div class="warn-box">
+        <strong>Prioritise:</strong> Get ~100 mislabelled validation examples. Count error types. If sports/business confusion = 50% of errors → fix it. If it's only 5% → don't waste time.
+      </div>
+      <div class="danger-box">
+        <strong>NEVER use test set insights to refine your model.</strong> That would invalidate your evaluation.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Class Imbalance Solutions</div>
+    <div class="grid-2">
+      <div class="info-box">
+        <strong>Evaluation:</strong> Don't use accuracy. Use F1, AUC, or per-class metrics.
+      </div>
+      <div class="info-box">
+        <strong>Training:</strong> Resample training set to equal balance (oversample minority / undersample majority). Or use class-weighted loss.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Classifiers Don't Always Use the Patterns We Expect</div>
+    <div class="grid-2" style="margin-bottom:.8rem">
+      <div class="success-box">
+        <strong>What we hope:</strong> The classifier learns meaningful, interpretable features — e.g., sentiment words like <em>"impeccable"</em>, <em>"terrible"</em>, <em>"fresh"</em> that a human would also use.
+      </div>
+      <div class="danger-box">
+        <strong>What may actually happen:</strong> The classifier exploits <em>spurious correlations</em> in the training data — e.g., the article <em>"a"</em> appearing more frequently in negative reviews due to dataset-specific artefacts.
+      </div>
+    </div>
+    <div class="warn-box">
+      <strong>Why this matters:</strong> A model exploiting spurious patterns may get high training/test scores on one dataset but <em>fail to generalise</em> to new data or domains. Always inspect which features the model relies on.
+    </div>
+    <div style="margin-top:.8rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.9rem;font-size:.88rem">
+      <strong>Real example (Pang &amp; Lee, 2004):</strong> A top-weighted feature in a sentiment classifier was the word <em>"a"</em> — correlating with negative reviews not because "a" expresses sentiment, but due to writing style differences between positive and negative reviewers in the training corpus.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Interpretability &amp; Explainability</div>
+    <div class="info-box" style="margin-bottom:.8rem">
+      <strong>Inspecting weights (Logistic Regression):</strong> Because LR assigns a learned weight to each feature, you can directly inspect the top positive/negative weights — making LR one of the most <em>interpretable</em> classifiers. SVMs share this property for linear kernels.
+    </div>
+    <div class="grid-2" style="margin-bottom:.8rem">
+      <div style="background:#fff7ed;border:1px solid #fdba74;border-radius:8px;padding:.9rem">
+        <strong>LIME</strong> (Local Interpretable Model-agnostic Explanations)<br>
+        <span style="font-size:.85rem">Fits a simple local linear model around a single prediction to explain <em>why</em> the classifier made that decision. Works for any black-box model.</span>
+      </div>
+      <div style="background:#fdf4ff;border:1px solid #d8b4fe;border-radius:8px;padding:.9rem">
+        <strong>SHAP</strong> (SHapley Additive exPlanations)<br>
+        <span style="font-size:.85rem">Uses game-theory Shapley values to assign each feature a contribution score for a specific prediction. Consistent and theoretically grounded.</span>
+      </div>
+    </div>
+    <div class="danger-box">
+      <strong>Caution:</strong> LIME and SHAP are <em>vast simplifications</em> of the model's true decision process. Explainability for complex models is an <strong>unsolved problem</strong>. Explanations can be misleading or unstable — treat them as approximations, not ground truth.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Other Tricks for Tweaking Performance</div>
+    <div class="info-box" style="margin-bottom:.8rem">
+      <strong>Upweighting:</strong> Give more importance to features from certain document regions by counting them multiple times in your feature vector.
+    </div>
+    <div style="display:flex;flex-direction:column;gap:.6rem">
+      <div style="background:#f0fdf4;border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:.8rem;font-size:.88rem">
+        <strong>Title words ×2</strong> — Count words appearing in the title twice in the BoW vector.
+        <span style="color:#64748b;font-size:.82rem">(Cohen &amp; Singer, 1996)</span>
+      </div>
+      <div style="background:#f0fdf4;border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:.8rem;font-size:.88rem">
+        <strong>First paragraph sentences</strong> — Weight sentences in the opening paragraph more heavily, as they tend to state the main topic.
+        <span style="color:#64748b;font-size:.82rem">(Murata, 1999)</span>
+      </div>
+      <div style="background:#f0fdf4;border-left:4px solid var(--accent);border-radius:0 8px 8px 0;padding:.8rem;font-size:.88rem">
+        <strong>Sentences containing title words</strong> — Boost sentences that contain words from the document title, as they are likely topic-relevant.
+        <span style="color:#64748b;font-size:.82rem">(Ko et al., 2002)</span>
+      </div>
+      <div class="warn-box" style="margin-top:.2rem">
+        These are domain-specific heuristics — they work for news article classification but may not transfer to other text types (e.g., social media, legal documents). Always validate on your domain.
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== SECTION 11: WORKFLOW ===== -->
+<section id="workflow">
+  <h2 class="section-title">11. The Right Workflow</h2>
+  <div class="card">
+    <div class="card-title">Step-by-Step Correct Workflow</div>
+    <div style="display:flex;flex-direction:column;gap:.5rem">
+      <div style="background:#dbeafe;border-radius:8px;padding:.8rem;display:flex;gap:.8rem;align-items:center">
+        <div style="background:var(--primary);color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">1</div>
+        <div><strong>Split Data</strong> into Train / Validation / Test sets <em>before</em> any modelling.</div>
+      </div>
+      <div style="background:#ede9fe;border-radius:8px;padding:.8rem;display:flex;gap:.8rem;align-items:center">
+        <div style="background:var(--secondary);color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">2</div>
+        <div><strong>Train classifier</strong> on training set only.</div>
+      </div>
+      <div style="background:#ecfdf5;border-radius:8px;padding:.8rem;display:flex;gap:.8rem;align-items:center">
+        <div style="background:var(--accent);color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">3</div>
+        <div><strong>Fit training set well</strong> — check for underfitting.</div>
+      </div>
+      <div style="background:#ecfdf5;border-radius:8px;padding:.8rem;display:flex;gap:.8rem;align-items:center">
+        <div style="background:var(--accent);color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">4</div>
+        <div><strong>Fit validation set well</strong> — tune hyperparameters, do error analysis using validation.</div>
+      </div>
+      <div style="background:#fff7ed;border-radius:8px;padding:.8rem;display:flex;gap:.8rem;align-items:center">
+        <div style="background:var(--warn);color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">5</div>
+        <div><strong>Evaluate on test set</strong> — ONCE, for final performance estimate only.</div>
+      </div>
+      <div style="background:#ecfdf5;border-radius:8px;padding:.8rem;display:flex;gap:.8rem;align-items:center">
+        <div style="background:var(--accent);color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">6</div>
+        <div><strong>Deploy</strong> — perform well in the real world!</div>
+      </div>
+    </div>
+    <div class="danger-box" style="margin-top:1rem">
+      <strong>Common Mistakes:</strong><br>
+      1. Using ALL data for training (no test set)<br>
+      2. Measuring performance on training data<br>
+      3. Using test set insights to tune the model (data leakage!)
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- ===== SECTION 12: EXAM QUESTIONS ===== -->
+<section id="exam">
+  <h2 class="section-title">12. Exam Questions</h2>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('mcq','exam-tabs')">MCQ</button>
+    <button class="tab-btn" onclick="showTab('calc','exam-tabs')">Calculations</button>
+    <button class="tab-btn" onclick="showTab('short','exam-tabs')">Short Answer</button>
+    <button class="tab-btn" onclick="showTab('essay','exam-tabs')">Essay / Discussion</button>
+    <button class="tab-btn" onclick="showTab('coding','exam-tabs')">Code &amp; Application</button>
+    <button class="tab-btn" onclick="showTab('pastpapers','exam-tabs')" style="background:#7c3aed;color:white">Past Papers ⭐</button>
+  </div>
+
+  <!-- MCQ -->
+  <div id="mcq" class="tab-content exam-tabs active">
+    <div id="quiz-container"></div>
+    <button class="btn" onclick="resetQuiz()" style="margin-top:1rem">Reset Quiz</button>
+    <div id="quiz-score" style="margin-top:.8rem;font-weight:700;font-size:1rem"></div>
+  </div>
+
+  <!-- CALCULATIONS -->
+  <div id="calc" class="tab-content exam-tabs">
+    <div class="quiz-question">
+      <div class="quiz-q">Q1. A classifier gives the following results on 100 test samples:<br>TP=35, FP=10, TN=45, FN=10. Calculate Precision, Recall, F1-score, and Accuracy.</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Solution <span>+</span></div>
+        <div class="accordion-body">
+          <div class="formula-box">
+            Precision = TP/(TP+FP) = 35/(35+10) = 35/45 ≈ <strong>0.778</strong><br>
+            Recall = TP/(TP+FN) = 35/(35+10) = 35/45 ≈ <strong>0.778</strong><br>
+            F1 = 2×(0.778×0.778)/(0.778+0.778) = <strong>0.778</strong><br>
+            Accuracy = (TP+TN)/Total = (35+45)/100 = <strong>0.80</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <div class="quiz-q">Q2. You have a 3-class problem (Sports, Politics, Tech) with per-class metrics:<br>
+        Sports: P=0.60, R=0.75, F1=0.667, n=20<br>
+        Politics: P=0.80, R=0.70, F1=0.747, n=10<br>
+        Tech: P=0.50, R=0.60, F1=0.545, n=30<br>
+        Calculate Macro-F1 and Weighted-F1.</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Solution <span>+</span></div>
+        <div class="accordion-body">
+          <div class="formula-box">
+            Macro-F1 = (0.667 + 0.747 + 0.545) / 3 = 1.959/3 ≈ <strong>0.653</strong><br><br>
+            Weighted-F1 = (20×0.667 + 10×0.747 + 30×0.545) / (20+10+30)<br>
+            = (13.34 + 7.47 + 16.35) / 60 = 37.16/60 ≈ <strong>0.619</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <div class="quiz-q">Q3. Logistic Regression Calculation. Given weights w=[3, −2, 1], bias b=0.5, and input x=[1, 1, 2]. What is P(y=1|x)?</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Solution <span>+</span></div>
+        <div class="accordion-body">
+          <div class="formula-box">
+            z = w·x + b = (3×1) + (−2×1) + (1×2) + 0.5 = 3 − 2 + 2 + 0.5 = <strong>3.5</strong><br><br>
+            P(y=1|x) = σ(3.5) = 1/(1+e^(−3.5)) = 1/(1+0.0302) ≈ <strong>0.971</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <div class="quiz-q">Q4. Cross-Entropy Loss. What is the cross-entropy loss when the true label y=1 and the predicted probability ŷ=0.8?</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Solution <span>+</span></div>
+        <div class="accordion-body">
+          <div class="formula-box">
+            L_CE = −[y·log(ŷ) + (1−y)·log(1−ŷ)]<br>
+            = −[1·log(0.8) + 0·log(0.2)]<br>
+            = −log(0.8) = −(−0.2231) ≈ <strong>0.223</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <div class="quiz-q">Q5. Class Imbalance. A dataset has 950 negatives and 50 positives. A classifier always predicts Negative. What is its accuracy, precision (for positive class), and recall (for positive class)?</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Solution <span>+</span></div>
+        <div class="accordion-body">
+          <div class="formula-box">
+            TP=0, TN=950, FP=0, FN=50<br><br>
+            Accuracy = (0+950)/1000 = <strong>95%</strong> (misleadingly high!)<br>
+            Precision = 0/(0+0) = <strong>undefined (0)</strong><br>
+            Recall = 0/(0+50) = <strong>0.00</strong><br>
+            F1 = <strong>0.00</strong>
+          </div>
+          <div class="danger-box">This shows why accuracy is a poor metric for imbalanced datasets!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHORT ANSWER -->
+  <div id="short" class="tab-content exam-tabs">
+    <div class="quiz-question">
+      <div class="quiz-q">Q1. Explain the difference between precision and recall. Give a practical example of when you would prioritise recall over precision.</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <p><strong>Precision</strong>: Of all items predicted as positive, what fraction truly are? P = TP/(TP+FP).</p>
+          <p style="margin-top:.5rem"><strong>Recall</strong>: Of all truly positive items, what fraction did we find? R = TP/(TP+FN).</p>
+          <p style="margin-top:.5rem"><strong>Example prioritising recall:</strong> Medical cancer screening. Missing a true cancer (FN) is far more dangerous than a false alarm (FP) that leads to further testing. We want to find ALL cancers even if we flag some healthy patients.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <div class="quiz-q">Q2. What is the difference between macro-averaged and micro-averaged F1? When would each be more appropriate?</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <p><strong>Macro-F1</strong>: Compute F1 for each class, take unweighted mean. Each class counts equally regardless of size.</p>
+          <p style="margin-top:.5rem"><strong>Micro-F1</strong>: Pool all TP, FP, FN globally then compute F1. Dominated by majority class performance.</p>
+          <p style="margin-top:.5rem"><strong>Use macro</strong> when all classes are equally important (e.g., rare disease classification). <strong>Use micro</strong> when class imbalance reflects real world frequency and you care about overall example-level accuracy.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <div class="quiz-q">Q3. Explain overfitting in the context of text classification. What causes it and how can it be mitigated?</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <p><strong>Overfitting</strong>: The model learns the training data too closely — it memorises noise and specific patterns that don't generalise. Low training error but high test error.</p>
+          <p style="margin-top:.5rem"><strong>Causes</strong>: Too many features relative to training data size; overly complex model; insufficient training data.</p>
+          <p style="margin-top:.5rem"><strong>Mitigation</strong>: Regularisation (L1/L2); reduce model complexity; collect more data; use cross-validation; feature selection; dropout (neural nets).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <div class="quiz-q">Q4. Why is it important to use a separate validation set and test set, rather than just a single held-out set?</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <p>The <strong>validation set</strong> is used repeatedly during development — for tuning hyperparameters, feature selection, error analysis, and model selection. By using the validation set many times, the model is effectively "tuned" to it.</p>
+          <p style="margin-top:.5rem">The <strong>test set</strong> must remain completely unseen until final evaluation to give an unbiased estimate of real-world performance. If we used the same set for both, our performance estimate would be optimistically biased — the model has indirectly "seen" the test set through our tuning decisions.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <div class="quiz-q">Q5. What is the One-vs-All (OvA) strategy for multi-class classification? What is its limitation?</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <p>OvA trains <strong>K binary classifiers</strong> for K classes. Each classifier discriminates one class against all others. At test time, run all K classifiers and pick the class with the highest confidence.</p>
+          <p style="margin-top:.5rem"><strong>Limitation</strong>: Doesn't scale to extreme classification (thousands/millions of classes). K classifiers needed, each with highly imbalanced training data (1 class vs all others).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <div class="quiz-q">Q6. What is the ROC curve and what does AUC measure? What does AUC=0.5 signify?</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <p>The <strong>ROC (Receiver Operating Characteristic) curve</strong> plots True Positive Rate (recall) vs False Positive Rate at different classification thresholds.</p>
+          <p style="margin-top:.5rem"><strong>AUC (Area Under the Curve)</strong> summarises the ROC into a single number from 0–1. It represents the probability that the classifier ranks a random positive example higher than a random negative example.</p>
+          <p style="margin-top:.5rem"><strong>AUC = 0.5</strong>: Random classifier — no discriminative power. The curve follows the diagonal y=x line.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ESSAY -->
+  <div id="essay" class="tab-content exam-tabs">
+    <div class="quiz-question">
+      <div class="quiz-q">Q1. [Essay] A startup wants to build a text classifier to detect hate speech on social media. Describe the full pipeline from data collection to deployment, highlighting the key decisions and challenges at each stage. (15 marks)</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Mark Scheme / Key Points <span>+</span></div>
+        <div class="accordion-body">
+          <ul style="margin-left:1.2rem;line-height:1.9">
+            <li><strong>Task definition</strong>: Binary (hate/not hate) or multi-class (type of hate). Define classes clearly.</li>
+            <li><strong>Data collection</strong>: Sources (Twitter, Reddit etc.), sample bias, class imbalance (hate speech is rare).</li>
+            <li><strong>Annotation</strong>: Inter-annotator agreement, annotation guidelines, multiple annotators per item, handling disagreements.</li>
+            <li><strong>Feature engineering</strong>: BoW, TF-IDF, embeddings, special tokens (#, @), emoji handling.</li>
+            <li><strong>Train/val/test split</strong>: Time-based split vs random, stratification for class imbalance.</li>
+            <li><strong>Model choice</strong>: Logistic regression baseline, SVM, fine-tuned BERT. Trade-offs: speed vs accuracy, interpretability.</li>
+            <li><strong>Class imbalance handling</strong>: Oversampling, class weights, appropriate metrics (F1 not accuracy).</li>
+            <li><strong>Evaluation</strong>: Use macro-F1 on positive class, AUC, human evaluation of errors.</li>
+            <li><strong>Error analysis</strong>: What types of hate speech are missed? Sarcasm, coded language.</li>
+            <li><strong>Deployment considerations</strong>: Threshold tuning, human review loop, monitoring distribution shift, bias audit.</li>
+            <li><strong>Ethical issues</strong>: False positive impact on users, bias against certain groups, appeals process.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <div class="quiz-q">Q2. [Essay] Compare and contrast Naive Bayes and Logistic Regression for text classification. In what scenarios would you prefer one over the other? (10 marks)</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Key Points <span>+</span></div>
+        <div class="accordion-body">
+          <table class="nice">
+            <tr><th>Dimension</th><th>Naive Bayes</th><th>Logistic Regression</th></tr>
+            <tr><td>Type</td><td>Generative (models P(x|y))</td><td>Discriminative (models P(y|x))</td></tr>
+            <tr><td>Assumption</td><td>Feature independence</td><td>No independence assumption</td></tr>
+            <tr><td>Training speed</td><td>Very fast, one pass</td><td>Iterative gradient descent</td></tr>
+            <tr><td>Small data</td><td>Works well</td><td>May overfit</td></tr>
+            <tr><td>Correlated features</td><td>Hurt by them</td><td>Handles them better</td></tr>
+            <tr><td>Interpretability</td><td>Word probabilities</td><td>Feature weights</td></tr>
+            <tr><td>Performance</td><td>Good baseline</td><td>Usually better with enough data</td></tr>
+          </table>
+          <div class="info-box" style="margin-top:.8rem">
+            Use NB for: very small datasets, real-time systems requiring fast training, as baseline.<br>
+            Use LR for: larger datasets, when interpretable weights are needed, correlated features.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <div class="quiz-q">Q3. [Discussion] "Adding more features always improves classifier performance." Critically evaluate this statement. (8 marks)</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Key Points <span>+</span></div>
+        <div class="accordion-body">
+          <p><strong>Against the statement:</strong></p>
+          <ul style="margin-left:1.2rem;line-height:1.8">
+            <li>Irrelevant features add noise, confuse the classifier</li>
+            <li>More features → higher dimensionality → risk of overfitting (curse of dimensionality)</li>
+            <li>Correlated features can cause numerical instability (e.g. multicollinearity in LR)</li>
+            <li>Increases computational cost without benefit</li>
+            <li>Lecture explicitly states: "adding more features is not always useful"</li>
+          </ul>
+          <p style="margin-top:.8rem"><strong>Partial truth:</strong></p>
+          <ul style="margin-left:1.2rem;line-height:1.8">
+            <li>The right additional features CAN improve performance</li>
+            <li>Domain-specific features (e.g. upweighting title words) can help</li>
+            <li>Feature selection/regularisation can mitigate the negative effects</li>
+          </ul>
+          <p style="margin-top:.8rem"><strong>Conclusion:</strong> Quality over quantity. Thoughtful feature engineering guided by error analysis and domain knowledge is more valuable than blindly adding features.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CODING -->
+  <div id="coding" class="tab-content exam-tabs">
+    <div class="quiz-question">
+      <div class="quiz-q">Q1. Write scikit-learn code to train a logistic regression classifier on text data, evaluate with a confusion matrix, and report macro F1-score.</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Answer <span>+</span></div>
+        <div class="accordion-body">
+          <pre>from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (classification_report,
+                              confusion_matrix, f1_score)
+from sklearn.model_selection import train_test_split
+
+# 1. Split data
+X_train, X_test, y_train, y_test = train_test_split(
+    texts, labels, test_size=0.2, random_state=42, stratify=labels)
+
+# 2. Vectorise
+vectorizer = TfidfVectorizer(max_features=10000, ngram_range=(1,2))
+X_train_vec = vectorizer.fit_transform(X_train)
+X_test_vec  = vectorizer.transform(X_test)
+
+# 3. Train
+clf = LogisticRegression(C=1.0, max_iter=1000)
+clf.fit(X_train_vec, y_train)
+
+# 4. Evaluate
+y_pred = clf.predict(X_test_vec)
+print(confusion_matrix(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+macro_f1 = f1_score(y_test, y_pred, average='macro')
+print(f"Macro F1: {macro_f1:.3f}")</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <div class="quiz-q">Q2. How would you handle multi-label classification in scikit-learn? Show a code snippet.</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Answer <span>+</span></div>
+        <div class="accordion-body">
+          <pre>from sklearn.multiclass import OneVsRestClassifier
+from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import f1_score
+
+# y is a list of label sets: [['Tech','Health'], ['Business'], ...]
+mlb = MultiLabelBinarizer()
+Y_train = mlb.fit_transform(y_train_labels)
+Y_test  = mlb.transform(y_test_labels)
+
+clf = OneVsRestClassifier(LogisticRegression())
+clf.fit(X_train_vec, Y_train)
+Y_pred = clf.predict(X_test_vec)
+
+print(f"Macro F1: {f1_score(Y_test, Y_pred, average='macro'):.3f}")</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-question">
+      <div class="quiz-q">Q3. Application question: A medical classifier for disease detection has 98% accuracy but clinicians are unhappy. Explain what might be wrong and what you would investigate.</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Answer <span>+</span></div>
+        <div class="accordion-body">
+          <p><strong>Root cause: Class imbalance.</strong></p>
+          <ul style="margin-left:1.2rem;line-height:1.8">
+            <li>Disease prevalence may be ~2% → always predicting "healthy" gives 98% accuracy</li>
+            <li>Recall (sensitivity) for the disease class may be 0% — missing ALL cases</li>
+          </ul>
+          <p style="margin-top:.8rem"><strong>Investigation steps:</strong></p>
+          <ul style="margin-left:1.2rem;line-height:1.8">
+            <li>Compute confusion matrix — look at TP, FP, FN, TN for disease class</li>
+            <li>Calculate precision, recall, F1 for disease (positive) class</li>
+            <li>Plot ROC curve and compute AUC</li>
+            <li>Adjust classification threshold to increase recall</li>
+            <li>Apply class imbalance handling: oversampling, class-weighted training</li>
+            <li>Evaluate with clinically meaningful metric (e.g. recall ≥ 0.95 for disease class)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAST PAPERS -->
+  <div id="pastpapers" class="tab-content exam-tabs">
+    <div class="info-box" style="margin-bottom:1rem">
+      <strong>Real past exam questions from TaD 2022, 2024, 2025.</strong> Work through each question before revealing the model answer. Questions are marked with year and marks. ⭐ = high-value question type.
+    </div>
+
+    <!-- 2022 Q3d: System comparison -->
+    <div class="quiz-question">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">
+        <span class="badge badge-blue">2022 Exam</span>
+        <span class="badge badge-orange">3 marks</span>
+        <span class="badge badge-purple">Train/Test Analysis ⭐</span>
+      </div>
+      <div class="quiz-q">Q1. [2022 Q3d] You want to identify whether two systems (System A and System B) are better than a baseline at a patent classification task. The table below shows intrinsic evaluation metrics (* = statistically significant vs baseline, p &lt; 0.05):
+
+<table class="nice" style="margin-top:.8rem">
+  <tr><th></th><th>Train Prec.</th><th>Train Rec.</th><th>Test Prec.</th><th>Test Rec.</th></tr>
+  <tr><td>Baseline</td><td>0.61</td><td>0.42</td><td>0.56</td><td>0.50</td></tr>
+  <tr><td>System A</td><td>0.62*</td><td>0.43*</td><td>0.58*</td><td>0.51</td></tr>
+  <tr><td>System B</td><td>0.67*</td><td>0.48*</td><td>0.51</td><td>0.42</td></tr>
+</table>
+
+Discuss the effectiveness (generalizzability, overfit/underfit, performance on training/test sets) of models A and B vs the baseline.</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <p><strong>System A:</strong></p>
+          <ul style="margin-left:1.2rem;line-height:1.8">
+            <li>Performs statistically significantly better than baseline on the <em>training set</em> (both precision and recall).</li>
+            <li>Performs significantly better than baseline on the <em>test set</em> for precision (0.58 vs 0.56), and slightly better for recall (0.51 vs 0.50) though not significant.</li>
+            <li>System A generalises well — it is better than baseline on both train and test. No clear sign of overfitting.</li>
+          </ul>
+          <p style="margin-top:.8rem"><strong>System B:</strong></p>
+          <ul style="margin-left:1.2rem;line-height:1.8">
+            <li>Performs the best on the <em>training set</em> (0.67 precision, 0.48 recall, both significant).</li>
+            <li>However on the <em>test set</em>, System B performs <em>worse</em> than baseline (0.51 vs 0.56 precision; 0.42 vs 0.50 recall) — and these differences are not significant.</li>
+            <li>This is a classic sign of <strong>overfitting</strong>: System B has learned patterns specific to the training data that don't generalise.</li>
+          </ul>
+          <div class="warn-box" style="margin-top:.8rem"><strong>Key takeaway:</strong> System A is the only model that actually helps. System B is misleading — it looks great on train but fails on test.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Practice: Similar to 2022 Q3d -->
+    <div class="quiz-question" style="border-color:#7c3aed">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">
+        <span class="badge badge-purple">Generated Practice</span>
+        <span class="badge badge-orange">3 marks</span>
+      </div>
+      <div class="quiz-q">Q2. [Practice — similar to 2022 Q3d] Three systems are evaluated on a sentiment classification task (* = statistically significant vs baseline, p &lt; 0.05):
+
+<table class="nice" style="margin-top:.8rem">
+  <tr><th></th><th>Train F1</th><th>Val F1</th><th>Test F1</th></tr>
+  <tr><td>Baseline</td><td>0.55</td><td>0.52</td><td>0.53</td></tr>
+  <tr><td>System X</td><td>0.57*</td><td>0.55*</td><td>0.54*</td></tr>
+  <tr><td>System Y</td><td>0.72*</td><td>0.53</td><td>0.48</td></tr>
+  <tr><td>System Z</td><td>0.56</td><td>0.51</td><td>0.52</td></tr>
+</table>
+
+Which system would you deploy and why? Identify any signs of overfitting or underfitting.</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <p><strong>System X</strong> — deploy this one. It is statistically significantly better than the baseline on train AND test sets, and the gap between train/test performance is small (not overfitting).</p>
+          <p style="margin-top:.8rem"><strong>System Y</strong> — classic overfitting. Very high train F1 (0.72) but <em>worse than baseline</em> on test (0.48). Do not deploy.</p>
+          <p style="margin-top:.8rem"><strong>System Z</strong> — not significantly different from baseline on any set. No benefit over baseline, possible underfitting (low train performance too).</p>
+          <div class="warn-box" style="margin-top:.8rem"><strong>Note:</strong> Always prioritise test set performance over training set performance. A model that looks great on training but fails on test is not a useful model.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2025 Q2c: Anomalies -->
+    <div class="quiz-question">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">
+        <span class="badge badge-blue">2025 Resit Exam</span>
+        <span class="badge badge-orange">8 marks</span>
+        <span class="badge badge-red">Anomaly Spotting ⭐⭐</span>
+      </div>
+      <div class="quiz-q">Q3. [2025 Q2c] A sentiment classifier is trained and evaluated. Identify <strong>8 anomalies</strong> in the dataset, presented metrics, and evaluation procedure.
+
+<div class="grid-2" style="margin-top:.8rem;gap:.5rem">
+<div>
+<strong>Training Set Confusion Matrix:</strong>
+<table class="cm-table" style="margin-top:.4rem;max-width:280px">
+  <tr><td></td><th>Pred Pos</th><th>Pred Neg</th></tr>
+  <tr><th>Actual Pos</th><td class="cm-tp">2</td><td class="cm-fn">2</td></tr>
+  <tr><th>Actual Neg</th><td class="cm-fp">8</td><td class="cm-tn">3</td></tr>
+</table>
+<p style="margin-top:.4rem;font-size:.82rem">Sample Count: 15 | Accuracy: 0.5 | Perplexity: 19.2<br>Macro-Precision: 0.2 | Macro-Recall: 0.5 | Macro-F1: 0.6</p>
+</div>
+<div>
+<strong>Validation Set Confusion Matrix:</strong>
+<table class="cm-table" style="margin-top:.4rem;max-width:320px">
+  <tr><td></td><th>Pred Pos</th><th>Pred Neg</th><th>Pred Neutral</th></tr>
+  <tr><th>Actual Pos</th><td class="cm-tp">50</td><td>0</td><td>0</td></tr>
+  <tr><th>Actual Neg</th><td>0</td><td class="cm-tn">10</td><td>0</td></tr>
+  <tr><th>Actual Neutral</th><td>0</td><td>0</td><td class="cm-tp">5</td></tr>
+</table>
+<p style="margin-top:.4rem;font-size:.82rem">Sample Count: 65 | Accuracy: 1.00 | Perplexity: 10.8<br>Macro-Precision: 1.00 | Macro-Recall: 1.00 | Macro-F1: 1.00</p>
+</div>
+</div></div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer (8 Anomalies) <span>+</span></div>
+        <div class="accordion-body">
+          <ol style="margin-left:1.2rem;line-height:2.0">
+            <li><strong>Perplexity is not a classification metric</strong> — it is a language model metric. It has no place in a classification evaluation report.</li>
+            <li><strong>Training set has 2 classes (Pos/Neg), validation set has 3 classes (Pos/Neg/Neutral)</strong> — this is inconsistent. Either the problem changed mid-experiment, or the data is mislabelled.</li>
+            <li><strong>The training accuracy doesn't match the confusion matrix</strong> — From the CM: (TP+TN)/Total = (2+3)/15 = 5/15 = 0.333, not 0.5 as reported.</li>
+            <li><strong>Class distribution flipped between training and validation</strong> — Training has 11 Neg vs 4 Pos. Validation has 50 Pos vs 10 Neg vs 5 Neutral. The majority class completely changed.</li>
+            <li><strong>Validation set is larger than training set</strong> — 65 vs 15 samples. Best practice is the opposite (most data used for training).</li>
+            <li><strong>Perfect 1.00 scores on validation set are suspicious</strong> — while training performance is poor. Suggests data leakage, or test set contamination (validation data may have leaked into training).</li>
+            <li><strong>Macro-F1 of 0.6 is wrong for training set</strong> — F1 must be between Precision (0.2) and Recall (0.5). A value of 0.6 exceeds both, which is mathematically impossible for a harmonic mean.</li>
+            <li><strong>The training set is far too small</strong> — 15 samples is insufficient to train and reliably evaluate a classifier. 4 positive vs 11 negative is highly imbalanced for such a tiny set.</li>
+          </ol>
+          <div class="danger-box" style="margin-top:.8rem"><strong>Exam tip:</strong> This type of "spot the anomaly" question rewards systematic thinking. Check: metric math, class consistency, split sizes, and whether results are suspiciously perfect.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Practice: Anomaly spotting -->
+    <div class="quiz-question" style="border-color:#7c3aed">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">
+        <span class="badge badge-purple">Generated Practice</span>
+        <span class="badge badge-orange">6 marks</span>
+      </div>
+      <div class="quiz-q">Q4. [Practice — anomaly spotting] A spam classifier is reported with the following results. Identify <strong>6 anomalies</strong>.
+
+<div style="margin-top:.8rem;background:#f8fafc;padding:1rem;border-radius:8px;font-size:.85rem">
+<strong>Training CM (200 samples):</strong> TP=80, FP=20, TN=90, FN=10<br>
+<strong>Training metrics:</strong> Accuracy=0.875 | Precision=0.80 | Recall=0.89 | F1=0.50<br><br>
+<strong>Test CM (50 samples):</strong> TP=30, FP=5, TN=30, FN=0<br>
+<strong>Test metrics:</strong> Accuracy=1.00 | Precision=0.86 | Recall=0.95 | F1=0.90<br><br>
+<strong>Note:</strong> Perplexity on test set = 3.2. Model trained with BLEU-score optimisation.
+</div></div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <ol style="margin-left:1.2rem;line-height:2.0">
+            <li><strong>Training F1 is wrong</strong> — With P=0.80 and R=0.89, F1 should be 2×(0.80×0.89)/(0.80+0.89) ≈ 0.843, not 0.50.</li>
+            <li><strong>Training accuracy doesn't match CM</strong> — (80+90)/200 = 0.85, not 0.875.</li>
+            <li><strong>Test set has FN=0 but accuracy=1.00 is inconsistent with having FP=5</strong> — If FN=0 and FP=5, accuracy=(30+30)/65≈0.923, not 1.00. The CM values don't add up to 50 either (30+5+30+0=65, not 50).</li>
+            <li><strong>Perplexity is not a classification metric</strong> — should not appear in spam classifier evaluation.</li>
+            <li><strong>BLEU score is a machine translation metric</strong> — not appropriate for training a binary classifier.</li>
+            <li><strong>Test performance is better than training performance</strong> — typically a sign of data leakage (test samples seen during training) or the model is being evaluated on too easy/filtered test data.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2025 Q2a: Multi-label vs Multi-class -->
+    <div class="quiz-question">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">
+        <span class="badge badge-blue">2025 Resit Exam</span>
+        <span class="badge badge-orange">8 marks</span>
+        <span class="badge badge-green">Dataset Problems ⭐</span>
+      </div>
+      <div class="quiz-q">Q5. [2025 Q2a] You are building a multi-class text classifier to categorise recipes for a website into four classes: <em>comfort food, easy-to-make, Italian</em> and <em>pasta</em>. To build your labelled dataset, you search the website using existing search functionality and the class names (e.g. searching "comfort food"). You take the first five recipes for each class as labelled data. Discuss <strong>four problems</strong> with this approach.</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <ol style="margin-left:1.2rem;line-height:2.0">
+            <li><strong>This is a multi-label problem, not multi-class.</strong> A recipe can belong to multiple classes simultaneously (e.g., an Italian pasta dish is both "Italian" and "pasta"). A multi-class approach forces exactly one label, which is incorrect.</li>
+            <li><strong>Five recipes per class is far too few.</strong> 20 total samples is insufficient to train a classifier reliably, and leaves too little data for evaluation (you need separate train/val/test splits).</li>
+            <li><strong>Labels are derived from an automated search, not human annotation.</strong> The quality of labels depends on the existing search system's quality. Any search errors carry directly into your dataset labels.</li>
+            <li><strong>The classifier is bounded by the existing search system's performance.</strong> By using search results to create labels, the maximum achievable performance is what the search system already achieves — you can't improve on it, only replicate it.</li>
+          </ol>
+          <div class="info-box" style="margin-top:.8rem"><strong>Bonus point:</strong> The classes overlap semantically ("pasta" is a subset of "Italian"), leading to systematic label ambiguity. The dataset does not reflect the natural distribution of recipes on the site.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2025 Q3a: Computational cost ranking -->
+    <div class="quiz-question">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">
+        <span class="badge badge-blue">2025 Resit Exam</span>
+        <span class="badge badge-orange">2 marks</span>
+        <span class="badge badge-green">Model Comparison</span>
+      </div>
+      <div class="quiz-q">Q6. [2025 Q3a] Rank the following three approaches for sentiment classification by <strong>computational cost of deployment</strong>, from least to most expensive. Justify your answer.
+<br><br>1. BERT-base (fine-tuned on labelled data) &nbsp; 2. Logistic Regression with TF-IDF features &nbsp; 3. LLAMA-70B (prompted, zero-shot)</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <div class="success-box">
+            <strong>Ranking (least → most expensive):</strong><br>
+            <strong>Logistic Regression &lt; BERT-base &lt; LLAMA-70B</strong>
+          </div>
+          <ul style="margin-left:1.2rem;margin-top:.8rem;line-height:1.8">
+            <li><strong>Logistic Regression</strong>: A lightweight linear model over sparse TF-IDF vectors. Very fast inference, minimal memory. Can run on CPU.</li>
+            <li><strong>BERT-base</strong>: ~110M parameters transformer. Requires GPU for reasonable inference speed. Significantly more expensive than LR.</li>
+            <li><strong>LLAMA-70B</strong>: 70 billion parameters. Requires multiple high-end GPUs. Orders of magnitude more expensive than BERT in terms of memory, compute, and energy.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Practice: Model comparison -->
+    <div class="quiz-question" style="border-color:#7c3aed">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">
+        <span class="badge badge-purple">Generated Practice</span>
+        <span class="badge badge-orange">4 marks</span>
+      </div>
+      <div class="quiz-q">Q7. [Practice] A company wants to classify customer support tickets (100k tickets/day) into 5 categories. They have 10,000 labelled examples. They consider: (A) LLAMA-70B zero-shot, (B) fine-tuned BERT-base, (C) Logistic Regression with TF-IDF. Recommend an approach and justify based on: effectiveness, computational cost, and the available training data.</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <p><strong>Recommendation: Fine-tuned BERT-base (B)</strong></p>
+          <ul style="margin-left:1.2rem;line-height:1.8">
+            <li><strong>Effectiveness</strong>: With 10,000 labelled examples, fine-tuning BERT is feasible and typically outperforms logistic regression on complex classification. LLAMA zero-shot may be strong but unpredictable without task-specific fine-tuning.</li>
+            <li><strong>Computational cost</strong>: At 100k tickets/day, LLAMA-70B is prohibitively expensive. BERT can be deployed on GPU servers at reasonable cost. Logistic Regression would be cheapest but may sacrifice accuracy.</li>
+            <li><strong>Training data</strong>: 10,000 examples is sufficient to fine-tune BERT effectively. Logistic regression may work but BERT will generalise better to edge cases.</li>
+          </ul>
+          <div class="info-box" style="margin-top:.8rem"><strong>If budget is very tight:</strong> Start with Logistic Regression as baseline, then switch to BERT if performance is insufficient. Never jump straight to 70B models without justification.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2025 Q3d: Sub-word tokenization -->
+    <div class="quiz-question">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">
+        <span class="badge badge-blue">2025 Resit Exam</span>
+        <span class="badge badge-orange">4 marks</span>
+        <span class="badge badge-red">Sub-word Tokenization ⭐</span>
+      </div>
+      <div class="quiz-q">Q8. [2025 Q3d] A BERT-based model fine-tuned on open benchmark sentiment data classifies every sample mentioning the brand name "BeStep" as positive sentiment. False positives include:
+<ul style="margin-top:.4rem;margin-left:1.2rem">
+  <li>"I disliked my experience with bestep."</li>
+  <li>"@Bestep I placed an order three weeks ago, and still haven't gotten it!"</li>
+  <li>"I'm not happy with my purchase BeStep. I want a refund."</li>
+</ul>
+The problem is caused by sub-word tokenisation. Describe the problem and suggest a solution.</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <p><strong>Problem:</strong> BERT uses WordPiece tokenisation. The brand name "BeStep" / "bestep" is likely split into subwords such as <code>best ##ep</code>. The token "best" is strongly associated with positive sentiment in the model's training data. Therefore, any text containing "BeStep" triggers the positive sentiment prediction, regardless of the actual sentiment expressed.</p>
+          <p style="margin-top:.8rem"><strong>Solution:</strong> Replace the brand name "BeStep" with a neutral placeholder (e.g., <code>[BRAND]</code> or <code>COMPANY</code>) before feeding text to the model. This ensures the brand name doesn't tokenise into sentiment-bearing subwords. The placeholder itself won't carry any sentiment signal from pre-training.</p>
+          <div class="info-box" style="margin-top:.8rem"><strong>Why this matters:</strong> This is an example of a model exploiting spurious correlations in training data — the model associates the token "best" with positive sentiment because "best" commonly appears in positive reviews. The fix is to remove the source of the spurious signal.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2022 Q3a: Pre-processing justification -->
+    <div class="quiz-question">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">
+        <span class="badge badge-blue">2022 Exam</span>
+        <span class="badge badge-orange">4 marks</span>
+        <span class="badge badge-green">Pre-processing</span>
+      </div>
+      <div class="quiz-q">Q9. [2022 Q3a] You are building a patent classification system. You apply a pre-processing pipeline consisting of <strong>case normalisation</strong> and a <strong>stemmer</strong>. Justify each of these two pre-processing stages with an example of why each could lead to improved classification performance.</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <p><strong>Case Normalisation:</strong> Inconsistent capitalisation occurs in patents based on position in the sentence. For example, "textile" is a strong indicator of patent class D. At the start of a sentence it appears as "Textile" (capital T), but in the middle as "textile". Without case normalisation, these are treated as different tokens. Case folding ensures they are the same feature.</p>
+          <p style="margin-top:.8rem"><strong>Stemming:</strong> Plurality and tense rarely change the topic of a patent. For example, "textile" and "textiles" both indicate section D equally strongly. Stemming maps both to the root form (e.g., "textil"), treating them as the same feature and reducing sparsity.</p>
+          <div class="warn-box" style="margin-top:.8rem"><strong>Important:</strong> These justifications must be in context — always explain why it helps for the specific task (patent classification), not just in general.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Practice: Pre-processing -->
+    <div class="quiz-question" style="border-color:#7c3aed">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">
+        <span class="badge badge-purple">Generated Practice</span>
+        <span class="badge badge-orange">4 marks</span>
+      </div>
+      <div class="quiz-q">Q10. [Practice] You are building a sentiment classifier for hotel reviews. Justify the use of <strong>stopword removal</strong> and <strong>n-grams (bigrams)</strong> as pre-processing/feature choices. For each, provide a specific example showing why it helps for this task.</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <p><strong>Stopword Removal:</strong> Words like "the", "is", "a" appear in both positive and negative reviews equally and carry no sentiment signal. Removing them reduces the feature space and lets the classifier focus on signal-bearing words. Example: "The room is dirty" → after removal: "room dirty" — the remaining words directly indicate negative sentiment.</p>
+          <p style="margin-top:.8rem"><strong>Bigrams:</strong> Single words can be misleading. "not" alone means little, but "not good" and "not clean" are clearly negative. "highly recommend" as a bigram is a strong positive signal that would be lost if "highly" and "recommend" were treated as separate features. Bigrams capture sentiment that depends on word order and context.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2025 Q2b: Duplicated samples -->
+    <div class="quiz-question">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">
+        <span class="badge badge-blue">2025 Resit Exam</span>
+        <span class="badge badge-orange">4 marks</span>
+        <span class="badge badge-orange">Data Leakage ⭐</span>
+      </div>
+      <div class="quiz-q">Q11. [2025 Q2b] You realise that samples with the "comfort food" label have been triplicated (repeated 3×) in your dataset. This error occurred before any data splitting. Give <strong>four effects</strong> this would have on training and evaluation.</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <ol style="margin-left:1.2rem;line-height:2.0">
+            <li><strong>Class imbalance</strong> — "comfort food" now has 3× more samples than other classes, creating artificial imbalance.</li>
+            <li><strong>Training bias</strong> — The classifier will over-focus on "comfort food" features during training, potentially at the expense of other classes.</li>
+            <li><strong>Test set leakage</strong> — When splitting the data, copies of the same "comfort food" sample may end up in both the training set AND the evaluation (val/test) set. This means the model is effectively evaluated on data it has already seen, inflating performance metrics.</li>
+            <li><strong>Unrealistic class distribution</strong> — The artificial imbalance doesn't reflect the true distribution of recipes on the website, so performance metrics won't reflect real-world performance.</li>
+          </ol>
+          <div class="danger-box" style="margin-top:.8rem"><strong>Key concept:</strong> Test set leakage (data contamination) is one of the most serious evaluation errors — it makes your results look better than they really are. Always deduplicate before splitting!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generated: Fleiss kappa / IAC -->
+    <div class="quiz-question" style="border-color:#7c3aed">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">
+        <span class="badge badge-purple">Generated Practice</span>
+        <span class="badge badge-orange">4 marks</span>
+      </div>
+      <div class="quiz-q">Q12. [Practice] A colleague argues that a dataset with Fleiss kappa of 0.52 has unreliable labels and suggests replacing human annotators with a Large Language Model. Give <strong>three counter-arguments</strong> to this proposal.</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <ol style="margin-left:1.2rem;line-height:2.0">
+            <li><strong>0.52 indicates "Moderate agreement"</strong> — this is not necessarily unreliable. For subjective tasks (sentiment, sarcasm), kappa values of 0.4–0.7 are commonly acceptable. The interpretation depends on task difficulty.</li>
+            <li><strong>An LLM won't fix a poorly defined task</strong> — if disagreement stems from an ambiguous annotation scheme, an LLM will also be uncertain or inconsistent. The root cause (task definition) must be fixed first.</li>
+            <li><strong>LLMs may have biases and inconsistencies</strong> — they can produce different labels for the same text on different runs, and may reflect biases from pre-training data that are inappropriate for your domain. Human annotators with domain expertise are more reliable for specialised tasks.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generated: Cross-lingual -->
+    <div class="quiz-question" style="border-color:#7c3aed">
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem">
+        <span class="badge badge-purple">Generated Practice</span>
+        <span class="badge badge-orange">4 marks</span>
+      </div>
+      <div class="quiz-q">Q13. [Practice — cross-lingual, similar to 2025 Q3c] You want to extend your English sentiment classifier to French. Give one problem specific to using <strong>Logistic Regression with TF-IDF</strong> for French, and a different problem specific to using <strong>BERT-base</strong> (trained on English) for French. Then suggest one solution that addresses both problems.</div>
+      <div class="accordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">Show Model Answer <span>+</span></div>
+        <div class="accordion-body">
+          <p><strong>Logistic Regression problem:</strong> TF-IDF features are based on vocabulary seen during training (English tokens). French text will consist almost entirely of unseen tokens, which are either ignored or mapped to an "unknown" token. The model has no meaningful features to classify French text — effectively useless.</p>
+          <p style="margin-top:.8rem"><strong>BERT-base problem:</strong> BERT-base's WordPiece vocabulary and embeddings were trained on English corpora. French words will be split into arbitrary character-level subwords that have no meaningful representations. Even if words aren't marked "unknown", the subword embeddings carry no French semantic information.</p>
+          <p style="margin-top:.8rem"><strong>Solution that addresses both:</strong> Use a multilingual model such as <strong>mBERT</strong> (multilingual BERT) or <strong>XLM-RoBERTa</strong>, which are pre-trained on 100+ languages. These models have vocabularies covering French and learn language-agnostic representations. Alternatively, collect French sentiment data and train new models from scratch for French.</p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /pastpapers -->
+
+</section>
+
+</div><!-- /container -->
+
+<script>
+// ===== TABS =====
+function showTab(id, group) {
+  document.querySelectorAll('.tab-content.' + group).forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(group)) btn.classList.remove('active');
+  });
+  const target = document.getElementById(id);
+  if(target) { target.classList.add('active'); target.classList.add('animate-in'); }
+  event.target.classList.add('active');
+}
+
+// ===== ACCORDION =====
+function toggleAccordion(header) {
+  const body = header.nextElementSibling;
+  const span = header.querySelector('span');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  span.textContent = isOpen ? '+' : '−';
+}
+
+// ===== SCROLL NAV =====
+function scrollTo(id) {
+  document.querySelector(id).scrollIntoView({behavior:'smooth'});
+  document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// ===== CONFUSION MATRIX CALCULATOR =====
+function calcMetrics() {
+  const tp = parseFloat(document.getElementById('tp').value)||0;
+  const fp = parseFloat(document.getElementById('fp').value)||0;
+  const tn = parseFloat(document.getElementById('tn').value)||0;
+  const fn = parseFloat(document.getElementById('fn').value)||0;
+  const total = tp+fp+tn+fn;
+  const acc = total ? ((tp+tn)/total).toFixed(3) : '—';
+  const prec = (tp+fp) ? (tp/(tp+fp)).toFixed(3) : '—';
+  const rec  = (tp+fn) ? (tp/(tp+fn)).toFixed(3) : '—';
+  const p = parseFloat(prec), r = parseFloat(rec);
+  const f1 = (!isNaN(p)&&!isNaN(r)&&(p+r)>0) ? (2*p*r/(p+r)).toFixed(3) : '—';
+  document.getElementById('m-acc').textContent = acc;
+  document.getElementById('m-prec').textContent = prec;
+  document.getElementById('m-rec').textContent = rec;
+  document.getElementById('m-f1').textContent = f1;
+}
+calcMetrics();
+
+// ===== SIGMOID CANVAS =====
+function drawSigmoid() {
+  const c = document.getElementById('sigmoidCanvas');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  const W=c.width, H=c.height, pad=30;
+  // Axes
+  ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
+  // Labels
+  ctx.fillStyle='#64748b'; ctx.font='10px sans-serif';
+  ctx.fillText('z',(W-pad)+4,(H-pad)+4);
+  ctx.fillText('σ(z)',pad-18,pad);
+  ctx.fillText('1',pad-15,pad+4);
+  ctx.fillText('0.5',pad-22,(H-pad)/2+4);
+  ctx.fillText('0',pad-12,H-pad+4);
+  // Grid
+  ctx.strokeStyle='#f1f5f9'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(pad,(H-pad)/2); ctx.lineTo(W-pad,(H-pad)/2); ctx.stroke();
+  // Sigmoid curve
+  ctx.strokeStyle='#2563eb'; ctx.lineWidth=2.5;
+  ctx.beginPath();
+  for(let px=pad; px<=W-pad; px++){
+    const z = (px-pad)/(W-2*pad)*12-6;
+    const sig = 1/(1+Math.exp(-z));
+    const y = (H-pad) - sig*(H-2*pad);
+    px===pad ? ctx.moveTo(px,y) : ctx.lineTo(px,y);
+  }
+  ctx.stroke();
+  // Current point
+  const slider = document.getElementById('sigSlider');
+  if(slider){
+    const z=parseFloat(slider.value);
+    const sig=1/(1+Math.exp(-z));
+    const px = pad + (z+6)/12*(W-2*pad);
+    const py = (H-pad) - sig*(H-2*pad);
+    ctx.fillStyle='#dc2626'; ctx.beginPath(); ctx.arc(px,py,6,0,Math.PI*2); ctx.fill();
+    // Dotted lines
+    ctx.strokeStyle='#fca5a5'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(px,H-pad); ctx.lineTo(px,py); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad,py); ctx.lineTo(px,py); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+function updateSigmoid() {
+  const z=parseFloat(document.getElementById('sigSlider').value);
+  const sig=1/(1+Math.exp(-z));
+  document.getElementById('sigZ').textContent=z.toFixed(1);
+  document.getElementById('sigVal').textContent=sig.toFixed(3);
+  drawSigmoid();
+}
+drawSigmoid();
+
+// ===== ROC CANVAS =====
+function drawROC() {
+  const c = document.getElementById('rocCanvas');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  const W=c.width, H=c.height, pad=35;
+  ctx.clearRect(0,0,W,H);
+  // Background
+  ctx.fillStyle='#f8fafc'; ctx.fillRect(0,0,W,H);
+  // Grid
+  ctx.strokeStyle='#e2e8f0'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const x=pad+i*(W-2*pad)/4, y=pad+i*(H-2*pad)/4;
+    ctx.beginPath(); ctx.moveTo(x,pad); ctx.lineTo(x,H-pad); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(W-pad,y); ctx.stroke();
+  }
+  // Axes
+  ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(pad,pad); ctx.lineTo(pad,H-pad); ctx.lineTo(W-pad,H-pad); ctx.stroke();
+  ctx.fillStyle='#64748b'; ctx.font='11px sans-serif';
+  ctx.fillText('TPR (Recall)',pad,pad-8);
+  ctx.fillText('FPR',W-pad-10,H-10);
+  ctx.fillText('1.0',pad-25,pad+4);
+  ctx.fillText('0',pad-12,H-pad+12);
+  // Random diagonal
+  ctx.strokeStyle='#94a3b8'; ctx.lineWidth=1.5; ctx.setLineDash([5,5]);
+  ctx.beginPath(); ctx.moveTo(pad,H-pad); ctx.lineTo(W-pad,pad); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#94a3b8'; ctx.font='10px sans-serif';
+  ctx.fillText('Random',W-95,H-65);
+  // Good ROC
+  const pts1=[[0,0],[0.05,0.4],[0.1,0.7],[0.2,0.88],[0.4,0.95],[0.6,0.98],[1,1]];
+  ctx.strokeStyle='#2563eb'; ctx.lineWidth=2.5;
+  ctx.beginPath();
+  pts1.forEach(([fx,fy],i)=>{
+    const x=pad+fx*(W-2*pad), y=(H-pad)-fy*(H-2*pad);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  // Fill AUC area
+  ctx.fillStyle='rgba(37,99,235,0.08)';
+  ctx.beginPath();
+  pts1.forEach(([fx,fy],i)=>{
+    const x=pad+fx*(W-2*pad), y=(H-pad)-fy*(H-2*pad);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.lineTo(W-pad,H-pad); ctx.lineTo(pad,H-pad); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#1d4ed8'; ctx.font='bold 12px sans-serif';
+  ctx.fillText('Good (AUC≈0.95)',pad+10,pad+25);
+  ctx.fillStyle='#94a3b8'; ctx.font='11px sans-serif';
+  ctx.fillText('AUC=0.5',W-100,H-80);
+}
+drawROC();
+
+// ===== FIT CANVAS =====
+function drawFit() {
+  const c = document.getElementById('fitCanvas');
+  if(!c) return;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  const W=c.width, H=c.height;
+  // Data points
+  const pts=[[40,160],[70,120],[90,100],[110,80],[140,60],[160,40],[180,30],[220,20],[260,25],[290,40]];
+  // Underfitting line (straight)
+  ctx.strokeStyle='#dc2626'; ctx.lineWidth=2; ctx.setLineDash([5,3]);
+  ctx.beginPath(); ctx.moveTo(30,180); ctx.lineTo(300,30); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#dc2626'; ctx.font='10px sans-serif'; ctx.fillText('Underfitting',30,170);
+  // Good fit curve
+  ctx.strokeStyle='#059669'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(30,175); ctx.bezierCurveTo(100,100,200,40,310,15); ctx.stroke();
+  ctx.fillStyle='#059669'; ctx.fillText('Good Fit',120,55);
+  // Overfitting (wiggly)
+  ctx.strokeStyle='#d97706'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(30,175);
+  pts.forEach(([x,y])=>ctx.lineTo(x,y));
+  ctx.lineTo(310,50); ctx.stroke();
+  ctx.fillStyle='#d97706'; ctx.fillText('Overfitting',220,60);
+  // Points
+  pts.forEach(([x,y])=>{
+    ctx.fillStyle='#1e293b'; ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fill();
+  });
+}
+drawFit();
+
+// ===== MCQ QUIZ =====
+const questions = [
+  {
+    q: "Which metric is most appropriate when your dataset has 95% negative examples and 5% positive examples?",
+    opts: ["Accuracy","F1-Score (positive class)","Training loss","Number of features"],
+    correct: 1,
+    explain: "Accuracy is misleading with class imbalance (a classifier predicting always negative gets 95% accuracy). F1-Score focuses on the minority class."
+  },
+  {
+    q: "A classifier has Precision=0.9 and Recall=0.3. What does this tell you?",
+    opts: [
+      "The classifier makes very few predictions, but when it does, they're usually correct",
+      "The classifier finds most positives but has many false alarms",
+      "The classifier is well-balanced",
+      "Accuracy must be above 0.9"
+    ],
+    correct: 0,
+    explain: "High precision + low recall = the classifier is conservative. It misses many positives (high FN, low recall) but when it predicts positive, it's usually right (low FP, high precision)."
+  },
+  {
+    q: "In a binary confusion matrix, False Positives (FP) are:",
+    opts: [
+      "Items correctly identified as positive",
+      "Items that are actually positive but predicted as negative",
+      "Items that are actually negative but predicted as positive",
+      "Items correctly identified as negative"
+    ],
+    correct: 2,
+    explain: "FP = False Positive = predicted positive, actually negative. This is a Type I error."
+  },
+  {
+    q: "K-Fold Cross-Validation is most useful when:",
+    opts: [
+      "You have a very large dataset",
+      "You have a small dataset and want a reliable generalisation estimate",
+      "You need to speed up training",
+      "You are doing unsupervised learning"
+    ],
+    correct: 1,
+    explain: "K-Fold is most valuable for small datasets where holding out a single test set wastes too much training data. It gives a more robust estimate by using each fold as a test set."
+  },
+  {
+    q: "The sigmoid function σ(z) maps its input to which range?",
+    opts: ["(−1, 1)","(0, 1)","(0, ∞)","(−∞, ∞)"],
+    correct: 1,
+    explain: "σ(z) = 1/(1+e^−z) maps any real number to the open interval (0,1), making it suitable for probability output."
+  },
+  {
+    q: "Macro-averaged F1 treats all classes:",
+    opts: [
+      "Proportionally to their frequency in the dataset",
+      "Equally, regardless of how many samples each has",
+      "Only evaluates the majority class",
+      "Only evaluates the minority class"
+    ],
+    correct: 1,
+    explain: "Macro average takes the unweighted mean of per-class metrics — each class contributes equally regardless of size. Good for when all classes are equally important."
+  },
+  {
+    q: "What does AUC = 0.5 indicate for a classifier?",
+    opts: [
+      "50% accuracy",
+      "The classifier performs no better than random chance",
+      "50% precision",
+      "The classifier is well-calibrated"
+    ],
+    correct: 1,
+    explain: "AUC=0.5 means the ROC curve lies along the diagonal (y=x), meaning the classifier cannot discriminate between classes — equivalent to random guessing."
+  },
+  {
+    q: "Which of the following would be a sign of overfitting?",
+    opts: [
+      "High training error and high validation error",
+      "Low training error and high validation error",
+      "Low training error and low validation error",
+      "High training error and low validation error"
+    ],
+    correct: 1,
+    explain: "Overfitting = the model fits training data too closely. Training error is low (memorised training data) but validation error is high (fails to generalise to new data)."
+  },
+  {
+    q: "In One-vs-All (OvA) classification with 5 classes, how many binary classifiers are trained?",
+    opts: ["10","4","5","25"],
+    correct: 2,
+    explain: "OvA trains one binary classifier per class. With 5 classes, 5 classifiers are trained, each discriminating one class vs all others."
+  },
+  {
+    q: "Cross-entropy loss for a binary classifier is minimised when:",
+    opts: [
+      "The predicted probability is 0 for all instances",
+      "The predicted probability matches the true labels as closely as possible",
+      "The number of features is maximised",
+      "The learning rate is set to 1.0"
+    ],
+    correct: 1,
+    explain: "Cross-entropy loss penalises predictions that are far from the true label. It is minimised when ŷ ≈ y — the model confidently predicts the correct class."
+  },
+  {
+    q: "System A has Train F1=0.62* and Test F1=0.58*. System B has Train F1=0.70* and Test F1=0.49. (* = statistically significant vs baseline). Which statement is correct?",
+    opts: [
+      "System B should be deployed because it has higher training F1",
+      "System A generalises better; System B shows signs of overfitting",
+      "Both systems are overfitting since test F1 < train F1",
+      "System B is better because statistical significance is only needed on test"
+    ],
+    correct: 1,
+    explain: "System A is statistically significantly better than baseline on both train AND test — it generalises. System B is impressive on train but performs worse than baseline on test, which is classic overfitting."
+  },
+  {
+    q: "You are using BERT to classify brand sentiment. It classifies every review mentioning 'BestBuy' as positive. The most likely cause is:",
+    opts: [
+      "BERT has too few layers",
+      "The brand name tokenises into 'best ##buy', causing 'best' to trigger positive sentiment",
+      "The training data has too few positive examples",
+      "BERT's attention mechanism ignores entity names"
+    ],
+    correct: 1,
+    explain: "WordPiece tokenisation splits 'BestBuy' into subwords. The token 'best' appears frequently in positive contexts in BERT's pre-training data, so it triggers positive predictions. Fix: replace brand names with a neutral placeholder."
+  },
+  {
+    q: "A dataset has samples labelled by searching a website and taking the top 5 results per class. What is the MOST serious problem with this approach?",
+    opts: [
+      "The dataset will be too large",
+      "The classifier is bounded by the existing search system's performance",
+      "The labels will be in multiple languages",
+      "Stemming cannot be applied to search results"
+    ],
+    correct: 1,
+    explain: "If you use a search system's output to create labels, the best your classifier can do is replicate what the search system already does. You can't beat your own label generation process."
+  },
+  {
+    q: "Training data samples are accidentally triplicated before the train/test split. What is the MOST dangerous consequence?",
+    opts: [
+      "The vocabulary size increases",
+      "The model trains faster",
+      "Copies of the same sample appear in both train and test sets (data leakage), inflating evaluation scores",
+      "The tokeniser produces more subwords"
+    ],
+    correct: 2,
+    explain: "When duplicated samples are split, the same example can appear in both training and test sets. The model is then evaluated on data it has already seen, which artificially inflates performance metrics — this is data/test set leakage."
+  },
+  {
+    q: "Fleiss Kappa of 0.61 between annotators means:",
+    opts: [
+      "Labels are completely unreliable",
+      "There is substantial agreement (moderate-to-high)",
+      "Annotators disagree more than they agree",
+      "The task is impossible to annotate"
+    ],
+    correct: 1,
+    explain: "Fleiss Kappa interpretation: <0.2 slight, 0.21-0.40 fair, 0.41-0.60 moderate, 0.61-0.80 substantial, >0.80 almost perfect. Kappa=0.61 is on the good end — substantial agreement."
+  },
+  {
+    q: "Which of the following is NOT a valid anomaly in an evaluation report?",
+    opts: [
+      "Perplexity reported for a classification task",
+      "Test set larger than training set",
+      "Training F1 = 0.78 when Precision = 0.80 and Recall = 0.76",
+      "Training accuracy of 0.85 when (TP+TN)/Total = 0.72"
+    ],
+    correct: 2,
+    explain: "F1 = 2×P×R/(P+R) = 2×0.80×0.76/(0.80+0.76) ≈ 0.779 ≈ 0.78. This is mathematically correct, so it is NOT an anomaly. The others are: perplexity ≠ classification metric; test > train violates best practice; reported accuracy ≠ calculated accuracy."
+  },
+  {
+    q: "Logistic Regression with TF-IDF is applied to classify French text but was trained only on English data. What happens?",
+    opts: [
+      "It works perfectly because TF-IDF is language-agnostic",
+      "French tokens are mostly unseen, so the model has almost no useful features",
+      "The model automatically translates French to English",
+      "Precision increases because French words are rare"
+    ],
+    correct: 1,
+    explain: "TF-IDF features are based on the training vocabulary (English tokens). French words will be unseen tokens, mapped to zero or ignored. The model loses almost all its features and cannot classify reliably."
+  }
+];
+
+let answered = new Array(questions.length).fill(false);
+let score = 0;
+
+function renderQuiz() {
+  const container = document.getElementById('quiz-container');
+  container.innerHTML = '';
+  questions.forEach((q, qi) => {
+    const div = document.createElement('div');
+    div.className = 'quiz-question';
+    div.innerHTML = `<div class="quiz-q">Q${qi+1}. ${q.q}</div>
+      <div class="quiz-options">
+        ${q.opts.map((o,oi)=>`<div class="quiz-opt" onclick="answerQuiz(${qi},${oi},this)">${String.fromCharCode(65+oi)}. ${o}</div>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="fb-${qi}"></div>`;
+    container.appendChild(div);
+  });
+}
+
+function answerQuiz(qi, selected, el) {
+  if(answered[qi]) return;
+  answered[qi] = true;
+  const q = questions[qi];
+  const opts = el.parentElement.querySelectorAll('.quiz-opt');
+  opts[q.correct].classList.add('correct');
+  if(selected !== q.correct) { el.classList.add('wrong'); }
+  else { score++; }
+  const fb = document.getElementById('fb-'+qi);
+  fb.style.background = selected===q.correct?'#ecfdf5':'#fef2f2';
+  fb.style.border = `1px solid ${selected===q.correct?'#059669':'#dc2626'}`;
+  fb.textContent = (selected===q.correct?'✓ Correct! ':'✗ Incorrect. ') + q.explain;
+  fb.classList.add('show');
+  const done = answered.filter(Boolean).length;
+  document.getElementById('quiz-score').textContent = `Score: ${score} / ${done} answered`;
+}
+
+function resetQuiz() {
+  answered = new Array(questions.length).fill(false);
+  score = 0;
+  document.getElementById('quiz-score').textContent = '';
+  renderQuiz();
+}
+
+renderQuiz();
+</script>
+</body>
+</html>
