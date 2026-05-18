@@ -1,0 +1,2193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 6: POS Tagging & Parsing — Interactive Notes</title>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --card: #22263a;
+    --accent: #7c6af7;
+    --accent2: #38bdf8;
+    --accent3: #34d399;
+    --accent4: #f87171;
+    --accent5: #fbbf24;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --border: #2d3356;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 16px; line-height: 1.7; }
+
+  /* NAV */
+  nav { position: sticky; top: 0; z-index: 100; background: rgba(15,17,23,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; gap: 0; overflow-x: auto; }
+  nav a { color: var(--muted); text-decoration: none; padding: 1rem 1.1rem; font-size: 0.82rem; font-weight: 600; white-space: nowrap; border-bottom: 3px solid transparent; transition: all .2s; letter-spacing:.03em; text-transform: uppercase; }
+  nav a:hover, nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* LAYOUT */
+  .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+  section { margin-bottom: 5rem; }
+  h1 { font-size: 2.6rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: .5rem; }
+  h2 { font-size: 1.7rem; font-weight: 700; color: var(--accent2); margin: 2.5rem 0 1rem; border-left: 4px solid var(--accent2); padding-left: .8rem; }
+  h3 { font-size: 1.2rem; font-weight: 700; color: var(--accent3); margin: 1.5rem 0 .6rem; }
+  h4 { font-size: 1rem; font-weight: 700; color: var(--accent5); margin: 1rem 0 .4rem; }
+  p { color: var(--text); margin-bottom: .8rem; }
+
+  /* CARDS */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.2rem; }
+  .card-accent { border-left: 4px solid var(--accent); }
+  .card-blue { border-left: 4px solid var(--accent2); }
+  .card-green { border-left: 4px solid var(--accent3); }
+  .card-red { border-left: 4px solid var(--accent4); }
+  .card-yellow { border-left: 4px solid var(--accent5); }
+
+  /* HIGHLIGHT BOXES */
+  .info-box { background: rgba(124,106,247,.12); border: 1px solid rgba(124,106,247,.4); border-radius: 10px; padding: 1rem 1.2rem; margin: 1rem 0; }
+  .warn-box { background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.4); border-radius: 10px; padding: 1rem 1.2rem; margin: 1rem 0; }
+  .success-box { background: rgba(52,211,153,.1); border: 1px solid rgba(52,211,153,.4); border-radius: 10px; padding: 1rem 1.2rem; margin: 1rem 0; }
+  .error-box { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.4); border-radius: 10px; padding: 1rem 1.2rem; margin: 1rem 0; }
+
+  /* FORMULA */
+  .formula { background: #181c2e; border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem 1.5rem; margin: 1rem 0; overflow-x: auto; text-align: center; font-size: 1.05rem; }
+
+  /* CODE */
+  code { background: #181c2e; color: var(--accent3); padding: .15rem .4rem; border-radius: 4px; font-family: 'Consolas', monospace; font-size: .9rem; }
+  pre { background: #181c2e; border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem; overflow-x: auto; margin: 1rem 0; }
+  pre code { background: none; padding: 0; color: var(--accent3); }
+
+  /* TABLES */
+  .tbl-wrap { overflow-x: auto; margin: 1rem 0; }
+  table { border-collapse: collapse; width: 100%; min-width: 400px; }
+  th { background: rgba(124,106,247,.25); color: var(--accent); padding: .7rem 1rem; font-size: .85rem; letter-spacing:.05em; text-transform: uppercase; border: 1px solid var(--border); }
+  td { padding: .6rem 1rem; border: 1px solid var(--border); color: var(--text); }
+  tr:nth-child(even) td { background: rgba(255,255,255,.03); }
+  tr:hover td { background: rgba(124,106,247,.08); }
+
+  /* TAGS */
+  .tag { display: inline-block; padding: .2rem .6rem; border-radius: 20px; font-size: .78rem; font-weight: 700; margin: .1rem; }
+  .tag-noun { background: rgba(56,189,248,.2); color: var(--accent2); }
+  .tag-verb { background: rgba(52,211,153,.2); color: var(--accent3); }
+  .tag-adj { background: rgba(251,191,36,.2); color: var(--accent5); }
+  .tag-det { background: rgba(248,113,113,.2); color: var(--accent4); }
+  .tag-prep { background: rgba(124,106,247,.2); color: var(--accent); }
+  .tag-propn { background: rgba(167,139,250,.2); color: #a78bfa; }
+  .tag-punct { background: rgba(148,163,184,.2); color: var(--muted); }
+  .tag-aux { background: rgba(251,146,60,.2); color: #fb923c; }
+
+  /* POS SENTENCE DISPLAY */
+  .pos-sentence { display: flex; flex-wrap: wrap; gap: .5rem; align-items: flex-end; margin: 1rem 0; }
+  .pos-word { display: flex; flex-direction: column; align-items: center; gap: .25rem; }
+  .pos-word span:first-child { color: var(--text); font-weight: 600; font-size: 1rem; }
+
+  /* PIPELINE */
+  .pipeline { display: flex; flex-wrap: wrap; gap: 0; align-items: center; margin: 1.5rem 0; }
+  .pipe-step { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: .6rem 1rem; font-size: .85rem; font-weight: 600; color: var(--accent2); white-space: nowrap; }
+  .pipe-arrow { color: var(--accent); padding: 0 .3rem; font-size: 1.2rem; }
+
+  /* HMM DIAGRAM */
+  .hmm-diagram { overflow-x: auto; padding: 1rem 0; }
+
+  /* VITERBI TABLE */
+  .viterbi-grid { display: grid; gap: 1rem; }
+  .viterbi-step { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+  .viterbi-step.highlight { border-color: var(--accent); }
+
+  /* QUIZ */
+  .quiz-section { margin-top: 3rem; }
+  .question-block { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .question-block h4 { color: var(--accent5); margin-bottom: 1rem; }
+  .question-text { color: var(--text); font-weight: 500; margin-bottom: 1rem; font-size: 1rem; }
+  .options label { display: flex; align-items: flex-start; gap: .7rem; padding: .5rem .7rem; border-radius: 8px; cursor: pointer; margin-bottom: .4rem; border: 1px solid transparent; transition: all .2s; }
+  .options label:hover { background: rgba(124,106,247,.1); border-color: rgba(124,106,247,.3); }
+  .options input[type=radio], .options input[type=checkbox] { margin-top: .2rem; accent-color: var(--accent); }
+  .options input[type=text], .options textarea { width: 100%; background: #181c2e; border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: .6rem .9rem; font-size: .95rem; font-family: inherit; margin-top: .3rem; resize: vertical; }
+  .check-btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: .55rem 1.4rem; cursor: pointer; font-weight: 700; font-size: .9rem; margin-top: .8rem; transition: opacity .2s; }
+  .check-btn:hover { opacity: .85; }
+  .feedback { margin-top: .8rem; padding: .7rem 1rem; border-radius: 8px; font-weight: 600; display: none; }
+  .feedback.correct { background: rgba(52,211,153,.15); color: var(--accent3); border: 1px solid rgba(52,211,153,.4); display: block; }
+  .feedback.wrong { background: rgba(248,113,113,.15); color: var(--accent4); border: 1px solid rgba(248,113,113,.4); display: block; }
+  .feedback.info { background: rgba(56,189,248,.1); color: var(--accent2); border: 1px solid rgba(56,189,248,.3); display: block; }
+
+  /* ANIMATION: fade-in */
+  .fade-in { opacity: 0; transform: translateY(24px); transition: opacity .5s ease, transform .5s ease; }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+  /* TRANSITION PARSER ANIMATION */
+  .parser-state { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-start; margin: 1rem 0; }
+  .parser-box { background: #181c2e; border: 1px solid var(--border); border-radius: 8px; padding: .8rem 1.2rem; min-width: 180px; }
+  .parser-box h5 { color: var(--muted); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; margin-bottom: .5rem; }
+  .parser-tokens { display: flex; gap: .4rem; flex-wrap: wrap; }
+  .parser-token { background: rgba(124,106,247,.2); color: var(--accent); padding: .25rem .6rem; border-radius: 6px; font-size: .9rem; font-weight: 600; }
+  .parser-token.root { background: rgba(248,113,113,.2); color: var(--accent4); }
+  .parser-action { background: rgba(52,211,153,.15); border: 1px solid rgba(52,211,153,.4); color: var(--accent3); padding: .4rem 1rem; border-radius: 8px; font-weight: 700; font-size: .9rem; display: inline-block; margin-bottom: .5rem; }
+  .parser-nav { display: flex; gap: .7rem; margin-top: 1rem; align-items: center; }
+  .nav-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: .5rem 1.1rem; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: .9rem; transition: all .2s; }
+  .nav-btn:hover:not(:disabled) { background: rgba(124,106,247,.2); border-color: var(--accent); color: var(--accent); }
+  .nav-btn:disabled { opacity: .35; cursor: not-allowed; }
+  .step-counter { color: var(--muted); font-size: .85rem; }
+
+  /* TREE SVG */
+  .tree-container { overflow-x: auto; }
+  .tree-container svg text { font-family: 'Segoe UI', sans-serif; }
+
+  /* TOGGLE ANSWER */
+  .show-answer-btn { background: var(--surface); border: 1px solid var(--accent); color: var(--accent); padding: .4rem 1rem; border-radius: 8px; cursor: pointer; font-size: .85rem; font-weight: 600; margin-top: .5rem; transition: all .2s; }
+  .show-answer-btn:hover { background: rgba(124,106,247,.15); }
+  .answer-reveal { display: none; margin-top: .8rem; padding: 1rem; background: rgba(52,211,153,.08); border: 1px solid rgba(52,211,153,.3); border-radius: 8px; color: var(--accent3); }
+  .answer-reveal.shown { display: block; }
+
+  /* PROGRESS BAR */
+  .progress-bar-wrap { height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 2rem; position: sticky; top: 53px; z-index: 99; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; width: 0%; transition: width .3s; }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+
+  /* QUOTE */
+  blockquote { border-left: 4px solid var(--accent5); padding: .6rem 1rem; color: var(--accent5); font-style: italic; background: rgba(251,191,36,.06); border-radius: 0 8px 8px 0; margin: 1rem 0; }
+
+  /* BADGE */
+  .badge { display: inline-block; font-size: .75rem; font-weight: 700; padding: .15rem .5rem; border-radius: 20px; margin-left: .4rem; vertical-align: middle; }
+  .badge-exam { background: rgba(248,113,113,.25); color: var(--accent4); }
+  .badge-key { background: rgba(52,211,153,.2); color: var(--accent3); }
+
+  /* EXAM SECTION HEADER */
+  .exam-type-header { display: flex; align-items: center; gap: 1rem; margin: 2.5rem 0 1.2rem; }
+  .exam-type-badge { background: linear-gradient(135deg, var(--accent), #4f46e5); color: #fff; padding: .4rem 1.2rem; border-radius: 20px; font-weight: 800; font-size: .9rem; letter-spacing: .05em; }
+  .exam-type-header hr { flex: 1; border: none; border-top: 1px solid var(--border); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    h1 { font-size: 1.8rem; }
+    h2 { font-size: 1.3rem; }
+    .container { padding: 1rem 1rem 4rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav id="main-nav">
+  <a href="#overview" class="active">Overview</a>
+  <a href="#nlp-background">NLP</a>
+  <a href="#pos">POS</a>
+  <a href="#hmm">HMM</a>
+  <a href="#viterbi">Viterbi</a>
+  <a href="#parsing">Parsing</a>
+  <a href="#dependency">Dependency</a>
+  <a href="#transition">Transition</a>
+  <a href="#exam">Exam Q&amp;A</a>
+  <a href="#past-papers">Past Papers</a>
+  <a href="#practice-bank">Practice Bank</a>
+</nav>
+
+<div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-bar"></div></div>
+
+<div class="container">
+
+<!-- HERO -->
+<section id="overview" class="fade-in">
+  <h1>POS Tagging &amp; Parsing</h1>
+  <p style="color:var(--muted); font-size:1.05rem;">Text as Data — Lecture 6 &nbsp;|&nbsp; Sean MacAvaney &amp; Jake Lever &nbsp;|&nbsp; Based on Jurafsky &amp; Martin (ed3)</p>
+
+  <div class="card card-accent" style="margin-top:1.5rem;">
+    <h3 style="margin-top:0;">What you will learn</h3>
+    <div class="grid-2">
+      <div>
+        <p><strong style="color:var(--accent2);">Sequential Labelling</strong></p>
+        <ul style="color:var(--muted); padding-left:1.2rem;">
+          <li>Parts-of-Speech (POS) Tagging</li>
+          <li>Named Entity Recognition (NER)</li>
+          <li>Hidden Markov Models (HMM)</li>
+          <li>Viterbi Algorithm</li>
+        </ul>
+      </div>
+      <div>
+        <p><strong style="color:var(--accent2);">Tree Structures</strong></p>
+        <ul style="color:var(--muted); padding-left:1.2rem;">
+          <li>Constituency Parsing</li>
+          <li>Dependency Parsing</li>
+          <li>Transition-Based Parsing</li>
+          <li>Abstract Meaning Representation</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>Core Insight:</strong> Text is more than a bag-of-words. Real NLP models <em>structure</em> — who did what to whom, how phrases group, what refers to what.
+  </div>
+</section>
+
+<!-- NLP BACKGROUND -->
+<section id="nlp-background" class="fade-in">
+  <h2>NLP Background</h2>
+
+  <blockquote>"John drank some wine on the new sofa. It was red."</blockquote>
+  <p>A bag-of-words model sees a set of tokens. An NLP system can see <em>structure</em>: noun phrases, subjects, objects, anaphora references.</p>
+
+  <h3>Three Levels of NLP</h3>
+  <div class="grid-3">
+    <div class="card card-accent">
+      <h4>Syntax</h4>
+      <p>How words combine to form grammatical structure.</p>
+      <p><em>Example:</em> <code>bank</code> is a direct object.</p>
+    </div>
+    <div class="card card-blue">
+      <h4>Semantics</h4>
+      <p>How words convey meaning.</p>
+      <p><em>Example:</em> <code>bank</code> = financial institution (not riverbank).</p>
+    </div>
+    <div class="card card-green">
+      <h4>Pragmatics</h4>
+      <p>How context contributes to meaning.</p>
+      <p><em>Example:</em> <code>it</code> refers to the bank, not Rachel.</p>
+    </div>
+  </div>
+
+  <h3>Ambiguity is Everywhere</h3>
+  <div class="card card-yellow">
+    <h4>Real Newspaper Headlines</h4>
+    <ul style="color:var(--muted); padding-left:1.2rem;">
+      <li>"Boy paralyzed after tumor fights back to gain black belt"</li>
+      <li>"Scientists study whales from space"</li>
+      <li>"Juvenile court to try shooting defendant"</li>
+    </ul>
+    <p style="margin-top:.6rem;"><em>Each can be parsed in multiple ways!</em></p>
+  </div>
+
+  <h3>Garden Path Sentences</h3>
+  <div class="card">
+    <p>Sentences that seem syntactically wrong at first but are actually valid:</p>
+    <ul style="padding-left:1.2rem; color:var(--accent2);">
+      <li>"The <strong>old</strong> man the boat." <span style="color:var(--muted);">(old = noun, man = verb)</span></li>
+      <li>"The horse raced past the barn <strong>fell</strong>."</li>
+    </ul>
+  </div>
+
+  <h3>A Typical NLP Pipeline</h3>
+  <div class="pipeline">
+    <div class="pipe-step">Tokenization</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">Sentence Boundary</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">POS Tagging</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">Parsing</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">NER</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">Coreference</div>
+  </div>
+</section>
+
+<!-- POS TAGGING -->
+<section id="pos" class="fade-in">
+  <h2>Part-of-Speech (POS) Tagging</h2>
+
+  <p>Every word is assigned a tag based on its grammatical role in the sentence.</p>
+
+  <h3>Example Sentence</h3>
+  <div class="card">
+    <div class="pos-sentence">
+      <div class="pos-word"><span>John</span><span class="tag tag-propn">PROPN</span></div>
+      <div class="pos-word"><span>drank</span><span class="tag tag-verb">VERB</span></div>
+      <div class="pos-word"><span>some</span><span class="tag tag-det">DET</span></div>
+      <div class="pos-word"><span>wine</span><span class="tag tag-noun">NOUN</span></div>
+      <div class="pos-word"><span>on</span><span class="tag tag-prep">ADP</span></div>
+      <div class="pos-word"><span>the</span><span class="tag tag-det">DET</span></div>
+      <div class="pos-word"><span>new</span><span class="tag tag-adj">ADJ</span></div>
+      <div class="pos-word"><span>sofa</span><span class="tag tag-noun">NOUN</span></div>
+      <div class="pos-word"><span>.</span><span class="tag tag-punct">PUNCT</span></div>
+      <div class="pos-word"><span>It</span><span class="tag tag-noun">PRON</span></div>
+      <div class="pos-word"><span>was</span><span class="tag tag-aux">AUX</span></div>
+      <div class="pos-word"><span>red</span><span class="tag tag-adj">ADJ</span></div>
+      <div class="pos-word"><span>.</span><span class="tag tag-punct">PUNCT</span></div>
+    </div>
+  </div>
+
+  <h3>Universal POS Tags</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Tag</th><th>Name</th><th>Examples</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag tag-adj">ADJ</span></td><td>Adjective</td><td>big, old, green</td></tr>
+        <tr><td><span class="tag tag-prep">ADP</span></td><td>Adposition (preposition)</td><td>in, to, during</td></tr>
+        <tr><td><span class="tag tag-noun">ADV</span></td><td>Adverb</td><td>very, well, exactly</td></tr>
+        <tr><td><span class="tag tag-aux">AUX</span></td><td>Auxiliary verb</td><td>is, has, must</td></tr>
+        <tr><td><span class="tag tag-det">CCONJ</span></td><td>Coordinating conjunction</td><td>and, or, but</td></tr>
+        <tr><td><span class="tag tag-det">DET</span></td><td>Determiner</td><td>a, the, some</td></tr>
+        <tr><td><span class="tag tag-noun">NOUN</span></td><td>Noun</td><td>girl, cat, tree</td></tr>
+        <tr><td><span class="tag tag-noun">NUM</span></td><td>Numeral</td><td>five, 70, IV</td></tr>
+        <tr><td><span class="tag tag-noun">PRON</span></td><td>Pronoun</td><td>he, her, myself</td></tr>
+        <tr><td><span class="tag tag-propn">PROPN</span></td><td>Proper noun</td><td>Mary, Glasgow, HBO</td></tr>
+        <tr><td><span class="tag tag-punct">PUNCT</span></td><td>Punctuation</td><td>. , ( )</td></tr>
+        <tr><td><span class="tag tag-verb">VERB</span></td><td>Verb</td><td>drank, running, sits</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Why Context Matters</h3>
+  <div class="grid-2">
+    <div class="card card-red">
+      <h4>Without Context — Naive Bayes</h4>
+      <p>Assigns same POS to a word regardless of position.</p>
+      <p><code>"That was a bad <strong>call</strong>"</code> → NOUN</p>
+      <p><code>"Please <strong>call</strong> your mum"</code> → NOUN (wrong! should be VERB)</p>
+    </div>
+    <div class="card card-green">
+      <h4>With Context — HMM</h4>
+      <p>Uses surrounding words and previous tags to decide.</p>
+      <p>Considers: what tag usually follows a DET?</p>
+    </div>
+  </div>
+
+  <h3>POS Tagging Performance</h3>
+  <div class="grid-3">
+    <div class="card card-green"><h4>News Text</h4><p style="font-size:1.6rem; font-weight:800; color:var(--accent3);">&gt;98%</p><p style="color:var(--muted);">State-of-the-art accuracy</p></div>
+    <div class="card card-yellow"><h4>Low-resource Languages</h4><p style="font-size:1.6rem; font-weight:800; color:var(--accent5);">~87%</p><p style="color:var(--muted);">Less training data available</p></div>
+    <div class="card card-red"><h4>Tweets / Social Media</h4><p style="font-size:1.6rem; font-weight:800; color:var(--accent4);">~88%</p><p style="color:var(--muted);">Noisy, informal language</p></div>
+  </div>
+</section>
+
+<!-- HMM -->
+<section id="hmm" class="fade-in">
+  <h2>Hidden Markov Models (HMM)</h2>
+
+  <p>HMMs extend Naive Bayes to <em>sequences</em>, modelling how tags depend on each other.</p>
+
+  <h3>Core Components</h3>
+  <div class="grid-2">
+    <div class="card card-accent">
+      <h4>Observed nodes <code>x<sub>i</sub></code></h4>
+      <p>The <strong>words</strong> we can see.</p>
+    </div>
+    <div class="card card-blue">
+      <h4>Hidden nodes <code>y<sub>i</sub></code></h4>
+      <p>The <strong>POS tags</strong> we want to predict.</p>
+    </div>
+    <div class="card card-green">
+      <h4>Transition probabilities</h4>
+      <div class="formula">\( P(y_i \mid y_{i-1}) \)</div>
+      <p>Probability of tag given the previous tag (horizontal arrows).</p>
+    </div>
+    <div class="card card-yellow">
+      <h4>Emission probabilities</h4>
+      <div class="formula">\( P(x_i \mid y_i) \)</div>
+      <p>Probability of a word given its tag (vertical arrows).</p>
+    </div>
+  </div>
+
+  <h3>The Markov Assumption</h3>
+  <div class="info-box">
+    <strong>Key Assumption:</strong> The current state depends <em>only</em> on the previous state.
+    <div class="formula">\( P(y_i \mid y_1, y_2, \ldots, y_{i-1}) = P(y_i \mid y_{i-1}) \)</div>
+    <p>A 2nd-order HMM would condition on the previous 2 states.</p>
+  </div>
+
+  <h3>HMM Architecture Diagram</h3>
+  <div class="card" style="overflow-x:auto;">
+    <svg width="680" height="180" viewBox="0 0 680 180" style="max-width:100%; height:auto;">
+      <!-- Hidden state row -->
+      <text x="10" y="60" fill="#94a3b8" font-size="12" font-weight="700" font-family="Segoe UI">HIDDEN</text>
+      <!-- START -->
+      <rect x="60" y="35" width="60" height="36" rx="8" fill="#1a1d27" stroke="#7c6af7" stroke-width="2"/>
+      <text x="90" y="58" text-anchor="middle" fill="#7c6af7" font-size="12" font-weight="700" font-family="Segoe UI">&lt;START&gt;</text>
+      <!-- y1 PROPN -->
+      <rect x="160" y="35" width="80" height="36" rx="8" fill="#22263a" stroke="#38bdf8" stroke-width="2"/>
+      <text x="200" y="55" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="700" font-family="Segoe UI">y1</text>
+      <text x="200" y="68" text-anchor="middle" fill="#a78bfa" font-size="10" font-family="Segoe UI">PROPN</text>
+      <!-- y2 VERB -->
+      <rect x="290" y="35" width="80" height="36" rx="8" fill="#22263a" stroke="#38bdf8" stroke-width="2"/>
+      <text x="330" y="55" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="700" font-family="Segoe UI">y2</text>
+      <text x="330" y="68" text-anchor="middle" fill="#34d399" font-size="10" font-family="Segoe UI">VERB</text>
+      <!-- y3 DET -->
+      <rect x="420" y="35" width="80" height="36" rx="8" fill="#22263a" stroke="#38bdf8" stroke-width="2"/>
+      <text x="460" y="55" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="700" font-family="Segoe UI">y3</text>
+      <text x="460" y="68" text-anchor="middle" fill="#f87171" font-size="10" font-family="Segoe UI">DET</text>
+      <!-- y4 NOUN -->
+      <rect x="550" y="35" width="80" height="36" rx="8" fill="#22263a" stroke="#38bdf8" stroke-width="2"/>
+      <text x="590" y="55" text-anchor="middle" fill="#38bdf8" font-size="11" font-weight="700" font-family="Segoe UI">y4</text>
+      <text x="590" y="68" text-anchor="middle" fill="#38bdf8" font-size="10" font-family="Segoe UI">NOUN</text>
+      <!-- Transition arrows -->
+      <line x1="120" y1="53" x2="158" y2="53" stroke="#7c6af7" stroke-width="2" marker-end="url(#arr)"/>
+      <line x1="240" y1="53" x2="288" y2="53" stroke="#7c6af7" stroke-width="2" marker-end="url(#arr)"/>
+      <line x1="370" y1="53" x2="418" y2="53" stroke="#7c6af7" stroke-width="2" marker-end="url(#arr)"/>
+      <line x1="500" y1="53" x2="548" y2="53" stroke="#7c6af7" stroke-width="2" marker-end="url(#arr)"/>
+      <!-- Labels -->
+      <text x="139" y="47" text-anchor="middle" fill="#7c6af7" font-size="9" font-family="Segoe UI">P(y1|&lt;s&gt;)</text>
+      <text x="264" y="47" text-anchor="middle" fill="#7c6af7" font-size="9" font-family="Segoe UI">P(y2|y1)</text>
+      <text x="394" y="47" text-anchor="middle" fill="#7c6af7" font-size="9" font-family="Segoe UI">P(y3|y2)</text>
+      <text x="524" y="47" text-anchor="middle" fill="#7c6af7" font-size="9" font-family="Segoe UI">P(y4|y3)</text>
+      <!-- Observed row -->
+      <text x="10" y="145" fill="#94a3b8" font-size="12" font-weight="700" font-family="Segoe UI">OBSERVED</text>
+      <rect x="162" y="120" width="76" height="36" rx="8" fill="#181c2e" stroke="#fbbf24" stroke-width="2"/>
+      <text x="200" y="143" text-anchor="middle" fill="#fbbf24" font-size="11" font-family="Segoe UI">James</text>
+      <rect x="292" y="120" width="76" height="36" rx="8" fill="#181c2e" stroke="#fbbf24" stroke-width="2"/>
+      <text x="330" y="143" text-anchor="middle" fill="#fbbf24" font-size="11" font-family="Segoe UI">ate</text>
+      <rect x="422" y="120" width="76" height="36" rx="8" fill="#181c2e" stroke="#fbbf24" stroke-width="2"/>
+      <text x="460" y="143" text-anchor="middle" fill="#fbbf24" font-size="11" font-family="Segoe UI">the</text>
+      <rect x="552" y="120" width="76" height="36" rx="8" fill="#181c2e" stroke="#fbbf24" stroke-width="2"/>
+      <text x="590" y="143" text-anchor="middle" fill="#fbbf24" font-size="11" font-family="Segoe UI">food</text>
+      <!-- Emission arrows -->
+      <line x1="200" y1="71" x2="200" y2="118" stroke="#fbbf24" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arr2)"/>
+      <line x1="330" y1="71" x2="330" y2="118" stroke="#fbbf24" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arr2)"/>
+      <line x1="460" y1="71" x2="460" y2="118" stroke="#fbbf24" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arr2)"/>
+      <line x1="590" y1="71" x2="590" y2="118" stroke="#fbbf24" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arr2)"/>
+      <!-- Emission labels -->
+      <text x="207" y="98" fill="#fbbf24" font-size="9" font-family="Segoe UI">P(x1|y1)</text>
+      <text x="337" y="98" fill="#fbbf24" font-size="9" font-family="Segoe UI">P(x2|y2)</text>
+      <text x="467" y="98" fill="#fbbf24" font-size="9" font-family="Segoe UI">P(x3|y3)</text>
+      <text x="597" y="98" fill="#fbbf24" font-size="9" font-family="Segoe UI">P(x4|y4)</text>
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#7c6af7"/></marker>
+        <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#fbbf24"/></marker>
+      </defs>
+    </svg>
+    <p style="color:var(--muted); font-size:.85rem; margin-top:.5rem;">Purple arrows = Transitions &nbsp;|&nbsp; Gold dashed = Emissions</p>
+  </div>
+
+  <h3>Training: Count and Normalise</h3>
+  <p>From manually labelled (treebank) data, we estimate:</p>
+
+  <div class="formula">
+    \[ P(y_i \mid y_{i-1}) = \frac{\text{count}(y_{i-1}, y_i)}{\text{count}(y_{i-1})} \]
+  </div>
+  <div class="formula">
+    \[ P(x_i \mid y_i) = \frac{\text{count}(y_i, x_i)}{\text{count}(y_i)} \]
+  </div>
+
+  <h3>Worked Example: Transition Table</h3>
+  <div class="card card-blue">
+    <p>Training sentences: <code>N → V → DT → N</code> (James ate the food)</p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th></th><th>V</th><th>DT</th><th>N</th><th>&lt;end&gt;</th></tr></thead>
+        <tbody>
+          <tr><td><strong>&lt;start&gt;</strong></td><td>0</td><td>0</td><td>1</td><td>—</td></tr>
+          <tr><td><strong>N</strong></td><td>1/2</td><td>0</td><td>0</td><td>1/2</td></tr>
+          <tr><td><strong>V</strong></td><td>0</td><td>1</td><td>0</td><td>0</td></tr>
+          <tr><td><strong>DT</strong></td><td>0</td><td>0</td><td>1</td><td>0</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3>Worked Example: Emission Table</h3>
+  <div class="card card-green">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th></th><th>James</th><th>ate</th><th>the</th><th>food</th></tr></thead>
+        <tbody>
+          <tr><td><strong>N</strong></td><td>1/2</td><td>0</td><td>0</td><td>1/2</td></tr>
+          <tr><td><strong>V</strong></td><td>0</td><td>1</td><td>0</td><td>0</td></tr>
+          <tr><td><strong>DT</strong></td><td>0</td><td>0</td><td>1</td><td>0</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3>Inference: Sequence Score</h3>
+  <p>The probability of a complete tag sequence <em>and</em> word sequence:</p>
+  <div class="formula">
+    \[ P(\mathbf{y}, \mathbf{x}) = \prod_{i=1}^{n} P(y_i \mid y_{i-1}) \cdot P(x_i \mid y_i) \]
+  </div>
+
+  <h3>Greedy Approach (Suboptimal)</h3>
+  <div class="warn-box">
+    <strong>Greedy:</strong> At each step, pick the most likely tag given the <em>previous</em> decision.
+    <br>Problem: a locally good choice may lead to a globally bad sequence.
+  </div>
+
+  <h4>Greedy Step Formula</h4>
+  <div class="formula">
+    \[ y_i^* = \arg\max_{y_i} P(y_i \mid y_{i-1}^*) \cdot P(x_i \mid y_i) \]
+  </div>
+
+  <h3>Exercise: HMM POS Inference on "Sue drew Mark"</h3>
+  <div class="card card-yellow">
+    <p><strong>Given:</strong></p>
+    <div class="grid-2">
+      <div>
+        <p><strong>Transitions</strong></p>
+        <ul style="color:var(--muted); padding-left:1.2rem; font-size:.9rem;">
+          <li>P(VERB|&lt;START&gt;) = 1/4</li>
+          <li>P(PROPN|&lt;START&gt;) = 3/4</li>
+          <li>P(VERB|VERB) = 0</li>
+          <li>P(PROPN|VERB) = 1</li>
+          <li>P(VERB|PROPN) = 2/4</li>
+          <li>P(PROPN|PROPN) = 2/4</li>
+        </ul>
+      </div>
+      <div>
+        <p><strong>Emissions</strong></p>
+        <ul style="color:var(--muted); padding-left:1.2rem; font-size:.9rem;">
+          <li>P(sue|PROPN)=1/6, P(sue|VERB)=2/6</li>
+          <li>P(drew|PROPN)=2/6, P(drew|VERB)=3/6</li>
+          <li>P(mark|PROPN)=3/6, P(mark|VERB)=2/6</li>
+        </ul>
+      </div>
+    </div>
+    <br>
+    <p><strong>Step 1 — "sue":</strong></p>
+    <p style="color:var(--muted);">P(PROPN|&lt;S&gt;)×P(sue|PROPN) = 3/4 × 1/6 = <strong style="color:var(--accent3);">3/24</strong></p>
+    <p style="color:var(--muted);">P(VERB|&lt;S&gt;)×P(sue|VERB) = 1/4 × 2/6 = <strong style="color:var(--accent4);">2/24</strong> → Choose <strong>PROPN</strong></p>
+    <p><strong>Step 2 — "drew":</strong></p>
+    <p style="color:var(--muted);">P(VERB|PROPN)×P(drew|VERB) = 2/4 × 3/6 = <strong style="color:var(--accent3);">6/24</strong></p>
+    <p style="color:var(--muted);">P(PROPN|PROPN)×P(drew|PROPN) = 2/4 × 2/6 = 4/24 → Choose <strong>VERB</strong></p>
+    <p><strong>Step 3 — "mark":</strong></p>
+    <p style="color:var(--muted);">P(PROPN|VERB)×P(mark|PROPN) = 1 × 3/6 = <strong style="color:var(--accent3);">3/6</strong></p>
+    <p style="color:var(--muted);">P(VERB|VERB)×P(mark|VERB) = 0 → Choose <strong>PROPN</strong></p>
+    <p style="margin-top:.7rem;"><strong>Result:</strong> <span class="tag tag-propn">PROPN</span> <span class="tag tag-verb">VERB</span> <span class="tag tag-propn">PROPN</span></p>
+  </div>
+
+  <!-- HMM QUICK PRACTICE -->
+  <div class="exam-type-header" style="margin-top:2.5rem;">
+    <span class="exam-type-badge" style="background:linear-gradient(135deg,#f87171,#b91c1c);">Quick Practice — HMM</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>HMM-P1 — Transition Probability Calculation <span class="badge badge-exam">Exam Style</span></h4>
+    <p class="question-text">A training corpus contains the following POS bigrams: NOUN→VERB (30 times), NOUN→NOUN (10 times), NOUN→END (10 times). What is P(VERB | NOUN)?</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('hmm-p1')">Show Answer</button>
+    <div class="answer-reveal" id="hmm-p1">
+      <p>Total transitions from NOUN = 30 + 10 + 10 = 50</p>
+      <div class="formula">\[ P(\text{VERB} \mid \text{NOUN}) = \frac{30}{50} = 0.6 \]</div>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>HMM-P2 — Greedy Decoding <span class="badge badge-exam">Exam Style</span></h4>
+    <p class="question-text">Tag "John runs" using greedy HMM decoding with the following parameters:<br>
+    <strong>Transitions:</strong> P(PROPN|⟨S⟩)=0.8, P(VERB|⟨S⟩)=0.2, P(VERB|PROPN)=0.7, P(PROPN|PROPN)=0.3<br>
+    <strong>Emissions:</strong> P(john|PROPN)=0.4, P(john|VERB)=0.05, P(runs|PROPN)=0.1, P(runs|VERB)=0.6</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('hmm-p2')">Show Answer</button>
+    <div class="answer-reveal" id="hmm-p2">
+      <p><strong>Step 1 — "john":</strong></p>
+      <p>P(PROPN|⟨S⟩) × P(john|PROPN) = 0.8 × 0.4 = <strong>0.32</strong></p>
+      <p>P(VERB|⟨S⟩) × P(john|VERB) = 0.2 × 0.05 = 0.01</p>
+      <p>→ Choose <strong>PROPN</strong></p>
+      <p><strong>Step 2 — "runs" (previous = PROPN):</strong></p>
+      <p>P(VERB|PROPN) × P(runs|VERB) = 0.7 × 0.6 = <strong>0.42</strong></p>
+      <p>P(PROPN|PROPN) × P(runs|PROPN) = 0.3 × 0.1 = 0.03</p>
+      <p>→ Choose <strong>VERB</strong></p>
+      <p><strong>Result:</strong> john/PROPN &nbsp; runs/VERB ✓</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>HMM-P3 — Domain Mismatch <span class="badge badge-exam">Exam Style — 2022 Q3(c)</span></h4>
+    <p class="question-text">An HMM POS tagger trained on news data performs poorly on patent text. (a) Explain why. (b) Propose two fixes.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('hmm-p3')">Show Answer</button>
+    <div class="answer-reveal" id="hmm-p3">
+      <p><strong>(a) Why it fails:</strong> Domain mismatch — the tagger was trained on general news text which has different vocabulary, sentence structure, and POS distributions from patent text. Specialised patent vocabulary will be unknown to the tagger.</p>
+      <p><strong>(b) Two fixes:</strong></p>
+      <ol style="padding-left:1.2rem;">
+        <li>Manually annotate a sample of patent documents and fine-tune the tagger on this domain-specific training data.</li>
+        <li>Use a domain-specific dictionary to assign default POS tags to specialised patent terminology before running the tagger.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>HMM-P4 — POS for Word Sense Disambiguation <span class="badge badge-exam">Exam Style — 2022 Q3(b)</span></h4>
+    <p class="question-text">Give an example of a single word that appears in two different patent sections with different POS tags. Explain how the POS tag helps a classifier.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('hmm-p4')">Show Answer</button>
+    <div class="answer-reveal" id="hmm-p4">
+      <p><strong>Example word: "light"</strong></p>
+      <ul style="padding-left:1.2rem;">
+        <li>In Section F (Lighting): "light" is a <strong>NOUN</strong> (the physical particle / fixture)</li>
+        <li>In Section D (Textiles): "light" is an <strong>ADJ</strong> (lightweight fabric)</li>
+      </ul>
+      <p>A classifier using (word + POS tag) as features creates two distinct features — "light/NOUN" and "light/ADJ" — which carry different class signals. Without POS, the word "light" alone is ambiguous between the two sections.</p>
+    </div>
+  </div>
+</section>
+
+<!-- VITERBI -->
+<section id="viterbi" class="fade-in">
+  <h2>The Viterbi Algorithm</h2>
+
+  <div class="success-box">
+    <strong>Key Advantage over Greedy:</strong> Viterbi considers the <em>entire sequence</em> simultaneously using dynamic programming. It finds the globally optimal tag sequence — not just locally optimal choices.
+  </div>
+
+  <h3>Dynamic Programming Intuition</h3>
+  <div class="card card-accent">
+    <p>Just like computing Fibonacci numbers efficiently by storing results:</p>
+    <div class="formula">\[ \text{fib}(n) = \text{fib}(n-1) + \text{fib}(n-2) \]</div>
+    <p>We build up probabilities from left to right, never recomputing the same sub-problem.</p>
+  </div>
+
+  <h3>Algorithm Steps</h3>
+  <ol style="padding-left:1.5rem; color:var(--text); line-height:2.2;">
+    <li>Initialise: score each tag for the first word</li>
+    <li>For each subsequent word: compute max probability of reaching each tag</li>
+    <li>Track back-pointers (which previous state led to max)</li>
+    <li>Backtrack from end to recover optimal sequence</li>
+  </ol>
+
+  <h3>Viterbi Recurrence</h3>
+  <div class="formula">
+    \[ \delta_i(y) = \max_{y'} \Big[ \delta_{i-1}(y') \cdot P(y \mid y') \Big] \cdot P(x_i \mid y) \]
+  </div>
+  <div class="formula">
+    \[ \psi_i(y) = \arg\max_{y'} \Big[ \delta_{i-1}(y') \cdot P(y \mid y') \Big] \]
+  </div>
+  <p style="color:var(--muted);">Where \(\delta_i(y)\) = max probability of any path ending in state \(y\) at position \(i\), and \(\psi_i(y)\) = back-pointer.</p>
+
+  <h3>Interactive Demo: "black bears go home"</h3>
+  <div class="card" id="viterbi-demo">
+    <div id="viterbi-display">
+      <!-- Will be populated by JS -->
+    </div>
+    <div class="parser-nav">
+      <button class="nav-btn" id="vit-prev" onclick="vitStep(-1)">← Prev</button>
+      <button class="nav-btn" id="vit-next" onclick="vitStep(1)">Next →</button>
+      <span class="step-counter" id="vit-counter">Step 1 / 5</span>
+    </div>
+  </div>
+
+  <h3>Viterbi vs Greedy</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Property</th><th>Greedy</th><th>Viterbi</th></tr></thead>
+      <tbody>
+        <tr><td>Looks ahead?</td><td>No</td><td>Yes (full sequence)</td></tr>
+        <tr><td>Optimal solution?</td><td>Not guaranteed</td><td>Globally optimal</td></tr>
+        <tr><td>Time complexity</td><td>O(N × |T|)</td><td>O(N × |T|²)</td></tr>
+        <tr><td>Approach</td><td>Sequential decisions</td><td>Dynamic programming</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- VITERBI QUICK PRACTICE -->
+  <div class="exam-type-header" style="margin-top:2.5rem;">
+    <span class="exam-type-badge" style="background:linear-gradient(135deg,#7c6af7,#4f46e5);">Quick Practice — Viterbi</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>VIT-P1 — Identify the Recurrence <span class="badge badge-exam">Exam Style</span></h4>
+    <p class="question-text">Write the Viterbi recurrence relation for \(\delta_i(y)\) and explain what each term represents.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('vit-p1')">Show Answer</button>
+    <div class="answer-reveal" id="vit-p1">
+      <div class="formula">\[ \delta_i(y) = \max_{y'} \Big[ \delta_{i-1}(y') \cdot P(y \mid y') \Big] \cdot P(x_i \mid y) \]</div>
+      <ul style="padding-left:1.2rem; margin-top:.5rem;">
+        <li>\(\delta_{i-1}(y')\) — the best probability of any path ending in tag \(y'\) at the previous position</li>
+        <li>\(P(y \mid y')\) — transition probability from previous tag \(y'\) to current tag \(y\)</li>
+        <li>\(P(x_i \mid y)\) — emission probability of seeing current word \(x_i\) given tag \(y\)</li>
+        <li>The \(\max\) picks the best predecessor, stored in back-pointer \(\psi_i(y)\)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>VIT-P2 — Viterbi Step Calculation <span class="badge badge-exam">Numerical</span></h4>
+    <p class="question-text">Given δ₁(NOUN)=0.4, δ₁(VERB)=0.1. Transitions: P(VERB|NOUN)=0.6, P(VERB|VERB)=0.2. Emission: P("runs"|VERB)=0.5. Compute δ₂(VERB).</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('vit-p2')">Show Answer</button>
+    <div class="answer-reveal" id="vit-p2">
+      <p>δ₂(VERB) = max[ δ₁(NOUN) × P(VERB|NOUN), δ₁(VERB) × P(VERB|VERB) ] × P("runs"|VERB)</p>
+      <p>= max[ 0.4 × 0.6, 0.1 × 0.2 ] × 0.5</p>
+      <p>= max[ 0.24, 0.02 ] × 0.5</p>
+      <p>= <strong>0.24 × 0.5 = 0.12</strong></p>
+      <p>Back-pointer ψ₂(VERB) = <strong>NOUN</strong> (since 0.24 > 0.02)</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>VIT-P3 — Why Viterbi is Optimal <span class="badge badge-exam">Conceptual</span></h4>
+    <p class="question-text">Explain why the Viterbi algorithm is guaranteed to find the globally optimal POS tag sequence while greedy is not.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('vit-p3')">Show Answer</button>
+    <div class="answer-reveal" id="vit-p3">
+      <p><strong>Greedy</strong> makes locally optimal decisions one word at a time. A locally good choice at position i may prevent an even better global choice — for example, tagging "bank" as NOUN early on may block a better overall sequence where "bank" is VERB.</p>
+      <p><strong>Viterbi</strong> uses the <em>principle of optimality</em> (Bellman): the optimal path to state y at position i must pass through the optimal sub-path ending at position i−1. By storing the best sub-path probability at every (position, tag) pair and propagating forward, it guarantees no better path exists at each step — by induction, the final backtracked sequence is globally optimal.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PARSING -->
+<section id="parsing" class="fade-in">
+  <h2>Constituency Parsing</h2>
+
+  <p>Breaking a sentence into nested <strong>phrases</strong>: noun phrases, verb phrases, prepositional phrases.</p>
+
+  <h3>Phrase Types</h3>
+  <div class="grid-3">
+    <div class="card card-blue">
+      <h4>NP — Noun Phrase</h4>
+      <p>Noun + determiners/adjectives</p>
+      <p><code>The small dog</code></p>
+      <p><code>five cars</code></p>
+    </div>
+    <div class="card card-green">
+      <h4>VP — Verb Phrase</h4>
+      <p>Verb + arguments (no subject)</p>
+      <p><code>passed David the salt</code></p>
+      <p><code>walked away</code></p>
+    </div>
+    <div class="card card-yellow">
+      <h4>PP — Prepositional Phrase</h4>
+      <p>Preposition + NP</p>
+      <p><code>To the trains</code></p>
+      <p><code>On top of the building</code></p>
+    </div>
+  </div>
+
+  <h3>Constituency Tree: "I saw an elephant in my pajamas"</h3>
+  <div class="card tree-container">
+    <svg width="580" height="240" viewBox="0 0 580 240" style="max-width:100%; height:auto;" font-family="Segoe UI, sans-serif">
+      <!-- S -->
+      <rect x="255" y="8" width="50" height="26" rx="5" fill="#7c6af7" opacity=".9"/>
+      <text x="280" y="26" text-anchor="middle" fill="white" font-size="13" font-weight="700">S</text>
+      <!-- NP level 1 -->
+      <rect x="100" y="55" width="40" height="26" rx="5" fill="#38bdf8" opacity=".85"/>
+      <text x="120" y="73" text-anchor="middle" fill="white" font-size="12" font-weight="700">NP</text>
+      <!-- VP -->
+      <rect x="320" y="55" width="40" height="26" rx="5" fill="#34d399" opacity=".85"/>
+      <text x="340" y="73" text-anchor="middle" fill="white" font-size="12" font-weight="700">VP</text>
+      <!-- I -->
+      <rect x="90" y="108" width="30" height="24" rx="4" fill="#181c2e" stroke="#38bdf8" stroke-width="1.5"/>
+      <text x="105" y="125" text-anchor="middle" fill="#38bdf8" font-size="11">PRP</text>
+      <text x="105" y="148" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">I</text>
+      <!-- VBD -->
+      <rect x="210" y="108" width="40" height="24" rx="4" fill="#181c2e" stroke="#34d399" stroke-width="1.5"/>
+      <text x="230" y="125" text-anchor="middle" fill="#34d399" font-size="11">VBD</text>
+      <text x="230" y="148" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">saw</text>
+      <!-- NP level 2 -->
+      <rect x="310" y="108" width="40" height="24" rx="5" fill="#38bdf8" opacity=".7"/>
+      <text x="330" y="125" text-anchor="middle" fill="white" font-size="11" font-weight="700">NP</text>
+      <!-- DT an -->
+      <rect x="268" y="158" width="30" height="22" rx="4" fill="#181c2e" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="283" y="173" text-anchor="middle" fill="#fbbf24" font-size="10">DT</text>
+      <text x="283" y="193" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">an</text>
+      <!-- NN elephant -->
+      <rect x="316" y="158" width="60" height="22" rx="4" fill="#181c2e" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="346" y="173" text-anchor="middle" fill="#fbbf24" font-size="10">NN</text>
+      <text x="346" y="193" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">elephant</text>
+      <!-- PP -->
+      <rect x="415" y="108" width="40" height="24" rx="5" fill="#f87171" opacity=".75"/>
+      <text x="435" y="125" text-anchor="middle" fill="white" font-size="11" font-weight="700">PP</text>
+      <!-- IN in -->
+      <rect x="395" y="158" width="30" height="22" rx="4" fill="#181c2e" stroke="#f87171" stroke-width="1.5"/>
+      <text x="410" y="173" text-anchor="middle" fill="#f87171" font-size="10">IN</text>
+      <text x="410" y="193" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="600">in</text>
+      <!-- NP3 my pajamas -->
+      <rect x="445" y="158" width="80" height="22" rx="4" fill="#181c2e" stroke="#38bdf8" stroke-width="1.5"/>
+      <text x="485" y="173" text-anchor="middle" fill="#38bdf8" font-size="10">NP [my pajamas]</text>
+      <!-- Connecting lines -->
+      <line x1="280" y1="34" x2="120" y2="55" stroke="#7c6af7" stroke-width="1.5"/>
+      <line x1="280" y1="34" x2="340" y2="55" stroke="#7c6af7" stroke-width="1.5"/>
+      <line x1="120" y1="81" x2="105" y2="108" stroke="#38bdf8" stroke-width="1.5"/>
+      <line x1="340" y1="81" x2="230" y2="108" stroke="#34d399" stroke-width="1.5"/>
+      <line x1="340" y1="81" x2="330" y2="108" stroke="#34d399" stroke-width="1.5"/>
+      <line x1="340" y1="81" x2="435" y2="108" stroke="#34d399" stroke-width="1.5"/>
+      <line x1="330" y1="132" x2="283" y2="158" stroke="#38bdf8" stroke-width="1.5"/>
+      <line x1="330" y1="132" x2="346" y2="158" stroke="#38bdf8" stroke-width="1.5"/>
+      <line x1="435" y1="132" x2="410" y2="158" stroke="#f87171" stroke-width="1.5"/>
+      <line x1="435" y1="132" x2="485" y2="158" stroke="#f87171" stroke-width="1.5"/>
+    </svg>
+  </div>
+
+  <h3>Why Parse? Applications</h3>
+  <div class="grid-2">
+    <div class="card">
+      <ul style="padding-left:1.2rem; color:var(--muted);">
+        <li>Relation extraction</li>
+        <li>Question answering</li>
+        <li>Machine translation</li>
+      </ul>
+    </div>
+    <div class="card">
+      <ul style="padding-left:1.2rem; color:var(--muted);">
+        <li>Semantic role labelling</li>
+        <li>Summarization</li>
+        <li>Coreference resolution</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <strong>Ambiguity Challenge:</strong> A sentence of 20–30 words can have <em>thousands</em> of valid parse trees!
+  </div>
+</section>
+
+<!-- DEPENDENCY PARSING -->
+<section id="dependency" class="fade-in">
+  <h2>Dependency Parsing</h2>
+
+  <p>Instead of phrase brackets, draw <strong>directed labelled edges</strong> between words to show grammatical relations.</p>
+
+  <h3>Formal Properties of Dependency Trees</h3>
+  <div class="card card-accent">
+    <ul style="padding-left:1.2rem; color:var(--text); line-height:2;">
+      <li>Every word has <strong>exactly one</strong> incoming edge (except ROOT)</li>
+      <li><strong>Weakly connected</strong>: replacing directed edges with undirected gives a connected graph</li>
+      <li><strong>Acyclic</strong>: no circular dependencies</li>
+    </ul>
+  </div>
+
+  <h3>Example: "I ate the fish with a fork"</h3>
+  <div class="card tree-container">
+    <svg width="620" height="200" viewBox="0 0 620 200" style="max-width:100%; height:auto;" font-family="Segoe UI, sans-serif">
+      <!-- Word row -->
+      <text x="30" y="140" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="700">$0</text>
+      <text x="30" y="158" text-anchor="middle" fill="#94a3b8" font-size="11">ROOT</text>
+      <text x="100" y="140" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">I</text>
+      <text x="100" y="158" text-anchor="middle" fill="#94a3b8" font-size="11">₁</text>
+      <text x="180" y="140" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">ate</text>
+      <text x="180" y="158" text-anchor="middle" fill="#94a3b8" font-size="11">₂</text>
+      <text x="255" y="140" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">the</text>
+      <text x="255" y="158" text-anchor="middle" fill="#94a3b8" font-size="11">₃</text>
+      <text x="325" y="140" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">fish</text>
+      <text x="325" y="158" text-anchor="middle" fill="#94a3b8" font-size="11">₄</text>
+      <text x="400" y="140" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">with</text>
+      <text x="400" y="158" text-anchor="middle" fill="#94a3b8" font-size="11">₅</text>
+      <text x="470" y="140" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">a</text>
+      <text x="470" y="158" text-anchor="middle" fill="#94a3b8" font-size="11">₆</text>
+      <text x="540" y="140" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">fork</text>
+      <text x="540" y="158" text-anchor="middle" fill="#94a3b8" font-size="11">₇</text>
+      <!-- Arcs -->
+      <!-- ROOT → ate -->
+      <path d="M30,130 Q105,60 180,130" fill="none" stroke="#f87171" stroke-width="2" marker-end="url(#dep-arr)"/>
+      <text x="105" y="52" text-anchor="middle" fill="#f87171" font-size="10">root</text>
+      <!-- ate → I (nsubj) -->
+      <path d="M180,130 Q140,85 100,130" fill="none" stroke="#38bdf8" stroke-width="2" marker-end="url(#dep-arr)"/>
+      <text x="140" y="80" text-anchor="middle" fill="#38bdf8" font-size="10">nsubj</text>
+      <!-- ate → fish (dobj) -->
+      <path d="M180,130 Q252,75 325,130" fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#dep-arr)"/>
+      <text x="253" y="68" text-anchor="middle" fill="#34d399" font-size="10">dobj</text>
+      <!-- ate → with (prep) -->
+      <path d="M180,130 Q290,40 400,130" fill="none" stroke="#7c6af7" stroke-width="2" marker-end="url(#dep-arr)"/>
+      <text x="290" y="30" text-anchor="middle" fill="#7c6af7" font-size="10">prep</text>
+      <!-- fish → the (det) -->
+      <path d="M325,130 Q290,95 255,130" fill="none" stroke="#fbbf24" stroke-width="2" marker-end="url(#dep-arr)"/>
+      <text x="289" y="90" text-anchor="middle" fill="#fbbf24" font-size="10">det</text>
+      <!-- with → fork (pobj) -->
+      <path d="M400,130 Q505,80 540,130" fill="none" stroke="#a78bfa" stroke-width="2" marker-end="url(#dep-arr)"/>
+      <text x="478" y="75" text-anchor="middle" fill="#a78bfa" font-size="10">pobj</text>
+      <!-- fork → a (det) -->
+      <path d="M540,130 Q505,100 470,130" fill="none" stroke="#fbbf24" stroke-width="2" marker-end="url(#dep-arr)"/>
+      <text x="505" y="98" text-anchor="middle" fill="#fbbf24" font-size="10">det</text>
+      <defs>
+        <marker id="dep-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="currentColor"/></marker>
+      </defs>
+    </svg>
+  </div>
+
+  <h3>Dependency Relations</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Relation</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><code>nsubj</code></td><td>Nominal subject</td><td>I → ate</td></tr>
+        <tr><td><code>dobj</code></td><td>Direct object</td><td>fish → ate</td></tr>
+        <tr><td><code>det</code></td><td>Determiner</td><td>the → fish</td></tr>
+        <tr><td><code>prep</code></td><td>Prepositional modifier</td><td>with → ate</td></tr>
+        <tr><td><code>pobj</code></td><td>Object of preposition</td><td>fork → with</td></tr>
+        <tr><td><code>amod</code></td><td>Adjectival modifier</td><td>tasty → food</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- TRANSITION-BASED PARSING -->
+<section id="transition" class="fade-in">
+  <h2>Transition-Based Parsing</h2>
+
+  <p>Build a parse tree through a <em>sequence of actions</em> on a stack and buffer.</p>
+
+  <h3>State Representation</h3>
+  <div class="grid-2">
+    <div class="card card-accent">
+      <h4>Stack</h4>
+      <p>Words being considered for dependency arcs. Starts with ROOT.</p>
+    </div>
+    <div class="card card-blue">
+      <h4>Buffer</h4>
+      <p>Remaining input words. Words shift from buffer onto stack.</p>
+    </div>
+  </div>
+
+  <h3>Arc-Standard Actions</h3>
+  <div class="grid-3">
+    <div class="card card-green">
+      <h4>SHIFT</h4>
+      <p>Pop word from <strong>buffer</strong>, push to <strong>stack</strong>.</p>
+    </div>
+    <div class="card card-yellow">
+      <h4>LEFT-ARC</h4>
+      <p>Add edge: stack top is <strong>dependent</strong> of buffer front. Remove child from stack.</p>
+    </div>
+    <div class="card card-red">
+      <h4>RIGHT-ARC</h4>
+      <p>Add edge: buffer front is <strong>dependent</strong> of stack top. Remove child from stack.</p>
+    </div>
+  </div>
+
+  <h3>Interactive Demo: "Sally likes movies"</h3>
+  <div class="card" id="parser-demo">
+    <div id="parser-display"></div>
+    <div class="parser-nav">
+      <button class="nav-btn" id="parse-prev" onclick="parseStep(-1)">← Prev</button>
+      <button class="nav-btn" id="parse-next" onclick="parseStep(1)">Next →</button>
+      <span class="step-counter" id="parse-counter">Step 1 / 7</span>
+    </div>
+  </div>
+
+  <h3>Complexity Analysis</h3>
+  <div class="card card-green">
+    <p>For N tokens in a sentence:</p>
+    <ul style="padding-left:1.2rem; color:var(--muted);">
+      <li><strong>O(N)</strong> SHIFT operations — one per token</li>
+      <li><strong>O(N)</strong> REDUCE operations — one per dependency edge</li>
+    </ul>
+    <div class="formula">\[ \text{Total: } O(N) \text{ — linear time!} \]</div>
+  </div>
+
+  <div class="error-box">
+    <strong>Key Limitation:</strong> Actions are <em>irreversible</em>. You cannot undo a wrong arc. So the classifier must choose correctly every time.
+  </div>
+
+  <h3>Choosing Transitions: ML Classifier</h3>
+  <div class="card card-blue">
+    <p><strong>Input:</strong> Current state = {stack features, buffer features}</p>
+    <p><strong>Output:</strong> Action scores = {SHIFT, LEFT-ARC, RIGHT-ARC}</p>
+    <div class="formula">\[ \text{action}^* = \arg\max_{a \in \{\text{Shift, L-Arc, R-Arc}\}} \text{score}(a \mid \text{state}) \]</div>
+    <p><strong>Classifiers used:</strong> Rule-based, SVM, Neural Networks</p>
+    <p><strong>Training signal:</strong> Gold (ground truth) actions from annotated treebanks</p>
+  </div>
+
+  <h3>Complexity Comparison: Parsing Algorithms</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Algorithm</th><th>Type</th><th>Complexity</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Transition-Based (Arc-Standard)</td><td>Dependency</td><td>O(N)</td><td>Linear — fast</td></tr>
+        <tr><td>CKY</td><td>Constituency</td><td>O(N³)</td><td>Chart-based DP</td></tr>
+        <tr><td>Graph-Based (MST)</td><td>Dependency</td><td>O(N²)</td><td>All edges scored</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- EXAM QUESTIONS -->
+<section id="exam" class="fade-in">
+  <h2>Exam Questions &amp; Practice</h2>
+
+  <!-- MCQ -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge">Multiple Choice</span>
+    <hr>
+  </div>
+
+  <!-- Q1 -->
+  <div class="question-block">
+    <h4>Q1 — POS Tagging Basics</h4>
+    <p class="question-text">Which of the following best describes the Markov Assumption used in HMMs for POS tagging?</p>
+    <div class="options">
+      <label><input type="radio" name="q1" value="a"> The current tag depends on all previous tags in the sentence.</label>
+      <label><input type="radio" name="q1" value="b"> The current tag depends only on the previous tag.</label>
+      <label><input type="radio" name="q1" value="c"> The current tag depends only on the current word.</label>
+      <label><input type="radio" name="q1" value="d"> Tags are assigned independently with no dependencies.</label>
+    </div>
+    <button class="check-btn" onclick="checkMCQ('q1','b','Q1')">Check Answer</button>
+    <div class="feedback" id="fb-q1"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="question-block">
+    <h4>Q2 — HMM Components</h4>
+    <p class="question-text">In a Hidden Markov Model for POS tagging, what do the <em>emission probabilities</em> represent?</p>
+    <div class="options">
+      <label><input type="radio" name="q2" value="a"> The probability of transitioning from one POS tag to another.</label>
+      <label><input type="radio" name="q2" value="b"> The probability of observing a word given a POS tag: \(P(x_i \mid y_i)\).</label>
+      <label><input type="radio" name="q2" value="c"> The probability of a POS tag given the observed word: \(P(y_i \mid x_i)\).</label>
+      <label><input type="radio" name="q2" value="d"> The prior probability of each POS tag.</label>
+    </div>
+    <button class="check-btn" onclick="checkMCQ('q2','b','Q2')">Check Answer</button>
+    <div class="feedback" id="fb-q2"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="question-block">
+    <h4>Q3 — Viterbi vs Greedy</h4>
+    <p class="question-text">Why is the Viterbi algorithm preferred over the greedy approach for HMM decoding?</p>
+    <div class="options">
+      <label><input type="radio" name="q3" value="a"> It is faster, running in O(N) time.</label>
+      <label><input type="radio" name="q3" value="b"> It always assigns the most frequent POS tag.</label>
+      <label><input type="radio" name="q3" value="c"> It finds the globally optimal tag sequence by considering all paths using dynamic programming.</label>
+      <label><input type="radio" name="q3" value="d"> It ignores emission probabilities and only uses transitions.</label>
+    </div>
+    <button class="check-btn" onclick="checkMCQ('q3','c','Q3')">Check Answer</button>
+    <div class="feedback" id="fb-q3"></div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="question-block">
+    <h4>Q4 — Transition-Based Parsing</h4>
+    <p class="question-text">In Arc-Standard transition-based parsing, what does a <strong>SHIFT</strong> action do?</p>
+    <div class="options">
+      <label><input type="radio" name="q4" value="a"> Adds a left-directed dependency arc between stack top and buffer front.</label>
+      <label><input type="radio" name="q4" value="b"> Moves the top of the stack back to the buffer.</label>
+      <label><input type="radio" name="q4" value="c"> Pops a word from the buffer and pushes it onto the stack.</label>
+      <label><input type="radio" name="q4" value="d"> Removes the top two elements from the stack and creates an arc.</label>
+    </div>
+    <button class="check-btn" onclick="checkMCQ('q4','c','Q4')">Check Answer</button>
+    <div class="feedback" id="fb-q4"></div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="question-block">
+    <h4>Q5 — Parsing Complexity</h4>
+    <p class="question-text">What is the time complexity of Arc-Standard transition-based dependency parsing for a sentence of N tokens?</p>
+    <div class="options">
+      <label><input type="radio" name="q5" value="a"> O(N³)</label>
+      <label><input type="radio" name="q5" value="b"> O(N²)</label>
+      <label><input type="radio" name="q5" value="c"> O(N log N)</label>
+      <label><input type="radio" name="q5" value="d"> O(N)</label>
+    </div>
+    <button class="check-btn" onclick="checkMCQ('q5','d','Q5')">Check Answer</button>
+    <div class="feedback" id="fb-q5"></div>
+  </div>
+
+  <!-- Q6 -->
+  <div class="question-block">
+    <h4>Q6 — POS Tag Identification</h4>
+    <p class="question-text">In the sentence "A tall boy ran home", what is the correct POS sequence?</p>
+    <div class="options">
+      <label><input type="radio" name="q6" value="a"> NOUN ADJ NOUN VERB NOUN</label>
+      <label><input type="radio" name="q6" value="b"> DET ADJ NOUN VERB NOUN</label>
+      <label><input type="radio" name="q6" value="c"> DET NOUN ADJ VERB ADV</label>
+      <label><input type="radio" name="q6" value="d"> DET ADJ VERB NOUN NOUN</label>
+    </div>
+    <button class="check-btn" onclick="checkMCQ('q6','b','Q6')">Check Answer</button>
+    <div class="feedback" id="fb-q6"></div>
+  </div>
+
+  <!-- Q7 -->
+  <div class="question-block">
+    <h4>Q7 — Constituency vs Dependency</h4>
+    <p class="question-text">Which of the following is a key difference between constituency parsing and dependency parsing?</p>
+    <div class="options">
+      <label><input type="radio" name="q7" value="a"> Dependency parsing creates phrase brackets; constituency identifies word-to-word relations.</label>
+      <label><input type="radio" name="q7" value="b"> Constituency parsing groups words into nested phrases; dependency parsing creates labelled word-to-word relations.</label>
+      <label><input type="radio" name="q7" value="c"> They are identical; just different names for the same process.</label>
+      <label><input type="radio" name="q7" value="d"> Dependency parsing does not use tree structures.</label>
+    </div>
+    <button class="check-btn" onclick="checkMCQ('q7','b','Q7')">Check Answer</button>
+    <div class="feedback" id="fb-q7"></div>
+  </div>
+
+  <!-- Q8 -->
+  <div class="question-block">
+    <h4>Q8 — HMM Training</h4>
+    <p class="question-text">How are transition probabilities estimated during HMM training?</p>
+    <div class="options">
+      <label><input type="radio" name="q8" value="a"> Using gradient descent on a neural network.</label>
+      <label><input type="radio" name="q8" value="b"> By counting how often one tag follows another in labelled data, then normalising.</label>
+      <label><input type="radio" name="q8" value="c"> By computing the cosine similarity between tag embeddings.</label>
+      <label><input type="radio" name="q8" value="d"> By using a pre-defined linguistic rule set.</label>
+    </div>
+    <button class="check-btn" onclick="checkMCQ('q8','b','Q8')">Check Answer</button>
+    <div class="feedback" id="fb-q8"></div>
+  </div>
+
+  <!-- TRUE/FALSE -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge">True / False</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>TF1 — Dependency Trees</h4>
+    <p class="question-text">In a valid dependency tree, every word (except ROOT) has exactly one incoming edge. <strong>True or False?</strong></p>
+    <div class="options">
+      <label><input type="radio" name="tf1" value="true"> True</label>
+      <label><input type="radio" name="tf1" value="false"> False</label>
+    </div>
+    <button class="check-btn" onclick="checkMCQ('tf1','true','TF1')">Check Answer</button>
+    <div class="feedback" id="fb-tf1"></div>
+  </div>
+
+  <div class="question-block">
+    <h4>TF2 — POS Performance</h4>
+    <p class="question-text">State-of-the-art POS taggers achieve over 98% accuracy on <em>tweets</em>. <strong>True or False?</strong></p>
+    <div class="options">
+      <label><input type="radio" name="tf2" value="true"> True</label>
+      <label><input type="radio" name="tf2" value="false"> False</label>
+    </div>
+    <button class="check-btn" onclick="checkMCQ('tf2','false','TF2')">Check Answer</button>
+    <div class="feedback" id="fb-tf2"><span>Explanation: &gt;98% is for news text. Twitter/social media performance is ~88% due to informal language.</span></div>
+  </div>
+
+  <div class="question-block">
+    <h4>TF3 — Viterbi Backpointers</h4>
+    <p class="question-text">The Viterbi algorithm tracks back-pointers in order to recover the optimal tag sequence after the forward pass. <strong>True or False?</strong></p>
+    <div class="options">
+      <label><input type="radio" name="tf3" value="true"> True</label>
+      <label><input type="radio" name="tf3" value="false"> False</label>
+    </div>
+    <button class="check-btn" onclick="checkMCQ('tf3','true','TF3')">Check Answer</button>
+    <div class="feedback" id="fb-tf3"></div>
+  </div>
+
+  <div class="question-block">
+    <h4>TF4 — Transition Reversibility</h4>
+    <p class="question-text">In Arc-Standard parsing, a wrong action can be undone by applying the reverse action. <strong>True or False?</strong></p>
+    <div class="options">
+      <label><input type="radio" name="tf4" value="true"> True</label>
+      <label><input type="radio" name="tf4" value="false"> False</label>
+    </div>
+    <button class="check-btn" onclick="checkMCQ('tf4','false','TF4')">Check Answer</button>
+    <div class="feedback" id="fb-tf4"><span>Explanation: Actions in Arc-Standard are irreversible. This is a key weakness of transition-based parsing.</span></div>
+  </div>
+
+  <!-- FILL IN THE BLANK -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge">Fill in the Blank</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>FIB1</h4>
+    <p class="question-text">In HMMs, the probability \(P(y_i \mid y_{i-1})\) is called the __________ probability, while \(P(x_i \mid y_i)\) is called the __________ probability.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('fib1')">Show Answer</button>
+    <div class="answer-reveal" id="fib1"><strong>transition</strong> probability; <strong>emission</strong> probability</div>
+  </div>
+
+  <div class="question-block">
+    <h4>FIB2</h4>
+    <p class="question-text">The Viterbi algorithm is an example of __________, which solves overlapping subproblems efficiently by storing intermediate results.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('fib2')">Show Answer</button>
+    <div class="answer-reveal" id="fib2"><strong>Dynamic programming</strong></div>
+  </div>
+
+  <div class="question-block">
+    <h4>FIB3</h4>
+    <p class="question-text">In Arc-Standard parsing, the three core actions are __________, __________, and __________.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('fib3')">Show Answer</button>
+    <div class="answer-reveal" id="fib3"><strong>SHIFT</strong>, <strong>LEFT-ARC</strong>, <strong>RIGHT-ARC</strong></div>
+  </div>
+
+  <div class="question-block">
+    <h4>FIB4</h4>
+    <p class="question-text">A __________ noun phrase consists of a noun plus its determiners and adjectives. A __________ phrase consists of a verb and its arguments excluding the subject.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('fib4')">Show Answer</button>
+    <div class="answer-reveal" id="fib4">Noun Phrase (<strong>NP</strong>); Verb Phrase (<strong>VP</strong>)</div>
+  </div>
+
+  <div class="question-block">
+    <h4>FIB5</h4>
+    <p class="question-text">HMM assumes that the current hidden state depends only on the __________ state. This is called the __________.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('fib5')">Show Answer</button>
+    <div class="answer-reveal" id="fib5">previous (immediately preceding) state; <strong>Markov Assumption</strong></div>
+  </div>
+
+  <!-- SHORT ANSWER -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge">Short Answer</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>SA1 — NLP Levels</h4>
+    <p class="question-text">Name and briefly define the three levels of language analysis in NLP. Give one example for each.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('sa1')">Show Model Answer</button>
+    <div class="answer-reveal" id="sa1">
+      <p><strong>1. Syntax:</strong> How words combine grammatically. E.g., "bank" is the direct object of "ran".</p>
+      <p><strong>2. Semantics:</strong> What words mean. E.g., "bank" = financial institution vs. riverbank.</p>
+      <p><strong>3. Pragmatics:</strong> How context shapes meaning. E.g., "it" in "Rachel ran to the bank. It was closed" refers to the bank, not Rachel.</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>SA2 — Naive Bayes for POS</h4>
+    <p class="question-text">Why is Naive Bayes insufficient for POS tagging? Give an example illustrating the problem.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('sa2')">Show Model Answer</button>
+    <div class="answer-reveal" id="sa2">
+      <p>Naive Bayes ignores sequential context — it assigns the same tag to a word regardless of its position or surrounding words.</p>
+      <p><strong>Example:</strong> The word "call" would always be tagged as NOUN (most frequent), but in "Please call your mum" it should be VERB. Naive Bayes cannot distinguish these uses.</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>SA3 — Dependency Tree Properties</h4>
+    <p class="question-text">List three formal properties that a valid dependency tree must satisfy.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('sa3')">Show Model Answer</button>
+    <div class="answer-reveal" id="sa3">
+      <ol style="padding-left:1.2rem;">
+        <li>Every word has exactly one incoming edge (except ROOT which has none).</li>
+        <li>Weakly connected: replacing all directed edges with undirected edges yields a connected graph.</li>
+        <li>Acyclic: no cycles exist in the directed graph.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>SA4 — HMM Training</h4>
+    <p class="question-text">Describe how emission probabilities are estimated from a labelled corpus in HMM training. Write the formula.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('sa4')">Show Model Answer</button>
+    <div class="answer-reveal" id="sa4">
+      <p>Count how many times each word appears with each POS tag, then normalise by the total count of that tag:</p>
+      <div class="formula">\[ P(x_i \mid y_i) = \frac{\text{count}(y_i, x_i)}{\text{count}(y_i)} \]</div>
+      <p><strong>Example:</strong> If "ate" appears 50 times total and 50 of those are tagged VERB: P("ate" | VERB) = 50/50 = 1.0</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>SA5 — Greedy vs Viterbi</h4>
+    <p class="question-text">Explain intuitively why the greedy approach may fail where Viterbi succeeds. No formulas needed.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('sa5')">Show Model Answer</button>
+    <div class="answer-reveal" id="sa5">
+      <p>The greedy approach picks the locally best tag at each step without considering future words. This can lead to an early commitment that becomes wrong once we see later words.</p>
+      <p><strong>Analogy:</strong> Like choosing the shortest road at each junction in a road trip — you might end up on a fast road that leads to a dead end, while a slightly slower road at that junction led to a faster overall route.</p>
+      <p>Viterbi keeps track of all possible paths and finds the one with the maximum total probability across the entire sequence.</p>
+    </div>
+  </div>
+
+  <!-- LONG ANSWER / CALCULATION -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge">Long Answer / Calculation</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>LA1 — Full HMM Calculation</h4>
+    <p class="question-text">Given the following HMM parameters, use the <strong>greedy algorithm</strong> to find the POS sequence for "Sue drew Mark".</p>
+    <div class="card" style="margin:1rem 0; font-size:.9rem;">
+      <p><strong>Transitions:</strong> P(VERB|START)=1/4, P(PROPN|START)=3/4, P(VERB|VERB)=0, P(PROPN|VERB)=1, P(VERB|PROPN)=2/4, P(PROPN|PROPN)=2/4</p>
+      <p><strong>Emissions:</strong> P(sue|PROPN)=1/6, P(drew|PROPN)=2/6, P(mark|PROPN)=3/6, P(sue|VERB)=2/6, P(drew|VERB)=3/6, P(mark|VERB)=2/6</p>
+    </div>
+    <button class="show-answer-btn" onclick="toggleAnswer('la1')">Show Full Solution</button>
+    <div class="answer-reveal" id="la1">
+      <p><strong>Step 1 — "sue":</strong></p>
+      <p>P(PROPN|START) × P(sue|PROPN) = 3/4 × 1/6 = 3/24 = 0.125</p>
+      <p>P(VERB|START) × P(sue|VERB) = 1/4 × 2/6 = 2/24 ≈ 0.083</p>
+      <p>→ Choose <strong>PROPN</strong> (0.125 > 0.083)</p>
+      <br>
+      <p><strong>Step 2 — "drew" (previous = PROPN):</strong></p>
+      <p>P(PROPN|PROPN) × P(drew|PROPN) = 2/4 × 2/6 = 4/24 ≈ 0.167</p>
+      <p>P(VERB|PROPN) × P(drew|VERB) = 2/4 × 3/6 = 6/24 = 0.250</p>
+      <p>→ Choose <strong>VERB</strong> (0.250 > 0.167)</p>
+      <br>
+      <p><strong>Step 3 — "mark" (previous = VERB):</strong></p>
+      <p>P(VERB|VERB) × P(mark|VERB) = 0 × 2/6 = 0</p>
+      <p>P(PROPN|VERB) × P(mark|PROPN) = 1 × 3/6 = 0.500</p>
+      <p>→ Choose <strong>PROPN</strong></p>
+      <br>
+      <p><strong>Result:</strong> sue/PROPN  drew/VERB  mark/PROPN</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>LA2 — Viterbi Forward Pass</h4>
+    <p class="question-text">Explain the Viterbi recurrence relation in detail. Describe both the forward pass (computing δ) and the backtracking step. Why is it guaranteed to find the globally optimal sequence?</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('la2')">Show Model Answer</button>
+    <div class="answer-reveal" id="la2">
+      <p><strong>Forward Pass:</strong></p>
+      <p>Define \(\delta_i(y)\) as the maximum probability of any tag sequence ending in state \(y\) at position \(i\):</p>
+      <div class="formula">\[ \delta_i(y) = \max_{y'} \Big[ \delta_{i-1}(y') \cdot P(y \mid y') \Big] \cdot P(x_i \mid y) \]</div>
+      <p>Simultaneously record back-pointers:</p>
+      <div class="formula">\[ \psi_i(y) = \arg\max_{y'} \Big[ \delta_{i-1}(y') \cdot P(y \mid y') \Big] \]</div>
+      <p><strong>Backtracking:</strong> Start from the end state with maximum \(\delta_n\), then follow back-pointers \(\psi\) from right to left to recover the optimal sequence.</p>
+      <p><strong>Why globally optimal?</strong> The DP principle: the optimal path to state \(y\) at position \(i\) must pass through the optimal sub-path ending at the best predecessor. By induction, if we store the best path to each state at each step, we guarantee the globally best path.</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>LA3 — Transition-Based Parsing Walkthrough</h4>
+    <p class="question-text">For the sentence "He drinks irn bru", trace through the Arc-Standard transitions to build the dependency tree shown below: ROOT→drinks (root), drinks→He (nsubj), drinks→bru (dobj), bru→irn (compound).</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('la3')">Show Solution</button>
+    <div class="answer-reveal" id="la3">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Stack</th><th>Buffer</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>0</td><td>[ROOT]</td><td>[He, drinks, irn, bru]</td><td>—</td></tr>
+            <tr><td>1</td><td>[ROOT, He]</td><td>[drinks, irn, bru]</td><td>SHIFT</td></tr>
+            <tr><td>2</td><td>[ROOT, He, drinks]</td><td>[irn, bru]</td><td>SHIFT</td></tr>
+            <tr><td>3</td><td>[ROOT, drinks]</td><td>[irn, bru]</td><td>LEFT-ARC (drinks→He: nsubj)</td></tr>
+            <tr><td>4</td><td>[ROOT, drinks, irn]</td><td>[bru]</td><td>SHIFT</td></tr>
+            <tr><td>5</td><td>[ROOT, drinks, irn, bru]</td><td>[]</td><td>SHIFT</td></tr>
+            <tr><td>6</td><td>[ROOT, drinks, bru]</td><td>[]</td><td>LEFT-ARC (bru→irn: compound)</td></tr>
+            <tr><td>7</td><td>[ROOT, drinks]</td><td>[]</td><td>RIGHT-ARC (drinks→bru: dobj)</td></tr>
+            <tr><td>8</td><td>[ROOT]</td><td>[]</td><td>RIGHT-ARC (ROOT→drinks: root)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>LA4 — System Design</h4>
+    <p class="question-text">You are building a system to extract company-risk relations from news text (e.g., "Apple is facing a fine"). Explain how POS tagging and dependency parsing would help you avoid false positives like "I feel fine, said Tim Cook of Apple."</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('la4')">Show Model Answer</button>
+    <div class="answer-reveal" id="la4">
+      <p>A simple bag-of-words classifier would see the same tokens ("Apple", "fine", "Tim Cook") in both sentences and incorrectly classify both as expressing company risk.</p>
+      <p><strong>Using POS tagging:</strong> In "Apple is facing a fine", "fine" is tagged NOUN (the risk). In "I feel fine", "fine" is tagged ADJ (a feeling). This alone can disambiguate many cases.</p>
+      <p><strong>Using dependency parsing:</strong> We can check the syntactic role of each word:
+        <ul style="padding-left:1.2rem; margin-top:.5rem;">
+          <li>In the risk sentence: "fine" has the dependency relation <code>dobj</code> with "facing", and "Apple" is the <code>nsubj</code>.</li>
+          <li>In the safe sentence: "fine" is a predicative adjective (<code>acomp</code>) of "feel", with no connection to "Apple" via the risk relation.</li>
+        </ul>
+      </p>
+      <p>By conditioning our relation extractor on these structural features rather than just word presence, we can correctly identify which sentence expresses a company-risk relation.</p>
+    </div>
+  </div>
+
+  <!-- DIAGRAM QUESTIONS -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge">Diagram / Draw</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>D1 — Draw an HMM</h4>
+    <p class="question-text">Draw the HMM graph for POS tagging the sentence "cats sleep". Label all transition and emission arrows. Identify which nodes are hidden and which are observed.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('d1')">Show Answer Description</button>
+    <div class="answer-reveal" id="d1">
+      <p><strong>Hidden (top row):</strong> &lt;START&gt; → y₁ (NOUN) → y₂ (VERB) → &lt;END&gt;</p>
+      <p><strong>Observed (bottom row):</strong> x₁ = "cats", x₂ = "sleep"</p>
+      <p><strong>Horizontal arrows (transitions):</strong></p>
+      <ul style="padding-left:1.2rem;">
+        <li>START → NOUN: P(NOUN|START)</li>
+        <li>NOUN → VERB: P(VERB|NOUN)</li>
+        <li>VERB → END: P(END|VERB)</li>
+      </ul>
+      <p><strong>Vertical dashed arrows (emissions):</strong></p>
+      <ul style="padding-left:1.2rem;">
+        <li>NOUN → "cats": P("cats"|NOUN)</li>
+        <li>VERB → "sleep": P("sleep"|VERB)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>D2 — Draw a Dependency Tree</h4>
+    <p class="question-text">Draw the dependency tree for: "The quick fox jumps over the fence." Mark the root and label at least 4 dependency relations.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('d2')">Show Answer Description</button>
+    <div class="answer-reveal" id="d2">
+      <p><strong>Root:</strong> jumps</p>
+      <p><strong>Relations:</strong></p>
+      <ul style="padding-left:1.2rem;">
+        <li><code>nsubj</code>: jumps ← fox</li>
+        <li><code>det</code>: fox ← the</li>
+        <li><code>amod</code>: fox ← quick</li>
+        <li><code>prep</code>: jumps → over</li>
+        <li><code>pobj</code>: over → fence</li>
+        <li><code>det</code>: fence ← the</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- CONCEPT QUESTIONS -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge">Concept / Analysis</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>C1 — Garden Path Sentences</h4>
+    <p class="question-text">Explain why the sentence "The horse raced past the barn fell" is syntactically valid. What does this reveal about the difficulty of parsing?</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('c1')">Show Answer</button>
+    <div class="answer-reveal" id="c1">
+      <p>The sentence is a reduced relative clause: "The horse [that was] raced past the barn fell." Initially, readers parse "raced" as the main verb, then encounter "fell" and must re-analyse.</p>
+      <p><strong>Implication for parsing:</strong> The parser must consider multiple interpretations simultaneously. This is why chart-based methods (which maintain multiple partial parses) are valuable, and why ambiguity resolution is a core challenge — even humans get confused!</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>C2 — Abstract Meaning Representation</h4>
+    <p class="question-text">What are Abstract Meaning Representations (AMR), and why are they harder to parse than dependency trees?</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('c2')">Show Answer</button>
+    <div class="answer-reveal" id="c2">
+      <p><strong>AMR</strong> is a semantic formalism that represents the meaning of a sentence as a rooted, directed, acyclic graph — capturing concepts like verb senses (PropBank), named entities, and logical relations beyond simple syntax.</p>
+      <p><strong>Why harder than dependency trees:</strong></p>
+      <ul style="padding-left:1.2rem;">
+        <li>AMR produces a <em>graph</em>, not just a tree — reentrant nodes (a word appearing in multiple relations) are allowed.</li>
+        <li>Requires verb sense disambiguation (say-01 vs say-02).</li>
+        <li>Requires NER and coreference resolution.</li>
+        <li>Not anchored 1-to-1 to words — requires abstraction over sentence structure.</li>
+        <li>Less training data available compared to dependency treebanks.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>C3 — Beyond Rule-Based Systems</h4>
+    <p class="question-text">Why did the NLP field move from rule-based approaches to statistical/ML approaches for POS tagging?</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('c3')">Show Answer</button>
+    <div class="answer-reveal" id="c3">
+      <p><strong>Limitations of rule-based systems:</strong></p>
+      <ul style="padding-left:1.2rem;">
+        <li>Rules are hard to write: language is complex and irregular.</li>
+        <li>Rules are hard to maintain: updating for new domains, languages, or evolving language use is costly.</li>
+        <li>Coverage: rules often fail on edge cases or unseen vocabulary.</li>
+        <li>Portability: rules written for one language rarely transfer to another.</li>
+      </ul>
+      <p><strong>Advantages of ML approaches:</strong></p>
+      <ul style="padding-left:1.2rem;">
+        <li>Learn patterns automatically from labelled data (treebanks).</li>
+        <li>Generalise to new words via statistics.</li>
+        <li>Can be retrained for new domains or languages with new data.</li>
+        <li>Achieved &gt;98% accuracy — outperforming hand-written rules.</li>
+      </ul>
+    </div>
+  </div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- PAST PAPERS SECTION                                          -->
+<!-- ============================================================ -->
+<section id="past-papers" class="fade-in">
+  <h2>Past Exam Questions <span class="badge badge-exam">Real Exam</span></h2>
+  <p style="color:var(--muted);">All questions are from actual TaD exams (2022–2025). Solutions are model answers from official markschemes.</p>
+
+  <!-- ─── 2022 ─── -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge" style="background:linear-gradient(135deg,#0ea5e9,#0369a1);">2022 Exam</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>2022 Q3(a) [4 marks] — POS Preprocessing</h4>
+    <p class="question-text">Justify why case normalisation and stemming are appropriate preprocessing steps for a patent classification system.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('e22-1')">Show Model Answer</button>
+    <div class="answer-reveal" id="e22-1">
+      <p><strong>Case normalisation:</strong> "Textile" at the start of a sentence and "textile" mid-sentence are the same token. Without case folding the classifier treats them as different features, diluting signal. Case normalisation consolidates them.</p>
+      <p><strong>Stemming:</strong> "textiles" and "textile" both signal Section D. Stemming reduces them to the same stem, preventing the classifier from splitting the same signal across two features.</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>2022 Q3(c) [4 marks] — HMM Domain Mismatch</h4>
+    <p class="question-text">An off-the-shelf HMM POS tagger performs poorly on patent text. Explain why and propose two fixes.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('e22-2')">Show Model Answer</button>
+    <div class="answer-reveal" id="e22-2">
+      <p><strong>Why:</strong> Domain mismatch — the tagger was trained on general text (typically news), which does not contain the specialised vocabulary and sentence structures of patent text. Unknown specialised terms will be assigned incorrect tags.</p>
+      <p><strong>Fix 1:</strong> Manually annotate a sample of patent documents and fine-tune the existing tagger on this domain-specific data.</p>
+      <p><strong>Fix 2:</strong> Use a domain-specific dictionary of technical terms with pre-assigned default POS tags as a pre/post-processing step.</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>2022 Q3(d) [3 marks] — Evaluation Analysis</h4>
+    <p class="question-text">Three systems are evaluated. System B has the best training performance but worse-than-baseline test performance. System A has a small but statistically significant improvement over the baseline on the test set. What conclusion do you draw?</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('e22-3')">Show Model Answer</button>
+    <div class="answer-reveal" id="e22-3">
+      <p><strong>System B is overfitting.</strong> Its high training performance but degraded test performance indicates it has learned patterns specific to the training data that do not generalise.</p>
+      <p><strong>System A generalises better.</strong> Its statistically significant improvement on the test set shows genuine performance gains that transfer to unseen data, making it the preferred system despite smaller training gains.</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>2022 Q3(e) [4 marks] — BERT + POS Tags</h4>
+    <p class="question-text">Describe how you would incorporate explicit POS tags into a BERT-based text classifier.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('e22-4')">Show Model Answer</button>
+    <div class="answer-reveal" id="e22-4">
+      <p><strong>In a bag-of-features model:</strong> Each (term, POS) pair becomes a separate sparse feature. "light/NOUN" and "light/ADJ" are distinct features.</p>
+      <p><strong>In BERT:</strong> Introduce a new bank of POS embeddings (one per POS tag), analogous to positional or segment embeddings. Add the POS embedding to each token's input embedding at the input layer. The model then attends to both lexical content and syntactic role jointly through its attention heads.</p>
+    </div>
+  </div>
+
+  <!-- ─── 2023 ─── -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge" style="background:linear-gradient(135deg,#10b981,#047857);">2023 Exam</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>2023 Q2(a) [6 marks] — Perplexity Calculation</h4>
+    <p class="question-text">Two bigram models X and Y. Compute the perplexity of the sequence "⟨S⟩ a b b a ⟨E⟩" for both models. Model X probabilities: P(a|⟨S⟩)=0.1, P(b|a)=0.3, P(b|b)=0.4, P(a|b)=0.3, P(⟨E⟩|a)=0.5. Model Y: P(a|⟨S⟩)=0.3, P(b|a)=0.1, P(b|b)=0.6, P(a|b)=0.3, P(⟨E⟩|a)=0.1.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('e23-1')">Show Model Answer</button>
+    <div class="answer-reveal" id="e23-1">
+      <p>The sequence has 5 probability terms: P(a|⟨S⟩), P(b|a), P(b|b), P(a|b), P(⟨E⟩|a)</p>
+      <p><strong>Model X cross-entropy:</strong></p>
+      <div class="formula">\[ ce_X = -\frac{1}{5}[\log_2(0.1) + \log_2(0.3) + \log_2(0.4) + \log_2(0.3) + \log_2(0.5)] \]</div>
+      <p>= −[−3.32 − 1.74 − 1.32 − 1.74 − 1.0] / 5 = 9.12/5 = <strong>1.824</strong></p>
+      <p>PP<sub>X</sub> = 2<sup>1.824</sup> ≈ <strong>3.54</strong></p>
+      <p><strong>Model Y cross-entropy:</strong></p>
+      <p>= −[log₂(0.3) + log₂(0.1) + log₂(0.6) + log₂(0.3) + log₂(0.1)] / 5 = <strong>2.17</strong></p>
+      <p>PP<sub>Y</sub> = 2<sup>2.17</sup> ≈ <strong>4.50</strong></p>
+      <p class="success-box" style="margin-top:.5rem;"><strong>Conclusion: Model X better represents the sequence</strong> (lower perplexity: 3.54 vs 4.50)</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>2023 Q2(b) [8 marks] — Beam Search Generation</h4>
+    <p class="question-text">Using Model X from above, perform beam search with width=2 from prefix "⟨S⟩ a c". Show all steps. P(b|c)=0.6, P(c|c)=0.2, P(a|c)=0.1, P(⟨E⟩|c)=0.1. Also: P(⟨E⟩|b)=0.1, P(b|b)=0.4, P(a|b)=0.3.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('e23-2')">Show Model Answer</button>
+    <div class="answer-reveal" id="e23-2">
+      <p>Starting from context c, expand with beam width = 2:</p>
+      <p><strong>Step 1 — From c:</strong> b=0.6 ✓, c=0.2 ✓ (a=0.1 pruned, ⟨E⟩=0.1 pruned)</p>
+      <p>Beams: {b: 0.6, c: 0.2}</p>
+      <p><strong>Step 2 — Expand each beam:</strong></p>
+      <ul style="padding-left:1.2rem;">
+        <li>From b: bb=0.6×0.4=0.24 ✓, ba=0.6×0.3=0.18 ✓</li>
+        <li>From c: cb=0.2×0.6=0.12 (pruned), cc=0.2×0.2=0.04 (pruned)</li>
+      </ul>
+      <p>Beams: {bb: 0.24, ba: 0.18}</p>
+      <p><strong>Step 3 — Expand each beam:</strong></p>
+      <ul style="padding-left:1.2rem;">
+        <li>From bb: bbb=0.24×0.4=0.096 ✓, bb⟨E⟩=0.24×0.1=0.024 (pruned)</li>
+        <li>From ba: ba⟨E⟩=0.18×0.5=<strong>0.09</strong> ✓, bab=0.18×0.3=0.054 (pruned)</li>
+      </ul>
+      <p>Beams: {bbb: 0.096, ba⟨E⟩: 0.09}</p>
+      <p><strong>Step 4:</strong> bbb can score at best 0.096×0.1=0.0096 — cannot beat ba⟨E⟩ which is already complete.</p>
+      <p class="success-box"><strong>Final output: b a ⟨E⟩</strong> (probability = 0.09)</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>2023 Q3(d) [3 marks] — HMM POS Tagging Rationale</h4>
+    <p class="question-text">GPT-3 stated that HMMs are used for POS tagging because of "transition probabilities and the Viterbi algorithm." This is correct but incomplete. What key justification is missing?</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('e23-3')">Show Model Answer</button>
+    <div class="answer-reveal" id="e23-3">
+      <p>The missing justification is: <strong>syntax imposes constraints on POS tag sequences.</strong></p>
+      <p>In many languages, certain tag sequences are much more likely than others — for example, a DET is very likely followed by a NOUN or ADJ, and VERB is unlikely to follow another VERB. By modelling these transition probabilities P(y_i | y_{i-1}), the HMM captures this linguistic prior, producing higher-quality tagging than a model (like Naive Bayes) that ignores preceding tags.</p>
+    </div>
+  </div>
+
+  <!-- ─── 2024 ─── -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge" style="background:linear-gradient(135deg,#f59e0b,#b45309);">2024 Exam</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>2024 Q1(a) [4 marks] — Stopwords: BoW vs Transformers</h4>
+    <p class="question-text">Why should you remove stopwords for bag-of-words models but NOT for transformer models?</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('e24-1')">Show Model Answer</button>
+    <div class="answer-reveal" id="e24-1">
+      <p><strong>Bag-of-words:</strong> Word order and syntactic attachment are discarded. Stopwords like "the", "on", "is" provide no content signal — they appear everywhere. Removing them reduces noise and keeps only meaning-bearing words.</p>
+      <p><strong>Transformers:</strong> Explicitly encode word order via positional embeddings. "The cat sat on the mat" and "The mat sat on the cat" produce different contextual representations precisely because the structural words are present. Removing stopwords destroys the relational information the attention mechanism relies on.</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>2024 Q2(b) [6 marks] — Trigram Greedy Generation</h4>
+    <p class="question-text">Training text: <code>BCBBCBBABCCCBBCCBCCB</code>. Using a trigram model (greedy), the last two characters of the training text are "CB". Generate the next 3 tokens.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('e24-2')">Show Model Answer</button>
+    <div class="answer-reveal" id="e24-2">
+      <p>Count trigrams from training text to find conditional probabilities:</p>
+      <p><strong>From context CB:</strong> P(B|CB)=3/4=0.75, P(C|CB)=1/4 → First token: <strong>B</strong></p>
+      <p><strong>From context BB:</strong> P(A|BB)=1/3, P(C|BB)=2/3 → Second token: <strong>C</strong></p>
+      <p><strong>From context BC:</strong> P(B|BC)=2/5, P(C|BC)=3/5 → Third token: <strong>C</strong></p>
+      <p class="success-box"><strong>Output: B C C</strong></p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>2024 Q2(c) [8 marks] — Bigram Beam Search</h4>
+    <p class="question-text">Training text: <code>BCBBCBBABCCCBBCCBCCB</code>. Last character = "B". Using bigram beam search (width=2), generate the next 2 tokens. Count bigrams from the training text.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('e24-3')">Show Model Answer</button>
+    <div class="answer-reveal" id="e24-3">
+      <p><strong>Bigram counts from "B":</strong> B→A: 1 time, B→B: 3 times, B→C: 5 times (total from B = 9)</p>
+      <p>P(A|B)=1/9, P(B|B)=3/9=1/3, P(C|B)=5/9</p>
+      <p><strong>Step 1 — Top 2 beams:</strong> C (5/9), B (3/9). A discarded.</p>
+      <p><strong>Step 2 — Expand:</strong></p>
+      <ul style="padding-left:1.2rem;">
+        <li>From C: P(B|C)=5/9 → CB: 5/9×5/9=25/81; P(C|C)=4/9 → CC: 20/81</li>
+        <li>From B: P(C|B)=5/9 → BC: 3/9×5/9=15/81; P(B|B)=3/9 → BB: 9/81</li>
+      </ul>
+      <p>Top 2: CB (25/81), CC (20/81)</p>
+      <p class="success-box"><strong>Highest probability sequence: C B (probability = 25/81)</strong></p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>2024 Q3(d) [4 marks] — Brand Name Tokenisation Problem</h4>
+    <p class="question-text">A sentiment classifier wrongly classifies all posts mentioning "BeStep" as positive. Explain the subword tokenisation cause and propose a fix.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('e24-4')">Show Model Answer</button>
+    <div class="answer-reveal" id="e24-4">
+      <p><strong>Problem:</strong> BPE/WordPiece tokenises "bestep" as <strong>"best" + "##ep"</strong>. The token "best" strongly co-occurs with positive sentiment in training data. The model therefore associates any occurrence of the brand with positive sentiment regardless of actual content.</p>
+      <p><strong>Fix:</strong> Replace "BeStep" (and variants like "@bestep", "bestep") with a neutral placeholder such as <code>BRAND</code> before feeding text to the model. This placeholder will not split into any sentiment-bearing subwords.</p>
+    </div>
+  </div>
+
+  <!-- ─── 2025 ─── -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge" style="background:linear-gradient(135deg,#a855f7,#7e22ce);">2025 Exam</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>2025 Q1(a) [4 marks] — TF-IDF Vector Construction</h4>
+    <p class="question-text">Given IDF values: A=2, B=4, C=1, D=3, E=6, F=4, G=1, H=3, I=3, J=5. Construct the dense TF-IDF vector for document: <code>G C G A H A G</code></p>
+    <button class="show-answer-btn" onclick="toggleAnswer('e25-1')">Show Model Answer</button>
+    <div class="answer-reveal" id="e25-1">
+      <p><strong>Token counts:</strong> A=2, C=1, G=3, H=1</p>
+      <p><strong>TF-IDF = count × IDF:</strong></p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Token</th><th>TF</th><th>IDF</th><th>TF-IDF</th></tr></thead>
+        <tbody>
+          <tr><td>A</td><td>2</td><td>2</td><td><strong>4</strong></td></tr>
+          <tr><td>B</td><td>0</td><td>4</td><td>0</td></tr>
+          <tr><td>C</td><td>1</td><td>1</td><td><strong>1</strong></td></tr>
+          <tr><td>G</td><td>3</td><td>1</td><td><strong>3</strong></td></tr>
+          <tr><td>H</td><td>1</td><td>3</td><td><strong>3</strong></td></tr>
+          <tr><td>All others</td><td>0</td><td>—</td><td>0</td></tr>
+        </tbody>
+      </table></div>
+      <p><strong>DocX = [4, 0, 1, 0, 0, 0, 3, 3, 0, 0]</strong></p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>2025 Q1(c) [4 marks] — Overlap Coefficient &amp; Jaccard</h4>
+    <p class="question-text">DocX = {A, C, G, H} and DocY = {A, B, D, E, G, H, I, J}. Compute the Overlap Coefficient and Jaccard Similarity.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('e25-2')">Show Model Answer</button>
+    <div class="answer-reveal" id="e25-2">
+      <p>Intersection: {A, G, H} → |A ∩ B| = 3</p>
+      <p>Union: {A, B, C, D, E, G, H, I, J} → |A ∪ B| = 9</p>
+      <p>min(|DocX|, |DocY|) = min(4, 8) = 4</p>
+      <div class="formula">\[ \text{Overlap} = \frac{|A \cap B|}{\min(|A|,|B|)} = \frac{3}{4} = 0.75 \]</div>
+      <div class="formula">\[ \text{Jaccard} = \frac{|A \cap B|}{|A \cup B|} = \frac{3}{9} = 0.333 \]</div>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>2025 Q2(c) [8 marks] — Confusion Matrix Anomalies</h4>
+    <p class="question-text">A classifier report shows: Training Macro-F1=0.6, Macro-Precision=0.2, Macro-Recall=0.5; Validation accuracy=1.00 with 65 samples vs training set of only 15 samples. Identify as many anomalies as you can.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('e25-3')">Show Model Answer</button>
+    <div class="answer-reveal" id="e25-3">
+      <ol style="padding-left:1.2rem;">
+        <li><strong>F1 &gt; Precision AND Recall:</strong> Macro-F1=0.6 but Macro-Recall=0.5 — F1 must always be ≤ max(P, R), so F1 of 0.6 with Recall of 0.5 is mathematically impossible.</li>
+        <li><strong>Validation set larger than training set:</strong> 65 validation vs 15 training samples reverses standard practice and makes evaluation unreliable.</li>
+        <li><strong>Perfect validation performance (1.00):</strong> Implausibly perfect — suggests data leakage, the sets may be swapped, or overfitting on the validation set.</li>
+        <li><strong>Perplexity reported for a classifier:</strong> Perplexity is a language model metric; it has no meaning for text classification.</li>
+        <li><strong>Training has 2 classes; validation has 3 classes:</strong> The class schemas are inconsistent — you cannot evaluate the same classifier on different label sets.</li>
+        <li><strong>Class distributions are reversed:</strong> Training's largest class is Neg (11/15); validation's largest class is Pos (50/65) — the class balance is completely different between splits.</li>
+      </ol>
+    </div>
+  </div>
+
+</section>
+
+<!-- ============================================================ -->
+<!-- PRACTICE BANK SECTION                                        -->
+<!-- ============================================================ -->
+<section id="practice-bank" class="fade-in">
+  <h2>Exam Practice Bank <span class="badge badge-key">Generated</span></h2>
+  <p style="color:var(--muted);">Questions modelled on real exam patterns. Each topic maps to recurring exam themes across 2022–2025.</p>
+
+  <!-- Topic 1: BPE -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge" style="background:linear-gradient(135deg,#06b6d4,#0e7490);">Topic: BPE Tokenisation</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>PB1 — BPE Step-by-Step <span class="badge badge-exam">High Frequency</span></h4>
+    <p class="question-text">Build a BPE vocabulary of size 7 starting from the text "banana band ban". Show every merge step.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('pb1')">Show Answer</button>
+    <div class="answer-reveal" id="pb1">
+      <p><strong>Initial vocab (characters):</strong> {b, a, n, d, ' '} — size 5</p>
+      <p><strong>Initial tokenisation:</strong> b a n a n a | b a n d | b a n</p>
+      <p><strong>Step 1:</strong> Most frequent pair = <strong>b a</strong> (appears 3×) → merge to "ba"</p>
+      <p>Text: ba n a n a | ba n d | ba n — vocab size <strong>6</strong></p>
+      <p><strong>Step 2:</strong> Most frequent pair = <strong>ba n</strong> (appears 3×) → merge to "ban"</p>
+      <p>Text: ban a n a | ban d | ban — vocab size <strong>7</strong> ✓ DONE</p>
+      <p><strong>Final vocab:</strong> {b, a, n, d, ba, ban, ' '}</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>PB2 — BPE Vocabulary Size Trade-offs <span class="badge badge-exam">High Frequency</span></h4>
+    <p class="question-text">Explain the effect of BPE vocabulary size being too small (e.g., 100) vs too large (e.g., 100 million).</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('pb2')">Show Answer</button>
+    <div class="answer-reveal" id="pb2">
+      <p><strong>Too small (100):</strong> Only individual characters are representable. Each word is split into many meaningless character tokens. Models cannot learn over such granular units — there is no semantic signal at the character level. Sequences become very long, increasing computation.</p>
+      <p><strong>Too large (100 million):</strong> Every word gets its own token — equivalent to word-level tokenisation. No subword coverage: unseen words are unrepresentable and still need [UNK]. The embedding matrix becomes enormous and impractical to train. Rare words still lack coverage.</p>
+      <p><strong>Optimal:</strong> A vocabulary size (typically 30K–50K) that allows common words as single tokens but splits rare/unknown words into meaningful morphemes.</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>PB3 — [UNK] in BPE <span class="badge badge-exam">Conceptual</span></h4>
+    <p class="question-text">A colleague claims that BPE tokenisers do not need [UNK] tokens because Unicode can represent any character. Is this correct? Explain.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('pb3')">Show Answer</button>
+    <div class="answer-reveal" id="pb3">
+      <p><strong>The colleague is wrong.</strong> [UNK] is still needed because:</p>
+      <ol style="padding-left:1.2rem;">
+        <li>Unicode defines over 140,000 characters — far more than will appear in any training corpus. Characters not seen in training have no learned BPE encoding.</li>
+        <li>Unicode is continuously extended with new characters (new emoji, scripts, etc.) that postdate training.</li>
+        <li>Any character absent from the BPE training data cannot be encoded and must fall back to [UNK].</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Topic 2: Language Models -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge" style="background:linear-gradient(135deg,#34d399,#047857);">Topic: Language Models</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>PB4 — Perplexity Calculation <span class="badge badge-exam">Numerical</span></h4>
+    <p class="question-text">A bigram model assigns the following probabilities to the sequence "⟨S⟩ the cat sat ⟨E⟩": P(the|⟨S⟩)=0.3, P(cat|the)=0.2, P(sat|cat)=0.4, P(⟨E⟩|sat)=0.5. Calculate the cross-entropy and perplexity.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('pb4')">Show Answer</button>
+    <div class="answer-reveal" id="pb4">
+      <p>n = 4 probability terms</p>
+      <div class="formula">\[ ce = -\frac{1}{4}[\log_2(0.3) + \log_2(0.2) + \log_2(0.4) + \log_2(0.5)] \]</div>
+      <p>= −[−1.737 − 2.322 − 1.322 − 1.000] / 4 = 6.381/4 = <strong>1.595</strong></p>
+      <div class="formula">\[ PP = 2^{1.595} \approx \mathbf{3.02} \]</div>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>PB5 — Unigram Greedy Generation <span class="badge badge-exam">Numerical</span></h4>
+    <p class="question-text">Training text: <code>AABBBCCA</code>. Using a unigram model with greedy decoding, generate the next 3 tokens.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('pb5')">Show Answer</button>
+    <div class="answer-reveal" id="pb5">
+      <p><strong>Token counts:</strong> A=3, B=3, C=2. Total=8</p>
+      <p>P(A)=3/8=0.375, P(B)=3/8=0.375, P(C)=2/8=0.25</p>
+      <p>Greedy always picks the most probable. A and B are tied; ties typically go to the first alphabetically or first encountered.</p>
+      <p><strong>Output: A A A</strong> (or B B B if B chosen for ties) — whichever has higher raw probability or tie-breaking rule. Key point: unigram greedy generates the same token repeatedly.</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>PB6 — Smoothing: Why, What, When <span class="badge badge-exam">Conceptual</span></h4>
+    <p class="question-text">(a) Why is smoothing applied to n-gram models? (b) What happens if too much smoothing is applied? (c) Which sequences benefit most?</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('pb6')">Show Answer</button>
+    <div class="answer-reveal" id="pb6">
+      <p><strong>(a) Why:</strong> To avoid zero probabilities due to data sparsity. N-grams unseen in training would get P=0, making any sequence containing them have probability 0 — effectively saying they're impossible, which is incorrect.</p>
+      <p><strong>(b) Too much smoothing:</strong> Dilutes real probabilities. Common, informative n-grams have their probability reduced while rare/spurious ones are inflated — the model generates more nonsensical output.</p>
+      <p><strong>(c) Sequences that benefit most:</strong> Any n-gram with a zero count in the training data — e.g., in Model Y above, P(a|a)=0, P(c|b)=0, P(a|c)=0 would all benefit from smoothing.</p>
+    </div>
+  </div>
+
+  <!-- Topic 3: Set Similarity -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge" style="background:linear-gradient(135deg,#f87171,#b91c1c);">Topic: Set Similarity &amp; TF-IDF</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>PB7 — Sørensen-Dice &amp; Triangle Inequality <span class="badge badge-exam">2022 Style</span></h4>
+    <p class="question-text">Set A = {dog, cat, fish}, Set B = {cat, bird, fish}, Set C = {mouse, rat, cat}. (a) Compute Dice(A,B) and Dice(A,C). (b) Does the triangle inequality hold? (c) What does this imply about Dice as a metric?</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('pb7')">Show Answer</button>
+    <div class="answer-reveal" id="pb7">
+      <p><strong>(a)</strong> A∩B = {cat, fish}, |A∩B|=2; Dice(A,B) = 2×2/(3+3) = <strong>4/6 ≈ 0.667</strong></p>
+      <p>A∩C = {cat}, |A∩C|=1; Dice(A,C) = 2×1/(3+3) = <strong>2/6 ≈ 0.333</strong></p>
+      <p>B∩C = {cat}, |B∩C|=1; Dice(B,C) = 2×1/(3+3) = <strong>2/6 ≈ 0.333</strong></p>
+      <p><strong>(b)</strong> Triangle inequality for distance: d(A,B) ≤ d(A,C) + d(C,B). Converting Dice to distance: d = 1 − Dice.</p>
+      <p>d(A,B) = 0.333; d(A,C) + d(B,C) = 0.667 + 0.667 = 1.334 → 0.333 ≤ 1.334 ✓ holds here.</p>
+      <p><em>Note: Dice can violate triangle inequality in other configurations — it is a semi-metric, not a true metric.</em></p>
+      <p><strong>(c)</strong> Dice is a <strong>semi-metric</strong>: it satisfies non-negativity, symmetry, and d=0 iff A=B, but the triangle inequality is not always guaranteed.</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>PB8 — Reverse TF-IDF <span class="badge badge-exam">2025 Style</span></h4>
+    <p class="question-text">Given IDF: A=2, B=3, C=5. A document has TF-IDF vector [6, 9, 0]. Reconstruct the original token counts and determine if word order can be recovered.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('pb8')">Show Answer</button>
+    <div class="answer-reveal" id="pb8">
+      <p>TF = TF-IDF / IDF:</p>
+      <ul style="padding-left:1.2rem;">
+        <li>A: 6/2 = <strong>3 occurrences</strong></li>
+        <li>B: 9/3 = <strong>3 occurrences</strong></li>
+        <li>C: 0/5 = <strong>0 occurrences</strong> (absent)</li>
+      </ul>
+      <p><strong>Word order cannot be recovered.</strong> TF-IDF is a bag-of-words representation — it only stores counts, not positions. The document "A A A B B B", "A B A B A B", and "B B B A A A" all produce identical TF-IDF vectors.</p>
+    </div>
+  </div>
+
+  <!-- Topic 4: Text Classification -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge" style="background:linear-gradient(135deg,#fbbf24,#92400e);">Topic: Text Classification &amp; Evaluation</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>PB9 — Precision, Recall, F1 <span class="badge badge-exam">Calculation</span></h4>
+    <p class="question-text">A binary classifier produces: TP=40, FP=10, FN=8, TN=42. Calculate Precision, Recall, F1, and Accuracy.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('pb9')">Show Answer</button>
+    <div class="answer-reveal" id="pb9">
+      <div class="formula">\[ \text{Precision} = \frac{TP}{TP+FP} = \frac{40}{50} = 0.80 \]</div>
+      <div class="formula">\[ \text{Recall} = \frac{TP}{TP+FN} = \frac{40}{48} \approx 0.833 \]</div>
+      <div class="formula">\[ \text{F1} = \frac{2 \times P \times R}{P + R} = \frac{2 \times 0.80 \times 0.833}{0.80 + 0.833} = \frac{1.333}{1.633} \approx 0.816 \]</div>
+      <div class="formula">\[ \text{Accuracy} = \frac{TP+TN}{TP+FP+FN+TN} = \frac{82}{100} = 0.82 \]</div>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>PB10 — Overfitting vs Generalisation <span class="badge badge-exam">Analysis</span></h4>
+    <p class="question-text">System A: Train F1=0.72, Test F1=0.70. System B: Train F1=0.95, Test F1=0.58. System C: Train F1=0.68, Test F1=0.66. Which system would you deploy? Justify.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('pb10')">Show Answer</button>
+    <div class="answer-reveal" id="pb10">
+      <p><strong>Deploy System A.</strong></p>
+      <ul style="padding-left:1.2rem;">
+        <li><strong>System B</strong> is severely overfitting — train/test gap of 0.37 means it has memorised training data patterns. Test performance (0.58) is poor and would not work in production.</li>
+        <li><strong>System C</strong> generalises well (small train/test gap) but its absolute test performance (0.66) is lower than System A.</li>
+        <li><strong>System A</strong> achieves the best test performance (0.70) with good generalisation (train/test gap of only 0.02), indicating robust learning of transferable patterns.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>PB11 — Multi-label vs Multi-class <span class="badge badge-exam">Conceptual</span></h4>
+    <p class="question-text">A recipe website classifies dishes into: Italian, Asian, Comfort Food, Healthy. Why is this a multi-label problem? Why would treating it as multi-class be problematic?</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('pb11')">Show Answer</button>
+    <div class="answer-reveal" id="pb11">
+      <p><strong>Multi-label:</strong> A single recipe can genuinely belong to multiple categories simultaneously — e.g., "Japanese Ramen" is both Asian and Comfort Food; "Mediterranean Salad" is both Healthy and potentially Italian. Each dish may have any combination of applicable labels.</p>
+      <p><strong>Why multi-class is wrong:</strong> Multi-class forces exactly one label per instance. This creates artificial ambiguity (should "Japanese Ramen" be Asian or Comfort Food?), forces arbitrary choices during annotation, and loses useful label combinations that the model could learn from.</p>
+    </div>
+  </div>
+
+  <!-- Topic 5: Distributional Semantics -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge" style="background:linear-gradient(135deg,#8b5cf6,#5b21b6);">Topic: Distributional Semantics &amp; Word2Vec</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>PB12 — Outlier Detection with Cosine Similarity <span class="badge badge-exam">2022 Style</span></h4>
+    <p class="question-text">Describe pseudo-code to find the outlier in a word list given word vectors. What is the time complexity in terms of n (number of words) and d (vector dimensions)?</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('pb12')">Show Answer</button>
+    <div class="answer-reveal" id="pb12">
+      <pre><code>for i = 1 to n:
+    c = w_i  (candidate outlier)
+    R = V − {c}  (remaining words)
+    μ_i = (1/|R|) × Σ v for v in R  (centroid)
+    s_i = cosine_similarity(μ_i, c)
+output word with smallest s_i</code></pre>
+      <p><strong>Time complexity:</strong></p>
+      <ul style="padding-left:1.2rem;">
+        <li>For each of n candidates, compute centroid over n−1 vectors: O(n×d)</li>
+        <li>Compute cosine similarity: O(d)</li>
+        <li>Total: O(n²d) — for small n (e.g., 5-word lists) this is fast</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>PB13 — Polysemy &amp; Word2Vec <span class="badge badge-exam">2022 Style</span></h4>
+    <p class="question-text">Explain why word2vec produces a single vector for a polysemous word like "bank". What problems does this cause downstream?</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('pb13')">Show Answer</button>
+    <div class="answer-reveal" id="pb13">
+      <p><strong>Why a single vector:</strong> Word2vec trains one embedding per word type regardless of context. "bank" appears in both financial contexts ("bank account", "deposit") and geographic contexts ("river bank", "bank side") — the single vector is pulled towards both senses and ends up as a blend of both.</p>
+      <p><strong>Downstream problems:</strong></p>
+      <ol style="padding-left:1.2rem;">
+        <li><strong>Nearest neighbours are mixed:</strong> The k nearest neighbours of "bank" will include both {loan, interest, money} and {river, shore, water}, making word similarity unreliable.</li>
+        <li><strong>Classification degrades:</strong> A text classifier using these embeddings cannot reliably distinguish financial from geographic texts mentioning "bank".</li>
+        <li><strong>Analogy tasks fail:</strong> Word arithmetic (bank − money + river ≈ ?) produces incoherent results.</li>
+      </ol>
+      <p><em>Note: contextual embeddings (BERT) solve this by producing different vectors for the same word in different contexts.</em></p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>PB14 — Window Size Effects <span class="badge badge-exam">2022 Style</span></h4>
+    <p class="question-text">What happens to distributional word vectors when the context window k is: (a) too small, (b) too large? Give a concrete example for each.</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('pb14')">Show Answer</button>
+    <div class="answer-reveal" id="pb14">
+      <p><strong>(a) Too small (e.g., k=1):</strong> Vectors only capture syntactic neighbours (the word immediately before/after). Example: "run" and "running" might be close (both often preceded by "I"), but "run" and "sprint" might be far apart despite similar meaning. Semantic similarity is poorly captured.</p>
+      <p><strong>(b) Too large (e.g., k=100):</strong> Context is too broad and noisy — almost every word appears in the context of almost every other word. Example: the context of "dog" in a 100-word window will include hundreds of unrelated words, making the vector non-specific. Vectors converge to topic-level representations rather than word-level meaning.</p>
+    </div>
+  </div>
+
+  <!-- Topic 6: NER & Practical NLP -->
+  <div class="exam-type-header">
+    <span class="exam-type-badge" style="background:linear-gradient(135deg,#38bdf8,#0369a1);">Topic: NER, Coreference &amp; Applied NLP</span>
+    <hr>
+  </div>
+
+  <div class="question-block">
+    <h4>PB15 — Nested Named Entities <span class="badge badge-exam">Conceptual</span></h4>
+    <p class="question-text">In the sentence "The CEO of Apple, Tim Cook, announced...", identify all named entity mentions. Which entity is nested inside another?</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('pb15')">Show Answer</button>
+    <div class="answer-reveal" id="pb15">
+      <p><strong>Named entity mentions:</strong></p>
+      <ul style="padding-left:1.2rem;">
+        <li><strong>"The CEO of Apple"</strong> — a person/role entity (NP referring to Tim Cook)</li>
+        <li><strong>"Apple"</strong> — an organisation entity (nested inside "The CEO of Apple")</li>
+        <li><strong>"Tim Cook"</strong> — a person entity (appositive, not nested)</li>
+      </ul>
+      <p><strong>Nested entity:</strong> "Apple" (ORG) is nested inside "The CEO of Apple" (PERSON). Standard NER systems that only produce non-overlapping spans would miss one of these.</p>
+    </div>
+  </div>
+
+  <div class="question-block">
+    <h4>PB16 — Knowledge in LLMs <span class="badge badge-exam">2023 Style</span></h4>
+    <p class="question-text">How does an LLM like GPT "know" that Tim Cook is Apple's CEO? What are two key limitations of this form of knowledge storage?</p>
+    <button class="show-answer-btn" onclick="toggleAnswer('pb16')">Show Answer</button>
+    <div class="answer-reveal" id="pb16">
+      <p><strong>How it knows:</strong> Knowledge is encoded in the model's parameters during pre-training on large text corpora. The association "Tim Cook" ↔ "Apple CEO" appears many times in training data and is implicitly compressed into the weight matrix — not stored as an explicit fact.</p>
+      <p><strong>Limitation 1 — Hallucination/Inaccuracy:</strong> The model may generate plausible-sounding but incorrect facts. It cannot distinguish between something it has seen frequently (and may be reliably stored) vs something it infers incorrectly from partial patterns.</p>
+      <p><strong>Limitation 2 — Knowledge staleness:</strong> When real-world facts change (Tim Cook is replaced as CEO), the model's parameters cannot be easily updated without full retraining. The model will continue asserting outdated information.</p>
+    </div>
+  </div>
+
+  <!-- Quick Formula Reference -->
+  <div class="exam-type-header" style="margin-top:2.5rem;">
+    <span class="exam-type-badge" style="background:linear-gradient(135deg,#94a3b8,#475569);">Formula Quick Reference</span>
+    <hr>
+  </div>
+
+  <div class="card card-accent">
+    <h3 style="margin-top:0;">Formulas That Appear Every Year</h3>
+    <div class="grid-2">
+      <div>
+        <h4>Set Similarity</h4>
+        <div class="formula">\[ \text{Dice}(A,B) = \frac{2|A \cap B|}{|A|+|B|} \]</div>
+        <div class="formula">\[ \text{Jaccard}(A,B) = \frac{|A \cap B|}{|A \cup B|} \]</div>
+        <div class="formula">\[ \text{Overlap}(A,B) = \frac{|A \cap B|}{\min(|A|,|B|)} \]</div>
+      </div>
+      <div>
+        <h4>Language Models</h4>
+        <div class="formula">\[ ce = -\frac{1}{n}\sum_{i=1}^{n} \log_2 P(w_i \mid w_{i-1}) \]</div>
+        <div class="formula">\[ PP = 2^{ce} \]</div>
+        <div class="formula">\[ \text{TF-IDF}(t,d) = \text{TF}(t,d) \times \log\frac{N}{df_t} \]</div>
+      </div>
+      <div>
+        <h4>HMM</h4>
+        <div class="formula">\[ P(y_i \mid y_{i-1}) = \frac{\text{count}(y_{i-1},y_i)}{\text{count}(y_{i-1})} \]</div>
+        <div class="formula">\[ P(x_i \mid y_i) = \frac{\text{count}(y_i,x_i)}{\text{count}(y_i)} \]</div>
+      </div>
+      <div>
+        <h4>Classification Metrics</h4>
+        <div class="formula">\[ P = \frac{TP}{TP+FP}, \quad R = \frac{TP}{TP+FN} \]</div>
+        <div class="formula">\[ F_1 = \frac{2PR}{P+R} \]</div>
+        <div class="formula">\[ \text{Cosine}(u,v) = \frac{u \cdot v}{|u||v|} \]</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn-box" style="margin-top:1.5rem;">
+    <strong>Exam Strategy Tips (from recurring patterns 2022–2025):</strong>
+    <ul style="padding-left:1.2rem; margin-top:.5rem;">
+      <li>BPE questions always want <em>step-by-step</em> merges — show each merge with the resulting vocabulary.</li>
+      <li>Perplexity questions: always divide log-sum by <em>n</em> (number of tokens, not words) before exponentiating.</li>
+      <li>Beam search: expand ALL beams at each step, then prune to width.</li>
+      <li>Evaluation anomaly questions: check F1 vs P/R bounds, train/val set size ratio, and class schema consistency.</li>
+      <li>For "propose a fix" questions: one data-level fix + one model-level fix is usually expected.</li>
+      <li>For preprocessing questions: always justify with a <em>concrete example</em> showing the before/after.</li>
+    </ul>
+  </div>
+</section>
+
+</div><!-- /container -->
+
+<script>
+// ============================================================
+// INTERSECTION OBSERVER: fade-in
+// ============================================================
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+}, { threshold: 0, rootMargin: '0px 0px -50px 0px' });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// Force-reveal section when nav link is clicked (handles direct anchor jumps)
+document.querySelectorAll('nav a[href^="#"]').forEach(a => {
+  a.addEventListener('click', () => {
+    const id = a.getAttribute('href').slice(1);
+    const el = document.getElementById(id);
+    if (el) el.classList.add('visible');
+  });
+});
+
+// Also reveal any section that is already in viewport on page load
+window.addEventListener('load', () => {
+  document.querySelectorAll('.fade-in').forEach(el => {
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight) el.classList.add('visible');
+  });
+});
+
+// Reveal section if URL hash matches on load
+if (location.hash) {
+  const el = document.querySelector(location.hash);
+  if (el) el.classList.add('visible');
+}
+
+// ============================================================
+// NAV ACTIVE LINK + PROGRESS BAR
+// ============================================================
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('nav a');
+const progressBar = document.getElementById('progress-bar');
+
+window.addEventListener('scroll', () => {
+  const scrollY = window.scrollY;
+  const total = document.body.scrollHeight - window.innerHeight;
+  progressBar.style.width = Math.min(100, (scrollY / total) * 100) + '%';
+
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 120) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+
+// ============================================================
+// MCQ CHECK
+// ============================================================
+function checkMCQ(name, correct, label) {
+  const selected = document.querySelector(`input[name="${name}"]:checked`);
+  const fb = document.getElementById('fb-' + name);
+  if (!selected) { fb.className = 'feedback info'; fb.innerHTML = 'Please select an answer.'; return; }
+  if (selected.value === correct) {
+    fb.className = 'feedback correct';
+    fb.innerHTML = 'Correct!';
+  } else {
+    fb.className = 'feedback wrong';
+    const correctLabel = document.querySelector(`input[name="${name}"][value="${correct}"]`);
+    const correctText = correctLabel ? correctLabel.parentElement.textContent.trim() : correct;
+    fb.innerHTML = `Incorrect. The correct answer is: <strong>${correctText}</strong>`;
+    if (fb.querySelector('span')) fb.innerHTML += '<br>' + fb.querySelector('span').outerHTML;
+  }
+}
+
+// ============================================================
+// TOGGLE SHOW ANSWER
+// ============================================================
+function toggleAnswer(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('shown');
+  const btn = el.previousElementSibling;
+  btn.textContent = el.classList.contains('shown') ? 'Hide Answer' : 'Show Answer';
+}
+
+// ============================================================
+// VITERBI DEMO
+// ============================================================
+const vitSteps = [
+  {
+    title: 'Start',
+    desc: 'Initial state. P(&lt;START&gt;) = 1.0. No words processed yet.',
+    states: [{label:'&lt;START&gt;', p:1.0, color:'#7c6af7'}],
+    word: '—'
+  },
+  {
+    title: '"black" — Step 1',
+    desc: 'Compute P(tag) × P("black" | tag) for each tag.',
+    states: [
+      {label:'NOUN', p:0.1, color:'#38bdf8', from:'&lt;s&gt;'},
+      {label:'VERB', p:0.2, color:'#34d399', from:'&lt;s&gt;'},
+      {label:'ADJ',  p:0.8, color:'#fbbf24', from:'&lt;s&gt;', best:true}
+    ],
+    word: 'black',
+    calc: 'P(black|NOUN)×P(NOUN|&lt;s&gt;)=0.1 &nbsp;|&nbsp; P(black|VERB)×P(VERB|&lt;s&gt;)=0.2 &nbsp;|&nbsp; P(black|ADJ)×P(ADJ|&lt;s&gt;)=<strong>0.8</strong>'
+  },
+  {
+    title: '"bears" — Step 2',
+    desc: 'Extend each path. Choose the most likely predecessor for each tag.',
+    states: [
+      {label:'NOUN', p:0.6, color:'#38bdf8', from:'ADJ', best:true},
+      {label:'VERB', p:0.08, color:'#34d399', from:'ADJ'},
+      {label:'ADJ',  p:0.5, color:'#fbbf24', from:'ADJ'}
+    ],
+    word: 'bears',
+    calc: 'Best predecessor for NOUN: ADJ (0.8×P(NOUN|ADJ)×P(bears|NOUN)=<strong>0.6</strong>)'
+  },
+  {
+    title: '"go" — Step 3',
+    desc: 'Continue forward pass.',
+    states: [
+      {label:'NOUN', p:0.1, color:'#38bdf8', from:'VERB'},
+      {label:'VERB', p:0.4, color:'#34d399', from:'NOUN', best:true},
+      {label:'ADJ',  p:0.2, color:'#fbbf24', from:'NOUN'}
+    ],
+    word: 'go',
+    calc: 'Best predecessor for VERB: NOUN (0.6×P(VERB|NOUN)×P(go|VERB)=<strong>0.4</strong>)'
+  },
+  {
+    title: '"home" — Step 4 + Backtrack',
+    desc: 'Final step. P(&lt;END&gt;) = 0.25. Follow back-pointers to get optimal path.',
+    states: [
+      {label:'NOUN', p:0.3, color:'#38bdf8', from:'VERB', best:true},
+      {label:'VERB', p:0.05, color:'#34d399', from:'VERB'},
+      {label:'ADJ',  p:0.2, color:'#fbbf24', from:'VERB'}
+    ],
+    word: 'home',
+    calc: 'Best path: <strong>ADJ → NOUN → VERB → NOUN</strong> &nbsp; (black=ADJ, bears=NOUN, go=VERB, home=NOUN)',
+    result: true
+  }
+];
+
+let vitIdx = 0;
+function renderViterbi() {
+  const s = vitSteps[vitIdx];
+  let html = `<div class="viterbi-step${s.result?' highlight':''}">`;
+  html += `<p style="font-weight:700; color:var(--accent2); margin-bottom:.5rem;">Step ${vitIdx}: ${s.title}</p>`;
+  html += `<p style="color:var(--muted); margin-bottom:.8rem;">${s.desc}</p>`;
+  if (s.word !== '—') html += `<p style="margin-bottom:.6rem;">Current word: <span class="tag tag-noun" style="font-size:1rem;">${s.word}</span></p>`;
+  html += '<div style="display:flex; gap:.7rem; flex-wrap:wrap; margin-bottom:.7rem;">';
+  s.states.forEach(st => {
+    html += `<div style="background:#181c2e; border:2px solid ${st.best?st.color:'var(--border)'}; border-radius:8px; padding:.6rem 1rem; min-width:100px; text-align:center;">`;
+    html += `<div style="font-size:.8rem; color:${st.color}; font-weight:700;">${st.label}</div>`;
+    html += `<div style="font-size:1.3rem; font-weight:800; color:${st.color};">${st.p}</div>`;
+    if (st.from) html += `<div style="font-size:.75rem; color:var(--muted);">← ${st.from}</div>`;
+    if (st.best) html += `<div style="font-size:.7rem; color:var(--accent3); margin-top:.2rem;">BEST</div>`;
+    html += '</div>';
+  });
+  html += '</div>';
+  if (s.calc) html += `<div class="info-box" style="font-size:.85rem;">${s.calc}</div>`;
+  html += '</div>';
+  document.getElementById('viterbi-display').innerHTML = html;
+  document.getElementById('vit-counter').textContent = `Step ${vitIdx + 1} / ${vitSteps.length}`;
+  document.getElementById('vit-prev').disabled = vitIdx === 0;
+  document.getElementById('vit-next').disabled = vitIdx === vitSteps.length - 1;
+}
+function vitStep(dir) { vitIdx = Math.max(0, Math.min(vitSteps.length - 1, vitIdx + dir)); renderViterbi(); }
+renderViterbi();
+
+// ============================================================
+// PARSER DEMO
+// ============================================================
+const parseSteps = [
+  { stack: ['ROOT'], buffer: ['Sally','likes','movies','.'], action: null, arcs: [] },
+  { stack: ['ROOT','Sally'], buffer: ['likes','movies','.'], action: 'SHIFT', arcs: [] },
+  { stack: ['ROOT','Sally','likes'], buffer: ['movies','.'], action: 'SHIFT', arcs: [] },
+  { stack: ['ROOT','likes'], buffer: ['movies','.'], action: 'LEFT-ARC (nsubj: likes←Sally)', arcs: ['likes ←nsubj— Sally'] },
+  { stack: ['ROOT','likes','movies'], buffer: ['.'], action: 'SHIFT', arcs: ['likes ←nsubj— Sally'] },
+  { stack: ['ROOT','likes'], buffer: ['.'], action: 'RIGHT-ARC (dobj: likes→movies)', arcs: ['likes ←nsubj— Sally','likes —dobj→ movies'] },
+  { stack: ['ROOT','likes','.'], buffer: [], action: 'SHIFT', arcs: ['likes ←nsubj— Sally','likes —dobj→ movies'] },
+  { stack: ['ROOT','likes'], buffer: [], action: 'RIGHT-ARC (punct: likes→.)', arcs: ['likes ←nsubj— Sally','likes —dobj→ movies','likes —punct→ .'] },
+  { stack: ['ROOT'], buffer: [], action: 'RIGHT-ARC (root: ROOT→likes)', arcs: ['ROOT —root→ likes','likes ←nsubj— Sally','likes —dobj→ movies','likes —punct→ .'] }
+];
+
+let parseIdx = 0;
+function renderParser() {
+  const s = parseSteps[parseIdx];
+  let html = '';
+  if (s.action) html += `<div class="parser-action">${s.action}</div><br>`;
+  html += '<div class="parser-state">';
+  html += '<div class="parser-box"><h5>Stack</h5><div class="parser-tokens">';
+  s.stack.forEach(t => html += `<span class="parser-token${t==='ROOT'?' root':''}">${t}</span>`);
+  html += '</div></div>';
+  html += '<div class="parser-box"><h5>Buffer</h5><div class="parser-tokens">';
+  if (s.buffer.length === 0) html += '<span style="color:var(--muted); font-size:.85rem;">empty</span>';
+  s.buffer.forEach(t => html += `<span class="parser-token">${t}</span>`);
+  html += '</div></div>';
+  html += '<div class="parser-box" style="flex:1;"><h5>Dependency Arcs</h5>';
+  if (s.arcs.length === 0) html += '<span style="color:var(--muted); font-size:.85rem;">none yet</span>';
+  s.arcs.forEach(a => html += `<div style="color:var(--accent3); font-size:.85rem; margin-bottom:.2rem;">→ ${a}</div>`);
+  html += '</div>';
+  html += '</div>';
+  document.getElementById('parser-display').innerHTML = html;
+  document.getElementById('parse-counter').textContent = `Step ${parseIdx + 1} / ${parseSteps.length}`;
+  document.getElementById('parse-prev').disabled = parseIdx === 0;
+  document.getElementById('parse-next').disabled = parseIdx === parseSteps.length - 1;
+}
+function parseStep(dir) { parseIdx = Math.max(0, Math.min(parseSteps.length - 1, parseIdx + dir)); renderParser(); }
+renderParser();
+</script>
+</body>
+</html>

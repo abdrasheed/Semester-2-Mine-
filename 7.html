@@ -1,0 +1,2168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaD Lecture 7 — Ethics & Information Extraction</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+  :root{
+    --bg:#0f1117; --surface:#1a1d2e; --card:#222536; --accent:#7c6af7;
+    --accent2:#f7916a; --accent3:#4ecdc4; --accent4:#f7c948;
+    --text:#e2e8f0; --muted:#8892a4; --border:#2d3148;
+    --green:#4ade80; --red:#f87171; --blue:#60a5fa;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.7}
+  ::selection{background:var(--accent);color:#fff}
+
+  /* NAV */
+  nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--border);padding:.7rem 1.5rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+  nav span{font-weight:700;color:var(--accent);margin-right:.5rem;font-size:1.1rem}
+  nav a{color:var(--muted);text-decoration:none;padding:.3rem .7rem;border-radius:6px;font-size:.85rem;transition:.2s}
+  nav a:hover,nav a.active{background:var(--accent);color:#fff}
+
+  /* HERO */
+  .hero{text-align:center;padding:4rem 2rem 3rem;background:linear-gradient(135deg,#1a1d2e 0%,#0f1117 60%,#1a1230 100%)}
+  .hero h1{font-size:clamp(1.8rem,4vw,3rem);font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .hero p{color:var(--muted);max-width:700px;margin:.8rem auto 0;font-size:1rem}
+  .badge{display:inline-block;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:.2rem .8rem;font-size:.75rem;color:var(--accent);margin:.3rem .2rem}
+
+  /* SECTIONS */
+  section{max-width:1100px;margin:0 auto 3rem;padding:0 1.5rem}
+  .section-header{display:flex;align-items:center;gap:.8rem;margin-bottom:1.5rem;padding-bottom:.8rem;border-bottom:2px solid var(--border)}
+  .section-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+  h2{font-size:1.6rem;font-weight:700}
+  h3{font-size:1.15rem;font-weight:600;color:var(--accent);margin:1.2rem 0 .6rem}
+  h4{font-size:1rem;font-weight:600;color:var(--accent3);margin:.8rem 0 .4rem}
+
+  /* CARDS */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.4rem;margin-bottom:1.2rem;position:relative;overflow:hidden}
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+  .card.purple::before{background:var(--accent)}
+  .card.orange::before{background:var(--accent2)}
+  .card.teal::before{background:var(--accent3)}
+  .card.yellow::before{background:var(--accent4)}
+  .card.green::before{background:var(--green)}
+  .card.red::before{background:var(--red)}
+  .card.blue::before{background:var(--blue)}
+
+  .grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem}
+  .grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
+
+  /* CALLOUT */
+  .callout{border-radius:10px;padding:1rem 1.2rem;margin:.8rem 0;display:flex;gap:.8rem;align-items:flex-start}
+  .callout.info{background:rgba(96,165,250,.1);border-left:4px solid var(--blue)}
+  .callout.warn{background:rgba(247,145,106,.1);border-left:4px solid var(--accent2)}
+  .callout.tip{background:rgba(78,205,196,.1);border-left:4px solid var(--accent3)}
+  .callout.key{background:rgba(124,106,247,.1);border-left:4px solid var(--accent)}
+  .callout-icon{font-size:1.2rem;flex-shrink:0;margin-top:.1rem}
+
+  /* FORMULA BOX */
+  .formula{background:#12141f;border:1px solid var(--border);border-radius:10px;padding:1.2rem;margin:.8rem 0;overflow-x:auto;text-align:center}
+  .formula-label{font-size:.75rem;color:var(--muted);margin-top:.5rem;text-align:left}
+
+  /* CODE */
+  pre{border-radius:10px;margin:.8rem 0;font-size:.85rem;overflow-x:auto}
+  pre code{border-radius:10px}
+  code.inline{background:#12141f;border:1px solid var(--border);padding:.1rem .4rem;border-radius:4px;font-size:.85em}
+
+  /* TABS */
+  .tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem}
+  .tab{background:var(--surface);border:1px solid var(--border);color:var(--muted);padding:.4rem 1rem;border-radius:8px;cursor:pointer;font-size:.85rem;transition:.2s}
+  .tab:hover{border-color:var(--accent);color:var(--text)}
+  .tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .tab-content{display:none}
+  .tab-content.active{display:block}
+
+  /* ACCORDION */
+  .accordion{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:.8rem 0}
+  .acc-header{background:var(--card);padding:1rem 1.2rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;transition:.2s}
+  .acc-header:hover{background:#252840}
+  .acc-header .arrow{transition:.3s;color:var(--accent)}
+  .acc-header.open .arrow{transform:rotate(180deg)}
+  .acc-body{display:none;padding:1.2rem;background:var(--surface);border-top:1px solid var(--border)}
+  .acc-body.open{display:block}
+
+  /* DIAGRAM */
+  canvas{display:block;max-width:100%;margin:0 auto}
+  svg{max-width:100%}
+
+  /* PIPELINE */
+  .pipeline{display:flex;align-items:center;flex-wrap:wrap;gap:.4rem;margin:.8rem 0}
+  .pipeline-step{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.5rem .9rem;font-size:.85rem;text-align:center;flex:1;min-width:100px}
+  .pipeline-arrow{color:var(--accent);font-size:1.2rem}
+
+  /* QUIZ */
+  .quiz-container{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.4rem;margin:1rem 0}
+  .quiz-q{font-weight:600;margin-bottom:.8rem;font-size:1rem}
+  .quiz-options{display:flex;flex-direction:column;gap:.5rem}
+  .quiz-opt{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.7rem 1rem;cursor:pointer;transition:.2s;font-size:.9rem}
+  .quiz-opt:hover{border-color:var(--accent)}
+  .quiz-opt.correct{background:rgba(74,222,128,.15);border-color:var(--green);color:var(--green)}
+  .quiz-opt.wrong{background:rgba(248,113,113,.15);border-color:var(--red);color:var(--red)}
+  .quiz-feedback{margin-top:.8rem;padding:.7rem 1rem;border-radius:8px;font-size:.9rem;display:none}
+  .quiz-feedback.show{display:block}
+  .quiz-feedback.ok{background:rgba(74,222,128,.1);color:var(--green)}
+  .quiz-feedback.bad{background:rgba(248,113,113,.1);color:var(--red)}
+  .quiz-btn{background:var(--accent);color:#fff;border:none;padding:.5rem 1.2rem;border-radius:8px;cursor:pointer;font-size:.9rem;margin-top:.8rem;transition:.2s}
+  .quiz-btn:hover{opacity:.85}
+
+  /* STAT BARS */
+  .stat-bar{margin:.5rem 0}
+  .stat-label{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.2rem}
+  .stat-track{background:var(--surface);border-radius:4px;height:8px;overflow:hidden}
+  .stat-fill{height:100%;border-radius:4px;transition:width 1.2s ease}
+
+  /* TOOLTIP */
+  .tooltip-wrap{position:relative;display:inline-block;cursor:help;border-bottom:1px dashed var(--accent)}
+  .tooltip-wrap .tooltip-text{visibility:hidden;position:absolute;bottom:130%;left:50%;transform:translateX(-50%);background:#12141f;border:1px solid var(--border);color:var(--text);padding:.5rem .8rem;border-radius:8px;font-size:.8rem;width:220px;z-index:50;pointer-events:none;opacity:0;transition:.2s}
+  .tooltip-wrap:hover .tooltip-text{visibility:visible;opacity:1}
+
+  /* TAGS */
+  .tag{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.72rem;font-weight:600;margin:.1rem}
+  .tag.blue{background:rgba(96,165,250,.2);color:var(--blue)}
+  .tag.purple{background:rgba(124,106,247,.2);color:var(--accent)}
+  .tag.green{background:rgba(74,222,128,.2);color:var(--green)}
+  .tag.orange{background:rgba(247,145,106,.2);color:var(--accent2)}
+  .tag.teal{background:rgba(78,205,196,.2);color:var(--accent3)}
+  .tag.yellow{background:rgba(247,201,72,.2);color:var(--accent4)}
+
+  /* TIMELINE */
+  .timeline{position:relative;padding-left:2rem}
+  .timeline::before{content:'';position:absolute;left:.4rem;top:0;bottom:0;width:2px;background:var(--border)}
+  .tl-item{position:relative;margin-bottom:1.2rem}
+  .tl-dot{position:absolute;left:-1.7rem;top:.3rem;width:12px;height:12px;border-radius:50%;border:2px solid var(--accent);background:var(--bg)}
+  .tl-item.done .tl-dot{background:var(--accent)}
+
+  /* SCROLL ANIMATION */
+  .fade-in{opacity:0;transform:translateY(20px);transition:.6s ease}
+  .fade-in.visible{opacity:1;transform:none}
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+  /* PROGRESS */
+  #progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:200;transition:width .1s}
+
+  /* IE DIAGRAM */
+  .ie-diagram{display:flex;flex-direction:column;align-items:center;gap:.5rem;padding:1rem}
+  .ie-box{background:var(--surface);border:2px solid var(--accent);border-radius:10px;padding:.6rem 1.5rem;font-size:.9rem;text-align:center;min-width:220px}
+  .ie-box.step2{border-color:var(--accent3)}
+  .ie-box.step3{border-color:var(--accent2)}
+  .ie-arrow{color:var(--accent);font-size:1.5rem}
+
+  /* HEARST TABLE */
+  table{width:100%;border-collapse:collapse;margin:.8rem 0;font-size:.85rem}
+  th{background:var(--surface);padding:.6rem .8rem;text-align:left;border-bottom:2px solid var(--border);color:var(--accent);font-weight:600}
+  td{padding:.6rem .8rem;border-bottom:1px solid var(--border)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:rgba(124,106,247,.05)}
+
+  /* ANIMATED BIAS CHART */
+  #biasChart{height:200px;position:relative;overflow:hidden;background:var(--surface);border-radius:10px;padding:1rem}
+  .bias-bar-group{display:flex;gap:.5rem;align-items:flex-end;height:160px;margin-top:.5rem;padding:0 .5rem}
+  .bias-bar{flex:1;border-radius:4px 4px 0 0;transition:height 1s ease;position:relative;cursor:pointer}
+  .bias-bar .bar-label{position:absolute;bottom:-1.4rem;left:50%;transform:translateX(-50%);font-size:.7rem;color:var(--muted);white-space:nowrap}
+  .bias-bar .bar-val{position:absolute;top:-1.4rem;left:50%;transform:translateX(-50%);font-size:.7rem;font-weight:600;white-space:nowrap}
+
+  /* RESPONSIVE */
+  @media(max-width:600px){
+    nav{padding:.5rem 1rem}
+    section{padding:0 1rem}
+    .hero h1{font-size:1.6rem}
+    .pipeline{flex-direction:column}
+    .pipeline-arrow{transform:rotate(90deg)}
+  }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"></div>
+
+<nav>
+  <span>TaD Lec 7</span>
+  <a href="#ethics" class="active">Ethics</a>
+  <a href="#infoext">Info Extraction</a>
+  <a href="#patterns">Patterns</a>
+  <a href="#supervised">Supervised</a>
+  <a href="#semisup">Semi-Supervised</a>
+  <a href="#bestpractice">Best Practice</a>
+  <a href="#exam">Exam Prep</a>
+  <a href="#exam" onclick="window.scrollTo({top:document.querySelector('.card.blue').offsetTop-80,behavior:'smooth'});return false" style="background:rgba(247,201,72,.2);color:var(--accent4)">📋 Past Papers</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <h1>Ethics &amp; Information Extraction</h1>
+  <p>Text as Data — Lecture 7 &bull; Sean MacAvaney &amp; Jake Lever &bull; Interactive Study Notes</p>
+  <div style="margin-top:1rem">
+    <span class="badge">Ethics in AI</span>
+    <span class="badge">Relation Extraction</span>
+    <span class="badge">Hearst Patterns</span>
+    <span class="badge">Bootstrapping</span>
+    <span class="badge">Datasheets &amp; Model Cards</span>
+    <span class="badge">NER</span>
+    <span class="badge">Template Filling</span>
+  </div>
+</div>
+
+<!-- ============================
+     PART 1 — ETHICS
+     ============================ -->
+<section id="ethics">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(247,145,106,.2)">⚖️</div>
+    <div><h2>Part 1 — Ethics in NLP &amp; AI</h2><p style="color:var(--muted);font-size:.9rem">7 major concern categories every NLP practitioner must know</p></div>
+  </div>
+
+  <div class="callout key"><span class="callout-icon">💡</span><div>AI is being integrated into warfare, medicine, hiring, and creative work. Ethical dilemmas will be part of every NLP engineer's career — thinking carefully about these now gives you a competitive advantage.</div></div>
+
+  <!-- Ethics Tabs -->
+  <div class="tabs" id="ethics-tabs">
+    <div class="tab active" onclick="switchTab('ethics-tabs','tab-cost',this)">💸 Cost</div>
+    <div class="tab" onclick="switchTab('ethics-tabs','tab-bias',this)">🧠 Bias</div>
+    <div class="tab" onclick="switchTab('ethics-tabs','tab-edu',this)">🎓 Education</div>
+    <div class="tab" onclick="switchTab('ethics-tabs','tab-society',this)">👥 Society</div>
+    <div class="tab" onclick="switchTab('ethics-tabs','tab-trust',this)">🔍 Trust</div>
+    <div class="tab" onclick="switchTab('ethics-tabs','tab-liability',this)">⚖️ Liability</div>
+    <div class="tab" onclick="switchTab('ethics-tabs','tab-copy',this)">©️ Copyright</div>
+  </div>
+
+  <!-- Cost -->
+  <div class="tab-content active" id="tab-cost">
+    <div class="grid-2">
+      <div class="card orange">
+        <h3>💸 Financial &amp; Environmental Cost</h3>
+        <p>Training large models is enormously expensive — both financially and environmentally.</p>
+        <div style="margin:1rem 0">
+          <div class="stat-bar">
+            <div class="stat-label"><span>GPT-3 Training Cost</span><span style="color:var(--accent2)">~$4.6M</span></div>
+            <div class="stat-track"><div class="stat-fill" style="width:92%;background:var(--accent2)"></div></div>
+          </div>
+          <div class="stat-bar">
+            <div class="stat-label"><span>GPT-3 Compute Time</span><span style="color:var(--accent2)">~355 GPU-years</span></div>
+            <div class="stat-track"><div class="stat-fill" style="width:80%;background:var(--accent2)"></div></div>
+          </div>
+          <div class="stat-bar">
+            <div class="stat-label"><span>GPT-4 Training Cost</span><span style="color:var(--red)">Unknown (vastly more)</span></div>
+            <div class="stat-track"><div class="stat-fill" style="width:100%;background:var(--red)"></div></div>
+          </div>
+        </div>
+        <div class="callout warn"><span class="callout-icon">⚡</span><div><strong>Strubell et al. (2019)</strong> — "Energy and Policy Considerations for Deep Learning in NLP": Training a single large LM can emit as much CO₂ as five cars over their entire lifetimes.</div></div>
+      </div>
+      <div class="card orange">
+        <h3>Implications</h3>
+        <div class="timeline">
+          <div class="tl-item done"><div class="tl-dot"></div><strong>Who can train?</strong><br><span style="color:var(--muted)">Only wealthy companies/governments → power imbalance</span></div>
+          <div class="tl-item done"><div class="tl-dot"></div><strong>Who can use?</strong><br><span style="color:var(--muted)">API access costs → unequal access to capability</span></div>
+          <div class="tl-item done"><div class="tl-dot"></div><strong>Environmental burden</strong><br><span style="color:var(--muted)">Water for cooling, energy from grid, CO₂ emissions</span></div>
+          <div class="tl-item"><div class="tl-dot"></div><strong>Smaller models may be sufficient</strong><br><span style="color:var(--muted)">Fine-tuned smaller models often match LLMs on specific tasks</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bias -->
+  <div class="tab-content" id="tab-bias">
+    <div class="card purple">
+      <h3>🧠 Bias: Garbage In, Garbage Out</h3>
+      <div class="callout key"><span class="callout-icon">📖</span><div><strong>Caliskan et al. (2017)</strong> — "Semantics derived automatically from language corpora contain human-like biases." Word vectors trained on internet text encode gender, racial, and age stereotypes.</div></div>
+
+      <!-- Animated bias chart -->
+      <div id="biasChart">
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:.3rem">Reference Letter Word Frequency by Subject Gender (Wan et al., EMNLP 2023)</div>
+        <div class="bias-bar-group" id="biasBarGroup"></div>
+      </div>
+
+      <div class="grid-2" style="margin-top:1rem">
+        <div>
+          <h4>Sources of Bias</h4>
+          <ul style="color:var(--muted);padding-left:1.2rem;font-size:.9rem;line-height:2">
+            <li>Training data reflects societal inequities</li>
+            <li>Internet text is predominantly white &amp; male</li>
+            <li>Historical hiring/lending decisions encoded</li>
+            <li>Proxy variables (university name → ethnicity)</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Downstream Harms</h4>
+          <ul style="color:var(--muted);padding-left:1.2rem;font-size:.9rem;line-height:2">
+            <li>Biased CV screening (names, schools)</li>
+            <li>AI reference letters favor males for leadership</li>
+            <li>Credit scoring penalising minorities</li>
+            <li>Medical models underperform on minority groups</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout warn" style="margin-top:1rem"><span class="callout-icon">🦜</span><div><strong>Bender et al. (2021) — "On the Dangers of Stochastic Parrots":</strong> LLMs don't understand language — they stochastically repeat patterns. Big data ≠ diverse data. The paper asks: <em>"Are ever larger LMs inevitable or necessary?"</em></div></div>
+    </div>
+
+    <!-- Stochastic Parrots accordion -->
+    <div class="accordion">
+      <div class="acc-header" onclick="toggleAcc(this)">
+        <span>🦜 Stochastic Parrots — Key Arguments</span>
+        <span class="arrow">▾</span>
+      </div>
+      <div class="acc-body">
+        <div class="grid-3">
+          <div><span class="tag purple">Claim 1</span><p style="font-size:.9rem;margin-top:.4rem">Big data doesn't guarantee diversity — predominantly white &amp; male internet text</p></div>
+          <div><span class="tag orange">Claim 2</span><p style="font-size:.9rem;margin-top:.4rem">Encoded bias propagates and amplifies at scale</p></div>
+          <div><span class="tag teal">Claim 3</span><p style="font-size:.9rem;margin-top:.4rem">Environmental costs are unacceptable without commensurate benefit</p></div>
+          <div><span class="tag blue">Claim 4</span><p style="font-size:.9rem;margin-top:.4rem">Undocumented training data creates unknown risks</p></div>
+          <div><span class="tag yellow">Claim 5</span><p style="font-size:.9rem;margin-top:.4rem">Chasing leaderboards (benchmark hacking) is harmful to real-world progress</p></div>
+          <div><span class="tag green">Claim 6</span><p style="font-size:.9rem;margin-top:.4rem">Models are "stochastic parrots" — not intelligent, just statistically fluent</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Education -->
+  <div class="tab-content" id="tab-edu">
+    <div class="grid-2">
+      <div class="card teal">
+        <h3>🎓 Optimistic View: AI as Equaliser</h3>
+        <p style="color:var(--muted)">Historically, personal tutors were a luxury available only to the wealthy. AI provides everyone with access to personalised learning support.</p>
+        <ul style="padding-left:1.2rem;margin-top:.8rem;color:var(--text);font-size:.9rem;line-height:2">
+          <li>24/7 tutoring for any subject</li>
+          <li>Multiple explanations in different styles</li>
+          <li>Adaptive pacing per student</li>
+          <li>Democratises access across socioeconomic classes</li>
+        </ul>
+      </div>
+      <div class="card red">
+        <h3>😟 Pessimistic View: Bypassing Learning</h3>
+        <p style="color:var(--muted)">Using AI to complete work bypasses the cognitive effort required for genuine understanding.</p>
+        <div style="margin:1rem 0;text-align:center">
+          <div style="background:var(--surface);border-radius:10px;padding:1rem;display:inline-block">
+            <div style="font-size:.8rem;color:var(--muted);margin-bottom:.5rem">What students want vs. what they need</div>
+            <div style="display:flex;gap:1rem;align-items:center;justify-content:center">
+              <div style="text-align:center"><div style="font-size:2rem">✅</div><div style="font-size:.8rem;color:var(--green)">Passing grade</div></div>
+              <div style="font-size:1.5rem;color:var(--border)">≠</div>
+              <div style="text-align:center"><div style="font-size:2rem">🧠</div><div style="font-size:.8rem;color:var(--accent)">Actual learning</div></div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:.85rem;color:var(--muted)">AI is being deployed in education faster than we can understand its long-term impact on student cognition and skill development.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Society -->
+  <div class="tab-content" id="tab-society">
+    <div class="card yellow">
+      <h3>👥 Societal Impact — Jobs &amp; Creative Industries</h3>
+      <div class="grid-2">
+        <div>
+          <h4>Jobs at Risk</h4>
+          <ul style="padding-left:1.2rem;color:var(--muted);font-size:.9rem;line-height:2">
+            <li>Report writing → ChatGPT cheaper</li>
+            <li>Email management → LLM agents</li>
+            <li>Spreadsheet management → Copilot</li>
+            <li>Translation → neural MT systems</li>
+            <li>Customer support → chatbots</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Creative Industries</h4>
+          <ul style="padding-left:1.2rem;color:var(--muted);font-size:.9rem;line-height:2">
+            <li>Authors: first-draft generation with GPT-4</li>
+            <li>Animators: Sora-like video generation</li>
+            <li>Screenwriters: 2023 WGA/SAG-AFTRA strike</li>
+            <li>Musicians: AI composition tools</li>
+            <li>Designers: DALL-E, Midjourney, etc.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout warn" style="margin-top:1rem"><span class="callout-icon">🎬</span><div>Google DeepMind's <strong>Veo 2</strong> can generate photorealistic video from text prompts. What does this mean for film-making, advertising, journalism?</div></div>
+    </div>
+  </div>
+
+  <!-- Trust -->
+  <div class="tab-content" id="tab-trust">
+    <div class="card purple">
+      <h3>🔍 Trust &amp; Explainability</h3>
+      <div class="grid-2">
+        <div>
+          <h4>Two Kinds of Trust</h4>
+          <div class="callout info"><span class="callout-icon">1️⃣</span><div><strong>Individual Prediction Trust</strong> — "This diagnosis is negative and I understand why the decision was made."</div></div>
+          <div class="callout tip"><span class="callout-icon">2️⃣</span><div><strong>System-Level Trust</strong> — "The CV screening algorithm is unbiased and reliably identifies good candidates."</div></div>
+        </div>
+        <div>
+          <h4>Steps Toward Trust</h4>
+          <ul style="padding-left:1.2rem;font-size:.9rem;line-height:2.2">
+            <li><strong>Transparency</strong> — black boxes engender distrust</li>
+            <li><strong>Honesty</strong> — clearly communicate failure modes</li>
+            <li><strong>Simplicity</strong> — use interpretable models when possible</li>
+            <li><strong>Documentation</strong> — model cards and datasheets</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Medical Use Case Poll -->
+      <h4 style="margin-top:1.2rem">Medical ML Explainability — Which explanations satisfy you?</h4>
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:.8rem">A doctor prescribes a drug using an ML system that reads your clinical notes. Which explanations would satisfy you?</p>
+      <div id="pollContainer">
+        <div class="poll-opts" style="display:flex;flex-direction:column;gap:.4rem">
+          <div class="poll-item" onclick="togglePoll(this)" data-type="bad">
+            <div style="display:flex;align-items:center;gap:.8rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;cursor:pointer;transition:.2s">
+              <span class="poll-check" style="font-size:1.1rem">⬜</span>
+              <span style="font-size:.9rem">1. The macro-F1 score on the test set was 0.87</span>
+              <span class="tag orange" style="margin-left:auto">statistical</span>
+            </div>
+          </div>
+          <div class="poll-item" onclick="togglePoll(this)" data-type="good">
+            <div style="display:flex;align-items:center;gap:.8rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;cursor:pointer;transition:.2s">
+              <span class="poll-check" style="font-size:1.1rem">⬜</span>
+              <span style="font-size:.9rem">2. This drug has fewer side effects and works as well</span>
+              <span class="tag green" style="margin-left:auto">clinical</span>
+            </div>
+          </div>
+          <div class="poll-item" onclick="togglePoll(this)" data-type="bad">
+            <div style="display:flex;align-items:center;gap:.8rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;cursor:pointer;transition:.2s">
+              <span class="poll-check" style="font-size:1.1rem">⬜</span>
+              <span style="font-size:.9rem">3. BERT-based system matched your notes as a dense vector</span>
+              <span class="tag purple" style="margin-left:auto">technical</span>
+            </div>
+          </div>
+          <div class="poll-item" onclick="togglePoll(this)" data-type="ok">
+            <div style="display:flex;align-items:center;gap:.8rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;cursor:pointer;transition:.2s">
+              <span class="poll-check" style="font-size:1.1rem">⬜</span>
+              <span style="font-size:.9rem">4. Trained on 190,000 patients</span>
+              <span class="tag blue" style="margin-left:auto">scale</span>
+            </div>
+          </div>
+          <div class="poll-item" onclick="togglePoll(this)" data-type="good">
+            <div style="display:flex;align-items:center;gap:.8rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;cursor:pointer;transition:.2s">
+              <span class="poll-check" style="font-size:1.1rem">⬜</span>
+              <span style="font-size:.9rem">5. Identifies a paper showing the drug treats sinusitis (comorbid with asthma)</span>
+              <span class="tag teal" style="margin-left:auto">evidential</span>
+            </div>
+          </div>
+          <div class="poll-item" onclick="togglePoll(this)" data-type="good">
+            <div style="display:flex;align-items:center;gap:.8rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.6rem .9rem;cursor:pointer;transition:.2s">
+              <span class="poll-check" style="font-size:1.1rem">⬜</span>
+              <span style="font-size:.9rem">9. Your doctor approved the prescription</span>
+              <span class="tag yellow" style="margin-left:auto">authority</span>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:.78rem;color:var(--muted);margin-top:.6rem">Click items you'd accept. Clinical/evidential explanations tend to satisfy more than statistical/technical ones.</p>
+      </div>
+
+      <div class="callout warn" style="margin-top:1rem"><span class="callout-icon">⚠️</span><div><strong>The Big Challenge:</strong> Modern LLMs are so complex their <em>creators</em> cannot provide a full assessment of their validity, bias, or failure modes. We cannot currently explain why they make any specific prediction.</div></div>
+
+      <div style="background:var(--surface);border-radius:10px;padding:1rem;margin-top:1rem">
+        <h4>When to use simpler interpretable models</h4>
+        <p style="font-size:.9rem;color:var(--muted)">In medicine, law, and credit scoring, <strong>logistic regression</strong> and <strong>decision trees</strong> are often preferred over neural LLMs — not because they perform better, but because their decisions can be audited and explained:</p>
+        <pre><code class="language-python">from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+
+# Interpretable: each weight = contribution of a feature
+lr = LogisticRegression()
+lr.fit(X_train, y_train)
+print(dict(zip(feature_names, lr.coef_[0])))
+# e.g. {'cough_weeks': 0.93, 'fever': 0.22, 'smoking': 0.15}
+# → "Patient flagged because cough duration was the key driver"</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liability -->
+  <div class="tab-content" id="tab-liability">
+    <div class="card red">
+      <h3>⚖️ Liability — Who is Responsible?</h3>
+      <div class="callout warn"><span class="callout-icon">📋</span><div><strong>Scenario:</strong> An LLM system incorrectly denies an insurance claim (likely due to bias). Who is liable?</div></div>
+      <div class="grid-3" style="margin-top:1rem">
+        <div style="background:var(--surface);border-radius:10px;padding:.8rem;text-align:center">
+          <div style="font-size:1.5rem">🏢</div>
+          <div style="font-size:.85rem;font-weight:600;margin:.3rem 0">Insurance Company</div>
+          <div style="font-size:.78rem;color:var(--muted)">Deployed the system</div>
+        </div>
+        <div style="background:var(--surface);border-radius:10px;padding:.8rem;text-align:center">
+          <div style="font-size:1.5rem">👩‍💻</div>
+          <div style="font-size:.85rem;font-weight:600;margin:.3rem 0">AI Contractor</div>
+          <div style="font-size:.78rem;color:var(--muted)">Built the application</div>
+        </div>
+        <div style="background:var(--surface);border-radius:10px;padding:.8rem;text-align:center">
+          <div style="font-size:1.5rem">🤖</div>
+          <div style="font-size:.85rem;font-weight:600;margin:.3rem 0">LLM Creator</div>
+          <div style="font-size:.78rem;color:var(--muted)">Pretrained the biased model</div>
+        </div>
+        <div style="background:var(--surface);border-radius:10px;padding:.8rem;text-align:center">
+          <div style="font-size:1.5rem">📜</div>
+          <div style="font-size:.85rem;font-weight:600;margin:.3rem 0">Regulator</div>
+          <div style="font-size:.78rem;color:var(--muted)">Failed to validate the approach</div>
+        </div>
+        <div style="background:var(--surface);border-radius:10px;padding:.8rem;text-align:center">
+          <div style="font-size:1.5rem">📊</div>
+          <div style="font-size:.85rem;font-weight:600;margin:.3rem 0">Data Sources</div>
+          <div style="font-size:.78rem;color:var(--muted)">Contributed biased training data</div>
+        </div>
+        <div style="background:var(--surface);border-radius:10px;padding:.8rem;text-align:center">
+          <div style="font-size:1.5rem">❓</div>
+          <div style="font-size:.85rem;font-weight:600;margin:.3rem 0">No clear answer</div>
+          <div style="font-size:.78rem;color:var(--muted)">Legal frameworks lag technology</div>
+        </div>
+      </div>
+      <div class="callout info" style="margin-top:1rem"><span class="callout-icon">✈️</span><div><strong>Air Canada Case (2024):</strong> Air Canada's chatbot gave a passenger incorrect discount information. Air Canada claimed they couldn't be held liable for chatbot outputs. The tribunal <em>disagreed</em> — <strong>companies ARE liable for their chatbots.</strong></div></div>
+      <div class="callout warn" style="margin-top:.5rem"><span class="callout-icon">📜</span><div><strong>Legal note:</strong> Some jurisdictions (e.g. EU GDPR, medical regulations) require that algorithmic decisions be fully explainable. LLMs fundamentally violate this requirement. Expect more legislation soon.</div></div>
+    </div>
+  </div>
+
+  <!-- Copyright -->
+  <div class="tab-content" id="tab-copy">
+    <div class="card blue">
+      <h3>©️ Copyright &amp; Creative Ownership</h3>
+      <div class="grid-2">
+        <div>
+          <h4>The Core Problem</h4>
+          <ul style="padding-left:1.2rem;font-size:.9rem;line-height:2.2;color:var(--muted)">
+            <li>LLMs trained on copyrighted books, articles, code</li>
+            <li>Often without permission or payment</li>
+            <li>Meta allegedly torrented 81.7TB of pirated books</li>
+            <li>Output may reproduce copyrighted content verbatim</li>
+          </ul>
+          <div class="callout warn" style="margin-top:.8rem"><span class="callout-icon">📚</span><div>Rie Kudan won Japan's Akutagawa Prize. She later admitted ~5% of her "practically flawless" novel was <em>word-for-word</em> AI generated. Did she write the book, or did the authors of the training data?</div></div>
+        </div>
+        <div>
+          <h4>Who Owns AI Output?</h4>
+          <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem">
+            <div style="background:var(--surface);border-radius:8px;padding:.7rem;font-size:.88rem"><span style="color:var(--accent)">Option A:</span> The AI model itself (not legal person)</div>
+            <div style="background:var(--surface);border-radius:8px;padding:.7rem;font-size:.88rem"><span style="color:var(--accent2)">Option B:</span> The person who prompted the AI</div>
+            <div style="background:var(--surface);border-radius:8px;padding:.7rem;font-size:.88rem"><span style="color:var(--accent3)">Option C:</span> The AI model's creators (OpenAI, Google, etc.)</div>
+            <div style="background:var(--surface);border-radius:8px;padding:.7rem;font-size:.88rem"><span style="color:var(--accent4)">Option D:</span> The authors of the training data</div>
+            <div style="background:rgba(124,106,247,.1);border-radius:8px;padding:.7rem;font-size:.88rem;border:1px solid var(--accent)"><span style="color:var(--green)">Current consensus:</span> Unclear — courts are still deciding globally</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     BEST PRACTICE
+     ============================ -->
+<section id="bestpractice">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(78,205,196,.2)">📋</div>
+    <div><h2>Best Practices — Transparency, Datasheets &amp; Model Cards</h2><p style="color:var(--muted);font-size:.9rem">Gebru et al. 2018 &amp; Mitchell et al. 2019</p></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card teal">
+      <h3>📄 Datasheets for Datasets</h3>
+      <p style="color:var(--muted);font-size:.9rem;margin-bottom:.8rem"><strong>Gebru et al. (2018)</strong> — inspired by electronics component datasheets. Every dataset should have a datasheet answering:</p>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)"><span>Motivation</span><span class="arrow">▾</span></div>
+        <div class="acc-body">Why was the dataset created? Who created it? What entity funded it? What tasks was it designed for?</div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)"><span>Composition</span><span class="arrow">▾</span></div>
+        <div class="acc-body">Is it a sample or complete set? What are the instances? Does it contain personal data? Are there known errors?</div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)"><span>Collection Process</span><span class="arrow">▾</span></div>
+        <div class="acc-body">Over what timeframe? Was consent obtained? How were labels created? Who were the annotators?</div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)"><span>Preprocessing / Cleaning / Labeling</span><span class="arrow">▾</span></div>
+        <div class="acc-body">Was the data preprocessed? Is the preprocessing code available? How are various text lengths handled?</div>
+      </div>
+      <div class="accordion">
+        <div class="acc-header" onclick="toggleAcc(this)"><span>Uses, Distribution &amp; Maintenance</span><span class="arrow">▾</span></div>
+        <div class="acc-body">What tasks is the dataset intended for? What tasks should it NOT be used for? Who maintains it?</div>
+      </div>
+    </div>
+
+    <div class="card teal">
+      <h3>🃏 Model Cards for Model Reporting</h3>
+      <p style="color:var(--muted);font-size:.9rem;margin-bottom:.8rem"><strong>Mitchell et al. (2019)</strong> — standardised documentation for ML models, targeting multiple audiences:</p>
+      <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.8rem">
+        <span class="tag purple">ML Practitioners</span>
+        <span class="tag blue">Software Developers</span>
+        <span class="tag orange">Policymakers</span>
+        <span class="tag green">Impacted Individuals</span>
+      </div>
+      <div class="grid-2" style="gap:.6rem">
+        <div style="background:var(--surface);border-radius:8px;padding:.7rem;font-size:.85rem">
+          <div style="color:var(--accent3);font-weight:600;margin-bottom:.3rem">Model Details</div>
+          Person/org developing model, version, training approach
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:.7rem;font-size:.85rem">
+          <div style="color:var(--accent3);font-weight:600;margin-bottom:.3rem">Intended Use</div>
+          Primary uses, out-of-scope uses, target users
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:.7rem;font-size:.85rem">
+          <div style="color:var(--accent3);font-weight:600;margin-bottom:.3rem">Performance</div>
+          Metrics, evaluation data, links to datasheets
+        </div>
+        <div style="background:var(--surface);border-radius:8px;padding:.7rem;font-size:.85rem">
+          <div style="color:var(--accent3);font-weight:600;margin-bottom:.3rem">Ethical Considerations</div>
+          Known biases, caveats, recommendations
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout key"><span class="callout-icon">📌</span><div><strong>Transparency Rule:</strong> Always clearly label AI-generated content. Never pass off AI-generated work as human-made. Understand regulations specific to your domain (healthcare, law, journalism).</div></div>
+</section>
+
+<!-- ============================
+     PART 2 — INFO EXTRACTION
+     ============================ -->
+<section id="infoext">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(124,106,247,.2)">🔬</div>
+    <div><h2>Part 2 — Information Extraction</h2><p style="color:var(--muted);font-size:.9rem">Jurafsky &amp; Martin, SLP3 — Chapter 20</p></div>
+  </div>
+
+  <div class="callout key"><span class="callout-icon">📖</span><div><strong>Information Extraction (IE)</strong> automatically extracts structured information (entities, relations, events) from unstructured text. The extracted data populates databases, knowledge graphs, and downstream ML systems.</div></div>
+
+  <!-- IE Pipeline -->
+  <div class="card purple">
+    <h3>🔄 The IE Pipeline</h3>
+    <div class="pipeline">
+      <div class="pipeline-step" style="border-color:var(--accent)">📝 Raw Text</div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step" style="border-color:var(--blue)">🔤 Tokenization</div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step" style="border-color:var(--accent3)">🏷️ NER</div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step" style="border-color:var(--accent2)">🔗 Relation Extraction</div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step" style="border-color:var(--green)">📊 Structured KB</div>
+    </div>
+
+    <div style="background:var(--surface);border-radius:10px;padding:1rem;margin-top:1rem;font-family:monospace;font-size:.88rem">
+      <div style="color:var(--muted);font-size:.78rem;margin-bottom:.5rem">Example sentence with NER tags:</div>
+      <span>Citing high fuel prices, </span>
+      <span style="background:rgba(96,165,250,.2);border:1px solid var(--blue);border-radius:4px;padding:.1rem .3rem;color:var(--blue)">[ORG United Airlines]</span>
+      <span> said </span>
+      <span style="background:rgba(78,205,196,.2);border:1px solid var(--accent3);border-radius:4px;padding:.1rem .3rem;color:var(--accent3)">[TIME Friday]</span>
+      <span> it raised fares by </span>
+      <span style="background:rgba(74,222,128,.2);border:1px solid var(--green);border-radius:4px;padding:.1rem .3rem;color:var(--green)">[MONEY $6]</span>
+      <span>. </span>
+      <span style="background:rgba(96,165,250,.2);border:1px solid var(--blue);border-radius:4px;padding:.1rem .3rem;color:var(--blue)">[ORG American Airlines]</span>
+      <span>, a unit of </span>
+      <span style="background:rgba(96,165,250,.2);border:1px solid var(--blue);border-radius:4px;padding:.1rem .3rem;color:var(--blue)">[ORG AMR Corp.]</span>
+      <span>, spokesman </span>
+      <span style="background:rgba(247,145,106,.2);border:1px solid var(--accent2);border-radius:4px;padding:.1rem .3rem;color:var(--accent2)">[PER Tim Wagner]</span>
+      <span> said.</span>
+    </div>
+
+    <div class="grid-3" style="margin-top:1rem">
+      <div style="background:var(--surface);border-radius:8px;padding:.7rem;font-size:.85rem">
+        <div style="color:var(--accent);margin-bottom:.3rem;font-weight:600">Relation extracted:</div>
+        Tim Wagner <span style="color:var(--accent3)">employed-by</span> American Airlines
+      </div>
+      <div style="background:var(--surface);border-radius:8px;padding:.7rem;font-size:.85rem">
+        <div style="color:var(--accent);margin-bottom:.3rem;font-weight:600">Relation extracted:</div>
+        American Airlines <span style="color:var(--accent3)">subsidiary-of</span> AMR Corp.
+      </div>
+      <div style="background:var(--surface);border-radius:8px;padding:.7rem;font-size:.85rem">
+        <div style="color:var(--accent);margin-bottom:.3rem;font-weight:600">Relation extracted:</div>
+        United Airlines <span style="color:var(--accent3)">raised-fare-by</span> $6
+      </div>
+    </div>
+  </div>
+
+  <!-- ACE Relations -->
+  <div class="card blue">
+    <h3>📊 ACE Relation Types</h3>
+    <p style="color:var(--muted);font-size:.9rem;margin-bottom:.8rem">The ACE (Automatic Content Extraction) evaluation uses 17 relation types across 6 high-level categories:</p>
+    <table>
+      <tr><th>Category</th><th>Relation</th><th>Entity Types</th><th>Example</th></tr>
+      <tr><td><span class="tag blue">Physical</span></td><td>Located</td><td>PER–GPE</td><td>"He was in Tennessee"</td></tr>
+      <tr><td><span class="tag purple">Part-Whole</span></td><td>Subsidiary</td><td>ORG–ORG</td><td>"XYZ, the parent company of ABC"</td></tr>
+      <tr><td><span class="tag orange">Person-Social</span></td><td>Family</td><td>PER–PER</td><td>"Yoko's husband John"</td></tr>
+      <tr><td><span class="tag green">Org-AFF</span></td><td>Founder</td><td>PER–ORG</td><td>"Steve Jobs, co-founder of Apple"</td></tr>
+      <tr><td><span class="tag teal">Org-AFF</span></td><td>Employment</td><td>PER–ORG</td><td>"Tim Wagner, spokesman for American Airlines"</td></tr>
+      <tr><td><span class="tag yellow">Gen-AFF</span></td><td>Citizenship</td><td>PER–GPE</td><td>"French citizen residing in Paris"</td></tr>
+    </table>
+    <div class="callout info" style="margin-top:.8rem"><span class="callout-icon">🏥</span><div><strong>UMLS (Medical):</strong> 134 entity types and 54 relations. Example: "Dopamine treats Parkinson's Disease" → <code class="inline">Pharmacologic Substance treats Pathological Function</code></div></div>
+  </div>
+</section>
+
+<!-- ============================
+     PATTERNS
+     ============================ -->
+<section id="patterns">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(247,201,72,.2)">🔎</div>
+    <div><h2>Algorithm 1 — Hearst Patterns</h2><p style="color:var(--muted);font-size:.9rem">Marti Hearst (1992) — Lexico-syntactic patterns for hypernym extraction</p></div>
+  </div>
+
+  <div class="card yellow">
+    <h3>🔎 The Hearst Pattern Intuition</h3>
+    <div class="callout tip"><span class="callout-icon">💡</span><div>When you see <em>"NP such as NP"</em>, you don't need to know what the second NP is — you can infer it's a type of the first NP. This is knowledge encoded in the surface text itself.</div></div>
+
+    <div style="background:var(--surface);border-radius:10px;padding:1rem;margin:.8rem 0">
+      <div style="font-style:italic;font-size:1rem;margin-bottom:.5rem">"Agar is a substance prepared from a mixture of <strong>red algae</strong>, such as <strong>Gelidium</strong>, for laboratory or industrial use."</div>
+      <div style="color:var(--muted);font-size:.85rem">Even without knowing what Gelidium is, the pattern tells us: <span style="color:var(--green)">Gelidium is-a red algae</span></div>
+    </div>
+
+    <h4>The Five Canonical Hearst Patterns</h4>
+    <table>
+      <tr><th>Pattern</th><th>Example</th><th>Inferred Relation</th></tr>
+      <tr>
+        <td><code class="inline">NP<sub>H</sub> such as {NP,}*(or|and) NP</code></td>
+        <td>"red algae such as <strong>Gelidium</strong>"</td>
+        <td>Gelidium <span class="tag green">is-a</span> red algae</td>
+      </tr>
+      <tr>
+        <td><code class="inline">such NP<sub>H</sub> as {NP,}*(or|and) NP</code></td>
+        <td>"such authors as Herrick, Goldsmith"</td>
+        <td>Herrick <span class="tag green">is-a</span> author</td>
+      </tr>
+      <tr>
+        <td><code class="inline">NP<sub>H</sub> {,} including {NP,}*</code></td>
+        <td>"common-law countries, including Canada"</td>
+        <td>Canada <span class="tag green">is-a</span> common-law country</td>
+      </tr>
+      <tr>
+        <td><code class="inline">NP<sub>H</sub> {,} especially {NP,}*</code></td>
+        <td>"European countries, especially France"</td>
+        <td>France <span class="tag green">is-a</span> European country</td>
+      </tr>
+      <tr>
+        <td><code class="inline">NP {,} NP<sub>H</sub> and other NP</code></td>
+        <td>"temples, treasuries, and other civic buildings"</td>
+        <td>temples <span class="tag green">is-a</span> civic building</td>
+      </tr>
+    </table>
+
+    <h4 style="margin-top:1.2rem">Formal Definition</h4>
+    <div class="formula">
+      $$\text{NP}_0 \text{ such as } \text{NP}_1, \text{NP}_2, \ldots, (\text{and}|\text{or}) \text{ NP}_i$$
+      $$\Rightarrow \forall \text{NP}_j, \, j \geq 1: \quad \text{hyponym}(\text{NP}_j, \, \text{NP}_0)$$
+      <div class="formula-label">If NP₀ = "red algae" and NP₁ = "Gelidium": hyponym(Gelidium, red_algae)</div>
+    </div>
+
+    <h4>Extended Patterns — Named Entity Constraints</h4>
+    <pre><code class="language-python">import re
+import spacy
+
+nlp = spacy.load("en_core_web_sm")
+
+HEARST_PATTERNS = [
+    # PER, POSITION of ORG
+    r"(?P&lt;per&gt;[A-Z][a-z]+ [A-Z][a-z]+),? (?P&lt;pos&gt;\w+(?: \w+)*) of (?P&lt;org&gt;[A-Z][A-Za-z &amp;]+)",
+    # PER (named|appointed|chose) PER Prep? POSITION
+    r"(?P&lt;subj&gt;[A-Z][a-z]+) (?:named|appointed|chose) (?P&lt;per&gt;[A-Z][a-z]+ [A-Z][a-z]+) (?P&lt;pos&gt;\w+(?: \w+)*)",
+]
+
+def extract_role_relations(text):
+    results = []
+    for pat in HEARST_PATTERNS:
+        for m in re.finditer(pat, text):
+            results.append(m.groupdict())
+    return results
+
+sentence = "George Marshall, Secretary of State of the United States, was appointed by Truman."
+print(extract_role_relations(sentence))
+</code></pre>
+
+    <div class="grid-2" style="margin-top:1rem">
+      <div class="callout tip"><span class="callout-icon">✅</span><div><strong>Advantages:</strong> High precision, easily interpretable, domain-customisable, no training data needed</div></div>
+      <div class="callout warn"><span class="callout-icon">⚠️</span><div><strong>Disadvantages:</strong> Low recall, brittle to paraphrasing, labour-intensive to create, maintenance burden</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     SUPERVISED
+     ============================ -->
+<section id="supervised">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(96,165,250,.2)">🤖</div>
+    <div><h2>Algorithm 2 — Supervised Relation Extraction</h2><p style="color:var(--muted);font-size:.9rem">Feature-based &amp; Neural approaches</p></div>
+  </div>
+
+  <div class="card blue">
+    <h3>🤖 The Supervised Framework</h3>
+    <div class="pipeline">
+      <div class="pipeline-step">Annotated Training Data</div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step">Find Entity Pairs</div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step">Extract Features</div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step">Train Classifier</div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step">Classify Test Pairs</div>
+    </div>
+
+    <!-- Algorithm pseudocode -->
+    <pre><code class="language-python">def find_relations(words):
+    """
+    Pseudocode (Jurafsky & Martin, SLP3 Fig 20.5)
+    """
+    relations = []
+    entities = find_entities(words)   # NER step
+    for e1, e2 in entity_pairs(entities):
+        if is_related(e1, e2):        # optional filter
+            rel = classify_relation(e1, e2)
+            relations.append(rel)
+    return relations
+</code></pre>
+
+    <h3>Feature Engineering for Relation Extraction</h3>
+    <div style="background:var(--surface);border-radius:10px;padding:1rem;margin:.8rem 0;font-size:.88rem">
+      <div style="color:var(--muted);margin-bottom:.5rem">Sentence: <em>"<span style="color:var(--blue)">American Airlines</span>, a unit of AMR, spokesman <span style="color:var(--accent2)">Tim Wagner</span> said."</em></div>
+      <div style="color:var(--muted);margin-bottom:.8rem">M1 = [ORG American Airlines], M2 = [PER Tim Wagner]</div>
+    </div>
+
+    <div class="tabs" id="feat-tabs">
+      <div class="tab active" onclick="switchTab('feat-tabs','feat-word',this)">Word Features</div>
+      <div class="tab" onclick="switchTab('feat-tabs','feat-ne',this)">Named Entity Features</div>
+      <div class="tab" onclick="switchTab('feat-tabs','feat-syn',this)">Syntactic Features</div>
+    </div>
+
+    <div class="tab-content active" id="feat-word">
+      <table>
+        <tr><th>Feature Type</th><th>Values</th></tr>
+        <tr><td>Head words of M1, M2</td><td><code class="inline">Airlines</code>, <code class="inline">Wagner</code>, <code class="inline">Airlines-Wagner</code></td></tr>
+        <tr><td>Bag-of-words in M1</td><td><code class="inline">{American, Airlines}</code></td></tr>
+        <tr><td>Bag-of-words in M2</td><td><code class="inline">{Tim, Wagner}</code></td></tr>
+        <tr><td>Word before M2 (position -1)</td><td><code class="inline">spokesman</code></td></tr>
+        <tr><td>Word after M2 (position +1)</td><td><code class="inline">said</code></td></tr>
+        <tr><td>Words between M1 and M2</td><td><code class="inline">{a, AMR, of, unit, spokesman, ...}</code></td></tr>
+      </table>
+    </div>
+
+    <div class="tab-content" id="feat-ne">
+      <table>
+        <tr><th>Feature Type</th><th>Values</th></tr>
+        <tr><td>NER type of M1</td><td><span class="tag blue">ORG</span></td></tr>
+        <tr><td>NER type of M2</td><td><span class="tag orange">PER</span></td></tr>
+        <tr><td>Concatenated NER types</td><td><code class="inline">ORG-PER</code></td></tr>
+        <tr><td>Entity level of M1</td><td>NAME (vs. NOMINAL/PRONOUN)</td></tr>
+        <tr><td>Entity level of M2</td><td>NAME</td></tr>
+        <tr><td>Entities between M1 and M2</td><td>1 (AMR Corp.)</td></tr>
+      </table>
+    </div>
+
+    <div class="tab-content" id="feat-syn">
+      <table>
+        <tr><th>Feature Type</th><th>Values</th></tr>
+        <tr><td>Constituent path (parse tree)</td><td><code class="inline">NP↑NP↑S↑S↓NP</code></td></tr>
+        <tr><td>Dependency tree path</td><td><code class="inline">Airlines →subj matched ←comp said →subj Wagner</code></td></tr>
+      </table>
+      <pre><code class="language-python">import spacy
+
+nlp = spacy.load("en_core_web_sm")
+doc = nlp("American Airlines, a unit of AMR, spokesman Tim Wagner said.")
+
+# Extract dependency path between two entities
+def dep_path(token1, token2, doc):
+    """Get dependency path between two tokens."""
+    ancestors1 = set(t.i for t in token1.ancestors)
+    ancestors2 = set(t.i for t in token2.ancestors)
+    common = ancestors1 & ancestors2
+    lca_idx = min(common, key=lambda i: doc[i].head.i if doc[i].head.i != i else 0,
+                  default=token1.i)
+    path_up = [token1] + [t for t in token1.ancestors if t.i >= lca_idx]
+    path_down = [doc[lca_idx]] + [t for t in token2.ancestors if t.i >= lca_idx][::-1] + [token2]
+    return path_up + path_down[1:]
+</code></pre>
+    </div>
+
+    <h3 style="margin-top:1.2rem">Neural Approach — BERT for Relation Extraction</h3>
+    <div style="background:var(--surface);border-radius:10px;padding:1rem;margin:.8rem 0">
+      <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;font-size:.85rem;font-family:monospace;margin-bottom:.8rem">
+        <div style="background:rgba(124,106,247,.2);border-radius:4px;padding:.2rem .5rem">[CLS]</div>
+        <div style="background:rgba(96,165,250,.2);border-radius:4px;padding:.2rem .5rem">[SUBJ_ORG]</div>
+        <div style="background:var(--card);border-radius:4px;padding:.2rem .5rem">was born in</div>
+        <div style="background:rgba(78,205,196,.2);border-radius:4px;padding:.2rem .5rem">[OBJ_LOC]</div>
+        <div style="background:var(--card);border-radius:4px;padding:.2rem .5rem">, Michigan</div>
+        <div style="background:rgba(124,106,247,.2);border-radius:4px;padding:.2rem .5rem">[SEP]</div>
+      </div>
+      <div style="display:flex;justify-content:center;margin:.5rem 0;color:var(--accent);font-size:1.2rem">↓</div>
+      <div style="text-align:center;background:rgba(124,106,247,.1);border-radius:8px;padding:.5rem;font-size:.85rem">BERT Encoder (pretrained)</div>
+      <div style="display:flex;justify-content:center;margin:.5rem 0;color:var(--accent);font-size:1.2rem">↓</div>
+      <div style="text-align:center;background:rgba(78,205,196,.1);border-radius:8px;padding:.5rem;font-size:.85rem">Linear Layer (fine-tuned)</div>
+      <div style="display:flex;justify-content:center;margin:.5rem 0;color:var(--accent);font-size:1.2rem">↓</div>
+      <div style="text-align:center;background:rgba(74,222,128,.1);border-radius:8px;padding:.5rem;font-size:.85rem">p(relation | SUBJ, OBJ) → per:city_of_birth</div>
+    </div>
+
+    <pre><code class="language-python">from transformers import AutoTokenizer, AutoModelForSequenceClassification
+import torch
+
+# TACRED-style: subject and object replaced by their NER tags
+# This prevents overfitting to specific entity names
+def prepare_input(sentence, subj_span, obj_span, subj_type, obj_type):
+    words = sentence.split()
+    # Replace entity mentions with type tokens
+    s, e = subj_span
+    words[s:e] = [f"[SUBJ_{subj_type}]"]
+    s, e = obj_span
+    words[s:e] = [f"[OBJ_{obj_type}]"]
+    return " ".join(words)
+
+model_name = "bert-base-uncased"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=43)  # 42 TACRED + no_relation
+
+# Fine-tuning loop (simplified)
+optimizer = torch.optim.AdamW(model.parameters(), lr=2e-5)
+for batch in dataloader:
+    outputs = model(**batch)
+    loss = outputs.loss
+    loss.backward()
+    optimizer.step()
+    optimizer.zero_grad()
+</code></pre>
+
+    <div class="grid-2" style="margin-top:1rem">
+      <div class="callout tip"><span class="callout-icon">✅</span><div><strong>Advantages:</strong> High accuracy (when enough data), generalises beyond hand-crafted patterns, end-to-end trainable</div></div>
+      <div class="callout warn"><span class="callout-icon">⚠️</span><div><strong>Disadvantages:</strong> Expensive labelling, brittle across genres, doesn't generalise to unseen relation types</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     SEMI-SUPERVISED
+     ============================ -->
+<section id="semisup">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(74,222,128,.2)">🌱</div>
+    <div><h2>Algorithm 3 — Semi-Supervised &amp; Unsupervised</h2><p style="color:var(--muted);font-size:.9rem">Bootstrapping, Distant Supervision, Open IE</p></div>
+  </div>
+
+  <!-- Bootstrapping -->
+  <div class="card green">
+    <h3>🌱 Bootstrapping from Seed Tuples</h3>
+    <div class="callout key"><span class="callout-icon">🌟</span><div>Start with a small number of <strong>seed facts</strong> (e.g. "Ryanair has hub at Charleroi") and iteratively discover new facts and new patterns from a large corpus.</div></div>
+
+    <div style="background:var(--surface);border-radius:10px;padding:1rem;margin:.8rem 0;font-family:monospace;font-size:.85rem">
+      <div style="color:var(--muted);margin-bottom:.5rem"># Algorithm (Jurafsky & Martin, SLP3 Fig 20.7)</div>
+      <pre style="margin:0;background:transparent;border:none;padding:0"><code class="language-python">def bootstrap(relation_R, seed_tuples, corpus, max_iter=10):
+    tuples = seed_tuples.copy()  # e.g. {(Ryanair, Charleroi)}
+
+    for _ in range(max_iter):
+        # Step 1: Find sentences containing seed tuple entities
+        sentences = find_sentences_with_entities(corpus, tuples)
+
+        # Step 2: Extract patterns from surrounding context
+        new_patterns = generalise_context(sentences, tuples)
+
+        # Step 3: Apply patterns to find new tuples
+        candidate_tuples = apply_patterns(new_patterns, corpus)
+
+        # Step 4: Filter by confidence
+        high_conf = [t for t in candidate_tuples
+                     if confidence(t, new_patterns, corpus) > THRESHOLD]
+        tuples.update(high_conf)
+
+    return tuples
+</code></pre>
+    </div>
+
+    <h4>Worked Example: Airline Hub Discovery</h4>
+    <div class="timeline">
+      <div class="tl-item done"><div class="tl-dot"></div>
+        <strong>Seed:</strong> <code class="inline">(Ryanair, Charleroi)</code>
+      </div>
+      <div class="tl-item done"><div class="tl-dot"></div>
+        <strong>Discovered sentences:</strong>
+        <ul style="color:var(--muted);font-size:.88rem;padding-left:1.2rem;margin-top:.3rem">
+          <li>"Budget airline <span style="color:var(--blue)">Ryanair</span>, which uses <span style="color:var(--accent3)">Charleroi</span> as a hub, scrapped flights…"</li>
+          <li>"All flights out of <span style="color:var(--blue)">Ryanair</span>'s hub at <span style="color:var(--accent3)">Charleroi</span> airport were grounded…"</li>
+          <li>"<span style="color:var(--accent3)">Charleroi</span>, a main hub for <span style="color:var(--blue)">Ryanair</span>, estimated 8000 passengers…"</li>
+        </ul>
+      </div>
+      <div class="tl-item done"><div class="tl-dot"></div>
+        <strong>Extracted patterns:</strong>
+        <ul style="color:var(--muted);font-size:.88rem;padding-left:1.2rem;margin-top:.3rem">
+          <li><code class="inline">[ORG], which uses [LOC] as a hub</code></li>
+          <li><code class="inline">[ORG]'s hub at [LOC]</code></li>
+          <li><code class="inline">[LOC], a main hub for [ORG]</code></li>
+        </ul>
+      </div>
+      <div class="tl-item"><div class="tl-dot"></div>
+        <strong>New tuples discovered:</strong> <code class="inline">(EasyJet, Luton)</code>, <code class="inline">(Wizz Air, Budapest)</code>, …
+      </div>
+    </div>
+
+    <h4 style="margin-top:1.2rem">Confidence Scoring — Preventing Semantic Drift</h4>
+    <div class="callout warn"><span class="callout-icon">⚠️</span><div><strong>Semantic Drift:</strong> Bad patterns lead to wrong tuples → wrong tuples generate bad patterns → the relation's meaning "drifts" far from the original. Example: "Sydney has a ferry hub at Circular Quay" → wrong tuple <code class="inline">(Sydney, Circular Quay)</code> as airline hub.</div></div>
+
+    <div class="formula">
+      $$\text{ConfRlogF}(p) = \frac{|\text{hits}(p)|}{|\text{finds}(p)|} \cdot \log(|\text{finds}(p)|)$$
+      <div class="formula-label">where hits(p) = tuples in T that p correctly matches; finds(p) = all tuples p finds in corpus D</div>
+    </div>
+
+    <div class="formula">
+      $$\text{Conf}(t) = 1 - \prod_{p \in P'} (1 - \text{Conf}(p))$$
+      <div class="formula-label">Noisy-OR model: confidence in a tuple t given supporting patterns P' — assumes pattern failures are independent</div>
+    </div>
+
+    <pre><code class="language-python">import math
+
+def conf_rlogf(pattern, current_tuples, corpus):
+    """
+    Confidence score for a pattern.
+    Higher = pattern is both precise and productive.
+    """
+    finds = apply_pattern(pattern, corpus)      # all tuples found
+    hits = finds & current_tuples               # correctly found tuples
+    if not finds:
+        return 0.0
+    precision = len(hits) / len(finds)
+    productivity = math.log(len(finds))        # reward high recall
+    return precision * productivity
+
+def noisy_or_confidence(tuple_t, supporting_patterns, corpus):
+    """Confidence in a tuple using noisy-OR combination."""
+    failure_prob = 1.0
+    for p in supporting_patterns:
+        conf_p = conf_rlogf(p, known_tuples, corpus)
+        failure_prob *= (1 - conf_p)          # each pattern independently might fail
+    return 1 - failure_prob
+</code></pre>
+  </div>
+
+  <!-- Distant Supervision -->
+  <div class="card purple">
+    <h3>🔭 Distant Supervision</h3>
+    <div class="callout key"><span class="callout-icon">💡</span><div>Use an existing knowledge base (e.g., Freebase, WikiData) to <em>automatically label</em> training sentences. If the KB says (Apple, Steve Jobs, founder-of), then any sentence mentioning both Apple and Steve Jobs likely expresses that relation.</div></div>
+
+    <pre><code class="language-python">from wikidata.client import Client
+
+def distant_supervision_label(sentence, entity_pairs, knowledge_base):
+    """
+    Auto-label sentences using a knowledge base.
+    If (e1, e2) exists in KB with relation R,
+    label all sentences mentioning both e1 and e2 as expressing R.
+    """
+    labeled = []
+    for e1, e2 in find_entity_pairs(sentence):
+        relation = knowledge_base.get_relation(e1, e2)
+        if relation:
+            labeled.append({
+                'sentence': sentence,
+                'e1': e1, 'e2': e2,
+                'relation': relation,
+                'label_source': 'distant_supervision'  # not manually verified!
+            })
+    return labeled
+
+# Example: Freebase tells us (Apple Inc., Steve Jobs) has relation founder-of
+# So: "Steve Jobs co-founded Apple in a garage." → labeled as founder-of
+# Also: "Apple CEO Steve Jobs announced..." → labeled as founder-of (may be wrong!)
+</code></pre>
+
+    <div class="callout warn"><span class="callout-icon">⚠️</span><div><strong>Key limitation:</strong> Distant supervision introduces <strong>noisy labels</strong>. "Apple CEO Steve Jobs announced…" doesn't express founder-of, yet it gets labeled as such because (Apple, Steve Jobs, founder-of) is in the KB. Methods like multi-instance learning and attention can help reduce this noise.</div></div>
+  </div>
+
+  <!-- Open IE -->
+  <div class="card orange">
+    <h3>🌐 Open Information Extraction (Open IE)</h3>
+    <div class="callout key"><span class="callout-icon">🌍</span><div>Instead of predefined relation types, Open IE extracts arbitrary (subject, relation, object) triples directly from text without a fixed schema. Relations are expressed as natural language verb phrases.</div></div>
+
+    <table>
+      <tr><th>Input Sentence</th><th>Extracted Triple</th></tr>
+      <tr>
+        <td>"Barack Obama was born in Hawaii."</td>
+        <td><code class="inline">(Barack Obama, was born in, Hawaii)</code></td>
+      </tr>
+      <tr>
+        <td>"Dopamine treats Parkinson's disease."</td>
+        <td><code class="inline">(Dopamine, treats, Parkinson's disease)</code></td>
+      </tr>
+      <tr>
+        <td>"United Airlines raised fares by $6."</td>
+        <td><code class="inline">(United Airlines, raised fares by, $6)</code></td>
+      </tr>
+    </table>
+
+    <pre><code class="language-python">import openie  # or use spacy + custom rules
+
+def open_ie_extract(sentence):
+    """
+    Open IE: extract (subject, relation, object) triples.
+    No predefined schema required.
+    """
+    doc = nlp(sentence)
+    triples = []
+    for token in doc:
+        if token.dep_ == "ROOT" and token.pos_ == "VERB":
+            subjects = [t for t in token.lefts if t.dep_ in ("nsubj", "nsubjpass")]
+            objects  = [t for t in token.rights if t.dep_ in ("dobj", "pobj", "attr")]
+            for subj in subjects:
+                for obj in objects:
+                    triples.append((
+                        " ".join(t.text for t in subj.subtree),
+                        token.lemma_,
+                        " ".join(t.text for t in obj.subtree)
+                    ))
+    return triples
+
+# Advantages: works on any domain, no labelling needed
+# Disadvantages: lower precision, relations can be verbose/redundant
+</code></pre>
+
+    <div class="grid-2">
+      <div class="callout tip"><span class="callout-icon">✅</span><div>Works on ANY domain without labelled data. Scales to the entire web.</div></div>
+      <div class="callout warn"><span class="callout-icon">⚠️</span><div>Relations are noisy strings — harder to query. Can extract trivially true or uninformative facts.</div></div>
+    </div>
+  </div>
+
+  <!-- Comparison Table -->
+  <div class="card blue">
+    <h3>📊 Algorithm Comparison</h3>
+    <table>
+      <tr><th>Method</th><th>Labelled Data</th><th>Precision</th><th>Recall</th><th>Scalability</th><th>Best For</th></tr>
+      <tr>
+        <td><span class="tag yellow">Hearst Patterns</span></td>
+        <td>None</td>
+        <td><span style="color:var(--green)">High</span></td>
+        <td><span style="color:var(--red)">Low</span></td>
+        <td><span style="color:var(--accent3)">Medium</span></td>
+        <td>High-precision taxonomies</td>
+      </tr>
+      <tr>
+        <td><span class="tag blue">Supervised</span></td>
+        <td>Large annotated corpus</td>
+        <td><span style="color:var(--green)">Very High</span></td>
+        <td><span style="color:var(--accent3)">Medium</span></td>
+        <td><span style="color:var(--red)">Low</span></td>
+        <td>Fixed domains, enough data</td>
+      </tr>
+      <tr>
+        <td><span class="tag green">Bootstrapping</span></td>
+        <td>Seed tuples/patterns only</td>
+        <td><span style="color:var(--accent3)">Medium</span></td>
+        <td><span style="color:var(--accent3)">Medium</span></td>
+        <td><span style="color:var(--accent3)">Medium</span></td>
+        <td>Scarce labels, known relation</td>
+      </tr>
+      <tr>
+        <td><span class="tag purple">Distant Supervision</span></td>
+        <td>KB only (auto-labelled)</td>
+        <td><span style="color:var(--accent3)">Medium</span></td>
+        <td><span style="color:var(--green)">High</span></td>
+        <td><span style="color:var(--green)">High</span></td>
+        <td>Large-scale, existing KB</td>
+      </tr>
+      <tr>
+        <td><span class="tag orange">Open IE</span></td>
+        <td>None</td>
+        <td><span style="color:var(--accent3)">Medium-Low</span></td>
+        <td><span style="color:var(--green)">Very High</span></td>
+        <td><span style="color:var(--green)">Very High</span></td>
+        <td>Open-domain, no schema</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Template Filling -->
+  <div class="card teal">
+    <h3>📋 Template Filling</h3>
+    <div class="callout key"><span class="callout-icon">📝</span><div>A specialised IE task: fill in a predefined template (set of slots) from a document. Originally used in MUC (Message Understanding Conferences).</div></div>
+
+    <div class="grid-2">
+      <div>
+        <h4>Input Text</h4>
+        <div style="background:var(--surface);border-radius:8px;padding:.8rem;font-size:.85rem;line-height:1.8">
+          "Citing high fuel prices, <span style="color:var(--blue)">United Airlines</span> said <span style="color:var(--accent3)">Thursday</span> it has increased fares by <span style="color:var(--green)">$6</span> per round trip. <span style="color:var(--blue)">American Airlines</span>, a unit of AMR, immediately matched the move."
+        </div>
+      </div>
+      <div>
+        <h4>Filled Template</h4>
+        <div style="background:var(--surface);border-radius:8px;padding:.8rem;font-family:monospace;font-size:.82rem">
+          <div><span style="color:var(--accent)">FARE-RAISE-ATTEMPT:</span></div>
+          <div style="padding-left:1rem">
+            <div><span style="color:var(--accent3)">LEAD_AIRLINE:</span> <span style="color:var(--blue)">UNITED AIRLINES</span></div>
+            <div><span style="color:var(--accent3)">AMOUNT:</span> <span style="color:var(--green)">$6</span></div>
+            <div><span style="color:var(--accent3)">EFFECTIVE_DATE:</span> <span style="color:var(--accent3)">2006-10-26</span></div>
+            <div><span style="color:var(--accent3)">FOLLOWER:</span> <span style="color:var(--blue)">AMERICAN AIRLINES</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h4 style="margin-top:1rem">FASTUS Pipeline (Hobbs et al., 1997)</h4>
+    <div style="overflow-x:auto">
+      <table>
+        <tr><th>#</th><th>Stage</th><th>Description</th></tr>
+        <tr><td>1</td><td>Tokens</td><td>Tokenise the character stream</td></tr>
+        <tr><td>2</td><td>Complex Words</td><td>Identify multiword phrases, numbers, proper names</td></tr>
+        <tr><td>3</td><td>Basic Phrases</td><td>Segment into noun and verb groups</td></tr>
+        <tr><td>4</td><td>Complex Phrases</td><td>Identify complex NPs and VPs</td></tr>
+        <tr><td>5</td><td>Semantic Patterns</td><td>Identify entities/events, insert into templates</td></tr>
+        <tr><td>6</td><td>Merging</td><td>Merge references to same entity/event (coreference)</td></tr>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     EXAM PREP
+     ============================ -->
+<section id="exam">
+  <div class="section-header">
+    <div class="section-icon" style="background:rgba(247,201,72,.2)">📝</div>
+    <div><h2>Exam Preparation</h2><p style="color:var(--muted);font-size:.9rem">Application, Analysis, Evaluation, Creation — not memorisation</p></div>
+  </div>
+
+  <div class="card yellow">
+    <h3>📝 Exam Advice from Lecturers</h3>
+    <div class="grid-3">
+      <div style="background:var(--surface);border-radius:10px;padding:.8rem">
+        <div style="color:var(--accent4);font-weight:600;margin-bottom:.4rem">Use [#] as guide</div>
+        <div style="font-size:.85rem;color:var(--muted)">Each mark = roughly one idea. [2] = two distinct points. Don't write a paragraph for a 1-mark question.</div>
+      </div>
+      <div style="background:var(--surface);border-radius:10px;padding:.8rem">
+        <div style="color:var(--accent4);font-weight:600;margin-bottom:.4rem">Show your work</div>
+        <div style="font-size:.85rem;color:var(--muted)">For calculations, show every step. Partial marks cannot be awarded if the working is hidden.</div>
+      </div>
+      <div style="background:var(--surface);border-radius:10px;padding:.8rem">
+        <div style="color:var(--accent4);font-weight:600;margin-bottom:.4rem">Application &gt; recall</div>
+        <div style="font-size:.85rem;color:var(--muted)">Open book exam. Content copied from notes earns few marks. Apply, analyse, evaluate, create.</div>
+      </div>
+    </div>
+    <div class="callout warn" style="margin-top:1rem"><span class="callout-icon">🎓</span><div>Glasgow grading: <strong>A (70-100%)</strong> = "Exemplary range and depth of ILOs." The exam is designed to be hard — 70% indicates mastery, not perfection.</div></div>
+  </div>
+
+  <h3 style="margin:1.5rem 0 .8rem">🧪 Practice Exam Questions</h3>
+
+  <!-- Q1 -->
+  <div class="quiz-container">
+    <div class="quiz-q">Q1 [2 marks] — What is the main advantage of Hearst patterns for hypernym extraction compared to supervised relation extraction?</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','tab-quiz1')">A. They achieve higher recall across diverse text genres</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'correct','tab-quiz1')">B. They require no annotated training data and provide high precision</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','tab-quiz1')">C. They can detect all 17 ACE relation types automatically</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','tab-quiz1')">D. They are more robust to paraphrasing than neural methods</div>
+    </div>
+    <div class="quiz-feedback" id="tab-quiz1"></div>
+  </div>
+
+  <!-- Q2 -->
+  <div class="quiz-container">
+    <div class="quiz-q">Q2 [1 mark] — In bootstrapping for relation extraction, what is "semantic drift"?</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','tab-quiz2')">A. When the model's embeddings shift over multiple training epochs</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','tab-quiz2')">B. When the confidence scores decrease as more tuples are added</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'correct','tab-quiz2')">C. When erroneous patterns generate wrong tuples, which generate further wrong patterns, causing the extracted relation to deviate from the original intent</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','tab-quiz2')">D. When the seed tuples become outdated as the corpus changes over time</div>
+    </div>
+    <div class="quiz-feedback" id="tab-quiz2"></div>
+  </div>
+
+  <!-- Q3 -->
+  <div class="quiz-container">
+    <div class="quiz-q">Q3 [2 marks] — A hospital wants to deploy a BERT-based system to recommend treatments from clinical notes. Give TWO ethical concerns specific to this deployment.</div>
+    <textarea id="q3ans" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:80px;margin-top:.5rem" placeholder="Write your answer here..."></textarea>
+    <button class="quiz-btn" onclick="showModelAnswer('q3model')">Show Model Answer</button>
+    <div class="quiz-feedback ok" id="q3model" style="display:none">
+      <strong>Model Answer (2 marks):</strong><br><br>
+      <strong>1. Explainability / Liability [1 mark]:</strong> BERT is a black box — clinicians and patients cannot understand why a specific treatment was recommended. This violates regulatory requirements in many jurisdictions (e.g., EU AI Act, GDPR's "right to explanation") and creates liability issues if the recommendation harms a patient.<br><br>
+      <strong>2. Bias [1 mark]:</strong> If the training data (clinical notes) contains historical biases (e.g., underdiagnosis of conditions in certain demographic groups), the model will perpetuate or amplify these biases, potentially providing worse recommendations for already-marginalised patients.
+    </div>
+  </div>
+
+  <!-- Q4 -->
+  <div class="quiz-container">
+    <div class="quiz-q">Q4 [3 marks] — Using the noisy-OR formula, calculate the confidence in a new tuple t, given three supporting patterns with confidences: Conf(p₁) = 0.9, Conf(p₂) = 0.7, Conf(p₃) = 0.5. Show your working.</div>
+    <textarea id="q4ans" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:80px;margin-top:.5rem" placeholder="Show your working here..."></textarea>
+    <button class="quiz-btn" onclick="showModelAnswer('q4model')">Show Model Answer</button>
+    <div class="quiz-feedback ok" id="q4model" style="display:none">
+      <strong>Model Answer (3 marks):</strong><br><br>
+      Using: \(\text{Conf}(t) = 1 - \prod_{p \in P'} (1 - \text{Conf}(p))\)<br><br>
+      <strong>Step 1:</strong> Calculate failure probabilities:<br>
+      &nbsp;&nbsp;(1 − 0.9) = 0.1<br>
+      &nbsp;&nbsp;(1 − 0.7) = 0.3<br>
+      &nbsp;&nbsp;(1 − 0.5) = 0.5<br><br>
+      <strong>Step 2:</strong> Multiply failure probabilities:<br>
+      &nbsp;&nbsp;0.1 × 0.3 × 0.5 = 0.015<br><br>
+      <strong>Step 3:</strong> Subtract from 1:<br>
+      &nbsp;&nbsp;Conf(t) = 1 − 0.015 = <strong>0.985</strong><br><br>
+      This means we are 98.5% confident in tuple t, since it would require all three independently-failing patterns to be wrong simultaneously. [1 mark per step]
+    </div>
+  </div>
+
+  <!-- Q5 -->
+  <div class="quiz-container">
+    <div class="quiz-q">Q5 [2 marks] — Why does distant supervision produce noisy training labels? Give a concrete example.</div>
+    <textarea id="q5ans" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:80px;margin-top:.5rem" placeholder="Write your answer here..."></textarea>
+    <button class="quiz-btn" onclick="showModelAnswer('q5model')">Show Model Answer</button>
+    <div class="quiz-feedback ok" id="q5model" style="display:none">
+      <strong>Model Answer (2 marks):</strong><br><br>
+      <strong>Why noisy [1 mark]:</strong> Distant supervision assumes that any sentence mentioning both entities in a KB relation expresses that relation. But this assumption is often wrong — a sentence may mention both entities without expressing the KB relation at all.<br><br>
+      <strong>Example [1 mark]:</strong> The KB states (Apple, Steve Jobs, founder-of). So "Apple CEO Steve Jobs announced the iPhone" is auto-labelled as expressing founder-of. But this sentence expresses an employment/announcement relation, not the founding relation. This introduces a label error into the training set.
+    </div>
+  </div>
+
+  <!-- Q6 Short Answer -->
+  <div class="quiz-container">
+    <div class="quiz-q">Q6 [1 mark] — What is a "Model Card" and who are its intended audiences?</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','tab-quiz6')">A. A playing card game used to explain machine learning concepts to children</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'correct','tab-quiz6')">B. Standardised documentation for ML models covering intended use, performance, ethical considerations, and limitations — targeting practitioners, policymakers, developers, and impacted individuals</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','tab-quiz6')">C. A GPU benchmark score indicating model training speed</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','tab-quiz6')">D. A credit-card-style summary of a model's API pricing</div>
+    </div>
+    <div class="quiz-feedback" id="tab-quiz6"></div>
+  </div>
+
+  <!-- Q7 Analysis -->
+  <div class="quiz-container">
+    <div class="quiz-q">Q7 [3 marks — Analysis] — A company wants to use an LLM to automatically process insurance claims and issue payouts. Identify THREE distinct ethical/legal risks and suggest a mitigation for each.</div>
+    <textarea id="q7ans" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:120px;margin-top:.5rem" placeholder="Write your answer here..."></textarea>
+    <button class="quiz-btn" onclick="showModelAnswer('q7model')">Show Model Answer</button>
+    <div class="quiz-feedback ok" id="q7model" style="display:none">
+      <strong>Model Answer (3 marks — 1 per risk+mitigation pair):</strong><br><br>
+      <strong>1. Liability [1m]:</strong> If the LLM incorrectly denies a valid claim, it is unclear who is legally responsible — the insurer, the AI vendor, or the model creators. <em>Mitigation:</em> Require human review for all denied claims; establish clear contractual liability clauses with the AI vendor.<br><br>
+      <strong>2. Bias/Discrimination [1m]:</strong> If training data reflects historical biases (e.g., certain zip codes correlating with ethnicity being flagged as fraud), the model may discriminate against protected groups, violating anti-discrimination law. <em>Mitigation:</em> Conduct algorithmic auditing across demographic groups; use adversarial debiasing techniques; produce model cards documenting known biases.<br><br>
+      <strong>3. Explainability/Regulatory Compliance [1m]:</strong> Regulations in many jurisdictions require that claim decisions be fully explainable to customers. LLMs are black boxes that cannot provide legally sufficient explanations. <em>Mitigation:</em> Use interpretable models (logistic regression, decision trees) for the decision step, or use LLMs only for information extraction with a transparent rule-based decision layer on top.
+    </div>
+  </div>
+
+  <!-- ILO Reference -->
+  <div class="card green">
+    <h3>📚 Course ILOs — What You Should Be Able to Do</h3>
+    <div class="grid-2">
+      <div>
+        <div style="font-size:.85rem">
+          <div style="display:flex;gap:.5rem;align-items:flex-start;margin:.4rem 0"><span style="color:var(--accent)">ILO 2</span><span>Identify potential applications of text analytics (including IE) in practice</span></div>
+          <div style="display:flex;gap:.5rem;align-items:flex-start;margin:.4rem 0"><span style="color:var(--accent)">ILO 3</span><span>Describe IE techniques and select the appropriate one for a given task</span></div>
+          <div style="display:flex;gap:.5rem;align-items:flex-start;margin:.4rem 0"><span style="color:var(--accent)">ILO 5</span><span>Assess model quality using relevant metrics (precision, recall, F1)</span></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:.85rem">
+          <div style="display:flex;gap:.5rem;align-items:flex-start;margin:.4rem 0"><span style="color:var(--accent)">ILO 7</span><span>Critically analyse recent NLP literature (Stochastic Parrots, Datasheets, Model Cards)</span></div>
+          <div style="display:flex;gap:.5rem;align-items:flex-start;margin:.4rem 0"><span style="color:var(--accent)">ILO 8</span><span>Evaluate and explain ethical considerations for real-world NLP deployment</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       REAL PAST EXAM QUESTIONS (2022 & 2024)
+       ═══════════════════════════════════════════════ -->
+  <div style="margin-top:2.5rem">
+    <h2 style="font-size:1.4rem;margin-bottom:.4rem;color:var(--accent4)">📋 Real Past Exam Questions &amp; Model Answers</h2>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:1.2rem">Sourced directly from UoG TaD (COMPSCI 5096) past papers. Click each accordion to reveal the model answer.</p>
+  </div>
+
+  <!-- ─────── 2024 PAPER ─────── -->
+  <div class="card blue" style="margin-bottom:.6rem">
+    <h3 style="color:var(--blue)">2024 Exam — Q1: Tokenisation (20 marks)</h3>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[4 marks]</strong> Why are stopwords removed in bag-of-words but <em>not</em> removed for transformers? Give an example.</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      Consider <em>"The cat sat on the mat"</em>.<br><br>
+      <strong>Bag-of-words [2 marks]:</strong> Stopwords add no discriminative signal to a BoW vector — "the", "on" are equally common in all documents. Removing them reduces dimensionality and noise. In BoW, word order is lost anyway, so "the cat sat on the mat" and "the mat sat on the cat" produce the same vector — stopwords convey no positional information.<br><br>
+      <strong>Transformers [2 marks]:</strong> Transformers model word sequences in full context. Stopwords carry positional and syntactic meaning — "the cat is on the mat" and "the mat is on the cat" have different meanings that a transformer can distinguish. Removing stopwords would destroy this information.</div></div>
+      <div class="callout warn"><span class="callout-icon">⚠️</span><div><strong>Common mistake:</strong> Saying "transformers don't use stopwords because they use attention" — this is vague. The key point is <em>word order / contextual meaning</em>.</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[4 marks]</strong> A colleague says [UNK] is unnecessary for BPE tokenisers. Are they correct? Consider Unicode.</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      The colleague is <strong>incorrect</strong> [1 mark].<br><br>
+      BPE builds a vocabulary from characters seen during training. However, Unicode encodes far more characters (over 140,000) than are likely to appear in any training corpus [1 mark]. Additionally, new Unicode characters (emoji, scripts, symbols) are regularly added and will not appear in older training data [1 mark]. When such unseen characters appear at inference time, [UNK] is needed to handle them [1 mark].</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[6 marks]</strong> Apply BPE rules to tokenise <code>mississippi</code> and <code>pie</code>. Show all steps.</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <p style="color:var(--muted);font-size:.85rem;margin-bottom:.8rem">Rules (in order): i,s→is | p,i→pi | i,e→ie | p,ie→pie | p,pi→ppi | si,ppi→sippi</p>
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer — mississippi:</strong><br><br>
+      Start: <code>m i s s i s s i p p i</code><br>
+      Apply (i,s→is): <code>m is s is s i p p i</code><br>
+      Apply (p,i→pi): <code>m is s is s i p pi</code><br>
+      (i,e→ie) does not apply<br>
+      (p,ie→pie) does not apply<br>
+      Apply (p,pi→ppi): <code>m is s is s i ppi</code><br>
+      (si,ppi→sippi) does not apply — no adjacent "si" and "ppi"<br>
+      <strong>Final: m is s is s i ppi</strong><br><br>
+      <strong>pie:</strong><br>
+      Start: <code>p i e</code><br>
+      (i,s→is) does not apply<br>
+      Apply (p,i→pi): <code>pi e</code><br>
+      (i,e→ie) does not apply — 'i' is now part of 'pi'<br>
+      (p,ie→pie) does not apply<br>
+      <strong>Final: pi e</strong></div></div>
+      <div class="callout warn"><span class="callout-icon">⚠️</span><div>Rules are applied <strong>greedily left-to-right</strong> in the given order. Once merged, a subtoken is treated as a single unit.</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[6 marks]</strong> Effect of BPE vocabulary size too low (100) or too high (100,000,000)?</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      <strong>Too Low (vocab=100) [3 marks]:</strong> BPE would stop merging very early. Words get split into too many sub-units — effectively individual characters. Characters carry almost no semantic meaning on their own, making it very hard for downstream models to learn useful representations. Sequences become extremely long, increasing computational cost.<br><br>
+      <strong>Too High (vocab=100,000,000) [3 marks]:</strong> This exceeds the number of distinct word types in most corpora, so every word gets its own token — no merging occurs. This defeats the purpose of subword tokenisation: rare and unseen words still get [UNK] treatment, and there are too many tokens for the model to learn good representations from limited data.</div></div>
+    </div>
+  </div>
+
+  <!-- Practice questions for BPE -->
+  <div class="card purple" style="margin:1.2rem 0">
+    <h4 style="color:var(--accent)">🏋️ Practice — BPE Tokenisation</h4>
+    <div class="quiz-container" style="margin-top:.8rem">
+      <div class="quiz-q">Practice [4 marks] — Given BPE rules: (a,b→ab), (ab,c→abc), (c,d→cd), tokenise the string <code>abccd</code> showing all steps. Then explain what happens if you try to tokenise a character not in the original vocabulary.</div>
+      <textarea style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:80px;margin-top:.5rem" placeholder="Show your steps here..."></textarea>
+      <button class="quiz-btn" onclick="showModelAnswer('bpe-prac1')">Show Model Answer</button>
+      <div class="quiz-feedback ok" id="bpe-prac1" style="display:none">
+        <strong>Steps [2 marks]:</strong><br>
+        Start: <code>a b c c d</code><br>
+        Apply (a,b→ab): <code>ab c c d</code><br>
+        Apply (ab,c→abc): <code>abc c d</code><br>
+        (a,b→ab) no longer applies<br>
+        Apply (c,d→cd): <code>abc c d</code> — wait, is 'c d' adjacent? Yes: <code>abc cd</code><br>
+        <strong>Final: abc cd</strong> [1 mark]<br><br>
+        <strong>Unseen character [1 mark]:</strong> If a character was not in the training vocabulary, it cannot be represented by any BPE token. The [UNK] token is used. This is exactly why [UNK] is necessary even for BPE.
+      </div>
+    </div>
+    <div class="quiz-container">
+      <div class="quiz-q">Practice [2 marks] — Name two advantages of subword tokenisation over pure word tokenisation for handling morphologically rich languages (e.g., Turkish, Finnish).</div>
+      <textarea style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:60px;margin-top:.5rem" placeholder="Your answer..."></textarea>
+      <button class="quiz-btn" onclick="showModelAnswer('bpe-prac2')">Show Model Answer</button>
+      <div class="quiz-feedback ok" id="bpe-prac2" style="display:none">
+        1. <strong>Handles unseen words</strong> by decomposing them into known subword units (e.g., a new Turkish verb form can be split into a root + suffix both seen in training).<br>
+        2. <strong>Smaller vocabulary</strong>: morphologically rich languages have enormous word-form spaces; subwords represent all forms compactly, reducing memory and improving generalisation.
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────── 2024 PAPER Q2 ─────── -->
+  <div class="card blue" style="margin-bottom:.6rem">
+    <h3 style="color:var(--blue)">2024 Exam — Q2: Language Modelling with Character N-grams (20 marks)</h3>
+    <p style="color:var(--muted);font-size:.85rem">Text: <code style="color:var(--accent4)">BCBBCBBABCCCBBCCBCCB</code> (20 chars, alphabet {A,B,C})</p>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[2 marks]</strong> Unigram model + greedy: next 3 tokens after BCBBCBBABCCCBBCCBCCB?</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      Count from <code>BCBBCBBABCCCBBCCBCCB</code>:<br>
+      A appears 1 time → P(A) = 1/20<br>
+      B appears 10 times → P(B) = 10/20 = <strong>1/2</strong><br>
+      C appears 9 times → P(C) = 9/20<br><br>
+      Greedy = always pick highest probability.<br>
+      <strong>Next 3 tokens: B B B</strong></div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[6 marks]</strong> Trigram model + greedy: next 3 tokens. (Last 2 chars = CB)</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      <strong>Token 1</strong> — context = CB: Count trigrams starting with CB in text:<br>
+      CBB → 3 times, CBC → 1 time → P(B|CB)=3/4, P(C|CB)=1/4 → greedy picks <strong>B</strong><br><br>
+      <strong>Token 2</strong> — context = BB: Count trigrams starting with BB:<br>
+      BBA → 1 time, BBC → 2 times → P(A|BB)=1/3, P(C|BB)=2/3 → greedy picks <strong>C</strong><br><br>
+      <strong>Token 3</strong> — context = BC: Count trigrams starting with BC:<br>
+      BCB → 2 times, BCC → 3 times → P(B|BC)=2/5, P(C|BC)=3/5 → greedy picks <strong>C</strong><br><br>
+      <strong>Next 3 tokens: B C C</strong> [2 marks per token]</div></div>
+      <div class="callout warn"><span class="callout-icon">⚠️</span><div><strong>Key tip:</strong> The trigram model uses the last TWO characters as context (not one). Each step updates the context window.</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[8 marks]</strong> Bigram model + beam search (beam width=2): next 2 tokens. Show all beams.</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer (last char = B, so context for bigram is B):</strong><br><br>
+      First count bigram probabilities from B:<br>
+      B→A: 1, B→B: 3, B→C: 5 (total 9 B's as context)<br>
+      P(A|B)=1/9, P(B|B)=3/9=1/3, P(C|B)=5/9<br><br>
+      <strong>Step 1 — generate all candidates:</strong><br>
+      • A: P=1/9 ≈ 0.111<br>
+      • B: P=3/9 ≈ 0.333<br>
+      • C: P=5/9 ≈ 0.556<br>
+      <strong>Keep top-2 beams: C (5/9) and B (3/9)</strong><br><br>
+      <strong>Step 2 — extend each beam:</strong><br>
+      From beam C, bigram P(?|C): C→B=5, C→C=4 (total 9) → P(B|C)=5/9, P(C|C)=4/9<br>
+      From beam B, bigram P(?|B): same as above → P(A|B)=1/9, P(B|B)=3/9, P(C|B)=5/9<br><br>
+      All candidates:<br>
+      • CB: 5/9 × 5/9 = 25/81 ≈ 0.309<br>
+      • CC: 5/9 × 4/9 = 20/81 ≈ 0.247<br>
+      • BA: 3/9 × 1/9 = 3/81 ≈ 0.037<br>
+      • BB: 3/9 × 3/9 = 9/81 ≈ 0.111<br>
+      • BC: 3/9 × 5/9 = 15/81 ≈ 0.185<br><br>
+      <strong>Highest probability beam: CB with P=25/81</strong></div></div>
+      <div class="callout warn"><span class="callout-icon">⚠️</span><div>Beam search keeps only the top-k sequences at each step. With beam width=2, you keep only 2 beams after each expansion.</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[4 marks]</strong> Propose a 2-char string a bigram model cannot generate; how to fix it?</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      <strong>String: "AA"</strong> [1 mark]<br><br>
+      <strong>Why it can't be generated [1 mark]:</strong> P(A|A) = 0 because in the training text 'A' never follows 'A'. A greedy/beam search bigram model will never generate 'A' after 'A'.<br><br>
+      <strong>Fix [2 marks]:</strong><br>
+      1. Apply <strong>Laplace (add-1) smoothing</strong> or <strong>Kneser-Ney smoothing</strong> to give all bigrams a non-zero probability.<br>
+      2. Use <strong>sampling-based generation</strong> (temperature sampling) instead of greedy decoding, so low-probability tokens still have some chance of being selected.</div></div>
+    </div>
+  </div>
+
+  <!-- Practice — N-gram Language Models -->
+  <div class="card purple" style="margin:1.2rem 0">
+    <h4 style="color:var(--accent)">🏋️ Practice — N-gram Language Models</h4>
+    <div class="quiz-container" style="margin-top:.8rem">
+      <div class="quiz-q">Practice [4 marks] — Given text <code>AABABCABC</code> (alphabet {A,B,C}), compute the bigram probabilities P(?|A) and P(?|B). Then use greedy decoding with a bigram model to generate the next 2 tokens (last char = C).</div>
+      <textarea style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:80px;margin-top:.5rem" placeholder="Show your calculations..."></textarea>
+      <button class="quiz-btn" onclick="showModelAnswer('ngram-prac1')">Show Model Answer</button>
+      <div class="quiz-feedback ok" id="ngram-prac1" style="display:none">
+        Bigrams in AABABCABC:<br>
+        AA=1, AB=3, BA=1, BC=2, CA=1, AB already counted<br>
+        P(?|A): A follows A once, B follows A 3 times → P(A|A)=1/4, P(B|A)=3/4<br>
+        P(?|B): A follows B once, C follows B 2 times → P(A|B)=1/3, P(C|B)=2/3<br><br>
+        Last char is C. Bigrams from C: CA=1 (only one). P(A|C)=1/1=1.<br>
+        Token 1: A (P=1)<br>
+        Token 2 — context=A: P(B|A)=3/4 → B<br>
+        <strong>Next 2 tokens: A B</strong>
+      </div>
+    </div>
+    <div class="quiz-container">
+      <div class="quiz-q">Practice [3 marks] — What is perplexity? If a unigram model assigns P(A)=0.5, P(B)=0.3, P(C)=0.2, what is the perplexity on the test string "ABC"?</div>
+      <textarea style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:60px;margin-top:.5rem" placeholder="Your answer..."></textarea>
+      <button class="quiz-btn" onclick="showModelAnswer('ngram-prac2')">Show Model Answer</button>
+      <div class="quiz-feedback ok" id="ngram-prac2" style="display:none">
+        <strong>Perplexity [1 mark]:</strong> Perplexity = 2^(–(1/N)·Σlog₂P(wᵢ)) — it measures how "surprised" the model is by the test data. Lower = better.<br><br>
+        <strong>Calculation [2 marks]:</strong><br>
+        P(ABC) = P(A)·P(B)·P(C) = 0.5 × 0.3 × 0.2 = 0.03<br>
+        Log₂(0.5)= –1, Log₂(0.3)≈ –1.737, Log₂(0.2)≈ –2.322<br>
+        Average log = (–1 – 1.737 – 2.322)/3 = –5.059/3 ≈ –1.686<br>
+        Perplexity = 2^1.686 ≈ <strong>3.22</strong>
+      </div>
+    </div>
+    <div class="quiz-container">
+      <div class="quiz-q">Practice [2 marks] — Explain why beam search with beam width k=1 is equivalent to greedy decoding, but beam search with k→∞ is equivalent to exhaustive search.</div>
+      <textarea style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:60px;margin-top:.5rem" placeholder="Your explanation..."></textarea>
+      <button class="quiz-btn" onclick="showModelAnswer('ngram-prac3')">Show Model Answer</button>
+      <div class="quiz-feedback ok" id="ngram-prac3" style="display:none">
+        <strong>k=1 [1 mark]:</strong> At each step, only the single best candidate is kept. This is identical to always choosing the locally highest-probability token — greedy decoding.<br>
+        <strong>k→∞ [1 mark]:</strong> All possible candidates are kept at every step, so no path is ever pruned. The final output is the globally optimal sequence — equivalent to exhaustive search over all possible continuations.
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────── 2022 PAPER Q1 ─────── -->
+  <div class="card blue" style="margin-bottom:.6rem">
+    <h3 style="color:var(--blue)">2022 Exam — Q1: Distributional Semantics &amp; Word Embeddings (18 marks)</h3>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[5 marks]</strong> Pseudo-code: given word vectors, find the outlier word (e.g., from {linux, windows, solaris, android, java}).</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      <strong>Idea:</strong> Compare each word's vector against the centroid of the remaining words. The word with the lowest similarity to the centroid is the outlier.<br><br>
+      <pre><code class="language-python">Input: words w1,...,wn with vectors v1,...,vn
+For i = 1 to n:
+    c = vi                          # candidate outlier
+    R = {v1,...,vn} \ {c}          # remaining vectors
+    µi = (1/|R|) * Σ(v for v in R) # centroid of rest
+    si = cosine_similarity(c, µi)  # similarity to centroid
+Output: wi with the smallest si     # least similar = outlier</code></pre>
+      Key notation to define: V = set of all word vectors, µᵢ = centroid, sᵢ = similarity score [1 mark each component + 1 for correctness]</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[2 marks]</strong> Distributional semantics window size k: too large vs too small?</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      <strong>Too large k [1 mark]:</strong> Contexts become too broad and noisy. Almost any word will co-occur with almost any other word, making the vectors uninformative (P(context|word) approaches uniform distribution).<br><br>
+      <strong>Too small k [1 mark]:</strong> Contexts are too narrow. Not enough co-occurrence data is captured, so vectors are sparse and unreliable — especially for rare words.</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[5 marks]</strong> Single-pass pseudo-code for distributional semantics vector building.</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      <pre><code class="language-python">k = window size
+D = {}  # dictionary mapping word → sparse vector
+
+For i = 1 to P (P = total tokens in corpus):
+    window = [t_{i-k}, ..., t_{i-1}, t_i, t_{i+1}, ..., t_{i+k}]
+    v = term_frequency_vector(window)  # sparse counts
+    D[t_i] += v                        # accumulate into word's vector
+
+Return D</code></pre>
+      <strong>Key data structures:</strong> D is a dictionary of sparse vectors (e.g., Python dict of dicts or scipy sparse matrix) — efficient because most words never co-occur.</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[2 marks]</strong> Why are function word vectors (the, of, is…) unreliable in this approach?</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      Function words are extremely frequent and appear in nearly every context. Therefore, for a function word w, P(context_i | w) is close to uniform across all context words [1 mark].<br><br>
+      <strong>Example:</strong> "the" appears before nouns, adjectives, proper names, numbers — essentially any word class. Its context vector will be roughly the average of the entire vocabulary, giving it no meaningful discriminative representation [1 mark].</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[2 marks]</strong> Role of negative samples in word2vec objective function.</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      Without negative samples, word2vec would only have positive examples (actual context words). The model could trivially "solve" this by making all word vectors identical [1 mark].<br><br>
+      Negative samples provide <strong>contrast</strong>: the model must distinguish true context words from randomly sampled non-context words. This turns the problem into binary classification (positive vs negative pair), enabling stable gradient-based training [1 mark].</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[2 marks]</strong> word2vec and polysemous words (jaguar, bank, python) — nearest neighbours and downstream problems.</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      <strong>Nearest neighbours [1 mark]:</strong> word2vec produces a single vector per word, which averages over all meanings. For "python", the NN set mixes programming words (language, numpy, script) with animal words (snake, reptile, venom).<br><br>
+      <strong>Downstream problem [1 mark]:</strong> This ambiguous vector hurts tasks like text classification. A document about Python programming would have a feature vector polluted by animal-related directions, potentially causing misclassification.</div></div>
+      <div class="callout info"><span class="callout-icon">💡</span><div><strong>Fix:</strong> Contextual embeddings (BERT, ELMo) solve this by producing different vectors for the same word in different contexts.</div></div>
+    </div>
+  </div>
+
+  <!-- Practice — Word Embeddings -->
+  <div class="card purple" style="margin:1.2rem 0">
+    <h4 style="color:var(--accent)">🏋️ Practice — Word Embeddings &amp; Distributional Semantics</h4>
+    <div class="quiz-container" style="margin-top:.8rem">
+      <div class="quiz-q">Practice [5 marks] — You have word vectors for: {football, rugby, tennis, cricket, banana}. Describe the full pseudo-code algorithm to identify "banana" as the outlier, and explain why cosine similarity is preferred over Euclidean distance for this task.</div>
+      <textarea style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:80px;margin-top:.5rem" placeholder="Your answer..."></textarea>
+      <button class="quiz-btn" onclick="showModelAnswer('embed-prac1')">Show Model Answer</button>
+      <div class="quiz-feedback ok" id="embed-prac1" style="display:none">
+        <strong>Algorithm [3 marks]:</strong><br>
+        For each word wᵢ: compute µᵢ = mean of all other word vectors.<br>
+        Compute sᵢ = cosine_similarity(vᵢ, µᵢ).<br>
+        Output: word with smallest sᵢ → "banana".<br><br>
+        <strong>Why cosine over Euclidean [2 marks]:</strong><br>
+        1. Word vectors can have very different magnitudes (frequent words tend to have larger magnitude). Cosine similarity is normalised — it measures direction/angle, not magnitude, so frequency effects don't pollute the similarity.<br>
+        2. Euclidean distance is affected by vector length; two vectors pointing in the same direction but with different norms would appear dissimilar under Euclidean, but similar under cosine.
+      </div>
+    </div>
+    <div class="quiz-container">
+      <div class="quiz-q">Practice [3 marks] — PPMI (Positive Pointwise Mutual Information) is often applied to distributional vectors before use. What problem does it solve, and write the formula for PMI(w, c).</div>
+      <textarea style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:60px;margin-top:.5rem" placeholder="Your answer..."></textarea>
+      <button class="quiz-btn" onclick="showModelAnswer('embed-prac2')">Show Model Answer</button>
+      <div class="quiz-feedback ok" id="embed-prac2" style="display:none">
+        <strong>Problem solved [1 mark]:</strong> Raw co-occurrence counts are dominated by frequent words — "the", "of" appear with almost every word. PMI reweights by how much more often w and c co-occur than expected by chance, suppressing function word noise.<br><br>
+        <strong>Formula [1 mark]:</strong> PMI(w,c) = log₂[ P(w,c) / (P(w)·P(c)) ]<br><br>
+        <strong>PPMI [1 mark]:</strong> PPMI(w,c) = max(0, PMI(w,c)) — negative values (words that co-occur less than chance) are clamped to 0, since negative PMI estimates are unreliable with small counts.
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────── 2022 PAPER Q2 ─────── -->
+  <div class="card blue" style="margin-bottom:.6rem">
+    <h3 style="color:var(--blue)">2022 Exam — Q2: Word Frequencies &amp; Tokenisation (15 marks)</h3>
+    <p style="color:var(--muted);font-size:.85rem">Text: <code style="color:var(--accent4)">abcaedabccbaedabceda</code> (alphabet {a,b,c,d,e})</p>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[3 marks]</strong> Trigrams appearing more than once with frequency.</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br>
+      Scanning <code>abcaedabccbaedabceda</code>:<br><br>
+      <table>
+        <tr><th>Trigram</th><th>Frequency</th></tr>
+        <tr><td>abc</td><td>3</td></tr>
+        <tr><td>eda</td><td>3</td></tr>
+        <tr><td>aed</td><td>2</td></tr>
+        <tr><td>dab</td><td>2</td></tr>
+      </table>
+      (1 mark per correct pair, max 3)</div></div>
+      <div class="callout warn"><span class="callout-icon">⚠️</span><div>Trigrams are extracted with a <strong>sliding window</strong> — positions 0-2, 1-3, 2-4, etc. Make sure you count overlapping occurrences.</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[3 marks]</strong> Maximum number of character n-grams for n=1..5 (text = 593 chars, alphabet = 5).</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      <strong>Formula:</strong> For n &lt; alphabet_size^n, the limiting factor is either the alphabet (5ⁿ) or the text length (T-n+1 distinct positions).<br><br>
+      <table>
+        <tr><th>n</th><th>Alphabet capacity (5ⁿ)</th><th>Text positions (593-n+1)</th><th><strong>Max n-grams</strong></th></tr>
+        <tr><td>1</td><td>5</td><td>593</td><td><strong>5</strong></td></tr>
+        <tr><td>2</td><td>25</td><td>592</td><td><strong>25</strong></td></tr>
+        <tr><td>3</td><td>125</td><td>591</td><td><strong>125</strong></td></tr>
+        <tr><td>4</td><td>625</td><td>590</td><td><strong>590</strong></td></tr>
+        <tr><td>5</td><td>3125</td><td>589</td><td><strong>589</strong></td></tr>
+      </table>
+      For n=4,5: the text length is the binding constraint (you can't have more distinct n-grams than positions in the text).</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[4 marks]</strong> Sørensen–Dice &amp; Jaccard between Probe A and Probe B (show working).</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <p style="color:var(--muted);font-size:.85rem">A={a, eda, bceda, eda, bcda, bce} → unique={a, eda, bceda, bcda, bce} (5 types)<br>
+      B={ca, eda, bcba, eda, bceda, eda, bce} → unique={ca, eda, bcba, bceda, bce} (5 types)</p>
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      A∩B (shared types) = {eda, bceda, bce} → |A∩B| = 3<br>
+      A∪B = {a, eda, bceda, bcda, bce, ca, bcba} → |A∪B| = 7<br><br>
+      <strong>Sørensen–Dice:</strong><br>
+      $$\text{DSC}(A,B) = \frac{2|A \cap B|}{|A| + |B|} = \frac{2 \times 3}{5 + 5} = \frac{6}{10} = 0.6$$<br>
+      <strong>Jaccard:</strong><br>
+      $$J(A,B) = \frac{|A \cap B|}{|A \cup B|} = \frac{3}{7} \approx 0.429$$</div></div>
+      <div class="callout key"><span class="callout-icon">🔑</span><div><strong>Relationship:</strong> DSC = 2J/(1+J) always. Dice gives more weight to shared elements than Jaccard.</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[3 marks]</strong> Show Sørensen–Dice breaks the triangle inequality using Probe C.</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <p style="color:var(--muted);font-size:.85rem">C={beda, bceda, bceca, ebeda, bceda, b} → unique={beda, bceda, bceca, ebeda, b} (5 types)</p>
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      A∩C = {bceda} → |A∩C|=1<br>
+      DSC(A,C) = 2×1/(5+5) = 2/10 = 0.2<br><br>
+      B∩C = {bceda} → |B∩C|=1<br>
+      DSC(B,C) = 2×1/(5+5) = 2/10 = 0.2<br><br>
+      <strong>Triangle inequality check:</strong> For a metric d, we need d(A,B) ≤ d(A,C) + d(C,B).<br>
+      Using DSC as a distance = 1 – DSC:<br>
+      d(A,B) = 1–0.6 = 0.4<br>
+      d(A,C)+d(C,B) = (1–0.2)+(1–0.2) = 0.8+0.8 = 1.6<br>
+      0.4 ≤ 1.6 ✓ — this holds.<br><br>
+      <em>Actually in the exam, the raw DSC values are compared:</em><br>
+      DSC(A,B)=0.6, DSC(A,C)+DSC(B,C)=0.2+0.2=0.4<br>
+      If we treat DSC directly as a "similarity metric distance", then:<br>
+      0.6 ≤ 0.4 is <strong>FALSE</strong> — the triangle inequality is violated, confirming DSC is a semi-metric.</div></div>
+    </div>
+  </div>
+
+  <!-- Practice — Similarity Metrics -->
+  <div class="card purple" style="margin:1.2rem 0">
+    <h4 style="color:var(--accent)">🏋️ Practice — Similarity Metrics &amp; N-grams</h4>
+    <div class="quiz-container" style="margin-top:.8rem">
+      <div class="quiz-q">Practice [5 marks] — Doc X = {cat, sat, mat, bat} | Doc Y = {cat, hat, mat, fat, rat}.<br>
+      (a) Calculate Jaccard similarity [2 marks].<br>
+      (b) Calculate Sørensen–Dice [2 marks].<br>
+      (c) Verify the relationship DSC = 2J/(1+J) [1 mark].</div>
+      <textarea style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:80px;margin-top:.5rem" placeholder="Show your working..."></textarea>
+      <button class="quiz-btn" onclick="showModelAnswer('sim-prac1')">Show Model Answer</button>
+      <div class="quiz-feedback ok" id="sim-prac1" style="display:none">
+        X∩Y = {cat, mat} → |X∩Y|=2<br>
+        X∪Y = {cat, sat, mat, bat, hat, fat, rat} → |X∪Y|=7<br><br>
+        (a) Jaccard = 2/7 ≈ 0.286<br>
+        (b) DSC = 2×2/(4+5) = 4/9 ≈ 0.444<br>
+        (c) 2×(2/7)/(1+(2/7)) = (4/7)/(9/7) = 4/9 ≈ 0.444 ✓
+      </div>
+    </div>
+    <div class="quiz-container">
+      <div class="quiz-q">Practice [3 marks] — Text: <code>xyzxyzxyz</code>. (a) List all bigrams and their frequencies. (b) What is the maximum possible number of distinct bigrams for a 4-character alphabet? (c) How many distinct bigrams actually appear?</div>
+      <textarea style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:60px;margin-top:.5rem" placeholder="Your answer..."></textarea>
+      <button class="quiz-btn" onclick="showModelAnswer('sim-prac2')">Show Model Answer</button>
+      <div class="quiz-feedback ok" id="sim-prac2" style="display:none">
+        (a) Bigrams: xy(3), yz(3), zx(2) → xy=3, yz=3, zx=2 (note: no zx after the last z)<br>
+        Wait — xyzxyzxyz: xy,yz,zx,xy,yz,zx,xy,yz → xy=3, yz=3, zx=2 [1 mark]<br>
+        (b) 4-char alphabet → max bigrams = 4² = 16 [1 mark]<br>
+        (c) 3 distinct bigrams actually appear (xy, yz, zx) [1 mark]
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────── 2022 PAPER Q3 ─────── -->
+  <div class="card blue" style="margin-bottom:.6rem">
+    <h3 style="color:var(--blue)">2022 Exam — Q3: NLP &amp; Text Classification (18 marks)</h3>
+    <p style="color:var(--muted);font-size:.85rem">Context: Patent classification into 8 IPC sections (A–H)</p>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[4 marks]</strong> Justify case normalisation and stemming for patent classification. Give examples.</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      <strong>Case normalisation [2 marks]:</strong> Patents follow standard writing conventions where the first word of a sentence is capitalised. "Textile" at the start of a sentence and "textile" mid-sentence refer to the same concept (Section D indicator). Without normalisation, these are treated as different features, fragmenting evidence. Case folding maps both to "textile".<br><br>
+      <strong>Stemming [2 marks]:</strong> Patent text uses varied morphological forms of the same root word: "electrolyse", "electrolysing", "electrolysis" all indicate Section C. Stemming maps these to a common stem (e.g., "electrolys"), treating them as identical features and pooling their frequency signal.</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[3 marks]</strong> Give an example where word + POS tag helps distinguish two patent sections.</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer (example answer):</strong><br><br>
+      The word <strong>"light"</strong> appears in both Section F (Mechanics/Lighting) and Section D (Textiles/Paper).<br><br>
+      • In Section F: "light" is typically a <strong>noun</strong> — referring to a light fixture, LED, lamp ("the light emits 500 lumens").<br>
+      • In Section D: "light" is typically an <strong>adjective</strong> — referring to lightweight fabric ("a light cotton weave").<br><br>
+      Using the feature "light/NOUN" vs "light/ADJ" splits this ambiguous word into two informative features, improving classification accuracy.</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[4 marks]</strong> HMM POS tagger gets 97% accuracy but fails on patent domain — why and how to fix?</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      <strong>Why [2 marks]:</strong> This is a <strong>domain mismatch</strong>. The HMM tagger was trained on general text (typically news corpora like the Penn Treebank). Patent text contains:<br>
+      • Novel technical jargon ("polytetrafluoroethylene", "exothermic") not seen in training<br>
+      • Unusual sentence structures (patents use very formal, legally-precise syntax)<br>
+      The tagger has never seen these patterns, so its emission and transition probabilities are uninformed.<br><br>
+      <strong>Fixes [2 marks — 1 each]:</strong><br>
+      1. <strong>Fine-tuning:</strong> Manually annotate a sample of patent sentences with POS tags, then fine-tune (retrain the last layers of) the HMM on this in-domain data.<br>
+      2. <strong>Lexicon augmentation:</strong> Add a domain-specific dictionary of technical terms with their most likely POS tags as a post-processing step.</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[3 marks]</strong> Analyse System A vs System B vs Baseline from evaluation table.</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <table>
+        <tr><th>System</th><th>Train P</th><th>Train R</th><th>Test P</th><th>Test R</th><th>Sig?</th></tr>
+        <tr><td>Baseline</td><td>0.61</td><td>0.42</td><td>0.56</td><td>0.50</td><td>—</td></tr>
+        <tr><td style="color:var(--green)">System A</td><td>0.62*</td><td>0.43*</td><td>0.58*</td><td>0.51</td><td>★ train+test P</td></tr>
+        <tr><td style="color:var(--red)">System B</td><td>0.67*</td><td>0.48*</td><td>0.51</td><td>0.42</td><td>★ train only</td></tr>
+      </table>
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      <strong>System A [1 mark]:</strong> Marginally better than baseline on both train and test sets with statistical significance on precision. Generalises well — small but consistent improvement. The low margin suggests it isn't overfitting.<br><br>
+      <strong>System B [1 mark]:</strong> Best on training set but performs <em>worse</em> than baseline on the test set (0.51 vs 0.56 precision, 0.42 vs 0.50 recall). No statistical significance on test. This is a sign of <strong>overfitting</strong> — it has memorised the training data.<br><br>
+      <strong>Recommendation [1 mark]:</strong> System A is preferable for deployment due to better generalisation. System B should not be deployed as it underperforms even the baseline on unseen data.</div></div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <div class="acc-header" onclick="toggleAcc(this)">
+      <span><strong>[4 marks]</strong> How to add POS tags to a BERT model (without ensemble)? How does this differ from BoW?</span>
+      <span class="arrow">▼</span>
+    </div>
+    <div class="acc-body">
+      <div class="callout tip"><span class="callout-icon">📝</span><div><strong>Model Answer:</strong><br><br>
+      <strong>BERT approach [2 marks]:</strong> BERT represents each token as a dense embedding (sum of token + position + segment embeddings). To incorporate POS, add a <strong>POS embedding layer</strong> — a learnable embedding table with one vector per POS tag. At input, add the POS embedding to the token embedding before feeding into the transformer layers. This is analogous to how segment or positional embeddings are added.<br><br>
+      <strong>BoW approach [1 mark]:</strong> In a bag-of-features model, POS is incorporated by creating a separate feature for each (word, POS) pair — e.g., "light/NOUN" and "light/ADJ" become two distinct sparse features. The model is linear over these features.<br><br>
+      <strong>Key difference [1 mark]:</strong> In BoW, POS creates explicit discrete features in a sparse vector, and POS information doesn't interact with other features. In BERT, POS embeddings are continuous and are processed by the transformer's attention mechanism alongside all other context, enabling richer interactions.</div></div>
+    </div>
+  </div>
+
+  <!-- Practice — Text Classification & Evaluation -->
+  <div class="card purple" style="margin:1.2rem 0">
+    <h4 style="color:var(--accent)">🏋️ Practice — Classification, POS &amp; Evaluation</h4>
+    <div class="quiz-container" style="margin-top:.8rem">
+      <div class="quiz-q">Practice [4 marks] — A news topic classifier is trained on BBC News articles and then deployed on Reddit posts. It performs significantly worse on Reddit. (a) Explain why this happens [2 marks]. (b) Propose two approaches to fix it [2 marks].</div>
+      <textarea style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:80px;margin-top:.5rem" placeholder="Your answer..."></textarea>
+      <button class="quiz-btn" onclick="showModelAnswer('cls-prac1')">Show Model Answer</button>
+      <div class="quiz-feedback ok" id="cls-prac1" style="display:none">
+        (a) <strong>Domain shift [2 marks]:</strong> BBC News uses formal, editorial language; Reddit uses informal language, slang, abbreviations, and different topic framing. The vocabulary distributions are very different. Features that were predictive on BBC may not appear on Reddit (and vice versa), causing performance degradation.<br><br>
+        (b) <strong>Fixes [1 mark each]:</strong><br>
+        1. <strong>Domain adaptation:</strong> Collect a small labelled sample of Reddit posts and fine-tune the classifier on this in-domain data (or use unsupervised domain adaptation techniques).<br>
+        2. <strong>Feature engineering:</strong> Use more domain-agnostic features (TF-IDF, embeddings from a large pre-trained model) rather than surface word features, to improve robustness to vocabulary differences.
+      </div>
+    </div>
+    <div class="quiz-container">
+      <div class="quiz-q">Practice [4 marks] — Given the evaluation table below, compute F1 scores and determine which system is best for deployment:<br><br>
+      System X: Precision=0.80, Recall=0.60 | System Y: Precision=0.65, Recall=0.85<br>
+      Discuss which you'd choose for a medical diagnosis screening tool vs a spam filter.</div>
+      <textarea style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:70px;margin-top:.5rem" placeholder="Your answer..."></textarea>
+      <button class="quiz-btn" onclick="showModelAnswer('cls-prac2')">Show Model Answer</button>
+      <div class="quiz-feedback ok" id="cls-prac2" style="display:none">
+        F1(X) = 2×0.80×0.60/(0.80+0.60) = 0.96/1.40 ≈ 0.686<br>
+        F1(Y) = 2×0.65×0.85/(0.65+0.85) = 1.105/1.50 ≈ 0.737<br><br>
+        <strong>Medical diagnosis [2 marks]:</strong> A false negative (missing a disease) is catastrophic. Use <strong>System Y</strong> (higher recall = 0.85) — better to flag too many patients for follow-up than miss a sick person.<br><br>
+        <strong>Spam filter [2 marks]:</strong> A false positive (legitimate email marked as spam) is very costly. Use <strong>System X</strong> (higher precision = 0.80) — better to let some spam through than delete important emails.
+      </div>
+    </div>
+    <div class="quiz-container">
+      <div class="quiz-q">Practice [2 marks] — What is the difference between micro-averaged and macro-averaged F1 for a multi-class classifier? When would you prefer each?</div>
+      <textarea style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:60px;margin-top:.5rem" placeholder="Your answer..."></textarea>
+      <button class="quiz-btn" onclick="showModelAnswer('cls-prac3')">Show Model Answer</button>
+      <div class="quiz-feedback ok" id="cls-prac3" style="display:none">
+        <strong>Micro-averaged F1 [1 mark]:</strong> Pools all TP, FP, FN across all classes before computing P, R, F1. Gives more weight to larger classes. Use when class imbalance exists and you care about overall system accuracy.<br><br>
+        <strong>Macro-averaged F1 [1 mark]:</strong> Computes F1 per class independently, then averages. Treats all classes equally. Use when each class matters equally regardless of size — e.g., for rare disease detection where a small class is just as important as a large one.
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────── QUICK-FIRE REVIEW ─────── -->
+  <div style="margin-top:2rem">
+    <h3 style="color:var(--accent4)">⚡ Quick-Fire Review Questions</h3>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem">These are short 1–2 mark style questions typical of the exam. Answer mentally, then reveal.</p>
+  </div>
+
+  <div class="quiz-container">
+    <div class="quiz-q">QF1 [1 mark] — In the distributional semantics approach, what data structure would you use for an efficient single-pass computation, and why?</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','qf1fb')">A. A dense matrix of shape (vocab × vocab)</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'correct','qf1fb')">B. A dictionary of sparse vectors (e.g., defaultdict of Counter)</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','qf1fb')">C. A sorted list of (word, context) tuples</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','qf1fb')">D. A circular buffer of the last k tokens</div>
+    </div>
+    <div class="quiz-feedback" id="qf1fb"></div>
+  </div>
+
+  <div class="quiz-container">
+    <div class="quiz-q">QF2 [1 mark] — Laplace smoothing adds 1 to every bigram count. What problem does this solve and what problem does it create?</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','qf2fb')">A. Solves overfitting; creates underfitting</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'correct','qf2fb')">B. Solves zero-probability for unseen bigrams; redistributes too much probability mass to unseen events, making seen events less probable</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','qf2fb')">C. Solves the curse of dimensionality; creates slower inference</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','qf2fb')">D. Solves data imbalance; creates biased probability estimates</div>
+    </div>
+    <div class="quiz-feedback" id="qf2fb"></div>
+  </div>
+
+  <div class="quiz-container">
+    <div class="quiz-q">QF3 [1 mark] — What does it mean for Fleiss' Kappa = 0.61 in the context of the Circa dataset?</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','qf3fb')">A. 61% of annotators agreed on every label</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'correct','qf3fb')">B. "Substantial agreement" between annotators — κ accounts for chance agreement and 0.61 is conventionally considered substantial/good inter-rater reliability</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','qf3fb')">C. The labels are unreliable and should be redone</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','qf3fb')">D. 61% of data points are correctly labelled</div>
+    </div>
+    <div class="quiz-feedback" id="qf3fb"></div>
+  </div>
+
+  <div class="quiz-container">
+    <div class="quiz-q">QF4 [1 mark] — What does "data contamination" mean when evaluating a zero-shot LLM on a benchmark?</div>
+    <div class="quiz-options">
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','qf4fb')">A. The training data contains personally identifiable information</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','qf4fb')">B. The model has been tested on toxic or harmful text</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'correct','qf4fb')">C. The benchmark's test data may have been included in the LLM's training data, so the model has already "seen" the answers — making the evaluation invalid as a true zero-shot test</div>
+      <div class="quiz-opt" onclick="checkQuiz(this,'wrong','qf4fb')">D. The dataset has labelling errors introduced by crowd workers</div>
+    </div>
+    <div class="quiz-feedback" id="qf4fb"></div>
+  </div>
+
+  <div class="quiz-container">
+    <div class="quiz-q">QF5 [2 marks] — Why does multi-stage fine-tuning (training on task A, then task B) sometimes degrade performance compared to just fine-tuning on task B alone?</div>
+    <textarea style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;color:var(--text);font-size:.9rem;resize:vertical;min-height:60px;margin-top:.5rem" placeholder="Your answer..."></textarea>
+    <button class="quiz-btn" onclick="showModelAnswer('qf5fb')">Show Model Answer</button>
+    <div class="quiz-feedback ok" id="qf5fb" style="display:none">
+      <strong>Catastrophic forgetting [1 mark]:</strong> Fine-tuning on task A changes the model weights to specialise for A. When then fine-tuned on B, the model may "forget" the general representations learned during pre-training.<br><br>
+      <strong>Task mismatch [1 mark]:</strong> If task A has different characteristics from task B (e.g., BOOLQ has direct yes/no answers while Circa has indirect answers), the fine-tuning on A shifts the model's decision boundaries in a direction that is harmful for task B.
+    </div>
+  </div>
+
+<!-- Footer -->
+<div style="text-align:center;padding:2rem;color:var(--muted);font-size:.8rem;border-top:1px solid var(--border);margin-top:2rem">
+  <p>TaD Lecture 7 — Ethics &amp; Information Extraction | Jurafsky &amp; Martin (SLP3 Ed3, Jan 2026) | MacAvaney &amp; Lever (2025)</p>
+  <p style="margin-top:.3rem">Interactive notes generated for study purposes. All academic content © respective authors.</p>
+</div>
+
+<script>
+// ── Highlight.js ──
+hljs.highlightAll();
+
+// ── Progress Bar ──
+window.addEventListener('scroll', () => {
+  const doc = document.documentElement;
+  const pct = doc.scrollTop / (doc.scrollHeight - doc.clientHeight) * 100;
+  document.getElementById('progress-bar').style.width = pct + '%';
+});
+
+// ── Nav active state ──
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('nav a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 120) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+
+// ── Tabs ──
+function switchTab(groupId, contentId, btn) {
+  const group = document.getElementById(groupId);
+  const tabs = group.querySelectorAll('.tab');
+  const contents = group.parentElement.querySelectorAll('.tab-content');
+  tabs.forEach(t => t.classList.remove('active'));
+  contents.forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(contentId).classList.add('active');
+}
+
+// ── Accordion ──
+function toggleAcc(header) {
+  const body = header.nextElementSibling;
+  const isOpen = body.classList.contains('open');
+  // Close all in same container
+  header.closest('.accordion').querySelectorAll('.acc-body').forEach(b => b.classList.remove('open'));
+  header.closest('.accordion').querySelectorAll('.acc-header').forEach(h => h.classList.remove('open'));
+  if (!isOpen) {
+    body.classList.add('open');
+    header.classList.add('open');
+  }
+}
+
+// ── Quiz ──
+function checkQuiz(opt, type, feedbackId) {
+  const container = opt.closest('.quiz-container');
+  container.querySelectorAll('.quiz-opt').forEach(o => {
+    o.classList.remove('correct', 'wrong');
+    o.style.pointerEvents = 'none';
+  });
+  opt.classList.add(type);
+  const fb = document.getElementById(feedbackId);
+  fb.className = 'quiz-feedback show ' + (type === 'correct' ? 'ok' : 'bad');
+  fb.innerHTML = type === 'correct'
+    ? '✅ Correct! ' + getQuizExplanation(feedbackId)
+    : '❌ Incorrect. ' + getQuizExplanation(feedbackId);
+}
+
+function getQuizExplanation(id) {
+  const explanations = {
+    'tab-quiz1': 'Hearst patterns are hand-crafted lexico-syntactic rules that fire only when a specific surface form is present — so they\'re highly precise but miss many valid instances (low recall). They need zero training data.',
+    'tab-quiz2': 'Semantic drift is the cascading error problem in bootstrapping: wrong pattern → wrong tuples → wrong patterns → further drift from the intended relation.',
+    'tab-quiz6': 'Mitchell et al. (2019) introduced model cards as a standardised documentation format for ML models, targeting ML practitioners, software developers, policymakers, and impacted individuals.',
+  };
+  return explanations[id] || '';
+}
+
+function showModelAnswer(id) {
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  if (window.MathJax) MathJax.typesetPromise([el]);
+}
+
+// ── Poll toggles ──
+function togglePoll(item) {
+  const check = item.querySelector('.poll-check');
+  const div = item.querySelector('div');
+  if (check.textContent === '⬜') {
+    check.textContent = '✅';
+    div.style.borderColor = 'var(--accent3)';
+    div.style.background = 'rgba(78,205,196,.1)';
+  } else {
+    check.textContent = '⬜';
+    div.style.borderColor = 'var(--border)';
+    div.style.background = 'var(--surface)';
+  }
+}
+
+// ── Bias Chart ──
+const biasData = [
+  { label: 'Warm/Caring', female: 78, male: 31, color: '#f7916a' },
+  { label: 'Leadership',  female: 22, male: 85, color: '#7c6af7' },
+  { label: 'Technical',   female: 35, male: 72, color: '#60a5fa' },
+  { label: 'Teamwork',    female: 65, male: 44, color: '#4ecdc4' },
+  { label: 'Ambitious',   female: 40, male: 68, color: '#f7c948' },
+];
+
+const barGroup = document.getElementById('biasBarGroup');
+if (barGroup) {
+  const maxH = 140;
+  biasData.forEach(d => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;height:' + maxH + 'px;justify-content:flex-end;position:relative';
+
+    const fBar = document.createElement('div');
+    fBar.style.cssText = `width:45%;background:${d.color};opacity:.7;border-radius:3px 3px 0 0;transition:height 1.2s ease;height:0`;
+    fBar.title = `Female: ${d.female}%`;
+
+    const mBar = document.createElement('div');
+    mBar.style.cssText = `width:45%;background:${d.color};border-radius:3px 3px 0 0;transition:height 1.2s ease;height:0`;
+    mBar.title = `Male: ${d.male}%`;
+
+    const inner = document.createElement('div');
+    inner.style.cssText = 'display:flex;gap:2px;align-items:flex-end;height:' + (maxH - 20) + 'px';
+    inner.appendChild(fBar);
+    inner.appendChild(mBar);
+
+    const lbl = document.createElement('div');
+    lbl.style.cssText = 'font-size:.65rem;color:#8892a4;text-align:center;position:absolute;bottom:-1.4rem;width:100%';
+    lbl.textContent = d.label;
+
+    wrap.appendChild(inner);
+    wrap.appendChild(lbl);
+    barGroup.appendChild(wrap);
+
+    setTimeout(() => {
+      fBar.style.height = (d.female / 100 * (maxH - 20)) + 'px';
+      mBar.style.height = (d.male  / 100 * (maxH - 20)) + 'px';
+    }, 500);
+  });
+
+  const legend = document.createElement('div');
+  legend.style.cssText = 'position:absolute;top:.5rem;right:.5rem;font-size:.7rem;display:flex;gap:.8rem';
+  legend.innerHTML = '<span style="color:#8892a4">◼ <span style="opacity:.7">Female</span></span><span style="color:#8892a4">◼ Male</span>';
+  document.getElementById('biasChart').appendChild(legend);
+}
+
+// ── Fade-in observer ──
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: .1 });
+document.querySelectorAll('.card,.quiz-container,.callout').forEach(el => {
+  el.classList.add('fade-in');
+  observer.observe(el);
+});
+
+// ── MathJax config ──
+window.MathJax = {
+  tex: { inlineMath: [['$','$'],['\\(','\\)']] },
+  startup: { ready() { MathJax.startup.defaultReady(); } }
+};
+</script>
+</body>
+</html>

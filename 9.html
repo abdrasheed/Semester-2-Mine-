@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture 9: Large Language Models — Text as Data</title>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d2e;
+  --surface2: #252840;
+  --accent: #7c6af7;
+  --accent2: #f7927c;
+  --accent3: #6af7c4;
+  --text: #e0e6f0;
+  --muted: #8892a4;
+  --correct: #4ade80;
+  --wrong: #f87171;
+  --warn: #fbbf24;
+  --code-bg: #0d1117;
+  --border: #2e3247;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.7; }
+
+/* ── HEADER ── */
+.hero { background: linear-gradient(135deg, #1a1d2e 0%, #0f1117 50%, #1a1d2e 100%); padding: 60px 20px 40px; text-align: center; border-bottom: 1px solid var(--border); position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(124,106,247,0.15) 0%, transparent 70%); }
+.hero h1 { font-size: 2.5em; font-weight: 800; background: linear-gradient(90deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; position: relative; }
+.hero p { color: var(--muted); margin-top: 10px; font-size: 1.05em; position: relative; }
+.badge-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px; position: relative; }
+.badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 14px; font-size: 0.82em; color: var(--accent3); }
+
+/* ── NAV ── */
+.nav { position: sticky; top: 0; z-index: 100; background: rgba(15,17,23,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); display: flex; gap: 0; overflow-x: auto; padding: 0 20px; }
+.nav-btn { padding: 14px 18px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.88em; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; }
+.nav-btn:hover { color: var(--text); }
+.nav-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── LAYOUT ── */
+.container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+.section { display: none; animation: fadeIn 0.3s ease; }
+.section.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── CARDS ── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 22px; }
+.card h2 { font-size: 1.4em; margin-bottom: 14px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+.card h3 { font-size: 1.1em; margin: 16px 0 8px; color: var(--accent3); }
+.card h4 { font-size: 0.95em; margin: 12px 0 6px; color: var(--warn); }
+
+/* ── CALLOUTS ── */
+.callout { border-left: 3px solid; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; }
+.callout.key { border-color: var(--accent); background: rgba(124,106,247,0.08); }
+.callout.example { border-color: var(--accent3); background: rgba(106,247,196,0.06); }
+.callout.warn { border-color: var(--warn); background: rgba(251,191,36,0.06); }
+.callout.danger { border-color: var(--wrong); background: rgba(248,113,113,0.06); }
+.callout-title { font-weight: 700; font-size: 0.82em; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+.callout.key .callout-title { color: var(--accent); }
+.callout.example .callout-title { color: var(--accent3); }
+.callout.warn .callout-title { color: var(--warn); }
+.callout.danger .callout-title { color: var(--wrong); }
+
+/* ── CODE ── */
+pre { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: 18px; overflow-x: auto; font-size: 0.88em; line-height: 1.6; margin: 12px 0; }
+code { font-family: 'Cascadia Code', 'Fira Code', monospace; }
+.inline-code { background: var(--code-bg); padding: 2px 7px; border-radius: 4px; font-family: monospace; font-size: 0.9em; color: var(--accent3); border: 1px solid var(--border); }
+.kw { color: #c792ea; } .fn { color: #82aaff; } .str { color: #c3e88d; } .cm { color: #546e7a; font-style: italic; }
+.num { color: #f78c6c; } .cls { color: #ffcb6b; }
+
+/* ── MATH BOX ── */
+.math-box { background: var(--surface2); border: 1px solid var(--accent); border-radius: 8px; padding: 18px 22px; margin: 14px 0; text-align: center; font-size: 1.05em; }
+
+/* ── TABLE ── */
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9em; }
+th { background: var(--surface2); color: var(--accent); padding: 10px 14px; text-align: left; border-bottom: 2px solid var(--border); }
+td { padding: 9px 14px; border-bottom: 1px solid var(--border); }
+tr:hover td { background: rgba(124,106,247,0.05); }
+
+/* ── DIAGRAM ── */
+.diagram { background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 16px 0; font-family: monospace; font-size: 0.85em; overflow-x: auto; line-height: 1.8; }
+
+/* ── QUIZ ── */
+.quiz-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 18px 0; }
+.quiz-box .q-text { font-weight: 600; margin-bottom: 14px; color: var(--text); }
+.quiz-option { display: block; padding: 10px 16px; margin: 6px 0; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; background: var(--surface); color: var(--text); font-size: 0.92em; text-align: left; width: 100%; }
+.quiz-option:hover { border-color: var(--accent); background: rgba(124,106,247,0.1); }
+.quiz-option.correct { background: rgba(74,222,128,0.15); border-color: var(--correct); color: var(--correct); }
+.quiz-option.wrong { background: rgba(248,113,113,0.15); border-color: var(--wrong); color: var(--wrong); }
+.quiz-feedback { margin-top: 12px; padding: 12px 16px; border-radius: 8px; font-size: 0.9em; display: none; }
+.quiz-feedback.show { display: block; }
+.quiz-feedback.correct { background: rgba(74,222,128,0.1); border: 1px solid var(--correct); color: var(--correct); }
+.quiz-feedback.wrong { background: rgba(248,113,113,0.1); border: 1px solid var(--wrong); color: var(--wrong); }
+
+/* ── EXAM QUESTION ── */
+.exam-q { border: 1px solid var(--warn); border-radius: 10px; margin: 18px 0; overflow: hidden; }
+.exam-q-header { background: rgba(251,191,36,0.1); padding: 12px 18px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+.exam-q-header:hover { background: rgba(251,191,36,0.15); }
+.exam-q-title { font-weight: 700; color: var(--warn); font-size: 0.9em; }
+.exam-q-marks { background: var(--warn); color: #000; padding: 2px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 700; }
+.exam-q-body { padding: 18px; display: none; border-top: 1px solid var(--border); }
+.exam-q-body.show { display: block; }
+.solution { background: rgba(106,247,196,0.05); border: 1px solid var(--accent3); border-radius: 8px; padding: 14px; margin-top: 12px; }
+.solution-title { color: var(--accent3); font-weight: 700; font-size: 0.85em; text-transform: uppercase; margin-bottom: 8px; }
+
+/* ── PROGRESS ── */
+.progress-bar { height: 4px; background: var(--border); border-radius: 2px; margin: 8px 0; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent3)); border-radius: 2px; transition: width 0.5s ease; }
+
+/* ── TIMELINE ── */
+.timeline { position: relative; padding-left: 30px; }
+.timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+.tl-item { position: relative; margin-bottom: 20px; }
+.tl-item::before { content: ''; position: absolute; left: -24px; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); border: 2px solid var(--bg); }
+.tl-year { color: var(--accent); font-weight: 700; font-size: 0.85em; }
+
+/* ── GRID ── */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 700px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+/* ── FLIP CARDS ── */
+.flip-card { perspective: 800px; height: 160px; cursor: pointer; }
+.flip-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+.flip-card.flipped .flip-inner { transform: rotateY(180deg); }
+.flip-front, .flip-back { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 16px; text-align: center; }
+.flip-front { background: var(--surface2); border: 1px solid var(--border); color: var(--accent); font-weight: 700; }
+.flip-back { background: var(--surface); border: 1px solid var(--accent3); color: var(--text); font-size: 0.88em; transform: rotateY(180deg); }
+.flip-hint { font-size: 0.72em; color: var(--muted); margin-top: 6px; }
+
+/* ── ANIMATION ── */
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
+.pulse { animation: pulse 2s infinite; }
+@keyframes slideIn { from { transform: translateX(-20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Lecture 9: Large Language Models</h1>
+  <p>Text as Data · University of Glasgow · Sean MacAvaney & Jake Lever</p>
+  <div class="badge-row">
+    <span class="badge">Transformers</span>
+    <span class="badge">Instruction Tuning</span>
+    <span class="badge">Prompt Engineering</span>
+    <span class="badge">RLHF</span>
+    <span class="badge">LLaMA · GPT · BERT</span>
+    <span class="badge">Safety & Alignment</span>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="show('overview')">Overview</button>
+  <button class="nav-btn" onclick="show('architecture')">Architecture</button>
+  <button class="nav-btn" onclick="show('training')">Training & Tuning</button>
+  <button class="nav-btn" onclick="show('prompting')">Prompt Engineering</button>
+  <button class="nav-btn" onclick="show('models')">Models & Scale</button>
+  <button class="nav-btn" onclick="show('safety')">Safety & Challenges</button>
+  <button class="nav-btn" onclick="show('code')">Code Lab</button>
+  <button class="nav-btn" onclick="show('exam')">Exam Questions</button>
+  <button class="nav-btn" onclick="show('flashcards')">Flashcards</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════ OVERVIEW ═══════════════════════════════════════════ -->
+<div id="overview" class="section active">
+<div class="container">
+
+<div class="card">
+  <h2>🧠 What is a Large Language Model?</h2>
+  <p>A Large Language Model (LLM) is a <strong>transformer-based model with billions of parameters</strong> trained on massive text corpora to predict the next token. The "large" distinguishes them from smaller models like BERT.</p>
+
+  <div class="callout key">
+    <div class="callout-title">Key Definition</div>
+    LLMs are <strong>causal language models</strong>: they model P(token | all previous tokens) and generate text autoregressively — one token at a time.
+  </div>
+
+  <h3>Parameter Scale Evolution</h3>
+  <div class="timeline">
+    <div class="tl-item"><span class="tl-year">2019 · BERT-Large</span><br><span style="color:var(--muted)">340M parameters — "small" by modern standards</span></div>
+    <div class="tl-item"><span class="tl-year">2019 · GPT-2</span><br><span style="color:var(--muted)">1.5B parameters — caused alarm when released</span></div>
+    <div class="tl-item"><span class="tl-year">2020 · GPT-3</span><br><span style="color:var(--muted)">175B parameters — demonstrated few-shot learning</span></div>
+    <div class="tl-item"><span class="tl-year">2023 · LLaMA</span><br><span style="color:var(--muted)">7B–65B parameters — open weights from Meta</span></div>
+    <div class="tl-item"><span class="tl-year">2024 · GPT-4</span><br><span style="color:var(--muted)">~1.8T parameters (estimated, mixture of experts)</span></div>
+    <div class="tl-item"><span class="tl-year">2025 · GPT-5</span><br><span style="color:var(--muted)">$1.75/1M input tokens, $14/1M output tokens</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📐 The Core Idea: Next Token Prediction</h2>
+  <p>Every LLM is trained to answer one question: <em>given all previous tokens, what comes next?</em></p>
+
+  <div class="math-box">
+    \[ P(w_1, w_2, \ldots, w_n) = \prod_{i=1}^{n} P(w_i \mid w_1, w_2, \ldots, w_{i-1}) \]
+  </div>
+
+  <p>This is the <strong>chain rule of probability</strong>. LLMs parameterise each conditional \(P(w_i \mid w_{i-1}, \ldots, w_1)\) with billions of weights.</p>
+
+  <div class="callout example">
+    <div class="callout-title">Example</div>
+    Input: <em>"The cat sat on the"</em> → model outputs probability distribution over all tokens → argmax = <em>"mat"</em> (or sample stochastically)
+  </div>
+
+  <div class="quiz-box">
+    <div class="q-text">Practice: What probability does a causal LM compute at each step?</div>
+    <button class="quiz-option" onclick="checkQ(this, false, 'LMs compute P(w_i | all PREVIOUS tokens, not future ones — it\'s a causal/autoregressive model.')">P(w_i | all tokens in sequence)</button>
+    <button class="quiz-option" onclick="checkQ(this, true, 'Correct! Causal LMs only condition on past tokens — they cannot see future tokens (masked attention).')">P(w_i | w₁, w₂, …, w_{i-1})</button>
+    <button class="quiz-option" onclick="checkQ(this, false, 'That would be a masked LM (like BERT), not a causal LM.')">P(w_i | all surrounding tokens)</button>
+    <div class="quiz-feedback" id="qfb0"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🆚 LLMs vs BERT: Critical Comparison</h2>
+  <table>
+    <tr><th>Feature</th><th>BERT (Encoder)</th><th>GPT/LLaMA (Decoder LLM)</th></tr>
+    <tr><td>Architecture</td><td>Encoder-only</td><td>Decoder-only</td></tr>
+    <tr><td>Attention</td><td>Bidirectional (sees all tokens)</td><td>Causal (left-to-right only)</td></tr>
+    <tr><td>Parameters</td><td>110M – 340M</td><td>7B – 1.8T</td></tr>
+    <tr><td>Training objective</td><td>Masked LM + NSP</td><td>Next token prediction</td></tr>
+    <tr><td>Best for</td><td>Classification, NER, structured tasks</td><td>Generation, zero-shot, diverse tasks</td></tr>
+    <tr><td>Zero-shot ability</td><td>Poor</td><td>Strong</td></tr>
+    <tr><td>Compute cost</td><td>Low</td><td>Very high</td></tr>
+  </table>
+
+  <div class="callout warn">
+    <div class="callout-title">Exam Insight</div>
+    Fine-tuned BERT often <strong>outperforms</strong> zero-shot LLMs on structured tasks (classification, NER). This is a key exam point! LLMs win on complex reasoning and diverse/unseen inputs.
+  </div>
+
+  <div class="quiz-box">
+    <div class="q-text">Practice: A researcher wants to classify patents with 10,000 labelled examples. Which is more appropriate?</div>
+    <button class="quiz-option" onclick="checkQ(this, true, 'Correct! With labelled data, fine-tuned BERT typically outperforms zero-shot LLMs and is far cheaper to run.')">Fine-tuned BERT</button>
+    <button class="quiz-option" onclick="checkQ(this, false, 'LLMs in zero-shot mode usually underperform fine-tuned BERT when labelled data is available.')">Zero-shot GPT-4</button>
+    <button class="quiz-option" onclick="checkQ(this, false, 'Both need justification — but fine-tuned BERT wins here due to labelled data availability.')">Either — they are equivalent</button>
+    <div class="quiz-feedback" id="qfb1"></div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ ARCHITECTURE ═══════════════════════════════════════════ -->
+<div id="architecture" class="section">
+<div class="container">
+
+<div class="card">
+  <h2>🏗️ Decoder-Only Transformer Architecture</h2>
+  <p>LLMs use a <strong>decoder-only</strong> transformer stack. Each layer has: (1) masked self-attention, (2) feed-forward network, with residual connections and layer normalisation throughout.</p>
+
+  <!-- Decoder-Only Transformer Architecture Diagram -->
+  <div style="display:flex; flex-direction:column; align-items:center; gap:0; font-family:inherit; margin: 20px 0;">
+
+    <!-- INPUT TOKENS -->
+    <div style="background:#1e1b3a; border:2px solid #7c6af7; border-radius:10px; padding:10px 32px; color:#7c6af7; font-weight:700; font-size:0.95em; letter-spacing:1px;">
+      INPUT TOKENS &nbsp;["The", "cat", "sat", ...]
+    </div>
+
+    <!-- Arrow -->
+    <div style="width:2px; height:20px; background:#7c6af7; margin:0 auto;"></div>
+    <div style="width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent; border-top:10px solid #7c6af7;"></div>
+
+    <!-- Embeddings row -->
+    <div style="display:flex; align-items:center; gap:12px; background:#16213e; border:2px solid #4a9eff; border-radius:10px; padding:10px 20px;">
+      <div style="background:#1a2a4a; border:1px solid #4a9eff; border-radius:7px; padding:7px 16px; color:#4a9eff; font-size:0.88em; text-align:center;">
+        🔤 Token<br>Embeddings
+      </div>
+      <div style="color:#888; font-size:1.2em; font-weight:700;">+</div>
+      <div style="background:#1a2a4a; border:1px solid #4a9eff; border-radius:7px; padding:7px 16px; color:#4a9eff; font-size:0.88em; text-align:center;">
+        📍 Positional<br>Embeddings
+      </div>
+    </div>
+
+    <!-- Arrow -->
+    <div style="width:2px; height:20px; background:#7c6af7; margin:0 auto;"></div>
+    <div style="width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent; border-top:10px solid #7c6af7;"></div>
+
+    <!-- TRANSFORMER BLOCK (repeated N times) -->
+    <div style="border:2.5px dashed #7c6af7; border-radius:14px; padding:18px 24px; background:#120d2b; width:380px; max-width:95vw; position:relative;">
+
+      <!-- Block label -->
+      <div style="position:absolute; top:-13px; left:50%; transform:translateX(-50%); background:#120d2b; padding:0 10px; color:#a89af7; font-size:0.82em; font-weight:700; white-space:nowrap;">
+        🔁 Transformer Block × N &nbsp;(GPT-2: N=12 &nbsp;|&nbsp; GPT-3: N=96)
+      </div>
+
+      <div style="display:flex; flex-direction:column; align-items:center; gap:0;">
+
+        <!-- Masked Multi-Head Attention -->
+        <div style="background:#2d1f5e; border:2px solid #a78bfa; border-radius:10px; padding:10px 24px; width:100%; box-sizing:border-box; text-align:center;">
+          <div style="color:#c4b5fd; font-weight:700; font-size:0.92em;">🔒 Masked Multi-Head Attention</div>
+          <div style="color:#9ca3af; font-size:0.78em; margin-top:3px;">Each token attends only to itself + past tokens</div>
+        </div>
+
+        <!-- Add & Norm -->
+        <div style="display:flex; align-items:center; gap:6px; margin:6px 0;">
+          <div style="width:2px; height:16px; background:#a78bfa;"></div>
+          <div style="background:#1f2937; border:1px solid #6b7280; border-radius:6px; padding:3px 14px; color:#9ca3af; font-size:0.78em;">➕ Add &amp; Norm &nbsp;(residual + layer norm)</div>
+        </div>
+
+        <!-- Arrow down -->
+        <div style="width:2px; height:10px; background:#a78bfa;"></div>
+        <div style="width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid #a78bfa; margin-bottom:6px;"></div>
+
+        <!-- Feed-Forward Network -->
+        <div style="background:#1e3a2f; border:2px solid #34d399; border-radius:10px; padding:10px 24px; width:100%; box-sizing:border-box; text-align:center;">
+          <div style="color:#6ee7b7; font-weight:700; font-size:0.92em;">⚡ Feed-Forward Network (FFN)</div>
+          <div style="color:#9ca3af; font-size:0.78em; margin-top:3px;">Linear → ReLU/GELU → Linear &nbsp;(dim expands 4×)</div>
+        </div>
+
+        <!-- Add & Norm -->
+        <div style="display:flex; align-items:center; gap:6px; margin:6px 0;">
+          <div style="width:2px; height:16px; background:#34d399;"></div>
+          <div style="background:#1f2937; border:1px solid #6b7280; border-radius:6px; padding:3px 14px; color:#9ca3af; font-size:0.78em;">➕ Add &amp; Norm &nbsp;(residual + layer norm)</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Arrow -->
+    <div style="width:2px; height:20px; background:#7c6af7; margin:0 auto;"></div>
+    <div style="width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent; border-top:10px solid #7c6af7;"></div>
+
+    <!-- Linear + Softmax -->
+    <div style="background:#3b1f1f; border:2px solid #f87171; border-radius:10px; padding:10px 32px; text-align:center;">
+      <div style="color:#fca5a5; font-weight:700; font-size:0.92em;">📊 Linear Layer + Softmax</div>
+      <div style="color:#9ca3af; font-size:0.78em; margin-top:3px;">Projects to vocabulary size → probability over next token</div>
+    </div>
+
+    <!-- Arrow -->
+    <div style="width:2px; height:20px; background:#f87171; margin:0 auto;"></div>
+    <div style="width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent; border-top:10px solid #f87171;"></div>
+
+    <!-- OUTPUT -->
+    <div style="background:#1e1b3a; border:2px solid #fbbf24; border-radius:10px; padding:10px 32px; color:#fbbf24; font-weight:700; font-size:0.95em;">
+      🎯 P(next token) &nbsp;→&nbsp; "sat" with 72%, "slept" with 18%, ...
+    </div>
+
+  </div>
+
+  <h3>Causal (Masked) Attention</h3>
+  <p>The key difference from BERT is the <strong>attention mask</strong>: each token can only attend to itself and tokens to its left.</p>
+
+  <div class="math-box">
+    \[ \text{Attention}(Q, K, V) = \text{softmax}\!\left(\frac{QK^T}{\sqrt{d_k}} + M\right)\!V \]
+    <p style="font-size:0.85em; color:var(--muted); margin-top:8px;">where \(M_{ij} = -\infty\) if \(j > i\) (future positions), else \(0\)</p>
+  </div>
+
+  <div class="grid2" style="margin-top:16px">
+    <div>
+      <h3>BERT Attention (Bidirectional)</h3>
+      <div class="diagram" style="font-size:0.8em">
+Token:  The  cat  sat  on  mat
+The  [✓]  [✓]  [✓]  [✓]  [✓]
+cat  [✓]  [✓]  [✓]  [✓]  [✓]
+sat  [✓]  [✓]  [✓]  [✓]  [✓]
+on   [✓]  [✓]  [✓]  [✓]  [✓]
+mat  [✓]  [✓]  [✓]  [✓]  [✓]
+      </div>
+    </div>
+    <div>
+      <h3>GPT Attention (Causal)</h3>
+      <div class="diagram" style="font-size:0.8em">
+Token:  The  cat  sat  on  mat
+The  [✓]  [✗]  [✗]  [✗]  [✗]
+cat  [✓]  [✓]  [✗]  [✗]  [✗]
+sat  [✓]  [✓]  [✓]  [✗]  [✗]
+on   [✓]  [✓]  [✓]  [✓]  [✗]
+mat  [✓]  [✓]  [✓]  [✓]  [✓]
+      </div>
+    </div>
+  </div>
+
+  <div class="quiz-box">
+    <div class="q-text">Practice: Why does a decoder-only LLM use causal masking?</div>
+    <button class="quiz-option" onclick="checkQ(this, false, 'Speed is not the reason — causal masking actually requires generating one token at a time.')">To speed up inference</button>
+    <button class="quiz-option" onclick="checkQ(this, true, 'Correct! During training, causal masking ensures the model predicts token t using only tokens 1..t-1, mimicking autoregressive generation.')">To prevent the model seeing future tokens during training</button>
+    <button class="quiz-option" onclick="checkQ(this, false, 'Masking reduces vocabulary visibility but that is not its purpose here.')">To reduce the effective vocabulary size</button>
+    <div class="quiz-feedback" id="qfb2"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🔢 Positional Encoding</h2>
+  <p>Transformers have no recurrence, so position must be injected explicitly. Two main approaches:</p>
+
+  <div class="grid2">
+    <div>
+      <h3>Sinusoidal (original)</h3>
+      <div class="math-box" style="font-size:0.88em">
+        \[ PE_{(pos, 2i)} = \sin\!\left(\frac{pos}{10000^{2i/d}}\right) \]
+        \[ PE_{(pos, 2i+1)} = \cos\!\left(\frac{pos}{10000^{2i/d}}\right) \]
+      </div>
+      <p style="font-size:0.88em; color:var(--muted)">Fixed, no parameters. Used in original transformer.</p>
+    </div>
+    <div>
+      <h3>Rotary (RoPE) — used in LLaMA</h3>
+      <p style="font-size:0.88em; margin-top:12px">Encodes <em>relative</em> position by rotating query/key vectors. Better generalisation to longer sequences. Used in LLaMA, GPT-NeoX.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🪙 Tokenisation in LLMs</h2>
+  <p>LLMs use <strong>BPE (Byte Pair Encoding)</strong> or similar subword tokenisers — never character-level or pure word-level. This gives a vocabulary of ~32K–100K tokens.</p>
+
+  <div class="callout example">
+    <div class="callout-title">BPE Example</div>
+    <code>"unhappiness" → ["un", "happy", "ness"]</code><br>
+    <code>"mississippi" → ["mis", "si", "ss", "ippi"]</code><br>
+    Unknown words handled gracefully — no <span class="inline-code">[UNK]</span> needed for most inputs.
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">Why not [UNK] in BPE?</div>
+    BPE can fall back to individual bytes/characters, so virtually any string is representable. However, <span class="inline-code">[UNK]</span> may still appear for unseen Unicode characters outside the training byte range.
+  </div>
+
+  <div class="quiz-box">
+    <div class="q-text">Practice: Why do LLMs use subword tokenisation instead of word-level tokenisation?</div>
+    <button class="quiz-option" onclick="checkQ(this, false, 'Subword is not necessarily faster at inference — it produces more tokens than word-level.')">It is faster at inference time</button>
+    <button class="quiz-option" onclick="checkQ(this, true, 'Correct! Subword tokenisation handles rare/unseen words by decomposing them, controls vocabulary size, and works across languages without word boundaries.')">It handles OOV words, controls vocabulary size, and works cross-lingually</button>
+    <button class="quiz-option" onclick="checkQ(this, false, 'Subword tokenisation is actually a data-driven approach, not rule-based.')">It encodes linguistic rules about morphology</button>
+    <div class="quiz-feedback" id="qfb3"></div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ TRAINING ═══════════════════════════════════════════ -->
+<div id="training" class="section">
+<div class="container">
+
+<div class="card">
+  <h2>📚 Pre-training: Next Token Prediction at Scale</h2>
+  <p>LLMs are pre-trained on trillions of tokens from the web, books, code, and other sources. The loss is <strong>cross-entropy</strong> over next-token prediction:</p>
+
+  <div class="math-box">
+    \[ \mathcal{L} = -\frac{1}{N}\sum_{i=1}^{N} \log P_\theta(w_i \mid w_1, \ldots, w_{i-1}) \]
+  </div>
+
+  <p>This is equivalent to minimising <strong>perplexity</strong>:</p>
+  <div class="math-box">
+    \[ \text{PPL} = \exp\!\left(-\frac{1}{N}\sum_{i=1}^{N} \log P(w_i \mid w_{<i})\right) \]
+    <p style="font-size:0.85em; color:var(--muted); margin-top:6px">Lower perplexity = model assigns higher probability to real text = better model</p>
+  </div>
+
+  <div class="callout example">
+    <div class="callout-title">Perplexity Intuition</div>
+    PPL = 10 means the model is as "confused" as if it had to choose uniformly among 10 options at each step. PPL = 2 means almost no uncertainty — like a coin flip.
+  </div>
+
+  <div class="quiz-box">
+    <div class="q-text">Practice: Model A has PPL=45, Model B has PPL=12 on the same test set. Which is better?</div>
+    <button class="quiz-option" onclick="checkQ(this, false, 'Higher PPL means more confusion — Model A is worse.')">Model A (PPL=45)</button>
+    <button class="quiz-option" onclick="checkQ(this, true, 'Correct! Lower perplexity means the model assigns higher probability to the actual test tokens — it is less "surprised".')">Model B (PPL=12)</button>
+    <button class="quiz-option" onclick="checkQ(this, false, 'They are not equal — PPL directly measures model quality on the test set.')">They are equal — it depends on the task</button>
+    <div class="quiz-feedback" id="qfb4"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🎓 Instruction Tuning</h2>
+  <p>Pre-trained LLMs can complete text but cannot <em>follow instructions</em>. Instruction tuning fine-tunes the model on <strong>(instruction, response)</strong> pairs to make it a helpful assistant.</p>
+
+  <div class="diagram">
+<span style="color:#7c6af7">Original pre-training format:</span>
+  "The capital of France is Paris. The Eiffel Tower..."
+
+<span style="color:#6af7c4">Instruction-tuned format:</span>
+  Instruction: "What is the capital of France?"
+  Response:    "The capital of France is Paris."
+  </div>
+
+  <h3>FLAN-style Multi-Task Instruction Tuning</h3>
+  <p>Many datasets are converted to instruction format and mixed together. Example transformations:</p>
+  <table>
+    <tr><th>Original Task</th><th>Instruction Format</th></tr>
+    <tr><td>Sentiment (SST-2)</td><td>"Classify the sentiment of: 'Great film!' → Positive"</td></tr>
+    <tr><td>Translation</td><td>"Translate to French: 'Hello world' → 'Bonjour monde'"</td></tr>
+    <tr><td>Summarisation</td><td>"Summarise this article in one sentence: [article]"</td></tr>
+    <tr><td>NER</td><td>"List all people mentioned in: 'Tim Cook visited London'"</td></tr>
+  </table>
+
+  <div class="callout key">
+    <div class="callout-title">Key Point</div>
+    Instruction tuning teaches the model the <em>format</em> of following instructions — it does not add new knowledge. The knowledge is already in the pre-trained weights.
+  </div>
+
+  <div class="quiz-box">
+    <div class="q-text">Practice: What is the primary effect of instruction tuning on a pre-trained LLM?</div>
+    <button class="quiz-option" onclick="checkQ(this, false, 'Instruction tuning does not significantly add new factual knowledge — the weights already contain it from pre-training.')">Adds new factual knowledge to the model</button>
+    <button class="quiz-option" onclick="checkQ(this, true, 'Correct! Instruction tuning teaches the model to follow the instruction-response format, making it a useful assistant rather than just a text completer.')">Teaches the model to respond to instructions in a helpful format</button>
+    <button class="quiz-option" onclick="checkQ(this, false, 'The architecture is not changed during instruction tuning.')">Changes the model architecture to include a dialogue module</button>
+    <div class="quiz-feedback" id="qfb5"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🤝 RLHF: Reinforcement Learning from Human Feedback</h2>
+  <p>RLHF aligns LLMs with human preferences. It is the secret behind ChatGPT being "helpful, harmless, honest."</p>
+
+  <div class="diagram">
+<span style="color:#7c6af7">Step 1: Supervised Fine-Tuning (SFT)</span>
+   Human writes ideal responses → fine-tune LLM on these
+
+<span style="color:#6af7c4">Step 2: Reward Model Training</span>
+   Show humans pairs of responses → they rank them
+   Train a reward model: RM(prompt, response) → scalar score
+
+<span style="color:#f7927c">Step 3: PPO Optimisation</span>
+   Use RL (Proximal Policy Optimization) to update LLM
+   Maximise: E[RM(prompt, LLM(prompt))]
+   With KL penalty to prevent going too far from SFT model
+  </div>
+
+  <div class="math-box">
+    \[ \text{objective} = \mathbb{E}\left[r_\theta(x, y) - \beta \cdot \text{KL}\left[\pi_\theta(\cdot|x) \,\|\, \pi_\text{SFT}(\cdot|x)\right]\right] \]
+    <p style="font-size:0.82em; color:var(--muted); margin-top:6px">\(r_\theta\) = reward model score, \(\beta\) = KL penalty coefficient, \(\pi_\theta\) = current policy</p>
+  </div>
+
+  <div class="callout warn">
+    <div class="callout-title">RLHF Limitation</div>
+    The reward model can be "hacked" — the LLM learns to produce responses that <em>look</em> good to the reward model but aren't actually better. Called <strong>reward hacking</strong>.
+  </div>
+
+  <div class="quiz-box">
+    <div class="q-text">Practice: What is the KL penalty term in RLHF for?</div>
+    <button class="quiz-option" onclick="checkQ(this, false, 'The KL penalty is not about vocabulary size.')">To limit the vocabulary the model uses</button>
+    <button class="quiz-option" onclick="checkQ(this, true, 'Correct! The KL penalty prevents the RL-tuned model from diverging too far from the SFT baseline, avoiding degenerate text.')">To prevent the model diverging too far from the supervised fine-tuned baseline</button>
+    <button class="quiz-option" onclick="checkQ(this, false, 'The reward model trains on human preference pairs, not KL divergence.')">To train the reward model on human preferences</button>
+    <div class="quiz-feedback" id="qfb6"></div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ PROMPTING ═══════════════════════════════════════════ -->
+<div id="prompting" class="section">
+<div class="container">
+
+<div class="card">
+  <h2>💬 Prompt Engineering</h2>
+  <p>Prompt engineering is the practice of crafting inputs to LLMs to elicit the desired output — <em>without changing model weights</em>.</p>
+
+  <div class="grid3" style="margin:16px 0">
+    <div class="callout key" style="margin:0">
+      <div class="callout-title">Zero-Shot</div>
+      No examples provided. Just the instruction.
+    </div>
+    <div class="callout example" style="margin:0">
+      <div class="callout-title">Few-Shot</div>
+      2–5 examples of (input, output) before the query.
+    </div>
+    <div class="callout warn" style="margin:0">
+      <div class="callout-title">Chain-of-Thought</div>
+      Ask the model to reason step-by-step before answering.
+    </div>
+  </div>
+
+  <h3>Zero-Shot Prompting</h3>
+  <div class="diagram">
+Prompt:
+  "Classify the sentiment of the following review as
+   Positive or Negative.
+
+   Review: 'The battery dies in 2 hours. Terrible!'
+   Sentiment:"
+
+LLM output: "Negative"
+  </div>
+
+  <h3>Few-Shot Prompting</h3>
+  <div class="diagram">
+Prompt:
+  "Classify sentiment as Positive or Negative.
+
+   Review: 'Amazing build quality!' → Positive
+   Review: 'Arrived broken.' → Negative
+   Review: 'Fast delivery but poor packaging.' → "
+
+LLM output: "Negative"
+  </div>
+
+  <h3>Chain-of-Thought (CoT)</h3>
+  <div class="diagram">
+Prompt:
+  "Q: Roger has 5 tennis balls. He buys 2 cans of 3 balls.
+      How many does he have?
+   A: Roger starts with 5 balls. 2 cans × 3 = 6 new balls.
+      5 + 6 = 11. The answer is 11.
+
+   Q: The cafeteria had 23 apples. They used 20 for lunch
+      and bought 6 more. How many apples do they have?
+   A: [model must reason step by step]"
+
+LLM output: "23 - 20 = 3 remaining. 3 + 6 = 9. The answer is 9."
+  </div>
+
+  <div class="callout key">
+    <div class="callout-title">Why CoT works</div>
+    By generating intermediate reasoning steps, the model uses its own context window as a "scratchpad" — each step conditions the next, enabling multi-step arithmetic/logic.
+  </div>
+
+  <div class="quiz-box">
+    <div class="q-text">Practice: You need an LLM to answer multi-step maths questions accurately. Which prompting technique is most appropriate?</div>
+    <button class="quiz-option" onclick="checkQ(this, false, 'Zero-shot works for simple classification but struggles with multi-step reasoning.')">Zero-shot prompting</button>
+    <button class="quiz-option" onclick="checkQ(this, false, 'Few-shot improves performance but without reasoning steps, multi-step maths still fails.')">Few-shot prompting with answer-only examples</button>
+    <button class="quiz-option" onclick="checkQ(this, true, 'Correct! Chain-of-thought prompting provides step-by-step reasoning examples, which significantly improves multi-step maths accuracy.')">Chain-of-thought prompting</button>
+    <div class="quiz-feedback" id="qfb7"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🧪 LLM Evaluation Concerns</h2>
+  <h3>Data Contamination (Test Set Leakage)</h3>
+  <p>LLMs are trained on massive internet scrapes. Benchmark test sets <em>may appear in the training data</em>, inflating reported performance.</p>
+
+  <div class="callout danger">
+    <div class="callout-title">Zero-Shot LLM Evaluation Problem</div>
+    When you evaluate an LLM "zero-shot" on a standard benchmark, you cannot be sure the benchmark wasn't in its training data. This makes fair comparison with supervised models very difficult.
+  </div>
+
+  <h3>Prompt Sensitivity</h3>
+  <p>LLM performance can vary dramatically with small prompt changes — adding "Think carefully:" or reordering few-shot examples changes results.</p>
+
+  <div class="quiz-box">
+    <div class="q-text">Practice (2024 Exam style): A researcher evaluates GPT-4 zero-shot on a standard NLP benchmark and claims it outperforms supervised BERT. Name one major concern with this evaluation.</div>
+    <button class="quiz-option" onclick="checkQ(this, true, 'Correct! The benchmark test set may have appeared in GPT-4\'s pre-training data (data contamination), making the zero-shot evaluation unfair.')">Data contamination — the benchmark may be in the LLM training data</button>
+    <button class="quiz-option" onclick="checkQ(this, false, 'While PPL is important for LMs, it is not the main concern in comparing with supervised models.')">GPT-4 has lower perplexity than BERT</button>
+    <button class="quiz-option" onclick="checkQ(this, false, 'BERT uses wordpiece tokenisation, not BPE, but this is not the main evaluation concern.')">BERT uses a different tokeniser than GPT-4</button>
+    <div class="quiz-feedback" id="qfb8"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>📊 When to Use LLMs vs Fine-tuned BERT</h2>
+  <table>
+    <tr><th>Scenario</th><th>Recommendation</th><th>Reason</th></tr>
+    <tr><td>Large labelled dataset available</td><td>Fine-tune BERT</td><td>More accurate, cheaper, no contamination concern</td></tr>
+    <tr><td>No labelled data at all</td><td>LLM zero-shot</td><td>Only viable option</td></tr>
+    <tr><td>Rare/uncommon words in input</td><td>LLM</td><td>LLM subword handles OOV better</td></tr>
+    <tr><td>Multilingual inputs</td><td>LLM (multilingual)</td><td>Trained on many languages</td></tr>
+    <tr><td>Complex reasoning / open-ended</td><td>LLM</td><td>BERT not designed for generation</td></tr>
+    <tr><td>Production at scale</td><td>Fine-tuned BERT</td><td>Much cheaper inference</td></tr>
+  </table>
+</div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ MODELS ═══════════════════════════════════════════ -->
+<div id="models" class="section">
+<div class="container">
+
+<div class="card">
+  <h2>🦙 LLaMA: Open-Weight LLMs from Meta</h2>
+  <p>LLaMA (Large Language Model Meta AI) made powerful LLMs accessible for research by releasing model weights publicly.</p>
+
+  <table>
+    <tr><th>Model</th><th>Parameters</th><th>Context</th><th>Notes</th></tr>
+    <tr><td>LLaMA 1</td><td>7B, 13B, 33B, 65B</td><td>2048 tokens</td><td>First open-weights LLM at this scale</td></tr>
+    <tr><td>LLaMA 2</td><td>7B, 13B, 70B</td><td>4096 tokens</td><td>Included chat fine-tuned variants</td></tr>
+    <tr><td>LLaMA 3</td><td>8B, 70B, 405B</td><td>128K tokens</td><td>Competitive with GPT-4</td></tr>
+  </table>
+
+  <h3>Quantisation: Running LLMs on Consumer Hardware</h3>
+  <p>LLMs need massive RAM. Quantisation reduces precision of weights to fit in memory:</p>
+
+  <div class="math-box">
+    \[ \text{FP32 (32-bit)} \rightarrow \text{INT8 (8-bit)} \rightarrow \text{INT4 (4-bit)} \]
+    <p style="font-size:0.85em; color:var(--muted); margin-top:8px">7B model: FP32 = 28GB | INT8 = 7GB | INT4 = 3.5GB</p>
+  </div>
+
+  <div class="diagram">
+<span style="color:#7c6af7">llama.cpp</span> allows running quantised LLaMA on CPU:
+
+  <span style="color:#c3e88d">./llama-cli -m llama-3-8b-q4.gguf \
+    -p "What is the capital of France?" \
+    --temp 0.7 -n 200</span>
+
+Tradeoffs: INT4 loses some precision but is ~2× faster and uses ~8× less memory than FP32
+  </div>
+
+  <div class="quiz-box">
+    <div class="q-text">Practice: A 7B LLM in FP32 needs 28GB of RAM. After INT4 quantisation, approximately how much RAM is needed?</div>
+    <button class="quiz-option" onclick="checkQ(this, false, 'That is INT8 — halving the bits halves the memory.')">14GB</button>
+    <button class="quiz-option" onclick="checkQ(this, false, 'That is FP32 — no compression.')">28GB</button>
+    <button class="quiz-option" onclick="checkQ(this, true, 'Correct! INT4 is 4-bit vs 32-bit, so memory reduces by a factor of 8: 28/8 = 3.5GB.')">3.5GB</button>
+    <div class="quiz-feedback" id="qfb9"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>💰 Computational Cost & Environmental Impact</h2>
+  <table>
+    <tr><th>Model</th><th>Training Cost (est.)</th><th>Inference Cost</th></tr>
+    <tr><td>BERT-base</td><td>~$7K (4 TPUs, 4 days)</td><td>Very cheap</td></tr>
+    <tr><td>GPT-3</td><td>~$12M</td><td>$0.002/1K tokens (est.)</td></tr>
+    <tr><td>GPT-4</td><td>~$100M+</td><td>$0.03/1K tokens</td></tr>
+    <tr><td>GPT-5 (2025)</td><td>~$500M+</td><td>$1.75/1M input, $14/1M output</td></tr>
+  </table>
+
+  <div class="callout danger">
+    <div class="callout-title">Environmental Cost</div>
+    Training a single large LLM can emit as much CO₂ as 5 cars over their lifetime. Inference at ChatGPT scale uses as much electricity as a small country. This is a genuine exam discussion point.
+  </div>
+
+  <div class="callout key">
+    <div class="callout-title">Hype Cycle Position</div>
+    The lecture places LLMs at the <strong>"Slope of Enlightenment"</strong> — past the "Peak of Inflated Expectations" and "Trough of Disillusionment", moving towards productivity. Key: we understand what they're good and bad at.
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ SAFETY ═══════════════════════════════════════════ -->
+<div id="safety" class="section">
+<div class="container">
+
+<div class="card">
+  <h2>⚠️ Safety & Alignment Challenges</h2>
+
+  <div class="grid2">
+    <div>
+      <h3>Hallucination</h3>
+      <p>LLMs generate <strong>plausible-sounding but factually incorrect</strong> content. The model optimises for token probability, not truthfulness.</p>
+      <div class="callout danger" style="margin-top:10px">
+        <div class="callout-title">Example</div>
+        Ask: "List papers by [real researcher]" → LLM may generate convincing but non-existent papers with fake DOIs.
+      </div>
+    </div>
+    <div>
+      <h3>Jailbreaking</h3>
+      <p>Users craft prompts to <strong>bypass safety filters</strong>, getting the model to produce harmful content.</p>
+      <div class="callout danger" style="margin-top:10px">
+        <div class="callout-title">Example</div>
+        "DAN" (Do Anything Now) — roleplay prompts instructing the model to act as if it has no restrictions.
+      </div>
+    </div>
+  </div>
+
+  <h3>Harmful Content Generation</h3>
+  <p>Without safety training, LLMs will generate anything in their training distribution — including hate speech, violence, CSAM, dangerous instructions. RLHF reduces but doesn't eliminate this.</p>
+
+  <h3>Test Set Leakage (re-examined)</h3>
+  <p>Many standard NLP benchmarks appeared in LLM training data. Published benchmark scores for LLMs may be inflated — the model has effectively "seen" the test set.</p>
+
+  <h3>Bias Amplification</h3>
+  <p>LLMs trained on internet text absorb and amplify human biases (gender, racial, cultural). Generating text about professions, nationalities, etc. may reflect stereotypes.</p>
+
+  <div class="quiz-box">
+    <div class="q-text">Practice: A company uses GPT-4 to screen job applications. They report 90% accuracy on a benchmark. Name two reasons to be cautious before deploying.</div>
+    <button class="quiz-option" onclick="checkQ(this, true, 'Correct! Data contamination inflates benchmark scores AND social bias may cause discriminatory outcomes in hiring.')">Data contamination may inflate the benchmark score; the model may encode discriminatory biases</button>
+    <button class="quiz-option" onclick="checkQ(this, false, 'Latency is a practical concern but not a safety or evaluation validity concern.')">The model may be too slow; GPT-4 uses too many tokens</button>
+    <button class="quiz-option" onclick="checkQ(this, false, 'Parameter count doesn\'t directly address deployment safety concerns.')">GPT-4 has too many parameters; BERT is better for classification</button>
+    <div class="quiz-feedback" id="qfb10"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🧪 Indirect Answer Classification (2024 Exam Focus)</h2>
+  <p>This was the 2024 exam's Question 3 topic. "Indirect answers" are when someone responds to a yes/no question without explicitly saying yes or no.</p>
+
+  <div class="callout example">
+    <div class="callout-title">Example</div>
+    Q: "Did you enjoy the film?" → A: "I've seen it three times already" (implicit: Yes)
+  </div>
+
+  <h3>Multi-Stage Fine-Tuning</h3>
+  <p>Train on a <em>related but different</em> task first, then fine-tune on the target task:</p>
+  <div class="diagram">
+  Pre-trained LLM
+       ↓ (fine-tune on sentiment — related task)
+  Sentiment Model
+       ↓ (fine-tune on indirect answer data)
+  Indirect Answer Classifier
+  </div>
+
+  <div class="callout key">
+    <div class="callout-title">Why multi-stage?</div>
+    The intermediate task teaches the model relevant features (understanding implication, subjectivity, pragmatics) that transfer to the target task, especially when target data is scarce.
+  </div>
+
+  <div class="quiz-box">
+    <div class="q-text">Practice (2024 Exam Q3d): Why might a researcher use a harmful dataset as an intermediate training stage?</div>
+    <button class="quiz-option" onclick="checkQ(this, false, 'Using harmful data does not directly improve safety — quite the opposite.')">To make the final model safer</button>
+    <button class="quiz-option" onclick="checkQ(this, false, 'Harmful data training typically degrades performance on standard tasks.')">To increase the model\'s vocabulary size</button>
+    <button class="quiz-option" onclick="checkQ(this, true, 'Correct! A harmful dataset (e.g., toxic speech) can teach the model to DETECT such content even though generating it is undesirable. But the 2024 answer notes this DEGRADES performance — it\'s a poor idea.')">They would NOT — training on harmful data degrades performance on the target task</button>
+    <div class="quiz-feedback" id="qfb11"></div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ CODE ═══════════════════════════════════════════ -->
+<div id="code" class="section">
+<div class="container">
+
+<div class="card">
+  <h2>💻 Lab 5: Transformers in Practice</h2>
+  <p>Using HuggingFace <span class="inline-code">transformers</span> library to get context vectors and fine-tune BERT.</p>
+
+  <h3>1. Subword Tokenisation with BERT</h3>
+<pre><code><span class="kw">from</span> <span class="cls">transformers</span> <span class="kw">import</span> <span class="cls">AutoTokenizer</span>
+
+<span class="cm"># Load BERT's tokenizer (trained on same corpus as model)</span>
+tokenizer = <span class="cls">AutoTokenizer</span>.<span class="fn">from_pretrained</span>(<span class="str">"bert-base-uncased"</span>)
+
+<span class="cm"># Tokenize a sentence</span>
+text = <span class="str">"unhappiness is unavoidable"</span>
+tokens = tokenizer.<span class="fn">tokenize</span>(text)
+<span class="cm"># → ['un', '##happiness', 'is', 'un', '##avoid', '##able']</span>
+
+<span class="cm"># Encode to IDs (adds [CLS] and [SEP])</span>
+encoded = tokenizer.<span class="fn">encode</span>(text, return_tensors=<span class="str">'pt'</span>)
+<span class="cm"># [CLS] un ##happiness is un ##avoid ##able [SEP]</span>
+
+<span class="cm"># Note: bert-base-uncased lowercases everything</span>
+<span class="cm"># Use bert-base-cased if case matters</span></code></pre>
+
+  <div class="callout warn">
+    <div class="callout-title">## prefix = continuation token</div>
+    In BERT's WordPiece tokeniser, <span class="inline-code">##</span> means "continues previous token without space." So <span class="inline-code">un ##happiness</span> → "unhappiness".
+  </div>
+
+  <h3>2. Getting Context Vectors (Frozen Transformer)</h3>
+<pre><code><span class="kw">from</span> <span class="cls">transformers</span> <span class="kw">import</span> <span class="cls">AutoTokenizer</span>, <span class="cls">AutoModel</span>
+<span class="kw">import</span> torch
+
+tokenizer = <span class="cls">AutoTokenizer</span>.<span class="fn">from_pretrained</span>(<span class="str">"bert-base-uncased"</span>)
+model = <span class="cls">AutoModel</span>.<span class="fn">from_pretrained</span>(<span class="str">"bert-base-uncased"</span>)
+
+text = <span class="str">"I walked through Kelvingrove."</span>
+inputs = tokenizer(text, return_tensors=<span class="str">'pt'</span>)
+
+<span class="kw">with</span> torch.<span class="fn">no_grad</span>():  <span class="cm"># frozen = no gradients</span>
+    outputs = <span class="fn">model</span>(**inputs)
+
+<span class="cm"># Shape: [batch=1, seq_len=8, hidden=768]</span>
+context_vectors = outputs.last_hidden_state
+
+<span class="cm"># [CLS] token (index 0) = sentence representation</span>
+sentence_vector = context_vectors[<span class="num">0</span>, <span class="num">0</span>, :]  <span class="cm"># shape: [768]</span></code></pre>
+
+  <div class="callout key">
+    <div class="callout-title">Why [CLS]?</div>
+    BERT pre-training uses [CLS] for next-sentence prediction, so it learns to encode the overall sentence meaning. It's standard to use [CLS] as a sentence-level representation.
+  </div>
+
+  <h3>3. Fine-tuning BERT for NER (Token Classification)</h3>
+<pre><code><span class="kw">from</span> <span class="cls">transformers</span> <span class="kw">import</span> (
+    <span class="cls">AutoModelForTokenClassification</span>,
+    <span class="cls">TrainingArguments</span>, <span class="cls">Trainer</span>,
+    <span class="cls">DataCollatorForTokenClassification</span>,
+    <span class="fn">set_seed</span>
+)
+
+<span class="cm"># Label mapping (CoNLL 2003 NER)</span>
+ner_tags = [<span class="str">'O'</span>, <span class="str">'B-PER'</span>, <span class="str">'I-PER'</span>, <span class="str">'B-ORG'</span>, <span class="str">'I-ORG'</span>,
+            <span class="str">'B-LOC'</span>, <span class="str">'I-LOC'</span>, <span class="str">'B-MISC'</span>, <span class="str">'I-MISC'</span>]
+id2label = {i: t <span class="kw">for</span> i, t <span class="kw">in</span> <span class="fn">enumerate</span>(ner_tags)}
+
+<span class="fn">set_seed</span>(<span class="num">42</span>)
+model = <span class="cls">AutoModelForTokenClassification</span>.<span class="fn">from_pretrained</span>(
+    <span class="str">'bert-base-uncased'</span>,
+    id2label=id2label
+)
+<span class="cm"># ⚠️ Final classification layer is RANDOMLY initialised</span>
+<span class="cm"># Must train before use!</span>
+
+args = <span class="cls">TrainingArguments</span>(
+    output_dir=<span class="str">'./ner-bert'</span>,
+    num_train_epochs=<span class="num">3</span>,
+    per_device_train_batch_size=<span class="num">16</span>,
+    evaluation_strategy=<span class="str">'epoch'</span>
+)
+
+trainer = <span class="cls">Trainer</span>(
+    model=model, args=args,
+    train_dataset=train_data,
+    eval_dataset=eval_data,
+    data_collator=<span class="cls">DataCollatorForTokenClassification</span>(tokenizer),
+)
+trainer.<span class="fn">train</span>()  <span class="cm"># Fine-tunes BERT weights + new classifier head</span></code></pre>
+
+  <div class="quiz-box">
+    <div class="q-text">Practice: After loading AutoModelForTokenClassification, why does it warn "model needs to be TRAINED"?</div>
+    <button class="quiz-option" onclick="checkQ(this, false, 'The core BERT weights are loaded — they are not random.')">All BERT weights are randomly initialised</button>
+    <button class="quiz-option" onclick="checkQ(this, true, 'Correct! The pre-trained BERT weights load fine, but the NEW classification head (final layer specific to this task) is randomly initialised and must be trained.')">The new classification head (final layer) has random weights and must be trained</button>
+    <button class="quiz-option" onclick="checkQ(this, false, 'The warning is about weights, not the tokenizer.')">The tokenizer has not been loaded yet</button>
+    <div class="quiz-feedback" id="qfb12"></div>
+  </div>
+
+  <h3>4. Using an LLM API (GPT-5)</h3>
+<pre><code><span class="kw">from</span> <span class="cls">openai</span> <span class="kw">import</span> <span class="cls">OpenAI</span>
+
+client = <span class="cls">OpenAI</span>()  <span class="cm"># uses OPENAI_API_KEY env var</span>
+
+<span class="cm"># Zero-shot classification</span>
+response = client.chat.completions.<span class="fn">create</span>(
+    model=<span class="str">"gpt-4o"</span>,
+    messages=[
+        {<span class="str">"role"</span>: <span class="str">"system"</span>,
+         <span class="str">"content"</span>: <span class="str">"Classify sentiment as Positive/Negative/Neutral."</span>},
+        {<span class="str">"role"</span>: <span class="str">"user"</span>,
+         <span class="str">"content"</span>: <span class="str">"The packaging was beautiful but contents were damaged."</span>}
+    ]
+)
+print(response.choices[<span class="num">0</span>].message.content)
+<span class="cm"># → "Negative"</span>
+
+<span class="cm"># Cost: $1.75/1M input tokens + $14/1M output tokens (GPT-5)</span></code></pre>
+</div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ EXAM QUESTIONS ═══════════════════════════════════════════ -->
+<div id="exam" class="section">
+<div class="container">
+
+<div class="card">
+  <h2>📝 Past Exam Questions (with Solutions)</h2>
+  <p style="color:var(--muted)">Click any question to expand. Solutions are provided — try answering before revealing.</p>
+</div>
+
+<!-- 2023 Q3f -->
+<div class="exam-q">
+  <div class="exam-q-header" onclick="toggleExam(this)">
+    <span class="exam-q-title">2023 Exam Q3(f) — GPT-3 Knowledge Encoding</span>
+    <span class="exam-q-marks">5 marks</span>
+  </div>
+  <div class="exam-q-body">
+    <p>A student claims: <em>"GPT-3 stores facts in its context window, similar to how a database stores records."</em> Critique this statement.</p>
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer; color:var(--accent3); font-weight:600">▶ Reveal Solution</summary>
+      <div class="solution">
+        <div class="solution-title">Model Answer</div>
+        <p>The statement is <strong>incorrect</strong>. GPT-3 does not store facts in its context window — the context window is the <em>input prompt</em>, not permanent storage. Facts are encoded in the <strong>model parameters (weights)</strong> during pre-training. When GPT-3 "knows" that Paris is the capital of France, this is encoded distributionally across billions of parameters, not stored as an explicit record. This is why LLMs can <strong>hallucinate</strong> — the facts are imprecisely encoded and can be "misread" by the generation process. Unlike a database, there is no exact retrieval mechanism.</p>
+        <p style="margin-top:8px; color:var(--warn)"><strong>Key terms:</strong> parameters/weights, pre-training, hallucination, distributional encoding</p>
+      </div>
+    </details>
+    <div class="quiz-box" style="margin-top:14px">
+      <div class="q-text">Generated Practice: Where does an LLM store learned facts about the world?</div>
+      <button class="quiz-option" onclick="checkQ(this, false, 'The context window is the input — it is temporary and not where learned facts live.')">In the context window</button>
+      <button class="quiz-option" onclick="checkQ(this, true, 'Correct! Facts are encoded in the model\'s weights (parameters) during pre-training.')">In the model parameters (weights), distributed across layers</button>
+      <button class="quiz-option" onclick="checkQ(this, false, 'LLMs do not have an explicit memory database — this is the point of the question.')">In an external database queried at inference time</button>
+      <div class="quiz-feedback" id="qfbe1"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2023 Q3a -->
+<div class="exam-q">
+  <div class="exam-q-header" onclick="toggleExam(this)">
+    <span class="exam-q-title">2023 Exam Q3(a) — Two Probabilities LMs Measure</span>
+    <span class="exam-q-marks">3 marks</span>
+  </div>
+  <div class="exam-q-body">
+    <p>A student writes: <em>"Language models measure two probabilities: perplexity and coverage."</em> Correct this statement.</p>
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer; color:var(--accent3); font-weight:600">▶ Reveal Solution</summary>
+      <div class="solution">
+        <div class="solution-title">Model Answer</div>
+        <p>The statement is incorrect. The two probabilities a language model computes are:</p>
+        <ol style="margin-top:8px; padding-left:20px">
+          <li><strong>P(w₁, w₂, …, wₙ)</strong> — the joint probability of a whole sequence (used for tasks like scoring sentences or perplexity evaluation)</li>
+          <li><strong>P(wₙ | w₁, w₂, …, wₙ₋₁)</strong> — the conditional probability of the next word given all previous words (used for text generation)</li>
+        </ol>
+        <p style="margin-top:8px">Perplexity is a <em>metric</em> derived from these probabilities, not a probability itself. Coverage is not a language model concept.</p>
+      </div>
+    </details>
+    <div class="quiz-box" style="margin-top:14px">
+      <div class="q-text">Generated Practice: What is the relationship between perplexity and the log-probability of a sequence?</div>
+      <button class="quiz-option" onclick="checkQ(this, false, 'Perplexity is derived from the negative log probability, not identical to it.')">Perplexity equals the negative log probability</button>
+      <button class="quiz-option" onclick="checkQ(this, true, 'Correct! PPL = exp(- (1/N) Σ log P(wᵢ|w₁..wᵢ₋₁)) — it is the exponent of the average negative log probability per token.')">Perplexity is the exponent of the average negative log probability per token</button>
+      <button class="quiz-option" onclick="checkQ(this, false, 'Lower perplexity is better, not higher.')">Higher perplexity means the model assigns higher probability to the text</button>
+      <div class="quiz-feedback" id="qfbe2"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2024 Q1a -->
+<div class="exam-q">
+  <div class="exam-q-header" onclick="toggleExam(this)">
+    <span class="exam-q-title">2024 Exam Q1(a) — Stopwords: BoW vs Transformers</span>
+    <span class="exam-q-marks">4 marks</span>
+  </div>
+  <div class="exam-q-body">
+    <p>Explain why stopwords are removed in bag-of-words models but <strong>should not</strong> be removed when using transformer models.</p>
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer; color:var(--accent3); font-weight:600">▶ Reveal Solution</summary>
+      <div class="solution">
+        <div class="solution-title">Model Answer</div>
+        <p><strong>Bag-of-words:</strong> Stopwords (the, is, a, etc.) occur in almost all documents with similar frequencies, contributing little discriminative signal for classification. Removing them reduces dimensionality and noise.</p>
+        <p style="margin-top:8px"><strong>Transformers:</strong> Transformers use <em>contextual embeddings</em> — the representation of each word depends on all surrounding words. Stopwords like "not", "never", "only" fundamentally alter sentence meaning and provide critical structural cues. Removing "not" from "This is <strong>not</strong> good" produces "This is good" — opposite meaning. Transformers are not harmed by stopwords (they handle them gracefully), but lose critical information if they're removed.</p>
+      </div>
+    </details>
+    <div class="quiz-box" style="margin-top:14px">
+      <div class="q-text">Generated Practice: For a writing grammar checker, should you apply stemming/lemmatisation? Why?</div>
+      <button class="quiz-option" onclick="checkQ(this, true, 'Correct! A grammar checker needs word forms — "walks" vs "walking" have different grammatical roles. Stemming would destroy this distinction.')">No — word endings carry grammatical information needed for grammar checking</button>
+      <button class="quiz-option" onclick="checkQ(this, false, 'Stemming removes morphological information needed for grammar checking.')">Yes — stemming reduces vocabulary and improves all NLP tasks</button>
+      <button class="quiz-option" onclick="checkQ(this, false, 'Stopword removal for grammar checking would be harmful — function words define grammar.')">Yes — stopwords should be removed to speed up processing</button>
+      <div class="quiz-feedback" id="qfbe3"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2024 Q3a -->
+<div class="exam-q">
+  <div class="exam-q-header" onclick="toggleExam(this)">
+    <span class="exam-q-title">2024 Exam Q3(a) — Zero-Shot LLM Evaluation Concerns</span>
+    <span class="exam-q-marks">2 marks</span>
+  </div>
+  <div class="exam-q-body">
+    <p>A researcher evaluates an LLM in a zero-shot setting on a standard dataset. Name one concern with this evaluation approach.</p>
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer; color:var(--accent3); font-weight:600">▶ Reveal Solution</summary>
+      <div class="solution">
+        <div class="solution-title">Model Answer</div>
+        <p><strong>Data contamination</strong>: The standard dataset's test examples may have appeared in the LLM's pre-training data (scraped from the internet). This means the model has effectively "seen" the test set during training, inflating its apparent zero-shot performance. This makes fair comparison with supervised models (trained on separate data) very difficult.</p>
+      </div>
+    </details>
+    <div class="quiz-box" style="margin-top:14px">
+      <div class="q-text">Generated Practice: A team reports GPT-4 achieves 95% on a benchmark — 5% higher than BERT fine-tuned. Why might this be misleading?</div>
+      <button class="quiz-option" onclick="checkQ(this, true, 'Correct! The benchmark test set may have been in GPT-4\'s training data, giving it an unfair advantage over BERT which was fine-tuned on separate training data only.')">The benchmark test data may appear in GPT-4\'s pre-training corpus (data contamination)</button>
+      <button class="quiz-option" onclick="checkQ(this, false, 'Parameter count doesn\'t directly explain benchmark inflation.')">GPT-4 has more parameters than BERT</button>
+      <button class="quiz-option" onclick="checkQ(this, false, 'Different tokenisers alone don\'t explain the performance gap here.')">GPT-4 uses a different tokeniser</button>
+      <div class="quiz-feedback" id="qfbe4"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2025 Q3a -->
+<div class="exam-q">
+  <div class="exam-q-header" onclick="toggleExam(this)">
+    <span class="exam-q-title">2025 Exam Q3(a) — Computational Cost Ranking</span>
+    <span class="exam-q-marks">2 marks</span>
+  </div>
+  <div class="exam-q-body">
+    <p>Rank from least to most computationally expensive at inference time: Logistic Regression, BERT, LLaMA (7B).</p>
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer; color:var(--accent3); font-weight:600">▶ Reveal Solution</summary>
+      <div class="solution">
+        <div class="solution-title">Model Answer</div>
+        <p><strong>Logistic Regression &lt; BERT &lt; LLaMA</strong></p>
+        <ul style="margin-top:8px; padding-left:18px">
+          <li><strong>LogReg</strong>: Simple dot product — O(features) — trivially fast</li>
+          <li><strong>BERT</strong>: 110M–340M params, one forward pass per input — fast on GPU, slow on CPU</li>
+          <li><strong>LLaMA 7B</strong>: 7 billion params, autoregressive generation — generates one token at a time — very expensive, needs high-end GPU or quantisation for CPU</li>
+        </ul>
+      </div>
+    </details>
+  </div>
+</div>
+
+<!-- 2022 Q3e -->
+<div class="exam-q">
+  <div class="exam-q-header" onclick="toggleExam(this)">
+    <span class="exam-q-title">2022 Exam Q3(e) — Including POS Tags in BERT</span>
+    <span class="exam-q-marks">4 marks</span>
+  </div>
+  <div class="exam-q-body">
+    <p>Describe <strong>one method</strong> to incorporate part-of-speech (POS) tag features into a BERT-based text classification model.</p>
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer; color:var(--accent3); font-weight:600">▶ Reveal Solution</summary>
+      <div class="solution">
+        <div class="solution-title">Model Answer</div>
+        <p><strong>Method: POS Embedding at Input Layer</strong></p>
+        <p>BERT's input representation already combines <em>token embeddings + segment embeddings + positional embeddings</em>. We can add a fourth component: a <strong>POS embedding</strong>.</p>
+        <ol style="margin-top:8px; padding-left:18px">
+          <li>Run a POS tagger on each input sentence to get POS tags</li>
+          <li>Create a POS embedding lookup table (e.g., 45 Penn Treebank tags → 768-dim embeddings)</li>
+          <li>For each token, sum: token_emb + pos_emb + segment_emb + position_emb</li>
+          <li>Pass the combined embeddings through BERT as normal</li>
+        </ol>
+        <p style="margin-top:8px; color:var(--warn)">Note: Must align POS tags to BERT's subword tokens (e.g., assign same POS tag to all subword pieces of a word).</p>
+      </div>
+    </details>
+    <div class="quiz-box" style="margin-top:14px">
+      <div class="q-text">Generated Practice: What alignment problem arises when adding POS embeddings to BERT?</div>
+      <button class="quiz-option" onclick="checkQ(this, true, 'Correct! POS taggers work at the word level, but BERT tokenises words into subword pieces. Each subword needs a POS tag — typically the whole-word POS is copied to all its subwords.')">POS taggers tag words, but BERT splits words into subwords — must align POS tags to subword tokens</button>
+      <button class="quiz-option" onclick="checkQ(this, false, 'BERT already handles 768 dimensions — POS embeddings would also be 768d.')">POS embeddings are 32-dimensional but BERT needs 768-dimensional input</button>
+      <button class="quiz-option" onclick="checkQ(this, false, 'POS tags are fixed labels — they don\'t need to be trained as tokens per se.')">POS tags must be added to the tokeniser vocabulary</button>
+      <div class="quiz-feedback" id="qfbe5"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Generated Q: LLM Generation -->
+<div class="exam-q" style="border-color: var(--accent3)">
+  <div class="exam-q-header" onclick="toggleExam(this)" style="background: rgba(106,247,196,0.08)">
+    <span class="exam-q-title" style="color:var(--accent3)">🆕 Generated Q — LLM Generation Modes</span>
+    <span class="exam-q-marks" style="background:var(--accent3)">5 marks</span>
+  </div>
+  <div class="exam-q-body">
+    <p>An LLM has the following token probabilities given the prefix "The weather is":</p>
+    <table>
+      <tr><th>Token</th><th>P(token | prefix)</th></tr>
+      <tr><td>sunny</td><td>0.50</td></tr>
+      <tr><td>cold</td><td>0.30</td></tr>
+      <tr><td>nice</td><td>0.20</td></tr>
+    </table>
+    <p style="margin-top:10px">(a) [1 mark] What token does greedy decoding select?<br>
+    (b) [2 marks] Beam search with beam width 2: expand 2 steps, show all kept beams after step 1 and step 2 given: after "sunny" → {today:0.6, outside:0.4}; after "cold" → {today:0.5, outside:0.5}.<br>
+    (c) [2 marks] Name one advantage and one disadvantage of beam search over greedy decoding.</p>
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer; color:var(--accent3); font-weight:600">▶ Reveal Solution</summary>
+      <div class="solution">
+        <div class="solution-title">Model Answer</div>
+        <p><strong>(a) Greedy:</strong> Select highest probability token = <strong>"sunny"</strong> (P=0.50)</p>
+        <p style="margin-top:8px"><strong>(b) Beam search (width=2):</strong></p>
+        <p>Step 1 — keep top 2 after first token:</p>
+        <ul style="padding-left:18px">
+          <li>"sunny" → P=0.50 ✓ (kept)</li>
+          <li>"cold" → P=0.30 ✓ (kept)</li>
+          <li>"nice" → P=0.20 ✗ (pruned)</li>
+        </ul>
+        <p style="margin-top:8px">Step 2 — expand each beam and keep top 2 overall:</p>
+        <ul style="padding-left:18px">
+          <li>"sunny today" → 0.50 × 0.60 = 0.30 ✓</li>
+          <li>"sunny outside" → 0.50 × 0.40 = 0.20</li>
+          <li>"cold today" → 0.30 × 0.50 = 0.15</li>
+          <li>"cold outside" → 0.30 × 0.50 = 0.15</li>
+        </ul>
+        <p>Keep top 2: <strong>"sunny today" (0.30)</strong> and <strong>"sunny outside" (0.20)</strong></p>
+        <p style="margin-top:8px"><strong>(c)</strong> Advantage: explores multiple hypotheses — can find higher-probability sequences than greedy. Disadvantage: more computation (scales with beam width); still deterministic and may produce repetitive text.</p>
+      </div>
+    </details>
+  </div>
+</div>
+
+<!-- Generated Q: Sentiment + LLM -->
+<div class="exam-q" style="border-color: var(--accent3)">
+  <div class="exam-q-header" onclick="toggleExam(this)" style="background: rgba(106,247,196,0.08)">
+    <span class="exam-q-title" style="color:var(--accent3)">🆕 Generated Q — LLM for Sentiment Analysis</span>
+    <span class="exam-q-marks" style="background:var(--accent3)">8 marks</span>
+  </div>
+  <div class="exam-q-body">
+    <p>A company wants to analyse product reviews in 20 languages. They have 500 labelled English reviews and 0 labelled reviews in other languages. They are choosing between: (A) fine-tuned multilingual BERT, (B) GPT-4 zero-shot. Answer the following:</p>
+    <p style="margin-top:10px">(a) [2] Name one advantage of option B (GPT-4 zero-shot) over option A.<br>
+    (b) [2] Name one concern specific to using GPT-4 zero-shot for this application.<br>
+    (c) [4] A new engineer proposes removing stopwords from reviews before sending to GPT-4. Evaluate this proposal.</p>
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer; color:var(--accent3); font-weight:600">▶ Reveal Solution</summary>
+      <div class="solution">
+        <div class="solution-title">Model Answer</div>
+        <p><strong>(a)</strong> GPT-4 zero-shot works across all 20 languages without any labelled data in those languages. It has been trained on multilingual data and can directly apply its language understanding to classify sentiment without per-language fine-tuning.</p>
+        <p style="margin-top:8px"><strong>(b)</strong> Data contamination: GPT-4's training data may include reviews from the same product lines, making zero-shot evaluation misleading. Also: high inference cost ($14/1M output tokens at GPT-5 scale) and API dependency.</p>
+        <p style="margin-top:8px"><strong>(c)</strong> The proposal is <strong>inappropriate</strong>. GPT-4 uses contextual embeddings from transformers — unlike bag-of-words models, it processes the full sequence and stopwords contribute to meaning. Removing "not", "never", "hardly" would destroy negation signals critical for sentiment. Example: "not bad" → "bad" if stopwords removed. Furthermore, GPT-4 is not harmed by stopwords — its subword tokeniser handles them efficiently. The proposal would reduce accuracy for minimal efficiency gain.</p>
+      </div>
+    </details>
+  </div>
+</div>
+
+<!-- Generated Q: Hallucination -->
+<div class="exam-q" style="border-color: var(--accent3)">
+  <div class="exam-q-header" onclick="toggleExam(this)" style="background: rgba(106,247,196,0.08)">
+    <span class="exam-q-title" style="color:var(--accent3)">🆕 Generated Q — Hallucination & Safety</span>
+    <span class="exam-q-marks" style="background:var(--accent3)">6 marks</span>
+  </div>
+  <div class="exam-q-body">
+    <p>(a) [2] Explain why LLMs hallucinate facts even after instruction tuning and RLHF.<br>
+    (b) [2] A user asks an LLM to list papers by a real researcher. The LLM generates 5 papers with plausible titles, authors, and DOIs — but 3 of them don't exist. What LLM property caused this?<br>
+    (c) [2] Suggest one technical approach to reduce hallucination in LLM responses.</p>
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer; color:var(--accent3); font-weight:600">▶ Reveal Solution</summary>
+      <div class="solution">
+        <div class="solution-title">Model Answer</div>
+        <p><strong>(a)</strong> LLMs are trained to maximise the probability of the next token — they optimise for <em>plausibility</em>, not <em>accuracy</em>. Knowledge is encoded imprecisely and distributionally in billions of parameters. Instruction tuning and RLHF improve helpfulness and reduce obvious errors but don't provide a ground-truth knowledge lookup mechanism. The model generates what "sounds right" statistically.</p>
+        <p style="margin-top:8px"><strong>(b)</strong> Hallucination — the model generates plausible-sounding but non-existent content. It has learned patterns for how academic papers look (title, authors, journal, DOI format) and generates sequences that fit this pattern, without any mechanism to verify existence.</p>
+        <p style="margin-top:8px"><strong>(c)</strong> Retrieval-Augmented Generation (RAG): provide the model with retrieved documents from a verified knowledge base as context. The model then generates answers grounded in the provided documents rather than solely from parametric memory.</p>
+      </div>
+    </details>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ FLASHCARDS ═══════════════════════════════════════════ -->
+<div id="flashcards" class="section">
+<div class="container">
+
+<div class="card">
+  <h2>🃏 Flashcards — Click to Flip</h2>
+  <p style="color:var(--muted)">Test your understanding. Click each card to reveal the answer.</p>
+
+  <div class="grid3" style="margin-top:18px">
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">What is causal masking?<div class="flip-hint">click to flip</div></div>
+        <div class="flip-back">Attention mask where token i can only attend to tokens 1..i. Prevents seeing future tokens. Used in decoder-only LLMs (GPT, LLaMA).</div>
+      </div>
+    </div>
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">What is instruction tuning?<div class="flip-hint">click to flip</div></div>
+        <div class="flip-back">Fine-tuning an LLM on (instruction, response) pairs to make it follow instructions. Does NOT add new knowledge — teaches format.</div>
+      </div>
+    </div>
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">Define perplexity<div class="flip-hint">click to flip</div></div>
+        <div class="flip-back">PPL = exp(-(1/N) Σ log P(wᵢ|w₁..wᵢ₋₁)). Measures how "surprised" a model is by text. Lower = better.</div>
+      </div>
+    </div>
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">BERT vs GPT:<br>attention type?<div class="flip-hint">click to flip</div></div>
+        <div class="flip-back">BERT: bidirectional (sees all tokens). GPT/LLaMA: causal/unidirectional (only left context).</div>
+      </div>
+    </div>
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">What is hallucination in LLMs?<div class="flip-hint">click to flip</div></div>
+        <div class="flip-back">Generating plausible-sounding but factually incorrect content. Caused by optimising token probability, not truthfulness.</div>
+      </div>
+    </div>
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">What is quantisation?<div class="flip-hint">click to flip</div></div>
+        <div class="flip-back">Reducing weight precision (FP32→INT8→INT4) to reduce memory. INT4 uses 8× less memory than FP32. Slight accuracy loss.</div>
+      </div>
+    </div>
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">Chain-of-thought prompting?<div class="flip-hint">click to flip</div></div>
+        <div class="flip-back">Prompting the LLM to reason step-by-step before giving final answer. Uses context window as scratchpad. Improves multi-step reasoning.</div>
+      </div>
+    </div>
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">RLHF — 3 steps?<div class="flip-hint">click to flip</div></div>
+        <div class="flip-back">1. SFT: fine-tune on human demos. 2. Reward model: learn from human preference rankings. 3. PPO: optimise LLM to maximise reward model score.</div>
+      </div>
+    </div>
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">Data contamination?<div class="flip-hint">click to flip</div></div>
+        <div class="flip-back">Benchmark test sets appearing in LLM training data. Inflates zero-shot benchmark scores. Makes fair comparison with supervised models impossible.</div>
+      </div>
+    </div>
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">Why use [CLS] token in BERT?<div class="flip-hint">click to flip</div></div>
+        <div class="flip-back">[CLS] is trained for NSP (next sentence prediction) so it encodes whole-sentence meaning. Standard choice for sentence-level classification.</div>
+      </div>
+    </div>
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">LLaMA vs GPT: key difference?<div class="flip-hint">click to flip</div></div>
+        <div class="flip-back">LLaMA: open-weight (downloadable), Meta. GPT: closed-weight (API only), OpenAI. LLaMA enables local deployment and quantisation (llama.cpp).</div>
+      </div>
+    </div>
+    <div class="flip-card" onclick="this.classList.toggle('flipped')">
+      <div class="flip-inner">
+        <div class="flip-front">Jailbreaking?<div class="flip-hint">click to flip</div></div>
+        <div class="flip-back">Crafting prompts to bypass safety filters (e.g. "DAN" prompt). Safety filters from RLHF can be circumvented through creative prompt construction.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🏆 Quick-Fire Revision — Key Numbers to Know</h2>
+  <table>
+    <tr><th>Model</th><th>Parameters</th><th>Key Fact</th></tr>
+    <tr><td>BERT-base</td><td>110M</td><td>Encoder-only, bidirectional</td></tr>
+    <tr><td>BERT-large</td><td>340M</td><td>768→1024 hidden dim</td></tr>
+    <tr><td>GPT-2</td><td>1.5B</td><td>First "worrying" open LLM (2019)</td></tr>
+    <tr><td>GPT-3</td><td>175B</td><td>Few-shot learning breakthrough</td></tr>
+    <tr><td>LLaMA 1</td><td>7B–65B</td><td>First popular open-weight LLM</td></tr>
+    <tr><td>LLaMA 3</td><td>8B–405B</td><td>128K context, competitive with GPT-4</td></tr>
+    <tr><td>BERT context</td><td>512 tokens</td><td>Fixed max length</td></tr>
+    <tr><td>BERT hidden</td><td>768 (base)</td><td>Context vector dimension</td></tr>
+    <tr><td>GPT-5 pricing</td><td>—</td><td>$1.75/1M input, $14/1M output</td></tr>
+    <tr><td>INT4 compression</td><td>8× smaller</td><td>vs FP32; used in llama.cpp</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>📋 Exam Strategy — Lecture 9 Topics</h2>
+  <div class="grid2">
+    <div>
+      <h3>High-Probability Exam Topics</h3>
+      <ul style="padding-left:18px; line-height:2">
+        <li>BERT vs LLM comparison (architecture, use cases)</li>
+        <li>Zero-shot / few-shot / chain-of-thought</li>
+        <li>Data contamination in LLM evaluation</li>
+        <li>Instruction tuning vs pre-training</li>
+        <li>Hallucination — what causes it</li>
+        <li>Stopword removal: BoW vs transformer</li>
+        <li>Computational cost ranking</li>
+        <li>Quantisation: INT4/INT8 memory savings</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Definitions to Memorise</h3>
+      <ul style="padding-left:18px; line-height:2">
+        <li>Causal masking</li>
+        <li>Perplexity formula</li>
+        <li>RLHF 3 steps</li>
+        <li>Chain-of-thought</li>
+        <li>Data contamination</li>
+        <li>Quantisation</li>
+        <li>[CLS] token purpose</li>
+        <li>Jailbreaking</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout warn" style="margin-top:16px">
+    <div class="callout-title">Key Exam Pattern (2022-2025)</div>
+    Every exam has a "critique the student's statement" question. For Lec 9, expect: wrong definition of where LLMs store knowledge, wrong comparison of BERT vs LLM, or wrong claim about tokenisation/stopwords.
+  </div>
+</div>
+
+</div>
+</div>
+
+<script>
+// ── Navigation ──
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// ── Quiz ──
+let answered = {};
+function checkQ(btn, correct, explanation) {
+  const box = btn.closest('.quiz-box');
+  const fbId = box.querySelector('.quiz-feedback').id;
+  if (answered[fbId]) return;
+  answered[fbId] = true;
+  box.querySelectorAll('.quiz-option').forEach(b => b.style.pointerEvents = 'none');
+  btn.classList.add(correct ? 'correct' : 'wrong');
+  const fb = document.getElementById(fbId);
+  fb.textContent = (correct ? '✓ ' : '✗ ') + explanation;
+  fb.className = 'quiz-feedback show ' + (correct ? 'correct' : 'wrong');
+}
+
+// ── Exam toggles ──
+function toggleExam(header) {
+  const body = header.nextElementSibling;
+  body.classList.toggle('show');
+}
+
+// ── MathJax config ──
+window.MathJax = {
+  tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] },
+  svg: { fontCache: 'global' }
+};
+</script>
+</body>
+</html>
